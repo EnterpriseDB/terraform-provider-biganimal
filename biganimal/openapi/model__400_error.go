@@ -1,7 +1,7 @@
 /*
 BigAnimal
 
-BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1. 
+BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1.
 
 API version: 2.5.1
 */
@@ -14,37 +14,37 @@ import (
 	"encoding/json"
 )
 
-// 400Error struct for 400Error
-type 400Error struct {
+// Error400 struct for Error400
+type Error400 struct {
 	Status float32 `json:"status"`
 	Message string `json:"message"`
-	Errors []Model400ErrorErrorsInner `json:"errors,omitempty"`
+	Errors []Error400ErrorsInner `json:"errors,omitempty"`
 	Reference string `json:"reference"`
 	Source *string `json:"source,omitempty"`
 }
 
-// New400Error instantiates a new 400Error object
+// NewError400 instantiates a new Error400 object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func New400Error(status float32, message string, reference string) *400Error {
-	this := 400Error{}
+func NewError400(status float32, message string, reference string) *Error400 {
+	this := Error400{}
 	this.Status = status
 	this.Message = message
 	this.Reference = reference
 	return &this
 }
 
-// New400ErrorWithDefaults instantiates a new 400Error object
+// NewError400WithDefaults instantiates a new Error400 object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func New400ErrorWithDefaults() *400Error {
-	this := 400Error{}
+func NewError400WithDefaults() *Error400 {
+	this := Error400{}
 	return &this
 }
 
 // GetStatus returns the Status field value
-func (o *400Error) GetStatus() float32 {
+func (o *Error400) GetStatus() float32 {
 	if o == nil {
 		var ret float32
 		return ret
@@ -55,7 +55,7 @@ func (o *400Error) GetStatus() float32 {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *400Error) GetStatusOk() (*float32, bool) {
+func (o *Error400) GetStatusOk() (*float32, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -63,12 +63,12 @@ func (o *400Error) GetStatusOk() (*float32, bool) {
 }
 
 // SetStatus sets field value
-func (o *400Error) SetStatus(v float32) {
+func (o *Error400) SetStatus(v float32) {
 	o.Status = v
 }
 
 // GetMessage returns the Message field value
-func (o *400Error) GetMessage() string {
+func (o *Error400) GetMessage() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -79,7 +79,7 @@ func (o *400Error) GetMessage() string {
 
 // GetMessageOk returns a tuple with the Message field value
 // and a boolean to check if the value has been set.
-func (o *400Error) GetMessageOk() (*string, bool) {
+func (o *Error400) GetMessageOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -87,14 +87,14 @@ func (o *400Error) GetMessageOk() (*string, bool) {
 }
 
 // SetMessage sets field value
-func (o *400Error) SetMessage(v string) {
+func (o *Error400) SetMessage(v string) {
 	o.Message = v
 }
 
 // GetErrors returns the Errors field value if set, zero value otherwise.
-func (o *400Error) GetErrors() []Model400ErrorErrorsInner {
+func (o *Error400) GetErrors() []Error400ErrorsInner {
 	if o == nil || o.Errors == nil {
-		var ret []Model400ErrorErrorsInner
+		var ret []Error400ErrorsInner
 		return ret
 	}
 	return o.Errors
@@ -102,7 +102,7 @@ func (o *400Error) GetErrors() []Model400ErrorErrorsInner {
 
 // GetErrorsOk returns a tuple with the Errors field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *400Error) GetErrorsOk() ([]Model400ErrorErrorsInner, bool) {
+func (o *Error400) GetErrorsOk() ([]Error400ErrorsInner, bool) {
 	if o == nil || o.Errors == nil {
 		return nil, false
 	}
@@ -110,7 +110,7 @@ func (o *400Error) GetErrorsOk() ([]Model400ErrorErrorsInner, bool) {
 }
 
 // HasErrors returns a boolean if a field has been set.
-func (o *400Error) HasErrors() bool {
+func (o *Error400) HasErrors() bool {
 	if o != nil && o.Errors != nil {
 		return true
 	}
@@ -118,13 +118,13 @@ func (o *400Error) HasErrors() bool {
 	return false
 }
 
-// SetErrors gets a reference to the given []Model400ErrorErrorsInner and assigns it to the Errors field.
-func (o *400Error) SetErrors(v []Model400ErrorErrorsInner) {
+// SetErrors gets a reference to the given []Error400ErrorsInner and assigns it to the Errors field.
+func (o *Error400) SetErrors(v []Error400ErrorsInner) {
 	o.Errors = v
 }
 
 // GetReference returns the Reference field value
-func (o *400Error) GetReference() string {
+func (o *Error400) GetReference() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -135,7 +135,7 @@ func (o *400Error) GetReference() string {
 
 // GetReferenceOk returns a tuple with the Reference field value
 // and a boolean to check if the value has been set.
-func (o *400Error) GetReferenceOk() (*string, bool) {
+func (o *Error400) GetReferenceOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -143,12 +143,12 @@ func (o *400Error) GetReferenceOk() (*string, bool) {
 }
 
 // SetReference sets field value
-func (o *400Error) SetReference(v string) {
+func (o *Error400) SetReference(v string) {
 	o.Reference = v
 }
 
 // GetSource returns the Source field value if set, zero value otherwise.
-func (o *400Error) GetSource() string {
+func (o *Error400) GetSource() string {
 	if o == nil || o.Source == nil {
 		var ret string
 		return ret
@@ -158,7 +158,7 @@ func (o *400Error) GetSource() string {
 
 // GetSourceOk returns a tuple with the Source field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *400Error) GetSourceOk() (*string, bool) {
+func (o *Error400) GetSourceOk() (*string, bool) {
 	if o == nil || o.Source == nil {
 		return nil, false
 	}
@@ -166,7 +166,7 @@ func (o *400Error) GetSourceOk() (*string, bool) {
 }
 
 // HasSource returns a boolean if a field has been set.
-func (o *400Error) HasSource() bool {
+func (o *Error400) HasSource() bool {
 	if o != nil && o.Source != nil {
 		return true
 	}
@@ -175,11 +175,11 @@ func (o *400Error) HasSource() bool {
 }
 
 // SetSource gets a reference to the given string and assigns it to the Source field.
-func (o *400Error) SetSource(v string) {
+func (o *Error400) SetSource(v string) {
 	o.Source = &v
 }
 
-func (o 400Error) MarshalJSON() ([]byte, error) {
+func (o Error400) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
 	if true {
 		toSerialize["status"] = o.Status
@@ -199,38 +199,38 @@ func (o 400Error) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-type Nullable400Error struct {
-	value *400Error
+type NullableError400 struct {
+	value *Error400
 	isSet bool
 }
 
-func (v Nullable400Error) Get() *400Error {
+func (v NullableError400) Get() *Error400 {
 	return v.value
 }
 
-func (v *Nullable400Error) Set(val *400Error) {
+func (v *NullableError400) Set(val *Error400) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v Nullable400Error) IsSet() bool {
+func (v NullableError400) IsSet() bool {
 	return v.isSet
 }
 
-func (v *Nullable400Error) Unset() {
+func (v *NullableError400) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullable400Error(val *400Error) *Nullable400Error {
-	return &Nullable400Error{value: val, isSet: true}
+func NewNullableError400(val *Error400) *NullableError400 {
+	return &NullableError400{value: val, isSet: true}
 }
 
-func (v Nullable400Error) MarshalJSON() ([]byte, error) {
+func (v NullableError400) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *Nullable400Error) UnmarshalJSON(src []byte) error {
+func (v *NullableError400) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

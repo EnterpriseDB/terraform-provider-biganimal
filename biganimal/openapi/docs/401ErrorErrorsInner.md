@@ -1,104 +1,104 @@
-# 401ErrorErrorsInner
+# Error401ErrorsInner
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Path** | Pointer to **string** |  | [optional] 
-**Message** | Pointer to **string** |  | [optional] 
-**ErrorCode** | Pointer to **string** |  | [optional] 
+**Path** | Pointer to **string** |  | [optional]
+**Message** | Pointer to **string** |  | [optional]
+**ErrorCode** | Pointer to **string** |  | [optional]
 
 ## Methods
 
-### New401ErrorErrorsInner
+### NewError401ErrorsInner
 
-`func New401ErrorErrorsInner() *401ErrorErrorsInner`
+`func NewError401ErrorsInner() *Error401ErrorsInner`
 
-New401ErrorErrorsInner instantiates a new 401ErrorErrorsInner object
+NewError401ErrorsInner instantiates a new Error401ErrorsInner object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### New401ErrorErrorsInnerWithDefaults
+### NewError401ErrorsInnerWithDefaults
 
-`func New401ErrorErrorsInnerWithDefaults() *401ErrorErrorsInner`
+`func NewError401ErrorsInnerWithDefaults() *Error401ErrorsInner`
 
-New401ErrorErrorsInnerWithDefaults instantiates a new 401ErrorErrorsInner object
+NewError401ErrorsInnerWithDefaults instantiates a new Error401ErrorsInner object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetPath
 
-`func (o *401ErrorErrorsInner) GetPath() string`
+`func (o *Error401ErrorsInner) GetPath() string`
 
 GetPath returns the Path field if non-nil, zero value otherwise.
 
 ### GetPathOk
 
-`func (o *401ErrorErrorsInner) GetPathOk() (*string, bool)`
+`func (o *Error401ErrorsInner) GetPathOk() (*string, bool)`
 
 GetPathOk returns a tuple with the Path field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetPath
 
-`func (o *401ErrorErrorsInner) SetPath(v string)`
+`func (o *Error401ErrorsInner) SetPath(v string)`
 
 SetPath sets Path field to given value.
 
 ### HasPath
 
-`func (o *401ErrorErrorsInner) HasPath() bool`
+`func (o *Error401ErrorsInner) HasPath() bool`
 
 HasPath returns a boolean if a field has been set.
 
 ### GetMessage
 
-`func (o *401ErrorErrorsInner) GetMessage() string`
+`func (o *Error401ErrorsInner) GetMessage() string`
 
 GetMessage returns the Message field if non-nil, zero value otherwise.
 
 ### GetMessageOk
 
-`func (o *401ErrorErrorsInner) GetMessageOk() (*string, bool)`
+`func (o *Error401ErrorsInner) GetMessageOk() (*string, bool)`
 
 GetMessageOk returns a tuple with the Message field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetMessage
 
-`func (o *401ErrorErrorsInner) SetMessage(v string)`
+`func (o *Error401ErrorsInner) SetMessage(v string)`
 
 SetMessage sets Message field to given value.
 
 ### HasMessage
 
-`func (o *401ErrorErrorsInner) HasMessage() bool`
+`func (o *Error401ErrorsInner) HasMessage() bool`
 
 HasMessage returns a boolean if a field has been set.
 
 ### GetErrorCode
 
-`func (o *401ErrorErrorsInner) GetErrorCode() string`
+`func (o *Error401ErrorsInner) GetErrorCode() string`
 
 GetErrorCode returns the ErrorCode field if non-nil, zero value otherwise.
 
 ### GetErrorCodeOk
 
-`func (o *401ErrorErrorsInner) GetErrorCodeOk() (*string, bool)`
+`func (o *Error401ErrorsInner) GetErrorCodeOk() (*string, bool)`
 
 GetErrorCodeOk returns a tuple with the ErrorCode field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetErrorCode
 
-`func (o *401ErrorErrorsInner) SetErrorCode(v string)`
+`func (o *Error401ErrorsInner) SetErrorCode(v string)`
 
 SetErrorCode sets ErrorCode field to given value.
 
 ### HasErrorCode
 
-`func (o *401ErrorErrorsInner) HasErrorCode() bool`
+`func (o *Error401ErrorsInner) HasErrorCode() bool`
 
 HasErrorCode returns a boolean if a field has been set.
 

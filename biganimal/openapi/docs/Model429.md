@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Error** | Pointer to [**Model401Error**](401Error.md) |  | [optional] 
+**Error** | Pointer to [**Error401**](Error401.md) |  | [optional]
 
 ## Methods
 
@@ -27,20 +27,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetError
 
-`func (o *Model429) GetError() Model401Error`
+`func (o *Model429) GetError() Error401`
 
 GetError returns the Error field if non-nil, zero value otherwise.
 
 ### GetErrorOk
 
-`func (o *Model429) GetErrorOk() (*Model401Error, bool)`
+`func (o *Model429) GetErrorOk() (*Error401, bool)`
 
 GetErrorOk returns a tuple with the Error field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetError
 
-`func (o *Model429) SetError(v Model401Error)`
+`func (o *Model429) SetError(v Error401)`
 
 SetError sets Error field to given value.
 

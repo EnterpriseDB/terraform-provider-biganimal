@@ -1,7 +1,7 @@
 /*
 BigAnimal
 
-BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1. 
+BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1.
 
 API version: 2.5.1
 */
@@ -11,6 +11,7 @@ API version: 2.5.1
 package openapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -33,6 +34,13 @@ func RegisterAzureAsCreateCloudProviderRequest(v *RegisterAzure) CreateCloudProv
 	return CreateCloudProviderRequest{
 		RegisterAzure: v,
 	}
+}
+
+// A wrapper for strict JSON decoding
+func newStrictDecoder(data []byte) *json.Decoder {
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.DisallowUnknownFields()
+	return dec
 }
 
 

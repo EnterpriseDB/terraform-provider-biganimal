@@ -1,130 +1,130 @@
-# 400ErrorErrorsInner
+# Error400ErrorsInner
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Path** | Pointer to **string** |  | [optional] 
-**Message** | Pointer to **string** |  | [optional] 
-**ErrorCode** | Pointer to **string** |  | [optional] 
-**Details** | Pointer to **[]map[string]interface{}** |  | [optional] 
+**Path** | Pointer to **string** |  | [optional]
+**Message** | Pointer to **string** |  | [optional]
+**ErrorCode** | Pointer to **string** |  | [optional]
+**Details** | Pointer to **[]map[string]interface{}** |  | [optional]
 
 ## Methods
 
-### New400ErrorErrorsInner
+### NewError400ErrorsInner
 
-`func New400ErrorErrorsInner() *400ErrorErrorsInner`
+`func NewError400ErrorsInner() *Error400ErrorsInner`
 
-New400ErrorErrorsInner instantiates a new 400ErrorErrorsInner object
+NewError400ErrorsInner instantiates a new Error400ErrorsInner object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### New400ErrorErrorsInnerWithDefaults
+### NewError400ErrorsInnerWithDefaults
 
-`func New400ErrorErrorsInnerWithDefaults() *400ErrorErrorsInner`
+`func NewError400ErrorsInnerWithDefaults() *Error400ErrorsInner`
 
-New400ErrorErrorsInnerWithDefaults instantiates a new 400ErrorErrorsInner object
+NewError400ErrorsInnerWithDefaults instantiates a new Error400ErrorsInner object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetPath
 
-`func (o *400ErrorErrorsInner) GetPath() string`
+`func (o *Error400ErrorsInner) GetPath() string`
 
 GetPath returns the Path field if non-nil, zero value otherwise.
 
 ### GetPathOk
 
-`func (o *400ErrorErrorsInner) GetPathOk() (*string, bool)`
+`func (o *Error400ErrorsInner) GetPathOk() (*string, bool)`
 
 GetPathOk returns a tuple with the Path field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetPath
 
-`func (o *400ErrorErrorsInner) SetPath(v string)`
+`func (o *Error400ErrorsInner) SetPath(v string)`
 
 SetPath sets Path field to given value.
 
 ### HasPath
 
-`func (o *400ErrorErrorsInner) HasPath() bool`
+`func (o *Error400ErrorsInner) HasPath() bool`
 
 HasPath returns a boolean if a field has been set.
 
 ### GetMessage
 
-`func (o *400ErrorErrorsInner) GetMessage() string`
+`func (o *Error400ErrorsInner) GetMessage() string`
 
 GetMessage returns the Message field if non-nil, zero value otherwise.
 
 ### GetMessageOk
 
-`func (o *400ErrorErrorsInner) GetMessageOk() (*string, bool)`
+`func (o *Error400ErrorsInner) GetMessageOk() (*string, bool)`
 
 GetMessageOk returns a tuple with the Message field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetMessage
 
-`func (o *400ErrorErrorsInner) SetMessage(v string)`
+`func (o *Error400ErrorsInner) SetMessage(v string)`
 
 SetMessage sets Message field to given value.
 
 ### HasMessage
 
-`func (o *400ErrorErrorsInner) HasMessage() bool`
+`func (o *Error400ErrorsInner) HasMessage() bool`
 
 HasMessage returns a boolean if a field has been set.
 
 ### GetErrorCode
 
-`func (o *400ErrorErrorsInner) GetErrorCode() string`
+`func (o *Error400ErrorsInner) GetErrorCode() string`
 
 GetErrorCode returns the ErrorCode field if non-nil, zero value otherwise.
 
 ### GetErrorCodeOk
 
-`func (o *400ErrorErrorsInner) GetErrorCodeOk() (*string, bool)`
+`func (o *Error400ErrorsInner) GetErrorCodeOk() (*string, bool)`
 
 GetErrorCodeOk returns a tuple with the ErrorCode field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetErrorCode
 
-`func (o *400ErrorErrorsInner) SetErrorCode(v string)`
+`func (o *Error400ErrorsInner) SetErrorCode(v string)`
 
 SetErrorCode sets ErrorCode field to given value.
 
 ### HasErrorCode
 
-`func (o *400ErrorErrorsInner) HasErrorCode() bool`
+`func (o *Error400ErrorsInner) HasErrorCode() bool`
 
 HasErrorCode returns a boolean if a field has been set.
 
 ### GetDetails
 
-`func (o *400ErrorErrorsInner) GetDetails() []map[string]interface{}`
+`func (o *Error400ErrorsInner) GetDetails() []map[string]interface{}`
 
 GetDetails returns the Details field if non-nil, zero value otherwise.
 
 ### GetDetailsOk
 
-`func (o *400ErrorErrorsInner) GetDetailsOk() (*[]map[string]interface{}, bool)`
+`func (o *Error400ErrorsInner) GetDetailsOk() (*[]map[string]interface{}, bool)`
 
 GetDetailsOk returns a tuple with the Details field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetDetails
 
-`func (o *400ErrorErrorsInner) SetDetails(v []map[string]interface{})`
+`func (o *Error400ErrorsInner) SetDetails(v []map[string]interface{})`
 
 SetDetails sets Details field to given value.
 
 ### HasDetails
 
-`func (o *400ErrorErrorsInner) HasDetails() bool`
+`func (o *Error400ErrorsInner) HasDetails() bool`
 
 HasDetails returns a boolean if a field has been set.
 

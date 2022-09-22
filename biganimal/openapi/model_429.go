@@ -1,7 +1,7 @@
 /*
 BigAnimal
 
-BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1. 
+BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1.
 
 API version: 2.5.1
 */
@@ -16,7 +16,7 @@ import (
 
 // Model429 struct for Model429
 type Model429 struct {
-	Error *Model401Error `json:"error,omitempty"`
+	Error *Error401 `json:"error,omitempty"`
 }
 
 // NewModel429 instantiates a new Model429 object
@@ -37,9 +37,9 @@ func NewModel429WithDefaults() *Model429 {
 }
 
 // GetError returns the Error field value if set, zero value otherwise.
-func (o *Model429) GetError() Model401Error {
+func (o *Model429) GetError() Error401 {
 	if o == nil || o.Error == nil {
-		var ret Model401Error
+		var ret Error401
 		return ret
 	}
 	return *o.Error
@@ -47,7 +47,7 @@ func (o *Model429) GetError() Model401Error {
 
 // GetErrorOk returns a tuple with the Error field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Model429) GetErrorOk() (*Model401Error, bool) {
+func (o *Model429) GetErrorOk() (*Error401, bool) {
 	if o == nil || o.Error == nil {
 		return nil, false
 	}
@@ -63,8 +63,8 @@ func (o *Model429) HasError() bool {
 	return false
 }
 
-// SetError gets a reference to the given Model401Error and assigns it to the Error field.
-func (o *Model429) SetError(v Model401Error) {
+// SetError gets a reference to the given Error401 and assigns it to the Error field.
+func (o *Model429) SetError(v Error401) {
 	o.Error = &v
 }
 

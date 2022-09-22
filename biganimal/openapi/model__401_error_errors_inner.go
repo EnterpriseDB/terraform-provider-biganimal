@@ -1,7 +1,7 @@
 /*
 BigAnimal
 
-BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1. 
+BigAnimal REST API v2 <br /><br /> Please visit [API v2 Changelog page](/api/docs/v2migration.html) for information about migrating from API v1.
 
 API version: 2.5.1
 */
@@ -14,32 +14,32 @@ import (
 	"encoding/json"
 )
 
-// 401ErrorErrorsInner struct for 401ErrorErrorsInner
-type 401ErrorErrorsInner struct {
+// Error401ErrorsInner struct for Error401ErrorsInner
+type Error401ErrorsInner struct {
 	Path *string `json:"path,omitempty"`
 	Message *string `json:"message,omitempty"`
 	ErrorCode *string `json:"errorCode,omitempty"`
 }
 
-// New401ErrorErrorsInner instantiates a new 401ErrorErrorsInner object
+// NewError401ErrorsInner instantiates a new Error401ErrorsInner object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func New401ErrorErrorsInner() *401ErrorErrorsInner {
-	this := 401ErrorErrorsInner{}
+func NewError401ErrorsInner() *Error401ErrorsInner {
+	this := Error401ErrorsInner{}
 	return &this
 }
 
-// New401ErrorErrorsInnerWithDefaults instantiates a new 401ErrorErrorsInner object
+// NewError401ErrorsInnerWithDefaults instantiates a new Error401ErrorsInner object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func New401ErrorErrorsInnerWithDefaults() *401ErrorErrorsInner {
-	this := 401ErrorErrorsInner{}
+func NewError401ErrorsInnerWithDefaults() *Error401ErrorsInner {
+	this := Error401ErrorsInner{}
 	return &this
 }
 
 // GetPath returns the Path field value if set, zero value otherwise.
-func (o *401ErrorErrorsInner) GetPath() string {
+func (o *Error401ErrorsInner) GetPath() string {
 	if o == nil || o.Path == nil {
 		var ret string
 		return ret
@@ -49,7 +49,7 @@ func (o *401ErrorErrorsInner) GetPath() string {
 
 // GetPathOk returns a tuple with the Path field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *401ErrorErrorsInner) GetPathOk() (*string, bool) {
+func (o *Error401ErrorsInner) GetPathOk() (*string, bool) {
 	if o == nil || o.Path == nil {
 		return nil, false
 	}
@@ -57,7 +57,7 @@ func (o *401ErrorErrorsInner) GetPathOk() (*string, bool) {
 }
 
 // HasPath returns a boolean if a field has been set.
-func (o *401ErrorErrorsInner) HasPath() bool {
+func (o *Error401ErrorsInner) HasPath() bool {
 	if o != nil && o.Path != nil {
 		return true
 	}
@@ -66,12 +66,12 @@ func (o *401ErrorErrorsInner) HasPath() bool {
 }
 
 // SetPath gets a reference to the given string and assigns it to the Path field.
-func (o *401ErrorErrorsInner) SetPath(v string) {
+func (o *Error401ErrorsInner) SetPath(v string) {
 	o.Path = &v
 }
 
 // GetMessage returns the Message field value if set, zero value otherwise.
-func (o *401ErrorErrorsInner) GetMessage() string {
+func (o *Error401ErrorsInner) GetMessage() string {
 	if o == nil || o.Message == nil {
 		var ret string
 		return ret
@@ -81,7 +81,7 @@ func (o *401ErrorErrorsInner) GetMessage() string {
 
 // GetMessageOk returns a tuple with the Message field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *401ErrorErrorsInner) GetMessageOk() (*string, bool) {
+func (o *Error401ErrorsInner) GetMessageOk() (*string, bool) {
 	if o == nil || o.Message == nil {
 		return nil, false
 	}
@@ -89,7 +89,7 @@ func (o *401ErrorErrorsInner) GetMessageOk() (*string, bool) {
 }
 
 // HasMessage returns a boolean if a field has been set.
-func (o *401ErrorErrorsInner) HasMessage() bool {
+func (o *Error401ErrorsInner) HasMessage() bool {
 	if o != nil && o.Message != nil {
 		return true
 	}
@@ -98,12 +98,12 @@ func (o *401ErrorErrorsInner) HasMessage() bool {
 }
 
 // SetMessage gets a reference to the given string and assigns it to the Message field.
-func (o *401ErrorErrorsInner) SetMessage(v string) {
+func (o *Error401ErrorsInner) SetMessage(v string) {
 	o.Message = &v
 }
 
 // GetErrorCode returns the ErrorCode field value if set, zero value otherwise.
-func (o *401ErrorErrorsInner) GetErrorCode() string {
+func (o *Error401ErrorsInner) GetErrorCode() string {
 	if o == nil || o.ErrorCode == nil {
 		var ret string
 		return ret
@@ -113,7 +113,7 @@ func (o *401ErrorErrorsInner) GetErrorCode() string {
 
 // GetErrorCodeOk returns a tuple with the ErrorCode field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *401ErrorErrorsInner) GetErrorCodeOk() (*string, bool) {
+func (o *Error401ErrorsInner) GetErrorCodeOk() (*string, bool) {
 	if o == nil || o.ErrorCode == nil {
 		return nil, false
 	}
@@ -121,7 +121,7 @@ func (o *401ErrorErrorsInner) GetErrorCodeOk() (*string, bool) {
 }
 
 // HasErrorCode returns a boolean if a field has been set.
-func (o *401ErrorErrorsInner) HasErrorCode() bool {
+func (o *Error401ErrorsInner) HasErrorCode() bool {
 	if o != nil && o.ErrorCode != nil {
 		return true
 	}
@@ -130,11 +130,11 @@ func (o *401ErrorErrorsInner) HasErrorCode() bool {
 }
 
 // SetErrorCode gets a reference to the given string and assigns it to the ErrorCode field.
-func (o *401ErrorErrorsInner) SetErrorCode(v string) {
+func (o *Error401ErrorsInner) SetErrorCode(v string) {
 	o.ErrorCode = &v
 }
 
-func (o 401ErrorErrorsInner) MarshalJSON() ([]byte, error) {
+func (o Error401ErrorsInner) MarshalJSON() ([]byte, error) {
 	toSerialize := map[string]interface{}{}
 	if o.Path != nil {
 		toSerialize["path"] = o.Path
@@ -148,38 +148,38 @@ func (o 401ErrorErrorsInner) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-type Nullable401ErrorErrorsInner struct {
-	value *401ErrorErrorsInner
+type NullableError401ErrorsInner struct {
+	value *Error401ErrorsInner
 	isSet bool
 }
 
-func (v Nullable401ErrorErrorsInner) Get() *401ErrorErrorsInner {
+func (v NullableError401ErrorsInner) Get() *Error401ErrorsInner {
 	return v.value
 }
 
-func (v *Nullable401ErrorErrorsInner) Set(val *401ErrorErrorsInner) {
+func (v *NullableError401ErrorsInner) Set(val *Error401ErrorsInner) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v Nullable401ErrorErrorsInner) IsSet() bool {
+func (v NullableError401ErrorsInner) IsSet() bool {
 	return v.isSet
 }
 
-func (v *Nullable401ErrorErrorsInner) Unset() {
+func (v *NullableError401ErrorsInner) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullable401ErrorErrorsInner(val *401ErrorErrorsInner) *Nullable401ErrorErrorsInner {
-	return &Nullable401ErrorErrorsInner{value: val, isSet: true}
+func NewNullableError401ErrorsInner(val *Error401ErrorsInner) *NullableError401ErrorsInner {
+	return &NullableError401ErrorsInner{value: val, isSet: true}
 }
 
-func (v Nullable401ErrorErrorsInner) MarshalJSON() ([]byte, error) {
+func (v NullableError401ErrorsInner) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *Nullable401ErrorErrorsInner) UnmarshalJSON(src []byte) error {
+func (v *NullableError401ErrorsInner) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
