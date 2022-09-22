@@ -50,9 +50,9 @@ func dataSourceScaffolding() *schema.Resource {
 	}
 }
 
-/* type Clusters struct {
-	Data []baapi.Cluster
-} */
+type Clusters struct {
+	Data []baapi.ClusterDetail `json:"data"`
+}
 
 func dataSourceScaffoldingRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	// use the meta value to retrieve your client from the provider configure method
@@ -98,7 +98,7 @@ func dataSourceScaffoldingRead(ctx context.Context, d *schema.ResourceData, meta
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
 
-	var clusters []baapi.ClusterDetail
+	var clusters Clusters
 
 	if err = json.Unmarshal(body, &clusters); err != nil {
 		return diag.FromErr(err)
