@@ -1,4 +1,4 @@
-module terraform-provider-biganimal
+module github.com/EnterpriseDB/terraform-provider-biganimal
 
 go 1.18
 
@@ -10,14 +10,11 @@ require (
 )
 
 require (
-	github.com/antihax/optional v1.0.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.6.1 // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 )
 
 require (
-	github.com/EnterpriseDB/upm-cli v1.7.2
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect

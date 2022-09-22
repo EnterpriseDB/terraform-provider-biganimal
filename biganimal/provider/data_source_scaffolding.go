@@ -3,16 +3,16 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	"errors"
+
+	/* "errors" */
 	"fmt"
 
-	//"fmt"
 	"io"
 	"net/http"
 
 	"os"
 
-	baapi "github.com/EnterpriseDB/upm-cli/generated/api"
+	baapi "github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/openapi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/kr/pretty"
@@ -50,9 +50,9 @@ func dataSourceScaffolding() *schema.Resource {
 	}
 }
 
-type Clusters struct {
-	Data []baapi.Cluster `json:"data"`
-}
+/* type Clusters struct {
+	Data []baapi.Cluster
+} */
 
 func dataSourceScaffoldingRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	// use the meta value to retrieve your client from the provider configure method
@@ -81,28 +81,38 @@ func dataSourceScaffoldingRead(ctx context.Context, d *schema.ResourceData, meta
 	req.Header.Add("authorization", "Bearer "+token)
 	req.Header.Add("content-type", "application/json")
 
-	res, _ := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
+
+
+	// This only happens if the http request call fails.
+	// That's why the above StatusCode check.
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// TODO: Move this check to Client authentication part
+	if res.StatusCode == 401 {
+		return diag.Errorf("Please refresh your BA Token!")
+	}
 
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
 
-	var clusters Clusters
+	var clusters []baapi.ClusterDetail
 
 	if err = json.Unmarshal(body, &clusters); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if len(clusters.Data) != 1 {
-		return diag.FromErr(errors.New("some bullshit here"))
+/* 	if len(clusters.Data) != 1 {
+		return diag.FromErr(errors.New("some problem happened here"))
 	}
 
 	d.Set("CurrentPrimary", clusters.Data[0].CurrentPrimary)
 
-	d.Set("phase", clusters.Data[0].Phase)
+	d.Set("phase", clusters.Data[0].Phase) */
 	//fmt.Println(string(result))
 	pretty.Println(clusters)
-
-
 
 	/* 	var diags diag.Diagnostics
 

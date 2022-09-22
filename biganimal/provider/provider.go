@@ -76,12 +76,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 
 		ba_token := schema.Get("ba_token").(string)
 
-		c := apiClient{
-			BaURL:      "https://portal.biganimal.com/api/v2",
-			BaToken:    ba_token,
-			HTTPClient: &http.Client{Timeout: 10 * time.Second},
-		}
-
-		return c, nil
+		client, _ := NewClient(ba_token)
+		return client, nil
 	}
 }
