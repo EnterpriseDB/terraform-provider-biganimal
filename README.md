@@ -31,12 +31,13 @@ For more information about Vscode Golang debugging, please refer to [this docume
 
 ## Next steps, what can you do?
 
-* biganimal/provider/data_source_cluster.go is a good starting point. You can investigate the contents of the Json response and how it's unmarshalled to clusters struct.
+* [biganimal/provider/data_source_cluster.go](./biganimal/provider/data_source_cluster.go) is a good starting point. You can investigate the contents of the Json response and how it's [unmarshalled to clusters struct](https://github.com/EnterpriseDB/terraform-provider-biganimal/blob/b96336c0cb06d481854cdf0db0688de694e02a71/biganimal/provider/data_source_cluster.go#L103).
   * Add/remove new fields, experiment with how to consume those values, like using them in the resource, or printing their value in the outputs.
-* <i>**[[API client]]**</i> You can set up an apiClient inside biganimal/provider.go and configure it, so that this client can be used in data sources and resources. There are code crumbs in that provider.go file, they don't work for now 😅
-* You can start experimenting with biganimal/provider/resource_cluster.go. It has the blueprints for the CRUD operations. Feel free to start writing them.
+* <i>**[[API client]]**</i> You can set up an apiClient inside [biganimal/provider/provider.go](./biganimal/provider/provider.go) and configure it, so that this client can be used in data sources and resources. There are code crumbs in that provider.go file, they don't work for now 😅
+* You can start experimenting with [biganimal/provider/resource_cluster.go](biganimal/provider/resource_cluster.go). It has the blueprints for the CRUD operations. Feel free to start writing them.
 * While experimenting with the API calls, feel free to propose any schema designs. That would be very helpful for the RFC.
-* <i>**[[API client]]**</i> biganimal/openapi directory is a direct copy of the generated API Golang SDK v2 from upm-cli repository (See [this PR](https://github.com/EnterpriseDB/upm-cli/pull/242) for details.) This is a temporary situation, It's not decided yet where to reside this library.
+* <i>**[[API client]]**</i> [biganimal/openapi directory](./biganimal/openapi/)  is a direct copy of [the generated API Golang SDK v2 from the upm-cli repository](https://github.com/EnterpriseDB/upm-cli/tree/yh-8468-sdk-v2/generated/apiv2) (See [this PR](https://github.com/EnterpriseDB/upm-cli/pull/242) for details.) This is a temporary situation, It's not decided yet where to reside this library.
+* Tests generate is failing after each commit in Github(See [the GH Actions](https://github.com/EnterpriseDB/terraform-provider-biganimal/actions)). If you can fix/silence it, that would be nice 😊
 
 
 ---
