@@ -40,7 +40,7 @@ func New(version string) func() *schema.Provider {
 				"biganimal_cluster": dataSourceCluster(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				//"scaffolding_resource": resourceScaffolding(),
+				"biganimal_cluster": resourceCluster(),
 			},
 		}
 
