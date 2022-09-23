@@ -37,7 +37,7 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_data_source": dataSourceScaffolding(),
+				"biganimal_cluster": dataSourceCluster(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				//"scaffolding_resource": resourceScaffolding(),

@@ -18,12 +18,12 @@ import (
 	"github.com/kr/pretty"
 )
 
-func dataSourceScaffolding() *schema.Resource {
+func dataSourceCluster() *schema.Resource {
 	return &schema.Resource{
 		// This description is used by the documentation generator and the language server.
-		Description: "Sample data source in the Terraform provider scaffolding.",
+		Description: "Sample cluster data source in the BigAnimal terraform provider .",
 
-		ReadContext: dataSourceScaffoldingRead,
+		ReadContext: dataSourceClusterRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -34,7 +34,7 @@ func dataSourceScaffolding() *schema.Resource {
 			},
 			"current_primary": {
 				// This description is used by the documentation generator and the language server.
-				Description: "CurPiri.",
+				Description: "Current Primary of the cluster.",
 				Type:        schema.TypeString,
 				Required:    false,
 				Computed:    true,
@@ -54,7 +54,7 @@ type Clusters struct {
 	Data []baapi.ClusterDetail `json:"data"`
 }
 
-func dataSourceScaffoldingRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func dataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	// use the meta value to retrieve your client from the provider configure method
 	// client := meta.(*apiClient)
 

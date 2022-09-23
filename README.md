@@ -5,8 +5,29 @@ It's in experimental phase, and intends to be the playground for the Biganimal T
 
 Biganimal Resource and Datasource definitions are under (`biganimal/provider`)
 
-For now, we're using the `examples/provider/provider.tf` for development purposes.
+For now, we're using the `examples/provider/provider.tf` for development purposes. You can run `terraform plan` in that folder.
 
+## Requirements
+
+-	[Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
+-	[Go](https://golang.org/doc/install) >= 1.18
+
+
+## Debugging the provider
+
+If you're using Vscode, you can use the embedded Golang Debugger. Intro to debugging in Vscode is [here](https://code.visualstudio.com/docs/editor/debugging).
+
+There is already a .vscode/launch.json file, so you can easily run `Debug - Attach External CLI`, which is going to print a `TF_REATTACH_PROVIDERS` env var, like this one.
+```
+$> TF_REATTACH_PROVIDERS='{"registry.terraform.io/hashicorp/biganimal":{"Protocol":"grpc","ProtocolVersion":5,"Pid":14123,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/99/kt3b7rgn7wbcc55jt9zv_rch0000gn/T/plugin608643082"}}}'
+```
+
+You can navigate to `examples/provider` directory and run your terraform commands with this env var:
+```
+$> TF_REATTACH_PROVIDERS='{"registry.terraform.io/hashicorp/biganimal":{"Protocol":"grpc","ProtocolVersion":5,"Pid":14123,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/99/kt3b7rgn7wbcc55jt9zv_rch0000gn/T/plugin608643082"}}}' terraform plan
+```
+
+For more information about Vscode Golang debugging, please refer to [this documentation](https://github.com/golang/vscode-go/blob/master/docs/debugging.md).
 
 
 ---
