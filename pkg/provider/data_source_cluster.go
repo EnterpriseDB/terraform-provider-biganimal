@@ -12,7 +12,7 @@ import (
 
 	"os"
 
-	baapi "github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/openapi"
+	baapi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/openapi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/kr/pretty"
@@ -83,7 +83,6 @@ func dataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any
 
 	res, err := http.DefaultClient.Do(req)
 
-
 	// This only happens if the http request call fails.
 	// That's why the above StatusCode check.
 	if err != nil {
@@ -104,13 +103,13 @@ func dataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any
 		return diag.FromErr(err)
 	}
 
-/* 	if len(clusters.Data) != 1 {
-		return diag.FromErr(errors.New("some problem happened here"))
-	}
+	/* 	if len(clusters.Data) != 1 {
+	   		return diag.FromErr(errors.New("some problem happened here"))
+	   	}
 
-	d.Set("CurrentPrimary", clusters.Data[0].CurrentPrimary)
+	   	d.Set("CurrentPrimary", clusters.Data[0].CurrentPrimary)
 
-	d.Set("phase", clusters.Data[0].Phase) */
+	   	d.Set("phase", clusters.Data[0].Phase) */
 	//fmt.Println(string(result))
 	pretty.Println(clusters)
 
