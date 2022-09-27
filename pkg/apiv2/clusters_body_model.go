@@ -10,7 +10,7 @@
 package apiv2
 
 import "encoding/json"
-
+	
 type ClustersBody struct {
 	AllowedIpRanges       []AllowedIpRange                    `json:"allowedIpRanges"`
 	BackupRetentionPeriod *string                             `json:"backupRetentionPeriod,omitempty"`

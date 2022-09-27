@@ -29,3 +29,16 @@ test:
 
 testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+
+.PHONY: docs
+docs:
+	go generate
+
+.PHONY: tf-plan
+tf-plan:
+	terraform -chdir=examples/provider plan
+
+.PHONY: tf-apply
+tf-apply: 
+	terraform -chdir=examples/provider apply -auto-approve
+

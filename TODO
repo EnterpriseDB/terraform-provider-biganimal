@@ -1,0 +1,6 @@
+- flatten some of the nested structs
+- use our own model, rather than the openapi generated set of models
+- implement retries
+- implement delete
+- implement update
+

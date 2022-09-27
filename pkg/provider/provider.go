@@ -2,9 +2,9 @@ package provider
 
 import (
 	"context"
-	"net/http"
-	"time"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/cluster"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -29,7 +29,7 @@ func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
-				"ba_token": &schema.Schema{
+				"ba_token": {
 					Type:        schema.TypeString,
 					Sensitive:   false,
 					Required:    true,
@@ -37,10 +37,10 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": dataSourceCluster(),
+				"biganimal_cluster": cluster.DataSourceCluster(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": resourceCluster(),
+				"biganimal_cluster": cluster.ResourceCluster(),
 			},
 		}
 
@@ -50,33 +50,14 @@ func New(version string) func() *schema.Provider {
 	}
 }
 
-type apiClient struct {
-	// Add whatever fields, client or connection info, etc. here
-	// you would need to setup to communicate with the upstream
-	// API.
-	BaURL      string
-	BaToken    string
-	HTTPClient *http.Client
-}
-
-func NewClient(ba_token string) (*apiClient, error) {
-	c := apiClient{
-		BaURL:      "https://portal.biganimal.com/api/v2",
-		BaToken:    ba_token,
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
-	}
-	return &c, nil
-}
-
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, schema *schema.ResourceData) (any, diag.Diagnostics) {
 		// Setup a User-Agent for your API client (replace the provider name for yours):
 		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
 		// TODO: myClient.UserAgent = userAgent
 
-		ba_token := schema.Get("ba_token").(string)
+		client, err := client.NewClient()
 
-		client, _ := NewClient(ba_token)
-		return client, nil
+		return client, diag.FromErr(err)
 	}
 }
