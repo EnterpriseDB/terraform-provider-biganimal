@@ -17,12 +17,90 @@ Sample cluster data source in the BigAnimal terraform provider .
 
 ### Required
 
-- `name` (String) Name of the cluster.
+- `cluster_name` (String) Name of the cluster.
 
 ### Read-Only
 
-- `current_primary` (String) Current Primary of the cluster.
-- `id` (String) The ID of this resource.
+- `allowed_ip_ranges` (Block List) Allowed IP ranges (see [below for nested schema](#nestedblock--allowed_ip_ranges))
+- `backup_retention_period` (String) Backup Retention Period.
+- `cloud_provider` (String) Cloud Provider
+- `cluster_architecture` (Block List) Cluster Architecture (see [below for nested schema](#nestedblock--cluster_architecture))
+- `created_at` (String) Cluster Creation Time
+- `deleted_at` (String) Cluster Deletion Time
+- `expired_at` (String) Cluster Expiry Time
+- `first_recoverability_point_at` (String) Cluster Expiry Time
+- `id` (String) cluster ID
+- `instance_type` (List of Object) Instance Type (see [below for nested schema](#nestedatt--instance_type))
+- `pg_config` (List of Object) Instance Type (see [below for nested schema](#nestedatt--pg_config))
+- `pg_type` (List of Object) Allowed IP ranges (see [below for nested schema](#nestedatt--pg_type))
+- `pg_version` (String) Postgres type
 - `phase` (String) Current Phase of the cluster.
+- `private_networking` (Boolean) Is private networking enabled
+- `region` (String) Region
+- `replicas` (Number) Replicas
+- `resizing_pvc` (List of String) Resizing PVC
+- `storage` (List of Object) Storage (see [below for nested schema](#nestedatt--storage))
+
+<a id="nestedblock--allowed_ip_ranges"></a>
+### Nested Schema for `allowed_ip_ranges`
+
+Read-Only:
+
+- `cidr_block` (String) CIDR Block
+- `description` (String) CIDR Block Description
+
+
+<a id="nestedblock--cluster_architecture"></a>
+### Nested Schema for `cluster_architecture`
+
+Read-Only:
+
+- `id` (String) ID
+- `name` (String) Name
+- `nodes` (Number) Node Count
+
+
+<a id="nestedatt--instance_type"></a>
+### Nested Schema for `instance_type`
+
+Read-Only:
+
+- `category` (String)
+- `cpu` (Number)
+- `family_name` (String)
+- `instance_type_id` (String)
+- `instance_type_name` (String)
+- `ram` (Number)
+
+
+<a id="nestedatt--pg_config"></a>
+### Nested Schema for `pg_config`
+
+Read-Only:
+
+- `name` (String)
+- `value` (String)
+
+
+<a id="nestedatt--pg_type"></a>
+### Nested Schema for `pg_type`
+
+Read-Only:
+
+- `id` (String)
+- `name` (String)
+- `supported_cluster_architecture_ids` (List of String)
+
+
+<a id="nestedatt--storage"></a>
+### Nested Schema for `storage`
+
+Read-Only:
+
+- `iops` (String)
+- `size` (String)
+- `throughput` (String)
+- `volume_properties` (String)
+- `volume_type` (String)
 
 

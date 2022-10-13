@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/provider"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/provider"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
