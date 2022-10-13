@@ -12,7 +12,7 @@ terraform {
 }
 
 data "biganimal_cluster" "this" {
-  cluster_name = "tf-test-4"
+  cluster_name = var.cluster_name
 }
 
 output "cluster_architecture" {
