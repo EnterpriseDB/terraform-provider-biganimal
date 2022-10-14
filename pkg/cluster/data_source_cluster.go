@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -258,14 +258,14 @@ func DataSourceCluster() *schema.Resource {
 
 func DataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	diags := diag.Diagnostics{}
-	client := meta.(*client.ApiClient)
+	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
 
 	clusterName, ok := d.Get("cluster_name").(string)
 	if !ok {
 		return diag.FromErr(errors.New("Unable to find cluster id"))
 	}
 
-	cluster, err := client.GetClusterByName(ctx, clusterName)
+	cluster, err := client.ReadByName(ctx, clusterName)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/cluster"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -56,8 +56,6 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
 		// TODO: myClient.UserAgent = userAgent
 
-		client, err := client.NewClient()
-
-		return client, diag.FromErr(err)
+		return api.NewAPI(), nil
 	}
 }

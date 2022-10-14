@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -220,7 +220,7 @@ func ResourceCluster() *schema.Resource {
 }
 
 func ResourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := meta.(*client.ApiClient)
+	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
 	cluster := apiv2.ClustersBody{}
 
 	cluster.ClusterName = d.Get("cluster_name").(string)
@@ -257,17 +257,17 @@ func ResourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta any
 	}
 	cluster.Storage = makeStorage(storage[0].(map[string]interface{}))
 
-	response, err := client.CreateCluster(ctx, cluster)
+	clusterId, err := client.Create(ctx, cluster)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(response.Data.ClusterId)
+	d.SetId(clusterId)
 
 	// retry until we get success
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate)-time.Minute, func() *resource.RetryError {
-		clusterId := response.Data.ClusterId
-		cluster, err := client.GetClusterByID(ctx, clusterId)
+		clusterId := clusterId
+		cluster, err := client.Read(ctx, clusterId)
 		if err != nil {
 			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
 		}
@@ -295,10 +295,10 @@ func ResourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) 
 }
 
 func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) error {
-	client := meta.(*client.ApiClient)
+	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
 
 	clusterId := d.Id()
-	cluster, err := client.GetClusterByID(ctx, clusterId)
+	cluster, err := client.Read(ctx, clusterId)
 	if err != nil {
 		return err
 	}
@@ -329,7 +329,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) 
 }
 
 func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := meta.(*client.ApiClient)
+	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
 	// short circuit early for these types of changes
 	if d.HasChange("pg_type") {
 		return diag.FromErr(errors.New("pg_type is immutable"))
@@ -373,15 +373,15 @@ func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any
 	}
 	cluster.Storage = makeStorage(storage[0].(map[string]interface{}))
 
-	response, err := client.UpdateClusterById(ctx, cluster, d.Id())
+	newCluster, err := client.Update(ctx, cluster, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// retry until we get success
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate)-time.Minute, func() *resource.RetryError {
-		clusterId := response.Data.ClusterId
-		cluster, err := client.GetClusterByID(ctx, clusterId)
+		clusterId := newCluster.ClusterId
+		cluster, err := client.Read(ctx, clusterId)
 		if err != nil {
 			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
 		}
@@ -402,9 +402,9 @@ func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any
 }
 
 func ResourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := meta.(*client.ApiClient)
+	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
 	clusterId := d.Id()
-	if err := client.DeleteClusterByID(ctx, clusterId); err != nil {
+	if err := client.Delete(ctx, clusterId); err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
