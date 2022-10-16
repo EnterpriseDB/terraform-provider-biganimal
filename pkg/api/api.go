@@ -36,10 +36,15 @@ func (api *API) ClusterClient() *ClusterClient {
 	return c
 }
 
-func BuildAPI(meta any, kind ClientType) *API {
-	api, ok := meta.(API)
+func (api *API) RegionClient() *RegionClient {
+	c := NewRegionClient(api.Url, api.Token)
+	return c
+}
+
+func BuildAPI(meta any) *API {
+	api, ok := meta.(*API)
 	if !ok {
-		panic(fmt.Sprintf("unknown api type.  %T", api))
+		panic(fmt.Sprintf("unknown api type.  %T != %T", api, meta))
 	}
-	return &api
+	return api
 }

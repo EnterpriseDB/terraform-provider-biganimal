@@ -1,4 +1,4 @@
-package cluster
+package provider
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 func DataSourceCluster() *schema.Resource {
 	return &schema.Resource{
 		Description: "Sample cluster data source in the BigAnimal terraform provider .",
-		ReadContext: DataSourceClusterRead,
+		ReadContext: dataSourceClusterRead,
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
 				Description: "Allowed IP ranges",
@@ -256,9 +256,9 @@ func DataSourceCluster() *schema.Resource {
 	}
 }
 
-func DataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func dataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	diags := diag.Diagnostics{}
-	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
+	client := api.BuildAPI(meta).ClusterClient()
 
 	clusterName, ok := d.Get("cluster_name").(string)
 	if !ok {

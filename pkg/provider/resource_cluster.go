@@ -1,4 +1,4 @@
-package cluster
+package provider
 
 import (
 	"context"
@@ -220,7 +220,7 @@ func ResourceCluster() *schema.Resource {
 }
 
 func ResourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
+	client := api.BuildAPI(meta).ClusterClient()
 	cluster := apiv2.ClustersBody{}
 
 	cluster.ClusterName = d.Get("cluster_name").(string)
@@ -295,7 +295,7 @@ func ResourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) 
 }
 
 func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) error {
-	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
+	client := api.BuildAPI(meta).ClusterClient()
 
 	clusterId := d.Id()
 	cluster, err := client.Read(ctx, clusterId)
@@ -329,7 +329,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) 
 }
 
 func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
+	client := api.BuildAPI(meta).ClusterClient()
 	// short circuit early for these types of changes
 	if d.HasChange("pg_type") {
 		return diag.FromErr(errors.New("pg_type is immutable"))
@@ -402,7 +402,7 @@ func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any
 }
 
 func ResourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta, api.ClusterClientType).ClusterClient()
+	client := api.BuildAPI(meta).ClusterClient()
 	clusterId := d.Id()
 	if err := client.Delete(ctx, clusterId); err != nil {
 		return diag.FromErr(err)

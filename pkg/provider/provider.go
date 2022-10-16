@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/cluster"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+
 
 func init() {
 	// Set descriptions to support markdown syntax, this will be used in document generation
@@ -37,10 +38,12 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": cluster.DataSourceCluster(),
+				"biganimal_cluster": DataSourceCluster(),
+				"biganimal_region":  DataSourceRegion(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": cluster.ResourceCluster(),
+				"biganimal_cluster": ResourceCluster(),
+				"biganimal_region": ResourceRegion(),
 			},
 		}
 
