@@ -10,10 +10,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func DataSourceRegion() *schema.Resource {
+// RegionResource is a struct to namespace all the functions
+// involved in the Region Resource.  When multiple resources and objects
+// are in the same pkg/provider, then it's difficult to namespace things well
+type RegionData struct{}
+
+func NewRegionData() *RegionData {
+	return &RegionData{}
+}
+
+func (r *RegionData) Schema() *schema.Resource {
 	return &schema.Resource{
 		Description: "The available regions within a cloud provider",
-		ReadContext: dataSourceRegionRead,
+		ReadContext: r.Read,
 
 		// {
 		// 	"regionId": "azure:Canada East",
@@ -70,7 +79,7 @@ func DataSourceRegion() *schema.Resource {
 	}
 }
 
-func dataSourceRegionRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func (r *RegionData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	diags := diag.Diagnostics{}
 	client := api.BuildAPI(meta).RegionClient()
 	cloud_provider := d.Get("cloud_provider").(string)

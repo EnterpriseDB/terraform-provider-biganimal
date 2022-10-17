@@ -47,11 +47,13 @@ func (c RegionClient) Read(ctx context.Context, csp_id, id string) (*Region, err
 	if err != nil {
 		return nil, err
 	}
-
-	if len(regions) != 1 {
-		return nil, errors.New("unable to find a unique region")
+	for _, region := range regions {
+		if region.Id == id {
+			return region, nil
+		}
 	}
-	return regions[0], nil
+
+	return nil, errors.New("unable to find a unique region")
 }
 
 func (c RegionClient) List(ctx context.Context, csp_id, query string) ([]*Region, error) {
@@ -64,7 +66,7 @@ func (c RegionClient) List(ctx context.Context, csp_id, query string) ([]*Region
 		url += fmt.Sprintf("?q=%s", query)
 	}
 
-	body, err := doRequest(*c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
 	if err != nil {
 		return response.Data, err
 	}
@@ -88,7 +90,7 @@ func (c RegionClient) Update(ctx context.Context, action, csp_id, region_id stri
 		return errors.New("unknown region action")
 	}
 
-	_, err := doRequest(*c.HTTPClient, http.MethodPost, url, c.Token, nil)
+	_, err := doRequest(ctx, *c.HTTPClient, http.MethodPost, url, c.Token, nil)
 	return err
 }
 

@@ -1,12 +1,15 @@
 package api
 
 import (
+	"context"
 	"io"
 	"net/http"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-func doRequest(c http.Client, httpMethod, url, token string, body io.Reader) ([]byte, error) {
-	req, err := http.NewRequest(httpMethod, url, nil)
+func doRequest(ctx context.Context, c http.Client, httpMethod, url, token string, body io.Reader) ([]byte, error) {
+	req, err := http.NewRequest(httpMethod, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -20,11 +23,12 @@ func doRequest(c http.Client, httpMethod, url, token string, body io.Reader) ([]
 		return nil, err
 	}
 
-	if err := getStatusError(res.StatusCode); err != nil {
-		return []byte{}, err
-	}
-
 	defer res.Body.Close()
 	out, _ := io.ReadAll(res.Body)
-	return out, nil
+	err = getStatusError(res.StatusCode)
+	if err != nil {
+		tflog.Debug(ctx, string(out))
+	}
+
+	return out, err
 }

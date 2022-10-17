@@ -8,7 +8,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+var (
+	resourceRegion  = NewRegionResource()
+	resourceCluster = NewClusterResource()
 
+	dataRegion  = NewRegionData()
+	dataCluster = NewClusterData()
+)
 
 func init() {
 	// Set descriptions to support markdown syntax, this will be used in document generation
@@ -38,12 +44,12 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": DataSourceCluster(),
-				"biganimal_region":  DataSourceRegion(),
+				"biganimal_cluster": dataCluster.Schema(),
+				"biganimal_region":  dataRegion.Schema(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": ResourceCluster(),
-				"biganimal_region": ResourceRegion(),
+				"biganimal_cluster": resourceCluster.Schema(),
+				"biganimal_region":  resourceRegion.Schema(),
 			},
 		}
 
@@ -55,10 +61,12 @@ func New(version string) func() *schema.Provider {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, schema *schema.ResourceData) (any, diag.Diagnostics) {
-		// Setup a User-Agent for your API client (replace the provider name for yours):
-		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
-		// TODO: myClient.UserAgent = userAgent
-
+		// set our meta to be a new api.API
+		// this can be turned into concrete clients
+		// by
+		// api.BuildAPI(meta).ClusterClient()
+		// or
+		// api.BuildAPI(meta).RegionClient()
 		return api.NewAPI(), nil
 	}
 }

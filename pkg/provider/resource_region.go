@@ -13,14 +13,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func ResourceRegion() *schema.Resource {
+// RegionResource is a struct to namespace all the functions
+// involved in the Region Resource.  When multiple resources and objects
+// are in the same pkg/provider, then it's difficult to namespace things well
+type RegionResource struct{}
+
+func NewRegionResource() *RegionResource {
+	return &RegionResource{}
+}
+
+func (r *RegionResource) Schema() *schema.Resource {
 	return &schema.Resource{
 		Description: "Manage a region",
 
-		CreateContext: ResourceRegionCreate,
-		ReadContext:   ResourceRegionRead,
-		UpdateContext: ResourceRegionUpdate,
-		DeleteContext: ResourceRegionDelete,
+		CreateContext: r.Create,
+		ReadContext:   r.Read,
+		UpdateContext: r.Update,
+		DeleteContext: r.Delete,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(60 * time.Minute),
@@ -59,18 +68,18 @@ func ResourceRegion() *schema.Resource {
 	}
 }
 
-func ResourceRegionCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	return ResourceRegionUpdate(ctx, d, meta)
+func (r *RegionResource) Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	return r.Update(ctx, d, meta)
 }
 
-func ResourceRegionRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if err := resourceRegionRead(ctx, d, meta); err != nil {
+func (r *RegionResource) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	if err := r.read(ctx, d, meta); err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
 }
 
-func resourceRegionRead(ctx context.Context, d *schema.ResourceData, meta any) error {
+func (r *RegionResource) read(ctx context.Context, d *schema.ResourceData, meta any) error {
 	client := api.BuildAPI(meta).RegionClient()
 	cloud_provider := d.Get("cloud_provider").(string)
 
@@ -89,7 +98,7 @@ func resourceRegionRead(ctx context.Context, d *schema.ResourceData, meta any) e
 	return nil
 }
 
-func ResourceRegionUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).RegionClient()
 
 	cloudProvider := d.Get("cloud_provider").(string)
@@ -119,14 +128,14 @@ func ResourceRegionUpdate(ctx context.Context, d *schema.ResourceData, meta any)
 	err = resource.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutCreate)-time.Minute,
-		retryRegionFunc(ctx, d, meta, cloudProvider, id, desiredState))
+		r.retryFunc(ctx, d, meta, cloudProvider, id, desiredState))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
 }
 
-func ResourceRegionDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func (r *RegionResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).RegionClient()
 
 	cloudProvider := d.Get("cloud_provider").(string)
@@ -140,7 +149,7 @@ func ResourceRegionDelete(ctx context.Context, d *schema.ResourceData, meta any)
 	err := resource.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutDelete)-time.Minute,
-		retryRegionFunc(ctx, d, meta, cloudProvider, id, desiredState))
+		r.retryFunc(ctx, d, meta, cloudProvider, id, desiredState))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -148,7 +157,7 @@ func ResourceRegionDelete(ctx context.Context, d *schema.ResourceData, meta any)
 	return diag.Diagnostics{}
 }
 
-func retryRegionFunc(ctx context.Context, d *schema.ResourceData, meta any, cloudProvider, regionId, desiredState string) resource.RetryFunc {
+func (r *RegionResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, cloudProvider, regionId, desiredState string) resource.RetryFunc {
 	client := api.BuildAPI(meta).RegionClient()
 	return func() *resource.RetryError {
 		region, err := client.Read(ctx, cloudProvider, regionId)
@@ -160,7 +169,7 @@ func retryRegionFunc(ctx context.Context, d *schema.ResourceData, meta any, clou
 			return resource.RetryableError(errors.New("Operation incomplete"))
 		}
 
-		if err := resourceRegionRead(ctx, d, meta); err != nil {
+		if err := r.read(ctx, d, meta); err != nil {
 			return resource.NonRetryableError(err)
 		}
 

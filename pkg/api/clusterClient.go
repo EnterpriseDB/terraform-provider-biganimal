@@ -48,13 +48,13 @@ func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
 	cluster := model.(apiv2.ClustersBody)
 
 	url := fmt.Sprintf("%s/clusters", c.URL)
-
 	b, err := json.Marshal(cluster)
 	if err != nil {
 		return "", err
 	}
 
-	body, err := doRequest(*c.HTTPClient, http.MethodPost, url, c.Token, bytes.NewBuffer(b))
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodPost, url, c.Token, bytes.NewBuffer(b))
+
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +69,7 @@ func (c ClusterClient) Read(ctx context.Context, id string) (*apiv2.ClusterDetai
 	}{}
 
 	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
-	body, err := doRequest(*c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
 	if err != nil {
 		return &response.Data, err
 	}
@@ -84,7 +84,7 @@ func (c ClusterClient) ReadByName(ctx context.Context, name string) (*apiv2.Clus
 	}{}
 
 	url := fmt.Sprintf("%s/clusters?name=%s", c.URL, name)
-	body, err := doRequest(*c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
 	if err != nil {
 		return &apiv2.ClusterDetail{}, err
 	}
@@ -115,7 +115,7 @@ func (c ClusterClient) Update(ctx context.Context, model any, id string) (*apiv2
 		return nil, err
 	}
 
-	body, err := doRequest(*c.HTTPClient, http.MethodGet, url, c.Token, bytes.NewBuffer(b))
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, bytes.NewBuffer(b))
 	if err != nil {
 		return &apiv2.ClusterDetail{}, err
 	}
@@ -126,7 +126,7 @@ func (c ClusterClient) Update(ctx context.Context, model any, id string) (*apiv2
 
 func (c ClusterClient) Delete(ctx context.Context, id string) error {
 	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
-	_, err := doRequest(*c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	_, err := doRequest(ctx, *c.HTTPClient, http.MethodDelete, url, c.Token, nil)
 	return err
 }
 
