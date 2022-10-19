@@ -16,11 +16,11 @@ You are encouraged to contribute to the project by forking the project and submi
 
 ## Intro
 
-We welcome contributions to code, open defects, improvements and  documentation. All members of the community, including contributors, are expected to uphold the [Code of Conduct](./CODE_OF_CONDUCT.md).
+We welcome contributions to code, reporting defects, suggesting improvements and expanding documentation. All members of the community, including contributors, are expected to uphold the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Report an Issue
 
-[GitHub issues](https://github.com/istio/istio/issues/new/choose) can be used to report suspected defects or submit feature requests.
+[GitHub issues](https://github.com/EnterpriseDB/terraform-provider-biganimal/issues) can be used to report suspected defects or submit feature requests.
 
 When reporting a misbehaviour please make sure to provide:
 
@@ -50,7 +50,7 @@ that you want to work on it. Something like "I want to work on this" is fine.
 We recommend to go through the following steps when wishing to propose a feature.
 
 - Discuss your idea in Github discussions
-- Once there is general agreement that the feature is useful, create a GitHub issue to follow up. The issue should cover why the feature is needed, scope, use cases and any other considerations/limitattions
+- Once there is general agreement that the feature is useful, create a GitHub issue to follow up. The issue should cover why the feature is needed, scope, use cases and any other considerations/limitations
 - If the scope requires, you'll be asked to submit a design, along with technical and implementation details
 - Once the major technical issues are resolved and agreed upon, post a note to summarise design decision and the general execution plan
 - Submit a PR with your proposed code change. Please make sure to cover documentation for your feature, including usage examples when possible
@@ -76,7 +76,7 @@ For existing issues simply respond to the issue and express interest in working 
 
 To submit your proposed change:
 
-- clone the affected repository,
+- fork this repository,
 - create a new branch for your changes called "dev/ISSUE_ID",
 - commit your code,
 - submit a pull request (PR)
@@ -90,7 +90,7 @@ A PR is more likely to be accepted if it has:
 - code that follows the conventions in old code
 - code that respects [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
 - good enough unit and regression testing (see below)
-- all checks green for static code analysis and automatic tests
+- all required checks green
 
 ## Expected Level of Testing
 
