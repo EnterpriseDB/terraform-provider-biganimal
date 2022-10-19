@@ -12,7 +12,7 @@
 
   
 
-You are encouraged to contribute to the project via GitHub pull requests. This document describes guidelines to support you in submitting your contributions.
+You are encouraged to contribute to the project by forking the project and submitting [GitHub pull requests](https://github.com/EnterpriseDB/terraform-provider-biganimal/pulls). This document describes guidelines to support you in submitting your contributions.
 
 ## Intro
 
