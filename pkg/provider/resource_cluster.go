@@ -1,4 +1,4 @@
-package cluster
+package provider
 
 import (
 	"context"
@@ -6,22 +6,32 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func ResourceCluster() *schema.Resource {
+type ClusterResource struct {
+	helpers *ClusterHelpers
+}
+
+func NewClusterResource() *ClusterResource {
+	return &ClusterResource{
+		helpers: &ClusterHelpers{},
+	}
+}
+
+func (c *ClusterResource) Schema() *schema.Resource {
 	return &schema.Resource{
 		Description: "Create a Postgres Cluster",
 
-		CreateContext: ResourceClusterCreate,
-		ReadContext:   ResourceClusterRead,
-		UpdateContext: ResourceClusterUpdate,
-		DeleteContext: ResourceClusterDelete,
+		CreateContext: c.Create,
+		ReadContext:   c.Read,
+		UpdateContext: c.Update,
+		DeleteContext: c.Delete,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(45 * time.Minute),
@@ -219,24 +229,24 @@ func ResourceCluster() *schema.Resource {
 	}
 }
 
-func ResourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := meta.(*client.ApiClient)
+func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	client := api.BuildAPI(meta).ClusterClient()
 	cluster := apiv2.ClustersBody{}
 
 	cluster.ClusterName = d.Get("cluster_name").(string)
 	cluster.BackupRetentionPeriod = utils.StringRef(d.Get("backup_retention_period").(string))
-	cluster.AllowedIpRanges = makeAllowedIpRanges(d.Get("allowed_ip_ranges").([]interface{}))
+	cluster.AllowedIpRanges = c.makeAllowedIpRanges(d.Get("allowed_ip_ranges").([]interface{}))
 
 	cluster_architecture := d.Get("cluster_architecture").([]interface{})
 	if len(cluster_architecture) != 1 {
 		return diag.FromErr(errors.New("require exactly 1 cluster_architecture"))
 	}
-	cluster.ClusterArchitecture = makeClusterArchitecture(cluster_architecture[0].(map[string]interface{}))
+	cluster.ClusterArchitecture = c.makeClusterArchitecture(cluster_architecture[0].(map[string]interface{}))
 	cluster.InstanceType = &apiv2.ClustersInstanceType{
 		InstanceTypeId: d.Get("instance_type_id").(string),
 	}
 	cluster.Password = d.Get("password").(string)
-	cluster.PgConfig = makePgConfig(d.Get("pg_config").([]interface{}))
+	cluster.PgConfig = c.makePgConfig(d.Get("pg_config").([]interface{}))
 	cluster.PgType = &apiv2.ClustersPgType{
 		PgTypeId: d.Get("pg_type").(string),
 	}
@@ -255,81 +265,69 @@ func ResourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta any
 	if len(storage) != 1 {
 		return diag.FromErr(errors.New("require exactly 1 storage stanza"))
 	}
-	cluster.Storage = makeStorage(storage[0].(map[string]interface{}))
+	cluster.Storage = c.makeStorage(storage[0].(map[string]interface{}))
 
-	response, err := client.CreateCluster(ctx, cluster)
+	clusterId, err := client.Create(ctx, cluster)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(response.Data.ClusterId)
+	d.SetId(clusterId)
 
 	// retry until we get success
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate)-time.Minute, func() *resource.RetryError {
-		clusterId := response.Data.ClusterId
-		cluster, err := client.GetClusterByID(ctx, clusterId)
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
-		}
-
-		if !client.HasOkCondition(cluster.Conditions) {
-			return resource.RetryableError(errors.New("Instance not yet ready"))
-		}
-
-		if err := resourceClusterRead(ctx, d, meta); err != nil {
-			return resource.NonRetryableError(err)
-		}
-		return nil
-	})
+	err = resource.RetryContext(
+		ctx,
+		d.Timeout(schema.TimeoutUpdate)-time.Minute,
+		c.retryFunc(ctx, d, meta, clusterId))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
 }
 
-func ResourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if err := resourceClusterRead(ctx, d, meta); err != nil {
+func (c *ClusterResource) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	if err := c.read(ctx, d, meta); err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
 }
 
-func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) error {
-	client := meta.(*client.ApiClient)
+func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta any) error {
+	client := api.BuildAPI(meta).ClusterClient()
 
 	clusterId := d.Id()
-	cluster, err := client.GetClusterByID(ctx, clusterId)
+	cluster, err := client.Read(ctx, clusterId)
 	if err != nil {
 		return err
 	}
 
 	// set the outputs
 	d.Set("backup_retention_period", cluster.BackupRetentionPeriod)
-	d.Set("cluster_architecture", getClusterArchitectureData(cluster))
+	d.Set("cluster_architecture", c.helpers.getClusterArchitectureData(cluster))
 	d.Set("cluster_name", &cluster.ClusterName)
 
 	if cluster.FirstRecoverabilityPointAt != (*apiv2.PointInTime)(nil) {
-		d.Set("first_recoverability_point_at", pointInTimeToString(*cluster.FirstRecoverabilityPointAt))
+		d.Set("first_recoverability_point_at", utils.PointInTimeToString(*cluster.FirstRecoverabilityPointAt))
 	}
 
-	d.Set("instance_type", getInstanceTypeData(cluster))
+	d.Set("instance_type", c.helpers.getInstanceTypeData(cluster))
 	d.Set("id", cluster.ClusterId)
 	d.Set("pg_config", cluster.PgType.PgTypeId)
-	d.Set("pg_type", getPgTypeData(cluster))
+	d.Set("pg_type", c.helpers.getPgTypeData(cluster))
 	d.Set("pg_version", cluster.PgVersion.PgVersionName)
 	d.Set("phase", cluster.Phase)
 	d.Set("private_networking", cluster.PrivateNetworking)
 	d.Set("cloud_provider", cluster.Provider.CloudProviderId)
 	d.Set("region", cluster.Region.RegionId)
 	d.Set("replicas", cluster.Replicas)
-	d.Set("storage", getStorageData(cluster))
+	d.Set("storage", c.helpers.getStorageData(cluster))
 	d.Set("resizing_pvc", cluster.ResizingPvc)
 	d.SetId(cluster.ClusterId)
 	return nil
 }
 
-func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := meta.(*client.ApiClient)
+func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	client := api.BuildAPI(meta).ClusterClient()
 	// short circuit early for these types of changes
 	if d.HasChange("pg_type") {
 		return diag.FromErr(errors.New("pg_type is immutable"))
@@ -348,22 +346,23 @@ func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	cluster := apiv2.ClustersClusterIdBody{}
+	clusterId := d.Id()
 	cluster.ClusterName = d.Get("cluster_name").(string)
 	cluster.BackupRetentionPeriod = utils.StringRef(d.Get("backup_retention_period").(string))
-	cluster.AllowedIpRanges = makeAllowedIpRanges(d.Get("allowed_ip_ranges").([]interface{}))
+	cluster.AllowedIpRanges = c.makeAllowedIpRanges(d.Get("allowed_ip_ranges").([]interface{}))
 
 	cluster_architecture := d.Get("cluster_architecture").([]interface{})
 	if len(cluster_architecture) != 1 {
 		return diag.FromErr(errors.New("require exactly 1 cluster_architecture"))
 	}
-	cluster.ClusterArchitecture = makeClusterArchitecture(cluster_architecture[0].(map[string]interface{}))
+	cluster.ClusterArchitecture = c.makeClusterArchitecture(cluster_architecture[0].(map[string]interface{}))
 	cluster.InstanceType = &apiv2.ClustersInstanceType{
 		InstanceTypeId: d.Get("instance_type_id").(string),
 	}
 
 	// cluster.Password = d.Get("password").(string)
 
-	cluster.PgConfig = makePgConfig(d.Get("pg_config").([]interface{}))
+	cluster.PgConfig = c.makePgConfig(d.Get("pg_config").([]interface{}))
 
 	cluster.PrivateNetworking = d.Get("private_networking").(bool)
 	cluster.Replicas = utils.F64Ref(float64((d.Get("replicas").(int))))
@@ -371,53 +370,41 @@ func ResourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any
 	if len(storage) != 1 {
 		return diag.FromErr(errors.New("require exactly 1 storage stanza"))
 	}
-	cluster.Storage = makeStorage(storage[0].(map[string]interface{}))
+	cluster.Storage = c.makeStorage(storage[0].(map[string]interface{}))
 
-	response, err := client.UpdateClusterById(ctx, cluster, d.Id())
+	_, err := client.Update(ctx, cluster, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// retry until we get success
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate)-time.Minute, func() *resource.RetryError {
-		clusterId := response.Data.ClusterId
-		cluster, err := client.GetClusterByID(ctx, clusterId)
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
-		}
-
-		if !client.HasOkCondition(cluster.Conditions) {
-			return resource.RetryableError(errors.New("Instance not yet ready"))
-		}
-
-		if err := resourceClusterRead(ctx, d, meta); err != nil {
-			return resource.NonRetryableError(err)
-		}
-		return nil
-	})
+	err = resource.RetryContext(
+		ctx,
+		d.Timeout(schema.TimeoutUpdate)-time.Minute,
+		c.retryFunc(ctx, d, meta, clusterId))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
 }
 
-func ResourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := meta.(*client.ApiClient)
+func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	client := api.BuildAPI(meta).ClusterClient()
 	clusterId := d.Id()
-	if err := client.DeleteClusterByID(ctx, clusterId); err != nil {
+	if err := client.Delete(ctx, clusterId); err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
 }
 
-func makeClusterArchitecture(blob map[string]interface{}) *apiv2.ClustersClusterArchitecture {
+func (c *ClusterResource) makeClusterArchitecture(blob map[string]interface{}) *apiv2.ClustersClusterArchitecture {
 	return &apiv2.ClustersClusterArchitecture{
 		ClusterArchitectureId: blob["id"].(string),
 		Nodes:                 float64(blob["nodes"].(int)),
 	}
 }
 
-func makeAllowedIpRanges(list []interface{}) []apiv2.AllowedIpRange {
+func (c *ClusterResource) makeAllowedIpRanges(list []interface{}) []apiv2.AllowedIpRange {
 	data := []apiv2.AllowedIpRange{}
 
 	for _, v := range list {
@@ -430,7 +417,7 @@ func makeAllowedIpRanges(list []interface{}) []apiv2.AllowedIpRange {
 	return data
 }
 
-func makePgConfig(list []interface{}) []apiv2.ClustersClusterArchitectureParams {
+func (c *ClusterResource) makePgConfig(list []interface{}) []apiv2.ClustersClusterArchitectureParams {
 	data := []apiv2.ClustersClusterArchitectureParams{}
 
 	for _, v := range list {
@@ -443,7 +430,7 @@ func makePgConfig(list []interface{}) []apiv2.ClustersClusterArchitectureParams 
 	return data
 }
 
-func makeStorage(blob map[string]interface{}) *apiv2.ClustersStorage {
+func (c *ClusterResource) makeStorage(blob map[string]interface{}) *apiv2.ClustersStorage {
 	storage := &apiv2.ClustersStorage{
 		Size:               utils.StringRef(blob["size"].(string)),
 		VolumePropertiesId: blob["volume_properties"].(string),
@@ -463,6 +450,25 @@ func makeStorage(blob map[string]interface{}) *apiv2.ClustersStorage {
 	}
 
 	return storage
+}
+
+func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) resource.RetryFunc {
+	client := api.BuildAPI(meta).ClusterClient()
+	return func() *resource.RetryError {
+		cluster, err := client.Read(ctx, clusterId)
+		if err != nil {
+			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
+		}
+
+		if !client.HasOkCondition(cluster.Conditions) {
+			return resource.RetryableError(errors.New("Instance not yet ready"))
+		}
+
+		if err := c.read(ctx, d, meta); err != nil {
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	}
 }
 
 // {

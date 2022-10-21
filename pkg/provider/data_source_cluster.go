@@ -1,20 +1,30 @@
-package cluster
+package provider
 
 import (
 	"context"
 	"errors"
-	"time"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func DataSourceCluster() *schema.Resource {
+type ClusterData struct {
+	helpers *ClusterHelpers
+}
+
+func NewClusterData() *ClusterData {
+	return &ClusterData{
+		helpers: &ClusterHelpers{},
+	}
+}
+
+func (c *ClusterData) Schema() *schema.Resource {
 	return &schema.Resource{
 		Description: "Sample cluster data source in the BigAnimal terraform provider .",
-		ReadContext: DataSourceClusterRead,
+		ReadContext: c.Read,
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
 				Description: "Allowed IP ranges",
@@ -256,49 +266,49 @@ func DataSourceCluster() *schema.Resource {
 	}
 }
 
-func DataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	diags := diag.Diagnostics{}
-	client := meta.(*client.ApiClient)
+	client := api.BuildAPI(meta).ClusterClient()
 
 	clusterName, ok := d.Get("cluster_name").(string)
 	if !ok {
-		return diag.FromErr(errors.New("Unable to find cluster id"))
+		return diag.FromErr(errors.New("Unable to find cluster name"))
 	}
 
-	cluster, err := client.GetClusterByName(ctx, clusterName)
+	cluster, err := client.ReadByName(ctx, clusterName)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// set the outputs
 	d.Set("backup_retention_period", cluster.BackupRetentionPeriod)
-	d.Set("cluster_architecture", getClusterArchitectureData(cluster))
-	d.Set("created_at", pointInTimeToString(*cluster.CreatedAt))
+	d.Set("cluster_architecture", c.helpers.getClusterArchitectureData(cluster))
+	d.Set("created_at", utils.PointInTimeToString(*cluster.CreatedAt))
 	d.Set("cluster_name", &cluster.ClusterName)
 
 	if cluster.DeletedAt != (*apiv2.PointInTime)(nil) {
-		d.Set("deleted_at", pointInTimeToString(*cluster.DeletedAt))
+		d.Set("deleted_at", utils.PointInTimeToString(*cluster.DeletedAt))
 	}
 
 	if cluster.ExpiredAt != (*apiv2.PointInTime)(nil) {
-		d.Set("expired_at", pointInTimeToString(*cluster.ExpiredAt))
+		d.Set("expired_at", utils.PointInTimeToString(*cluster.ExpiredAt))
 	}
 
 	if cluster.FirstRecoverabilityPointAt != (*apiv2.PointInTime)(nil) {
-		d.Set("first_recoverability_point_at", pointInTimeToString(*cluster.FirstRecoverabilityPointAt))
+		d.Set("first_recoverability_point_at", utils.PointInTimeToString(*cluster.FirstRecoverabilityPointAt))
 	}
 
-	d.Set("instance_type", getInstanceTypeData(cluster))
+	d.Set("instance_type", c.helpers.getInstanceTypeData(cluster))
 	d.Set("id", cluster.ClusterId)
-	d.Set("pg_config", getPgConfigData(cluster))
-	d.Set("pg_type", getPgTypeData(cluster))
+	d.Set("pg_config", c.helpers.getPgConfigData(cluster))
+	d.Set("pg_type", cluster.PgType.PgTypeId)
 	d.Set("pg_version", cluster.PgVersion.PgVersionName)
 	d.Set("phase", cluster.Phase)
 	d.Set("private_networking", cluster.PrivateNetworking)
 	d.Set("cloud_provider", cluster.Provider.CloudProviderId)
 	d.Set("region", cluster.Region.RegionId)
 	d.Set("replicas", cluster.Replicas)
-	d.Set("storage", getStorageData(cluster))
+	d.Set("storage", c.helpers.getStorageData(cluster))
 	d.Set("resizing_pvc", cluster.ResizingPvc)
 
 	d.SetId(cluster.ClusterId)
@@ -306,11 +316,14 @@ func DataSourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any
 	return diags
 }
 
-func pointInTimeToString(p apiv2.PointInTime) string {
-	return time.Unix(int64(p.Seconds), int64(p.Nanos)).String()
-}
+// ClusterHelpers holds a number of methods to turn openapi
+// models into property maps that terraform can consume
+// these methods are used in both the resource and the data
+// structs.
+// there's a lot in this struct that can be simplified
+type ClusterHelpers struct{}
 
-func getClusterArchitectureData(cluster *apiv2.ClusterDetail) []interface{} {
+func (c *ClusterHelpers) getClusterArchitectureData(cluster *apiv2.ClusterDetail) []interface{} {
 	propMap := map[string]interface{}{}
 	propMap["id"] = cluster.ClusterArchitecture.ClusterArchitectureId
 	propMap["name"] = cluster.ClusterArchitecture.ClusterArchitectureName
@@ -319,7 +332,7 @@ func getClusterArchitectureData(cluster *apiv2.ClusterDetail) []interface{} {
 	return []interface{}{propMap}
 }
 
-func getInstanceTypeData(cluster *apiv2.ClusterDetail) []interface{} {
+func (c *ClusterHelpers) getInstanceTypeData(cluster *apiv2.ClusterDetail) []interface{} {
 	propMap := map[string]interface{}{}
 	propMap["category"] = cluster.InstanceType.Category
 	propMap["cpu"] = cluster.InstanceType.Cpu
@@ -331,7 +344,7 @@ func getInstanceTypeData(cluster *apiv2.ClusterDetail) []interface{} {
 	return []interface{}{propMap}
 }
 
-func getPgConfigData(cluster *apiv2.ClusterDetail) []interface{} {
+func (c *ClusterHelpers) getPgConfigData(cluster *apiv2.ClusterDetail) []interface{} {
 	list := []interface{}{}
 
 	for _, guc := range *cluster.PgConfig {
@@ -344,7 +357,7 @@ func getPgConfigData(cluster *apiv2.ClusterDetail) []interface{} {
 	return list
 }
 
-func getPgTypeData(cluster *apiv2.ClusterDetail) []interface{} {
+func (c *ClusterHelpers) getPgTypeData(cluster *apiv2.ClusterDetail) []interface{} {
 	propMap := map[string]interface{}{}
 	propMap["id"] = cluster.PgType.PgTypeId
 	propMap["name"] = cluster.PgType.PgTypeName
@@ -353,7 +366,7 @@ func getPgTypeData(cluster *apiv2.ClusterDetail) []interface{} {
 	return []interface{}{propMap}
 }
 
-func getStorageData(cluster *apiv2.ClusterDetail) []interface{} {
+func (c *ClusterHelpers) getStorageData(cluster *apiv2.ClusterDetail) []interface{} {
 	propMap := map[string]interface{}{}
 	propMap["iops"] = cluster.Storage.Iops
 	propMap["size"] = cluster.Storage.Size

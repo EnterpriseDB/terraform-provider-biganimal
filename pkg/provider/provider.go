@@ -3,10 +3,14 @@ package provider
 import (
 	"context"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/cluster"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+var (
+	resourceCluster = NewClusterResource()
+	dataCluster     = NewClusterData()
 )
 
 func init() {
@@ -37,10 +41,10 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": cluster.DataSourceCluster(),
+				"biganimal_cluster": dataCluster.Schema(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": cluster.ResourceCluster(),
+				"biganimal_cluster": resourceCluster.Schema(),
 			},
 		}
 
@@ -52,12 +56,12 @@ func New(version string) func() *schema.Provider {
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, schema *schema.ResourceData) (any, diag.Diagnostics) {
-		// Setup a User-Agent for your API client (replace the provider name for yours):
-		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
-		// TODO: myClient.UserAgent = userAgent
-
-		client, err := client.NewClient()
-
-		return client, diag.FromErr(err)
+		// set our meta to be a new api.API
+		// this can be turned into concrete clients
+		// by
+		// api.BuildAPI(meta).ClusterClient()
+		// or
+		// api.BuildAPI(meta).RegionClient()
+		return api.NewAPI(), nil
 	}
 }
