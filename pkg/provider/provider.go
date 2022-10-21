@@ -9,8 +9,11 @@ import (
 )
 
 var (
+	resourceRegion  = NewRegionResource()
 	resourceCluster = NewClusterResource()
-	dataCluster     = NewClusterData()
+
+	dataRegion  = NewRegionData()
+	dataCluster = NewClusterData()
 )
 
 func init() {
@@ -42,9 +45,11 @@ func New(version string) func() *schema.Provider {
 			},
 			DataSourcesMap: map[string]*schema.Resource{
 				"biganimal_cluster": dataCluster.Schema(),
+				"biganimal_region":  dataRegion.Schema(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"biganimal_cluster": resourceCluster.Schema(),
+				"biganimal_region":  resourceRegion.Schema(),
 			},
 		}
 
