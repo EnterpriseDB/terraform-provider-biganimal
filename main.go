@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/provider"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
@@ -38,7 +38,7 @@ func main() {
 		// TODO: update this string with the full name of your provider as used in your configs
 		ProviderAddr: "registry.terraform.io/hashicorp/biganimal",
 
-		ProviderFunc: provider.New(version),
+		ProviderFunc: biganimal.New(version),
 	}
 
 	plugin.Serve(opts)

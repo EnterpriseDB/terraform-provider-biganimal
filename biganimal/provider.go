@@ -1,10 +1,9 @@
-package provider
+package biganimal
 
 import (
 	"context"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/cluster"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -37,10 +36,10 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": cluster.DataSourceCluster(),
+				"biganimal_cluster": DataSourceCluster(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": cluster.ResourceCluster(),
+				"biganimal_cluster": ResourceCluster(),
 			},
 		}
 

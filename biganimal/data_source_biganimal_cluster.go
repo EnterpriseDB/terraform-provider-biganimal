@@ -1,12 +1,12 @@
-package cluster
+package biganimal
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/apiv2"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

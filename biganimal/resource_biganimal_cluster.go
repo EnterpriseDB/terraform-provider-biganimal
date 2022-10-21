@@ -1,4 +1,4 @@
-package cluster
+package biganimal
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/client"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/apiv2"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/utils"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

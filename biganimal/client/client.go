@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/biganimal/apiv2"
 )
 
 var (
