@@ -101,14 +101,13 @@ func (c ClusterClient) ReadByName(ctx context.Context, name string) (*models.Clu
 	return &clusters.Data[0], err
 }
 
-func (c ClusterClient) Update(ctx context.Context, model any, id string) (*models.Cluster, error) {
+func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, id string) (*models.Cluster, error) {
 	response := struct {
 		Data struct {
 			ClusterId string `json:"clusterId"`
 		} `json:"data"`
 	}{}
 
-	cluster := model.(models.Cluster)
 	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
 
 	b, err := json.Marshal(cluster)
