@@ -4,10 +4,6 @@ terraform {
       source  = "biganimal"
       version = "0.3.1"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.3.1"
-    }
   }
 }
 
@@ -17,6 +13,10 @@ data "biganimal_cluster" "this" {
 
 output "cluster_architecture" {
   value = data.biganimal_cluster.this.cluster_architecture
+}
+
+output "connection_uri" {
+  value = data.biganimal_cluster.this.connection_uri
 }
 
 output "backup_retention_period" {

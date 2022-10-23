@@ -58,6 +58,13 @@ resource "biganimal_cluster" "this_resource" {
   pg_version         = "14"
   private_networking = false
   cloud_provider     = "azure"
-  region             = "australiaeast"
+  region             = "eastus2"
   replicas           = 1
+}
+output "connection_uri" {
+  value = resource.biganimal_cluster.this_resource.connection_uri
+}
+output "password" {
+  sensitive = true
+  value = resource.biganimal_cluster.this_resource.password
 }
