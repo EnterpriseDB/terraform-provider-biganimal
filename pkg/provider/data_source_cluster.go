@@ -6,8 +6,10 @@ import (
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/kr/pretty"
 )
 
 type ClusterData struct{}
@@ -101,6 +103,11 @@ func (c *ClusterData) Schema() *schema.Resource {
 			},
 			"cluster_id": {
 				Description: "cluster ID",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"connection_uri": {
+				Description: "cluster connection uri",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -217,6 +224,12 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	tflog.Debug(ctx, pretty.Sprint(cluster))
+
+	connection, err := client.ConnectionString(ctx, *cluster.ClusterId)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	// set the outputs
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
@@ -238,6 +251,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	utils.SetOrPanic(d, "storage", utils.NewPropList(cluster.Storage))
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
+	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
 
 	d.SetId(*cluster.ClusterId)
 

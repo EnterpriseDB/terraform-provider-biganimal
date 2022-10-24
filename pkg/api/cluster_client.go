@@ -26,7 +26,7 @@ type ClusterClient struct {
 
 func NewClusterClient(url, token string) *ClusterClient {
 	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	c := ClusterClient{
@@ -101,6 +101,23 @@ func (c ClusterClient) ReadByName(ctx context.Context, name string) (*models.Clu
 	return &clusters.Data[0], err
 }
 
+func (c ClusterClient) ConnectionString(ctx context.Context, id string) (*models.ClusterConnection, error) {
+	response := struct {
+		Data models.ClusterConnection `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("%s/clusters/%s/connection/", c.URL, id)
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	if err != nil {
+		return &models.ClusterConnection{}, err
+	}
+
+	if json.Unmarshal(body, &response) != nil {
+		return &models.ClusterConnection{}, err
+	}
+	return &response.Data, nil
+}
+
 func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, id string) (*models.Cluster, error) {
 	response := struct {
 		Data struct {
@@ -115,7 +132,7 @@ func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, id s
 		return nil, err
 	}
 
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, bytes.NewBuffer(b))
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodPut, url, c.Token, bytes.NewBuffer(b))
 	if err != nil {
 		return &models.Cluster{}, err
 	}
