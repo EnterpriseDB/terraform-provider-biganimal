@@ -91,23 +91,6 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
-
-			// I don't think we need this on the *resource* side.  skip for now
-			// "created_at": {
-			// 	Description: "Cluster Creation Time",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
-			// "deleted_at": {
-			// 	Description: "Cluster Deletion Time",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
-			// "expired_at": {
-			// 	Description: "Cluster Expiry Time",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
 			"first_recoverability_point_at": {
 				Description: "Cluster Expiry Time",
 				Type:        schema.TypeString,
@@ -120,6 +103,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 			},
 			"id": {
 				Description: "cluster ID",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"connection_uri": {
+				Description: "cluster connection uri",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -158,11 +146,6 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
-			// "phase": {
-			// 	Description: "Current Phase of the cluster.",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
 			"private_networking": {
 				Description: "Is private networking enabled",
 				Type:        schema.TypeBool,
@@ -183,14 +166,6 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 			},
-			// "resizing_pvc": {
-			// 	Description: "Resizing PVC",
-			// 	Type:        schema.TypeList,
-			// 	Elem: &schema.Schema{
-			// 		Type: schema.TypeString,
-			// 	},
-			// 	Computed: true,
-			// },
 			"storage": {
 				Description: "Storage",
 				Type:        schema.TypeList,
@@ -230,6 +205,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 }
 
 func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+
 	client := api.BuildAPI(meta).ClusterClient()
 	cluster := apiv2.ClustersBody{}
 
@@ -301,10 +277,16 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 		return err
 	}
 
+	connection, err := client.ConnectionString(ctx, clusterId)
+	if err != nil {
+		return err
+	}
+
 	// set the outputs
 	d.Set("backup_retention_period", cluster.BackupRetentionPeriod)
 	d.Set("cluster_architecture", c.helpers.getClusterArchitectureData(cluster))
 	d.Set("cluster_name", &cluster.ClusterName)
+	d.Set("connection_uri", connection.PgUri)
 
 	if cluster.FirstRecoverabilityPointAt != (*apiv2.PointInTime)(nil) {
 		d.Set("first_recoverability_point_at", utils.PointInTimeToString(*cluster.FirstRecoverabilityPointAt))

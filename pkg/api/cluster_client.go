@@ -26,7 +26,7 @@ type ClusterClient struct {
 
 func NewClusterClient(url, token string) *ClusterClient {
 	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	c := ClusterClient{
@@ -38,12 +38,14 @@ func NewClusterClient(url, token string) *ClusterClient {
 	return &c
 }
 
+type something struct {
+	Data struct {
+		ClusterId string `json:"clusterId"`
+	} `json:"data"`
+}
+
 func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
-	response := struct {
-		Data struct {
-			ClusterId string `json:"clusterId"`
-		} `json:"data"`
-	}{}
+	response := something{}
 
 	cluster := model.(apiv2.ClustersBody)
 
@@ -75,6 +77,8 @@ func (c ClusterClient) Read(ctx context.Context, id string) (*apiv2.ClusterDetai
 	}
 	err = json.Unmarshal(body, &response)
 
+	// connectionString
+
 	return &response.Data, err
 }
 
@@ -100,6 +104,23 @@ func (c ClusterClient) ReadByName(ctx context.Context, name string) (*apiv2.Clus
 	return &clusters.Data[0], err
 }
 
+func (c ClusterClient) ConnectionString(ctx context.Context, id string) (*ClusterConnection, error) {
+	response := struct {
+		Data ClusterConnection `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("%s/clusters/%s/connection/", c.URL, id)
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	if err != nil {
+		return &ClusterConnection{}, err
+	}
+
+	if json.Unmarshal(body, &response) != nil {
+		return &ClusterConnection{}, err
+	}
+	return &response.Data, nil
+}
+
 func (c ClusterClient) Update(ctx context.Context, model any, id string) (*apiv2.ClusterDetail, error) {
 	response := struct {
 		Data struct {
@@ -107,7 +128,7 @@ func (c ClusterClient) Update(ctx context.Context, model any, id string) (*apiv2
 		} `json:"data"`
 	}{}
 
-	cluster := model.(apiv2.ClustersBody)
+	cluster := model.(apiv2.ClustersClusterIdBody)
 	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
 
 	b, err := json.Marshal(cluster)
@@ -115,7 +136,7 @@ func (c ClusterClient) Update(ctx context.Context, model any, id string) (*apiv2
 		return nil, err
 	}
 
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, bytes.NewBuffer(b))
+	body, err := doRequest(ctx, *c.HTTPClient, http.MethodPut, url, c.Token, bytes.NewBuffer(b))
 	if err != nil {
 		return &apiv2.ClusterDetail{}, err
 	}
@@ -143,4 +164,15 @@ type ClusterResponse struct {
 	Data struct {
 		ClusterId string `json:"clusterId"`
 	} `json:"data"`
+}
+
+type ClusterConnection struct {
+	DatabaseName        string `json:"databaseName"`
+	PgUri               string `json:"pgUri"`
+	Port                string `json:"port"`
+	ServiceName         string `json:"serviceName"`
+	ReadOnlyPgUri       string `json:"readOnlyPgUri"`
+	ReadOnlyPort        string `json:"readOnlyPort"`
+	ReadOnlyServiceName string `json:"readOnlyServiceName"`
+	Username            string `json:"username"`
 }
