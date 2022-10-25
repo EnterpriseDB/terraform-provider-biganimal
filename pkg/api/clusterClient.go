@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
 const (
@@ -45,7 +45,7 @@ func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
 		} `json:"data"`
 	}{}
 
-	cluster := model.(apiv2.ClustersBody)
+	cluster := model.(models.Cluster)
 
 	url := fmt.Sprintf("%s/clusters", c.URL)
 	b, err := json.Marshal(cluster)
@@ -63,9 +63,9 @@ func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
 	return response.Data.ClusterId, err
 }
 
-func (c ClusterClient) Read(ctx context.Context, id string) (*apiv2.ClusterDetail, error) {
+func (c ClusterClient) Read(ctx context.Context, id string) (*models.Cluster, error) {
 	response := struct {
-		Data apiv2.ClusterDetail `json:"data"`
+		Data models.Cluster `json:"data"`
 	}{}
 
 	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
@@ -73,41 +73,42 @@ func (c ClusterClient) Read(ctx context.Context, id string) (*apiv2.ClusterDetai
 	if err != nil {
 		return &response.Data, err
 	}
+
 	err = json.Unmarshal(body, &response)
 
 	return &response.Data, err
 }
 
-func (c ClusterClient) ReadByName(ctx context.Context, name string) (*apiv2.ClusterDetail, error) {
+func (c ClusterClient) ReadByName(ctx context.Context, name string) (*models.Cluster, error) {
 	clusters := struct {
-		Data []apiv2.ClusterDetail `json:"data"`
+		Data []models.Cluster `json:"data"`
 	}{}
 
 	url := fmt.Sprintf("%s/clusters?name=%s", c.URL, name)
 	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
 	if err != nil {
-		return &apiv2.ClusterDetail{}, err
+		return &models.Cluster{}, err
 	}
 
-	if json.Unmarshal(body, &clusters) != nil {
-		return &apiv2.ClusterDetail{}, err
+	if err := json.Unmarshal(body, &clusters); err != nil {
+		return &models.Cluster{}, err
 	}
 
 	if len(clusters.Data) != 1 {
-		return &apiv2.ClusterDetail{}, Error404
+		return &models.Cluster{}, Error404
 	}
 
 	return &clusters.Data[0], err
 }
 
-func (c ClusterClient) Update(ctx context.Context, model any, id string) (*apiv2.ClusterDetail, error) {
+func (c ClusterClient) Update(ctx context.Context, model any, id string) (*models.Cluster, error) {
 	response := struct {
 		Data struct {
 			ClusterId string `json:"clusterId"`
 		} `json:"data"`
 	}{}
 
-	cluster := model.(apiv2.ClustersBody)
+	cluster := model.(models.Cluster)
 	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
 
 	b, err := json.Marshal(cluster)
@@ -117,7 +118,7 @@ func (c ClusterClient) Update(ctx context.Context, model any, id string) (*apiv2
 
 	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, bytes.NewBuffer(b))
 	if err != nil {
-		return &apiv2.ClusterDetail{}, err
+		return &models.Cluster{}, err
 	}
 
 	err = json.Unmarshal(body, &response)
@@ -130,7 +131,7 @@ func (c ClusterClient) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-func (c *ClusterClient) HasOkCondition(conditions []apiv2.ClusterDetailConditions) bool {
+func (c *ClusterClient) HasOkCondition(conditions []models.Condition) bool {
 	for _, cond := range conditions {
 		if *cond.Type_ == "biganimal.com/deployed" && *cond.ConditionStatus == "True" {
 			return true
