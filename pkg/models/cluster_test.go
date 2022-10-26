@@ -113,7 +113,7 @@ var testResource = &schema.Resource{
 			Sensitive:   true,
 		},
 		"pg_config": {
-			Description: "Instance Type",
+			Description: "Postgres Config",
 			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Resource{
