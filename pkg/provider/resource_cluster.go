@@ -107,7 +107,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Cluster Expiry Time",
+				Description: "Instance Type",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
