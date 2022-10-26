@@ -3,22 +3,20 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/thoas/go-funk"
 )
 
-type ClusterData struct {
-	helpers *ClusterHelpers
-}
+type ClusterData struct{}
 
 func NewClusterData() *ClusterData {
-	return &ClusterData{
-		helpers: &ClusterHelpers{},
-	}
+	return &ClusterData{}
 }
 
 func (c *ClusterData) Schema() *schema.Resource {
@@ -74,7 +72,6 @@ func (c *ClusterData) Schema() *schema.Resource {
 					},
 				},
 			},
-
 			"cluster_name": {
 				Description: "Name of the cluster.",
 				Type:        schema.TypeString,
@@ -96,50 +93,16 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"first_recoverability_point_at": {
-				Description: "Cluster Expiry Time",
+				Description: "Earliest Backup recover time",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Instance Type",
-				Type:        schema.TypeList,
+				Description: "InstanceType",
+				Type:        schema.TypeString,
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"category": {
-							Description: "Instance category",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"cpu": {
-							Description: "core count",
-							Type:        schema.TypeInt,
-							Computed:    true,
-						},
-						"family_name": {
-							Description: "Family Name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"instance_type_id": {
-							Description: "Instance ID",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"instance_type_name": {
-							Description: "Instance Name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"ram": {
-							Description: "Memory in Mb",
-							Type:        schema.TypeFloat,
-							Computed:    true,
-						},
-					},
-				},
 			},
-			"id": {
+			"cluster_id": {
 				Description: "cluster ID",
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -164,34 +127,12 @@ func (c *ClusterData) Schema() *schema.Resource {
 				},
 			},
 			"pg_type": {
-				Description: "Allowed IP ranges",
-				Type:        schema.TypeList,
+				Description: "Postgres type",
+				Type:        schema.TypeString,
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description: "ID",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"name": {
-							Description: "Name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"supported_cluster_architecture_ids": {
-							Description: "Supported Cluster Architectures",
-							Type:        schema.TypeList,
-							Computed:    true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-					},
-				},
 			},
 			"pg_version": {
-				Description: "Postgres type",
+				Description: "Postgres version",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -281,98 +222,62 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	// set the outputs
-	d.Set("backup_retention_period", cluster.BackupRetentionPeriod)
-	d.Set("cluster_architecture", c.helpers.getClusterArchitectureData(cluster))
-	d.Set("created_at", utils.PointInTimeToString(*cluster.CreatedAt))
-	d.Set("cluster_name", &cluster.ClusterName)
+	SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
+	SetOrPanic(d, "cluster_architecture", cluster.ArchitecturePropList())
+	SetOrPanic(d, "created_at", cluster.CreatedAt)
+	SetOrPanic(d, "deleted_at", cluster.DeletedAt)
+	SetOrPanic(d, "expired_at", cluster.ExpiredAt)
+	SetOrPanic(d, "cluster_name", cluster.ClusterName)
+	SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt)
+	SetOrPanic(d, "instance_type", cluster.InstanceType)
+	SetOrPanic(d, "pg_config", cluster.PgConfig.PropList())
+	SetOrPanic(d, "pg_type", cluster.PgType)
+	SetOrPanic(d, "pg_version", cluster.PgType)
+	SetOrPanic(d, "phase", cluster.Phase)
+	SetOrPanic(d, "private_networking", cluster.PrivateNetworking)
+	SetOrPanic(d, "cloud_provider", cluster.Provider)
+	SetOrPanic(d, "region", cluster.Region)
+	SetOrPanic(d, "replicas", cluster.Replicas)
+	SetOrPanic(d, "storage", cluster.Storage.PropList())
+	SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
+	SetOrPanic(d, "cluster_id", cluster.ClusterId)
 
-	if cluster.DeletedAt != (*apiv2.PointInTime)(nil) {
-		d.Set("deleted_at", utils.PointInTimeToString(*cluster.DeletedAt))
-	}
-
-	if cluster.ExpiredAt != (*apiv2.PointInTime)(nil) {
-		d.Set("expired_at", utils.PointInTimeToString(*cluster.ExpiredAt))
-	}
-
-	if cluster.FirstRecoverabilityPointAt != (*apiv2.PointInTime)(nil) {
-		d.Set("first_recoverability_point_at", utils.PointInTimeToString(*cluster.FirstRecoverabilityPointAt))
-	}
-
-	d.Set("instance_type", c.helpers.getInstanceTypeData(cluster))
-	d.Set("id", cluster.ClusterId)
-	d.Set("pg_config", c.helpers.getPgConfigData(cluster))
-	d.Set("pg_type", cluster.PgType.PgTypeId)
-	d.Set("pg_version", cluster.PgVersion.PgVersionName)
-	d.Set("phase", cluster.Phase)
-	d.Set("private_networking", cluster.PrivateNetworking)
-	d.Set("cloud_provider", cluster.Provider.CloudProviderId)
-	d.Set("region", cluster.Region.RegionId)
-	d.Set("replicas", cluster.Replicas)
-	d.Set("storage", c.helpers.getStorageData(cluster))
-	d.Set("resizing_pvc", cluster.ResizingPvc)
-
-	d.SetId(cluster.ClusterId)
+	d.SetId(*cluster.ClusterId)
 
 	return diags
 }
 
-// ClusterHelpers holds a number of methods to turn openapi
-// models into property maps that terraform can consume
-// these methods are used in both the resource and the data
-// structs.
-// there's a lot in this struct that can be simplified
-type ClusterHelpers struct{}
-
-func (c *ClusterHelpers) getClusterArchitectureData(cluster *apiv2.ClusterDetail) []interface{} {
-	propMap := map[string]interface{}{}
-	propMap["id"] = cluster.ClusterArchitecture.ClusterArchitectureId
-	propMap["name"] = cluster.ClusterArchitecture.ClusterArchitectureName
-	propMap["nodes"] = cluster.ClusterArchitecture.Nodes
-
-	return []interface{}{propMap}
-}
-
-func (c *ClusterHelpers) getInstanceTypeData(cluster *apiv2.ClusterDetail) []interface{} {
-	propMap := map[string]interface{}{}
-	propMap["category"] = cluster.InstanceType.Category
-	propMap["cpu"] = cluster.InstanceType.Cpu
-	propMap["family_name"] = cluster.InstanceType.FamilyName
-	propMap["instance_type_id"] = cluster.InstanceType.InstanceTypeId
-	propMap["instance_type_name"] = cluster.InstanceType.InstanceTypeName
-	propMap["ram"] = cluster.InstanceType.Ram
-
-	return []interface{}{propMap}
-}
-
-func (c *ClusterHelpers) getPgConfigData(cluster *apiv2.ClusterDetail) []interface{} {
-	list := []interface{}{}
-
-	for _, guc := range *cluster.PgConfig {
-		propMap := map[string]interface{}{}
-		propMap["name"] = guc.Name
-		propMap["value"] = guc.Value
-		list = append(list, propMap)
+func SetOrPanic(d *schema.ResourceData, key string, value interface{}) {
+	if funk.IsEmpty(value) {
+		return // empty value
 	}
 
-	return list
-}
+	var err error
+	switch v := value.(type) {
+	case []interface{}, models.PropList:
+		err = d.Set(key, v)
+	case int, bool, string:
+		err = d.Set(key, v)
+	case *float64:
+		err = d.Set(key, *v)
+	case *int:
+		err = d.Set(key, *v)
+	case *bool:
+		err = d.Set(key, *v)
+	case *string:
+		err = d.Set(key, utils.DerefString(v))
 
-func (c *ClusterHelpers) getPgTypeData(cluster *apiv2.ClusterDetail) []interface{} {
-	propMap := map[string]interface{}{}
-	propMap["id"] = cluster.PgType.PgTypeId
-	propMap["name"] = cluster.PgType.PgTypeName
-	propMap["supported_cluster_architecture_ids"] = cluster.PgType.SupportedClusterArchitectureIds
+	default:
+		stringer, ok := value.(fmt.Stringer)
+		if !ok {
+			panic(fmt.Sprintf(" don't know how to handle %T", value))
+		}
 
-	return []interface{}{propMap}
-}
+		err = d.Set(key, stringer.String())
+	}
 
-func (c *ClusterHelpers) getStorageData(cluster *apiv2.ClusterDetail) []interface{} {
-	propMap := map[string]interface{}{}
-	propMap["iops"] = cluster.Storage.Iops
-	propMap["size"] = cluster.Storage.Size
-	propMap["throughput"] = cluster.Storage.Throughput
-	propMap["volume_properties"] = cluster.Storage.VolumePropertiesId
-	propMap["volume_type"] = cluster.Storage.VolumeTypeId
-
-	return []interface{}{propMap}
+	// if d.Set fails
+	if err != nil {
+		panic(err)
+	}
 }

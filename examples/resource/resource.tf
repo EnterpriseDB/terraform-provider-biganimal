@@ -36,7 +36,7 @@ resource "biganimal_cluster" "this_resource" {
     nodes = 1
   }
 
-  instance_type_id = "azure:Standard_D2s_v3"
+  instance_type = "azure:Standard_D2s_v3"
   password         = resource.random_password.password.result
   pg_config {
     name  = "application_name"

@@ -7,21 +7,16 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/apiv2"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type ClusterResource struct {
-	helpers *ClusterHelpers
-}
+type ClusterResource struct{}
 
 func NewClusterResource() *ClusterResource {
-	return &ClusterResource{
-		helpers: &ClusterHelpers{},
-	}
+	return &ClusterResource{}
 }
 
 func (c *ClusterResource) Schema() *schema.Resource {
@@ -91,34 +86,32 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
-
-			// I don't think we need this on the *resource* side.  skip for now
-			// "created_at": {
-			// 	Description: "Cluster Creation Time",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
-			// "deleted_at": {
-			// 	Description: "Cluster Deletion Time",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
-			// "expired_at": {
-			// 	Description: "Cluster Expiry Time",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
-			"first_recoverability_point_at": {
+			"created_at": {
+				Description: "Cluster Creation Time",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"deleted_at": {
+				Description: "Cluster Deletion Time",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"expired_at": {
 				Description: "Cluster Expiry Time",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			"instance_type_id": {
-				Description: "Cluster Expiry Time",
+			"first_recoverability_point_at": {
+				Description: "Earliest Backup recover time",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"instance_type": {
+				Description: "Instance Type",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
-			"id": {
+			"cluster_id": {
 				Description: "cluster ID",
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -158,11 +151,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
-			// "phase": {
-			// 	Description: "Current Phase of the cluster.",
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// },
+			"phase": {
+				Description: "Current Phase of the cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"private_networking": {
 				Description: "Is private networking enabled",
 				Type:        schema.TypeBool,
@@ -183,14 +176,14 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 			},
-			// "resizing_pvc": {
-			// 	Description: "Resizing PVC",
-			// 	Type:        schema.TypeList,
-			// 	Elem: &schema.Schema{
-			// 		Type: schema.TypeString,
-			// 	},
-			// 	Computed: true,
-			// },
+			"resizing_pvc": {
+				Description: "Resizing PVC",
+				Type:        schema.TypeList,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed: true,
+			},
 			"storage": {
 				Description: "Storage",
 				Type:        schema.TypeList,
@@ -231,43 +224,13 @@ func (c *ClusterResource) Schema() *schema.Resource {
 
 func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).ClusterClient()
-	cluster := apiv2.ClustersBody{}
 
-	cluster.ClusterName = d.Get("cluster_name").(string)
-	cluster.BackupRetentionPeriod = utils.StringRef(d.Get("backup_retention_period").(string))
-	cluster.AllowedIpRanges = c.makeAllowedIpRanges(d.Get("allowed_ip_ranges").([]interface{}))
+	cluster, err := models.NewCluster(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	cluster_architecture := d.Get("cluster_architecture").([]interface{})
-	if len(cluster_architecture) != 1 {
-		return diag.FromErr(errors.New("require exactly 1 cluster_architecture"))
-	}
-	cluster.ClusterArchitecture = c.makeClusterArchitecture(cluster_architecture[0].(map[string]interface{}))
-	cluster.InstanceType = &apiv2.ClustersInstanceType{
-		InstanceTypeId: d.Get("instance_type_id").(string),
-	}
-	cluster.Password = d.Get("password").(string)
-	cluster.PgConfig = c.makePgConfig(d.Get("pg_config").([]interface{}))
-	cluster.PgType = &apiv2.ClustersPgType{
-		PgTypeId: d.Get("pg_type").(string),
-	}
-	cluster.PgVersion = &apiv2.ClustersPgVersion{
-		PgVersionId: d.Get("pg_version").(string),
-	}
-	cluster.PrivateNetworking = d.Get("private_networking").(bool)
-	cluster.Provider = &apiv2.ClustersProvider{
-		CloudProviderId: d.Get("cloud_provider").(string),
-	}
-	cluster.Region = &apiv2.ClustersRegion{
-		RegionId: d.Get("region").(string),
-	}
-	cluster.Replicas = utils.F64Ref(float64((d.Get("replicas").(int))))
-	storage := d.Get("storage").([]interface{})
-	if len(storage) != 1 {
-		return diag.FromErr(errors.New("require exactly 1 storage stanza"))
-	}
-	cluster.Storage = c.makeStorage(storage[0].(map[string]interface{}))
-
-	clusterId, err := client.Create(ctx, cluster)
+	clusterId, err := client.Create(ctx, *cluster)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -302,27 +265,27 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	// set the outputs
-	d.Set("backup_retention_period", cluster.BackupRetentionPeriod)
-	d.Set("cluster_architecture", c.helpers.getClusterArchitectureData(cluster))
-	d.Set("cluster_name", &cluster.ClusterName)
+	SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
+	SetOrPanic(d, "cluster_architecture", cluster.ArchitecturePropList())
+	SetOrPanic(d, "created_at", cluster.CreatedAt)
+	SetOrPanic(d, "deleted_at", cluster.DeletedAt)
+	SetOrPanic(d, "expired_at", cluster.ExpiredAt)
+	SetOrPanic(d, "cluster_name", cluster.ClusterName)
+	SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt)
+	SetOrPanic(d, "instance_type", cluster.InstanceType)
+	SetOrPanic(d, "pg_config", cluster.PgConfig.PropList())
+	SetOrPanic(d, "pg_type", cluster.PgType)
+	SetOrPanic(d, "pg_version", cluster.PgType)
+	SetOrPanic(d, "phase", cluster.Phase)
+	SetOrPanic(d, "private_networking", cluster.PrivateNetworking)
+	SetOrPanic(d, "cloud_provider", cluster.Provider)
+	SetOrPanic(d, "region", cluster.Region)
+	SetOrPanic(d, "replicas", cluster.Replicas)
+	SetOrPanic(d, "storage", cluster.Storage.PropList())
+	SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
+	SetOrPanic(d, "cluster_id", cluster.ClusterId)
 
-	if cluster.FirstRecoverabilityPointAt != (*apiv2.PointInTime)(nil) {
-		d.Set("first_recoverability_point_at", utils.PointInTimeToString(*cluster.FirstRecoverabilityPointAt))
-	}
-
-	d.Set("instance_type", c.helpers.getInstanceTypeData(cluster))
-	d.Set("id", cluster.ClusterId)
-	d.Set("pg_config", cluster.PgType.PgTypeId)
-	d.Set("pg_type", c.helpers.getPgTypeData(cluster))
-	d.Set("pg_version", cluster.PgVersion.PgVersionName)
-	d.Set("phase", cluster.Phase)
-	d.Set("private_networking", cluster.PrivateNetworking)
-	d.Set("cloud_provider", cluster.Provider.CloudProviderId)
-	d.Set("region", cluster.Region.RegionId)
-	d.Set("replicas", cluster.Replicas)
-	d.Set("storage", c.helpers.getStorageData(cluster))
-	d.Set("resizing_pvc", cluster.ResizingPvc)
-	d.SetId(cluster.ClusterId)
+	d.SetId(*cluster.ClusterId)
 	return nil
 }
 
@@ -345,34 +308,14 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(errors.New("password is immutable for now"))
 	}
 
-	cluster := apiv2.ClustersClusterIdBody{}
+	cluster, err := models.NewCluster(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	clusterId := d.Id()
-	cluster.ClusterName = d.Get("cluster_name").(string)
-	cluster.BackupRetentionPeriod = utils.StringRef(d.Get("backup_retention_period").(string))
-	cluster.AllowedIpRanges = c.makeAllowedIpRanges(d.Get("allowed_ip_ranges").([]interface{}))
 
-	cluster_architecture := d.Get("cluster_architecture").([]interface{})
-	if len(cluster_architecture) != 1 {
-		return diag.FromErr(errors.New("require exactly 1 cluster_architecture"))
-	}
-	cluster.ClusterArchitecture = c.makeClusterArchitecture(cluster_architecture[0].(map[string]interface{}))
-	cluster.InstanceType = &apiv2.ClustersInstanceType{
-		InstanceTypeId: d.Get("instance_type_id").(string),
-	}
-
-	// cluster.Password = d.Get("password").(string)
-
-	cluster.PgConfig = c.makePgConfig(d.Get("pg_config").([]interface{}))
-
-	cluster.PrivateNetworking = d.Get("private_networking").(bool)
-	cluster.Replicas = utils.F64Ref(float64((d.Get("replicas").(int))))
-	storage := d.Get("storage").([]interface{})
-	if len(storage) != 1 {
-		return diag.FromErr(errors.New("require exactly 1 storage stanza"))
-	}
-	cluster.Storage = c.makeStorage(storage[0].(map[string]interface{}))
-
-	_, err := client.Update(ctx, cluster, d.Id())
+	_, err = client.Update(ctx, cluster, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -397,61 +340,6 @@ func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, me
 	return diag.Diagnostics{}
 }
 
-func (c *ClusterResource) makeClusterArchitecture(blob map[string]interface{}) *apiv2.ClustersClusterArchitecture {
-	return &apiv2.ClustersClusterArchitecture{
-		ClusterArchitectureId: blob["id"].(string),
-		Nodes:                 float64(blob["nodes"].(int)),
-	}
-}
-
-func (c *ClusterResource) makeAllowedIpRanges(list []interface{}) []apiv2.AllowedIpRange {
-	data := []apiv2.AllowedIpRange{}
-
-	for _, v := range list {
-		blob := v.(map[string]interface{})
-		data = append(data, apiv2.AllowedIpRange{
-			CidrBlock:   blob["cidr_block"].(string),
-			Description: blob["description"].(string),
-		})
-	}
-	return data
-}
-
-func (c *ClusterResource) makePgConfig(list []interface{}) []apiv2.ClustersClusterArchitectureParams {
-	data := []apiv2.ClustersClusterArchitectureParams{}
-
-	for _, v := range list {
-		blob := v.(map[string]interface{})
-		data = append(data, apiv2.ClustersClusterArchitectureParams{
-			Name:  utils.StringRef(blob["name"].(string)),
-			Value: utils.StringRef(blob["value"].(string)),
-		})
-	}
-	return data
-}
-
-func (c *ClusterResource) makeStorage(blob map[string]interface{}) *apiv2.ClustersStorage {
-	storage := &apiv2.ClustersStorage{
-		Size:               utils.StringRef(blob["size"].(string)),
-		VolumePropertiesId: blob["volume_properties"].(string),
-		VolumeTypeId:       blob["volume_type"].(string),
-	}
-
-	if iops, ok := blob["iops"].(string); ok {
-		storage.Iops = utils.StringRef(iops)
-	} else {
-		storage.Iops = utils.StringRef("")
-	}
-
-	if throughput, ok := blob["throughput"].(string); ok {
-		storage.Throughput = utils.StringRef(throughput)
-	} else {
-		storage.Throughput = utils.StringRef("")
-	}
-
-	return storage
-}
-
 func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) resource.RetryFunc {
 	client := api.BuildAPI(meta).ClusterClient()
 	return func() *resource.RetryError {
@@ -470,57 +358,3 @@ func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData,
 		return nil
 	}
 }
-
-// {
-// 	"clusterName": "My Cluster",
-// 	"password": "perfectenschlag",
-// 	"privateNetworking": false,
-// 	"replicas": 1,
-// 	"allowedIpRanges": [
-// 	  {
-// 		"cidrBlock": "252.1.1.1/24",
-// 		"description": "New York"
-// 	  },
-// 	  {
-// 		"cidrBlock": "167.3.2.1/32",
-// 		"description": "Boston"
-// 	  }
-// 	],
-// 	"pgConfig": [
-// 	  {
-// 		"name": "application_name",
-// 		"value": "restore-test"
-// 	  },
-// 	  {
-// 		"name": "array_nulls",
-// 		"value": "off"
-// 	  }
-// 	],
-// 	"pgType": {
-// 	  "pgTypeId": "epas"
-// 	},
-// 	"pgVersion": {
-// 	  "pgVersionId": "13"
-// 	},
-// 	"provider": {
-// 	  "cloudProviderId": "azure"
-// 	},
-// 	"readOnlyConnections": false,
-// 	"region": {
-// 	  "regionId": "australiaeast"
-// 	},
-// 	"instanceType": {
-// 	  "instanceTypeId": "azure:Standard_D16s_v3"
-// 	},
-// 	"storage": {
-// 	  "volumeTypeId": "azurepremiumstorage",
-// 	  "volumePropertiesId": "P1",
-// 	  "iops": "120",
-// 	  "size": "4 Gi"
-// 	},
-// 	"clusterArchitecture": {
-// 	  "clusterArchitectureId": "single",
-// 	  "nodes": 1
-// 	},
-// 	"backupRetentionPeriod": "6d"
-//   }

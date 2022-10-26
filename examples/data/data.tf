@@ -4,10 +4,6 @@ terraform {
       source  = "biganimal"
       version = "0.3.1"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.3.1"
-    }
   }
 }
 
@@ -41,10 +37,6 @@ output "expired_at" {
 
 output "instance_type" {
   value = data.biganimal_cluster.this.instance_type
-}
-
-output "instance_type_cpu" {
-  value = data.biganimal_cluster.this.instance_type[0].cpu
 }
 
 output "pg_config" {
