@@ -14,6 +14,8 @@ func doRequest(ctx context.Context, c http.Client, httpMethod, url, token string
 		return nil, err
 	}
 
+	tflog.Debug(ctx, url)
+
 	req.Header.Add("user-agent", userAgent)
 	req.Header.Add("authorization", "Bearer "+token)
 	req.Header.Add("content-type", "application/json")

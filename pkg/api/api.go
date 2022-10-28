@@ -36,6 +36,11 @@ func (api *API) ClusterClient() *ClusterClient {
 	return c
 }
 
+func (api *API) RegionClient() *RegionClient {
+	c := NewRegionClient(api.Url, api.Token)
+	return c
+}
+
 func BuildAPI(meta any) *API {
 	api, ok := meta.(*API)
 	if !ok {

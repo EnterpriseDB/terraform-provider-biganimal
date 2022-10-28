@@ -16,6 +16,7 @@ website/node_modules
 ./*.tfstate
 .terraform/
 terraform.tfvars
+.terraform.lock.hcl
 *.log
 *.bak
 *~

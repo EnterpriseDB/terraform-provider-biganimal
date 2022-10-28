@@ -1,31 +1,27 @@
 package models
 
 import (
-	"fmt"
-	"reflect"
-
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mitchellh/mapstructure"
 )
 
 func NewCluster(d *schema.ResourceData) (*Cluster, error) {
-	allowedIpRanges, err := MakeThing[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
+	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
 	if err != nil {
 		return nil, err
 	}
 
-	clusterArchitecture, err := MakeThing[Architecture](d.Get("cluster_architecture"))
+	clusterArchitecture, err := utils.StructFromProps[Architecture](d.Get("cluster_architecture"))
 	if err != nil {
 		return nil, err
 	}
 
-	pgConfig, err := MakeThing[KeyValues](d.Get("pg_config"))
+	pgConfig, err := utils.StructFromProps[[]KeyValue](d.Get("pg_config"))
 	if err != nil {
 		return nil, err
 	}
 
-	storage, err := MakeThing[Storage](d.Get("storage"))
+	storage, err := utils.StructFromProps[Storage](d.Get("storage"))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +49,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 			InstanceTypeId: utils.GetString(d, "instance_type"),
 		},
 		Password: utils.GetStringP(d, "password"),
-		PgConfig: &pgConfig,
+		PgConfig: pgConfig,
 		PgType: &PgType{
 			PgTypeId: utils.GetString(d, "pg_type"),
 		},
@@ -65,7 +61,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 			CloudProviderId: utils.GetString(d, "cloud_provider"),
 		},
 		Region: &Region{
-			RegionId: utils.GetString(d, "region"),
+			Id: utils.GetString(d, "region"),
 		},
 		Replicas: utils.GetIntP(d, "replicas"),
 		Storage:  &storage,
@@ -89,7 +85,7 @@ type Cluster struct {
 	FirstRecoverabilityPointAt *PointInTime     `json:"firstRecoverabilityPointAt,omitempty"`
 	InstanceType               *InstanceType    `json:"instanceType,omitempty"`
 	Password                   *string          `json:"password,omitempty"`
-	PgConfig                   *KeyValues       `json:"pgConfig,omitempty"`
+	PgConfig                   []KeyValue       `json:"pgConfig,omitempty"`
 	PgType                     *PgType          `json:"pgType,omitempty"`
 	PgVersion                  *PgVersion       `json:"pgVersion,omitempty"`
 	Phase                      *string          `json:"phase,omitempty"`
@@ -99,39 +95,4 @@ type Cluster struct {
 	Replicas                   *int             `json:"replicas,omitempty"`
 	ResizingPvc                []string         `json:"resizingPvc,omitempty"`
 	Storage                    *Storage         `json:"storage,omitempty"`
-}
-
-func (c Cluster) ArchitecturePropList() PropList {
-	if c.ClusterArchitecture == nil {
-		return PropList{}
-	}
-	propMap := map[string]interface{}{}
-	propMap["id"] = c.ClusterArchitecture.ClusterArchitectureId
-	propMap["name"] = c.ClusterArchitecture.ClusterArchitectureName
-	propMap["nodes"] = c.ClusterArchitecture.Nodes
-
-	return PropList{propMap}
-}
-
-func MakeThing[S any](blobs any) (S, error) {
-	lst, ok := blobs.([]interface{})
-	var s S
-	var thing any
-
-	if !ok {
-		return s, fmt.Errorf("wrong type of block, need list, got %T", lst)
-	}
-
-	if reflect.TypeOf(s).Kind() == reflect.Slice || reflect.TypeOf(s).Kind() == reflect.Array {
-		thing = lst
-	} else {
-		if len(lst) != 1 {
-			return s, fmt.Errorf("%T needs exactly one block", s)
-		}
-
-		thing = lst[0]
-	}
-
-	err := mapstructure.Decode(thing, &s)
-	return s, err
 }

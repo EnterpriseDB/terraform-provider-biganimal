@@ -1,10 +1,12 @@
 package models
 
 type Region struct {
-	RegionId   string `json:"regionId,omitempty"`
-	RegionName string `json:"regionName,omitempty"`
+	Id        string `json:"regionId,omitempty" mapstructure:"id"`
+	Name      string `json:"regionName,omitempty" mapstructure:"name,omitempty"`
+	Status    string `json:"status,omitempty" mapstructure:"status,omitempty"`
+	Continent string `json:"continent,omitempty" mapstructure:"continent,omitempty"`
 }
 
 func (r Region) String() string {
-	return r.RegionId
+	return r.Id
 }
