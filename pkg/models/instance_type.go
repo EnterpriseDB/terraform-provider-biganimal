@@ -9,6 +9,6 @@ type InstanceType struct {
 	Ram              float64 `json:"ram,omitempty"`
 }
 
-func (i *InstanceType) String() string {
+func (i InstanceType) String() string {
 	return i.InstanceTypeId
 }

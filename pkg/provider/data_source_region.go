@@ -100,7 +100,7 @@ func (r *RegionData) Read(ctx context.Context, d *schema.ResourceData, meta any)
 		return diag.FromErr(errors.New("unable to find a unique region"))
 	}
 
-	utils.SetOrPanic(d, "regions", utils.NewPropList(regions)) //getRegionList(regions))
+	utils.SetOrPanic(d, "regions", regions)
 	d.SetId(fmt.Sprintf("%s/%s", cloud_provider, query))
 
 	return diags
