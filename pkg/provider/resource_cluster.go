@@ -117,6 +117,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"connection_uri": {
+				Description: "cluster connection uri",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"password": {
 				Description: "Password",
 				Type:        schema.TypeString,
@@ -265,6 +270,11 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 		return err
 	}
 
+	connection, err := client.ConnectionString(ctx, clusterId)
+	if err != nil {
+		return err
+	}
+
 	// set the outputs
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
 	utils.SetOrPanic(d, "cluster_architecture", utils.NewPropList(cluster.ClusterArchitecture))
@@ -285,6 +295,7 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	utils.SetOrPanic(d, "storage", utils.NewPropList(cluster.Storage))
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
+	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
 
 	d.SetId(*cluster.ClusterId)
 	return nil
