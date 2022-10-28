@@ -32,24 +32,19 @@ When reporting a misbehaviour please make sure to provide:
 
 ## Find an Issue
 
-We have good first issues for new contributors and help wanted issues suitable
-for any contributor. [good first issue](TODO) has extra information to
-help you make your first contribution. [help wanted](TODO) are issues
-suitable for someone who isn't a core maintainer and is good to move onto after
-your first pull request.
+Browse the [GitHub issues](https://github.com/EnterpriseDB/terraform-provider-biganimal/issues) section of this repo. Once you see an issue that you'd like to work on, please post a comment saying
+that you want to work on it.
 
-Sometimes there won’t be any issues with these labels. That’s ok! There is
-likely still something for you to work on. If you want to contribute but you
-don’t know where to start or can't find a suitable issue, you can ⚠️ **explain how people can ask for an issue to work on**.
+If you want to contribute but you
+don’t know where to start or can't find a suitable issue, you can have a look at the [Discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussionssection) section.  
 
-Once you see an issue that you'd like to work on, please post a comment saying
-that you want to work on it. Something like "I want to work on this" is fine.
+
 
 ## Proposing a Feature
 
 We recommend to go through the following steps when wishing to propose a feature.
 
-- Discuss your idea in Github discussions
+- Discuss your idea in [Github discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussionssection)
 - Once there is general agreement that the feature is useful, create a GitHub issue to follow up. The issue should cover why the feature is needed, scope, use cases and any other considerations/limitations
 - If the scope requires, you'll be asked to submit a design, along with technical and implementation details
 - Once the major technical issues are resolved and agreed upon, post a note to summarise design decision and the general execution plan
@@ -61,14 +56,7 @@ If you want to skip submitting an issue and instead prefer to just send a pull r
 
 ## Developer Environment Setup
 
-(TODO) Explain how to:
-
-- Get the source code
-- Retrieve any dependencies
-- Build the source code
-- Run the project locally
-- Test the source code, unit and “integration” or “end-to-end”
-- Generate and preview the documentation locally
+Please refer to the [README](https://github.com/EnterpriseDB/terraform-provider-biganimal/blob/main/README.md).
 
 ## How to make a Pull Request
 
@@ -85,7 +73,7 @@ To submit your proposed change:
 
 A PR is more likely to be accepted if it has:
 
-- a well described PR body (TODO link)
+- a well described PR body
 - a good commit message. We use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/). (TODO link)
 - code that follows the conventions in old code
 - code that respects [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
