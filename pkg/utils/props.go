@@ -9,44 +9,6 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-func NewPropList(o any) []interface{} {
-	var (
-		pl  = []interface{}{}
-		err error
-	)
-
-	if !IsSlicey(o) {
-		// we're not a list, so we can just build
-		// a single map
-		m := map[string]interface{}{}
-		err = mapstructure.Decode(o, &m)
-		pl = append(pl, m)
-		if err != nil {
-			panic(err)
-		}
-
-		return pl
-	}
-
-	// we're listy, but we don't know
-	// what we're a list of.
-	// let's iterate over the reflect.Value, rather than
-	// trying to typeswitch and cast it to []interface{} or []KeyValue
-	items := reflect.ValueOf(o)
-	for i := 0; i < items.Len(); i++ {
-		obj := items.Index(i).Interface()
-
-		m := map[string]interface{}{}
-		err = mapstructure.Decode(obj, &m)
-		if err != nil {
-			panic(err)
-		}
-		pl = append(pl, m)
-	}
-
-	return pl
-}
-
 func StructFromProps[S any](blobs any) (S, error) {
 	lst, ok := blobs.([]interface{})
 	var s S
@@ -55,7 +17,7 @@ func StructFromProps[S any](blobs any) (S, error) {
 		return s, fmt.Errorf("wrong type of block, need list, got %T", blobs)
 	}
 
-	if IsSlicey(s) {
+	if reflect.TypeOf(s).Kind() == reflect.Slice || reflect.TypeOf(s).Kind() == reflect.Array {
 		err := mapstructure.Decode(lst, &s)
 		return s, err
 	}
@@ -68,37 +30,64 @@ func StructFromProps[S any](blobs any) (S, error) {
 	return s, err
 }
 
-func SetOrPanic(d *schema.ResourceData, key string, value interface{}) {
+func Set(d *schema.ResourceData, key string, value any) error {
+	// short circuit on empty value
 	if funk.IsEmpty(value) {
-		return // empty value
+		return nil
 	}
 
-	var err error
-	switch v := value.(type) {
-	case []interface{}:
-		err = d.Set(key, v)
-	case int, float64, bool, string:
-		err = d.Set(key, v)
-	case *float64:
-		err = d.Set(key, *v)
-	case *int:
-		err = d.Set(key, *v)
-	case *bool:
-		err = d.Set(key, *v)
-	case *string:
-		err = d.Set(key, DerefString(v))
+	// if it's a pointer we dereference it right away
+	// references that get passed in will be confused by the
+	// stringer check below, as stringer isn't implemented with
+	// pointer receivers
+	if reflect.ValueOf(value).Kind() == reflect.Ptr {
+		value = reflect.Indirect(reflect.ValueOf(value)).Interface()
+	}
 
-	default:
-		stringer, ok := value.(fmt.Stringer)
-		if !ok {
-			panic(fmt.Sprintf(" don't know how to handle %T", value))
+	// if it's a stringer, then stringify it
+	if stringer, ok := value.(fmt.Stringer); ok {
+		value = stringer.String()
+		err := d.Set(key, value)
+		if err != nil {
+			return err
+		}
+	}
+
+	switch reflect.ValueOf(value).Kind() {
+	case reflect.Slice, reflect.Array:
+		pl := []interface{}{}
+		items := reflect.ValueOf(value)
+		for i := 0; i < items.Len(); i++ {
+			obj := items.Index(i).Interface()
+
+			var m interface{}
+			err := mapstructure.Decode(obj, &m)
+			if err != nil {
+				return err
+			}
+			pl = append(pl, m)
+		}
+		value = pl
+	case reflect.Struct:
+		m := map[string]interface{}{}
+		pl := []interface{}{}
+
+		err := mapstructure.Decode(value, &m)
+		if err != nil {
+			return err
 		}
 
-		err = d.Set(key, stringer.String())
+		pl = append(pl, m)
+		value = pl
 	}
 
-	// if d.Set fails
+	return d.Set(key, value)
+}
+
+func SetOrPanic(d *schema.ResourceData, key string, value any) {
+	err := Set(d, key, value)
+
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("unable to set %s = %v (%T) : %v", key, value, value, err))
 	}
 }

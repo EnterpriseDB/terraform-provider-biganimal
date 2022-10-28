@@ -10,6 +10,10 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+func stringRef(s string) *string {
+	return &s
+}
+
 var testResource = &schema.Resource{
 	Description: "Create a Postgres Cluster",
 
@@ -62,6 +66,14 @@ var testResource = &schema.Resource{
 			Type:        schema.TypeString,
 			Optional:    true,
 		},
+		"array": {
+			Description: "array",
+			Type:        schema.TypeList,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			Computed: true,
+		},
 	},
 }
 
@@ -72,6 +84,24 @@ type testModel struct {
 	// F is 'optional', so we may not always have this.  we have to omitempty
 	// so we don't carry around unwanted default values as we transform these objects
 	F float64 `mapstructure:"float,omitempty"`
+}
+
+type testStringable struct {
+	I int    `mapstructure:"int"`
+	S string `mapstructure:"string"`
+
+	// F is 'optional', so we may not always have this.  we have to omitempty
+	// so we don't carry around unwanted default values as we transform these objects
+	F float64 `mapstructure:"float,omitempty"`
+}
+
+func (t testStringable) String() string {
+	return t.S
+}
+
+type AllowedIpRange struct {
+	CidrBlock   string `json:"cidrBlock" mapstructure:"cidr_block"`
+	Description string `json:"description" mapstructure:"description"`
 }
 
 func TestStructFromProps(t *testing.T) {
@@ -126,10 +156,6 @@ func TestStructFromProps(t *testing.T) {
 		t.Log(err)
 		assert.Equal(t, err != nil, tcase.wantErr)
 		assert.DeepEqual(t, a, tcase.want)
-
-		p := NewPropList(a)
-		assert.DeepEqual(t, p, tcase.in)
-
 	}
 }
 
@@ -142,7 +168,7 @@ func TestSetOrPanic(t *testing.T) {
 		in   any
 		out  any
 	}{
-		{
+		{ // simple values
 			kind: "int",
 			in:   int(1),
 			out:  int(1),
@@ -157,14 +183,50 @@ func TestSetOrPanic(t *testing.T) {
 			in:   "string",
 			out:  string("string"),
 		},
+		{ // string pointer
+			kind: "string",
+			in:   stringRef("randomstring"),
+			out:  string("randomstring"),
+		},
+		{
+			kind: "list",
+			in:   testModel{I: 9, S: "string"},
+			out:  []any{map[string]any{"int": int(9), "float": float64(0), "string": string("string")}},
+		},
+		{
+			kind: "list",
+			in:   &testModel{I: 9, S: "string"},
+			out:  []any{map[string]any{"int": int(9), "float": float64(0), "string": string("string")}},
+		},
+		{
+			kind: "list",
+			in:   []testModel{{S: "hello", I: 1}},
+			out:  []any{map[string]any{"float": float64(0), "int": int(1), "string": string("hello")}},
+		},
+		{
+			kind: "list",
+			in:   []testModel{},
+			out:  []any{},
+		},
+		{ // stringables
+			kind: "string",
+			in:   &testStringable{S: "Hello"},
+			out:  string("Hello"),
+		},
+		{ // stringables
+			kind: "string",
+			in:   testStringable{S: "Hello"},
+			out:  string("Hello"),
+		},
 	}
 
 	for num, tcase := range testCases {
-		t.Logf("testing StructFromProps #%d", num)
+		t.Logf("testing SetOrPanic #%d", num)
 		config := map[string]interface{}{}
 
 		d := schema.TestResourceDataRaw(t, cr.Schema, config)
 		SetOrPanic(d, tcase.kind, tcase.in)
+
 		out := d.Get(tcase.kind)
 		assert.DeepEqual(t, out, tcase.out)
 	}

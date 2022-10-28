@@ -232,15 +232,16 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	// set the outputs
+	utils.SetOrPanic(d, "allowed_ip_ranges", cluster.AllowedIpRanges)
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
-	utils.SetOrPanic(d, "cluster_architecture", utils.NewPropList(cluster.ClusterArchitecture))
+	utils.SetOrPanic(d, "cluster_architecture", *cluster.ClusterArchitecture)
 	utils.SetOrPanic(d, "created_at", cluster.CreatedAt)
 	utils.SetOrPanic(d, "deleted_at", cluster.DeletedAt)
 	utils.SetOrPanic(d, "expired_at", cluster.ExpiredAt)
 	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)
 	utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt)
 	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)
-	utils.SetOrPanic(d, "pg_config", utils.NewPropList(cluster.PgConfig))
+	utils.SetOrPanic(d, "pg_config", cluster.PgConfig)
 	utils.SetOrPanic(d, "pg_type", cluster.PgType)
 	utils.SetOrPanic(d, "pg_version", cluster.PgVersion)
 	utils.SetOrPanic(d, "phase", cluster.Phase)
@@ -248,7 +249,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	utils.SetOrPanic(d, "cloud_provider", cluster.Provider)
 	utils.SetOrPanic(d, "region", cluster.Region)
 	utils.SetOrPanic(d, "replicas", cluster.Replicas)
-	utils.SetOrPanic(d, "storage", utils.NewPropList(cluster.Storage))
+	utils.SetOrPanic(d, "storage", *cluster.Storage)
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
 	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
