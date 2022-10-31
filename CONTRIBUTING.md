@@ -74,10 +74,10 @@ To submit your proposed change:
 A PR is more likely to be accepted if it has:
 
 - a well described PR body
-- a good commit message. We use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/). (TODO link)
+- a good commit message. We use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/).
 - code that follows the conventions in old code
 - code that respects [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
-- good enough unit and regression testing (see below)
+- good enough demonstration of testing (see below)
 - all required checks green
 
 ## Expected Level of Testing
