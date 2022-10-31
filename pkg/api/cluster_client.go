@@ -147,15 +147,6 @@ func (c ClusterClient) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-func (c *ClusterClient) HasOkCondition(conditions []models.Condition) bool {
-	for _, cond := range conditions {
-		if *cond.Type_ == "biganimal.com/deployed" && *cond.ConditionStatus == "True" {
-			return true
-		}
-	}
-	return false
-}
-
 type ClusterResponse struct {
 	Data struct {
 		ClusterId string `json:"clusterId"`
