@@ -1,17 +1,5 @@
 # Contributing
 
-- [Intro](#intro)
-  - [Report an Issue](#issues)
-  - [Find an Issue](#find-an-issue)
-  - [Proposing a Feature](#proposing-a-feature)
-  - [Developer Environment Setup](#developer-environment-setup)
-  - [How to Make a Pull Request](#how-to-make-a-pull-request)
-  - [Commit and PR Guidelines](#commit-and-pr-guidelines)
-  - [Expected Level of Testing](#expected-level-of-testing)
-  - [Certificate of Origin](#certificate-of-origin)
-
-  
-
 You are encouraged to contribute to the project by forking the project and submitting [GitHub pull requests](https://github.com/EnterpriseDB/terraform-provider-biganimal/pulls). This document describes guidelines to support you in submitting your contributions.
 
 ## Intro
@@ -33,7 +21,7 @@ When reporting a misbehaviour please make sure to provide:
 ## Find an Issue
 
 Browse the [GitHub issues](https://github.com/EnterpriseDB/terraform-provider-biganimal/issues) section of this repo. Once you see an issue that you'd like to work on, please post a comment saying
-that you want to work on it.
+that you want to work on it: your comment will then be reviewed by a maintainer for issue assignment. 
 
 If you want to contribute but you
 don’t know where to start or can't find a suitable issue, you can have a look at the [Discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussionssection) section.  
