@@ -4,7 +4,7 @@ You are encouraged to contribute to the project by forking the project and submi
 
 ## Intro
 
-We welcome contributions to code, reporting defects, suggesting improvements and expanding documentation. All members of the community, including contributors, are expected to uphold the [Code of Conduct](./CODE_OF_CONDUCT.md).
+We welcome contributions to code, reporting defects,suggesting improvements and expanding documentation. All members of the community, including contributors, are expected to uphold the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Report an Issue
 
@@ -12,21 +12,16 @@ We welcome contributions to code, reporting defects, suggesting improvements and
 
 When reporting a misbehaviour please make sure to provide:
 
--  the version of the Provider you were using (e.g. version number,
-  or git commit);
+- the version of the Provider you were using (e.g. version number, or git commit);
 - the Operating system version you are using;
 - the expected VS obtained result;
 - the minimal steps needed to reproduce the issue
 
 ## Find an Issue
 
-Browse the [GitHub issues](https://github.com/EnterpriseDB/terraform-provider-biganimal/issues) section of this repo. Once you see an issue that you'd like to work on, please post a comment saying
-that you want to work on it: your comment will then be reviewed by a maintainer for issue assignment. 
+Browse the [GitHub issues](https://github.com/EnterpriseDB/terraform-provider-biganimal/issues) section of this repo. Once you see an issue that you'd like to work on, please post a comment saying that you want to work on it: your comment will then be reviewed by a maintainer for issue assignment.
 
-If you want to contribute but you
-don’t know where to start or can't find a suitable issue, you can have a look at the [Discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussionssection) section.  
-
-
+If you want to contribute but you don’t know where to start or can't find a suitable issue, you can have a look at the [Discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussionssection) section.
 
 ## Proposing a Feature
 
