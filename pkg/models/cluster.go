@@ -5,6 +5,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	// from https://github.com/EnterpriseDB/dataplane-postgres-operator/blob/83d333f137280e8c1c7b27470f469aa58b0f763e/api/v1beta1/dataplanepostgrescluster_types.go#L301
+	CONDITION_DEPLOYED = "biganimal.com/deployed"
+
+	// from https://github.com/EnterpriseDB/upm-ui/blob/8840e856aa93f7c266196dc97a53da20d7578fe2/app/src/locales/en-US/global.ts#L69
+	PHASE_HEALTHY = "Cluster in healthy state"
+)
+
 func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
 	if err != nil {
@@ -122,4 +130,18 @@ type Cluster struct {
 	Replicas                   *int              `json:"replicas,omitempty"`
 	ResizingPvc                []string          `json:"resizingPvc,omitempty"`
 	Storage                    *Storage          `json:"storage,omitempty"`
+}
+
+// IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
+// as well as the correct 'healthy' phase.  '
+func (c Cluster) IsHealthy() bool {
+	if *c.Phase != PHASE_HEALTHY {
+		return false
+	}
+	for _, cond := range c.Conditions {
+		if *cond.Type_ == CONDITION_DEPLOYED && *cond.ConditionStatus == "True" {
+			return true
+		}
+	}
+	return false
 }
