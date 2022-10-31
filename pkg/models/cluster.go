@@ -89,7 +89,6 @@ func NewClusterForCreate(d *schema.ResourceData) (*Cluster, error) {
 
 func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 	c, err := NewCluster(d)
-	c.ClusterArchitecture = nil
 	c.ClusterId = nil
 	c.PgType = nil
 	c.PgVersion = nil
