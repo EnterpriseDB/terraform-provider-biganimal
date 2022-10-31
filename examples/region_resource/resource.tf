@@ -7,20 +7,20 @@ terraform {
   }
 }
 
-# resource "biganimal_region" "this" {
-#   cloud_provider = "aws"
-#   region_id = "us-east-1"
-#   status = "SUSPENDED"
-# }
+resource "biganimal_region" "this" {
+  cloud_provider = "aws"
+  region_id = "us-east-1"
+  status = "ACTIVE"
+}
 
-# output "region_status" {
-#   value = resource.biganimal_region.this.status
-# }
+output "region_status" {
+  value = resource.biganimal_region.this.status
+}
 
-# output "region_name" {
-#   value = resource.biganimal_region.this.name
-# }
+output "region_name" {
+  value = resource.biganimal_region.this.name
+}
 
-# output "region_continent" {
-#   value = resource.biganimal_region.this.continent
-# }
+output "region_continent" {
+  value = resource.biganimal_region.this.continent
+}
