@@ -21,7 +21,7 @@ When reporting a misbehaviour please make sure to provide:
 
 Browse the [GitHub issues](https://github.com/EnterpriseDB/terraform-provider-biganimal/issues) section of this repo. Once you see an issue that you'd like to work on, please post a comment saying that you want to work on it: your comment will then be reviewed by a maintainer for issue assignment.
 
-If you want to contribute but you don’t know where to start or can't find a suitable issue, you can have a look at the [Discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussionssection) section.
+If you want to contribute but you don’t know where to start or can't find a suitable issue, you can have a look at the [Discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussions) section.
 
 ## Proposing a Feature
 
