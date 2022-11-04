@@ -25,15 +25,17 @@ Sample cluster data source in the BigAnimal terraform provider .
 - `backup_retention_period` (String) Backup Retention Period.
 - `cloud_provider` (String) Cloud Provider
 - `cluster_architecture` (Block List) Cluster Architecture (see [below for nested schema](#nestedblock--cluster_architecture))
+- `cluster_id` (String) cluster ID
+- `connection_uri` (String) cluster connection uri
 - `created_at` (String) Cluster Creation Time
 - `deleted_at` (String) Cluster Deletion Time
 - `expired_at` (String) Cluster Expiry Time
-- `first_recoverability_point_at` (String) Cluster Expiry Time
-- `id` (String) cluster ID
-- `instance_type` (List of Object) Instance Type (see [below for nested schema](#nestedatt--instance_type))
+- `first_recoverability_point_at` (String) Earliest Backup recover time
+- `id` (String) The ID of this resource.
+- `instance_type` (String) InstanceType
 - `pg_config` (List of Object) Instance Type (see [below for nested schema](#nestedatt--pg_config))
-- `pg_type` (List of Object) Allowed IP ranges (see [below for nested schema](#nestedatt--pg_type))
-- `pg_version` (String) Postgres type
+- `pg_type` (String) Postgres type
+- `pg_version` (String) Postgres version
 - `phase` (String) Current Phase of the cluster.
 - `private_networking` (Boolean) Is private networking enabled
 - `region` (String) Region
@@ -60,19 +62,6 @@ Read-Only:
 - `nodes` (Number) Node Count
 
 
-<a id="nestedatt--instance_type"></a>
-### Nested Schema for `instance_type`
-
-Read-Only:
-
-- `category` (String)
-- `cpu` (Number)
-- `family_name` (String)
-- `instance_type_id` (String)
-- `instance_type_name` (String)
-- `ram` (Number)
-
-
 <a id="nestedatt--pg_config"></a>
 ### Nested Schema for `pg_config`
 
@@ -80,16 +69,6 @@ Read-Only:
 
 - `name` (String)
 - `value` (String)
-
-
-<a id="nestedatt--pg_type"></a>
-### Nested Schema for `pg_type`
-
-Read-Only:
-
-- `id` (String)
-- `name` (String)
-- `supported_cluster_architecture_ids` (List of String)
 
 
 <a id="nestedatt--storage"></a>

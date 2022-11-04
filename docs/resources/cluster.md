@@ -20,7 +20,7 @@ Create a Postgres Cluster
 - `cloud_provider` (String) Cloud Provider
 - `cluster_architecture` (Block List, Min: 1) Cluster Architecture (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
-- `instance_type_id` (String) Cluster Expiry Time
+- `instance_type` (String) Instance Type
 - `password` (String, Sensitive) Password
 - `pg_type` (String) Postgres type
 - `pg_version` (String) Postgres Version
@@ -38,8 +38,15 @@ Create a Postgres Cluster
 
 ### Read-Only
 
-- `first_recoverability_point_at` (String) Cluster Expiry Time
-- `id` (String) cluster ID
+- `cluster_id` (String) cluster ID
+- `connection_uri` (String) cluster connection uri
+- `created_at` (String) Cluster Creation Time
+- `deleted_at` (String) Cluster Deletion Time
+- `expired_at` (String) Cluster Expiry Time
+- `first_recoverability_point_at` (String) Earliest Backup recover time
+- `id` (String) The ID of this resource.
+- `phase` (String) Current Phase of the cluster.
+- `resizing_pvc` (List of String) Resizing PVC
 
 <a id="nestedblock--cluster_architecture"></a>
 ### Nested Schema for `cluster_architecture`
