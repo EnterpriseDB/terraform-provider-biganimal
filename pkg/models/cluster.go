@@ -27,7 +27,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 	}
 
 	cluster := &Cluster{
-		AllowedIpRanges:       allowedIpRanges,
+		AllowedIpRanges:       &allowedIpRanges,
 		BackupRetentionPeriod: utils.GetStringP(d, "backup_retention_period"),
 		ClusterArchitecture:   &clusterArchitecture,
 		ClusterId:             utils.GetStringP(d, "cluster_id"),
@@ -49,7 +49,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 			InstanceTypeId: utils.GetString(d, "instance_type"),
 		},
 		Password: utils.GetStringP(d, "password"),
-		PgConfig: pgConfig,
+		PgConfig: &pgConfig,
 		PgType: &PgType{
 			PgTypeId: utils.GetString(d, "pg_type"),
 		},
@@ -70,29 +70,57 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 	return cluster, nil
 }
 
+// the following two methods create slightly different
+// versions of clusters for write operations
+// this is awkward, and should be replaced soon.
+//
+// we need to be able to unset this set of values.
+// the api doesn't like being sent this information.
+// because these fields are readonly in the api.
+// we didn't see this when we were using
+// the openapi because we had different struct types
+// and these fields were omitted from some of those types
+
+func NewClusterForCreate(d *schema.ResourceData) (*Cluster, error) {
+	c, err := NewCluster(d)
+	c.ClusterId = nil
+	return c, err
+}
+
+func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
+	c, err := NewCluster(d)
+	c.ClusterArchitecture = nil
+	c.ClusterId = nil
+	c.PgType = nil
+	c.PgVersion = nil
+	c.Provider = nil
+	c.Region = nil
+	return c, err
+}
+
 // everything is omitempty,
 // and everything is either nullable, or empty-able
 type Cluster struct {
-	AllowedIpRanges            []AllowedIpRange `json:"allowedIpRanges,omitempty"`
-	BackupRetentionPeriod      *string          `json:"backupRetentionPeriod,omitempty"`
-	ClusterArchitecture        *Architecture    `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
-	ClusterId                  *string          `json:"clusterId,omitempty"`
-	ClusterName                *string          `json:"clusterName,omitempty"`
-	Conditions                 []Condition      `json:"conditions,omitempty"`
-	CreatedAt                  *PointInTime     `json:"createdAt,omitempty"`
-	DeletedAt                  *PointInTime     `json:"deletedAt,omitempty"`
-	ExpiredAt                  *PointInTime     `json:"expiredAt,omitempty"`
-	FirstRecoverabilityPointAt *PointInTime     `json:"firstRecoverabilityPointAt,omitempty"`
-	InstanceType               *InstanceType    `json:"instanceType,omitempty"`
-	Password                   *string          `json:"password,omitempty"`
-	PgConfig                   []KeyValue       `json:"pgConfig,omitempty"`
-	PgType                     *PgType          `json:"pgType,omitempty"`
-	PgVersion                  *PgVersion       `json:"pgVersion,omitempty"`
-	Phase                      *string          `json:"phase,omitempty"`
-	PrivateNetworking          *bool            `json:"privateNetworking,omitempty"`
-	Provider                   *Provider        `json:"provider,omitempty"`
-	Region                     *Region          `json:"region,omitempty"`
-	Replicas                   *int             `json:"replicas,omitempty"`
-	ResizingPvc                []string         `json:"resizingPvc,omitempty"`
-	Storage                    *Storage         `json:"storage,omitempty"`
+	AllowedIpRanges            *[]AllowedIpRange `json:"allowedIpRanges,omitempty"`
+	BackupRetentionPeriod      *string           `json:"backupRetentionPeriod,omitempty"`
+	ClusterArchitecture        *Architecture     `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
+	ClusterId                  *string           `json:"clusterId,omitempty"`
+	ClusterName                *string           `json:"clusterName,omitempty"`
+	Conditions                 []Condition       `json:"conditions,omitempty"`
+	CreatedAt                  *PointInTime      `json:"createdAt,omitempty"`
+	DeletedAt                  *PointInTime      `json:"deletedAt,omitempty"`
+	ExpiredAt                  *PointInTime      `json:"expiredAt,omitempty"`
+	FirstRecoverabilityPointAt *PointInTime      `json:"firstRecoverabilityPointAt,omitempty"`
+	InstanceType               *InstanceType     `json:"instanceType,omitempty"`
+	Password                   *string           `json:"password,omitempty"`
+	PgConfig                   *[]KeyValue       `json:"pgConfig,omitempty"`
+	PgType                     *PgType           `json:"pgType,omitempty"`
+	PgVersion                  *PgVersion        `json:"pgVersion,omitempty"`
+	Phase                      *string           `json:"phase,omitempty"`
+	PrivateNetworking          *bool             `json:"privateNetworking,omitempty"`
+	Provider                   *Provider         `json:"provider,omitempty"`
+	Region                     *Region           `json:"region,omitempty"`
+	Replicas                   *int              `json:"replicas,omitempty"`
+	ResizingPvc                []string          `json:"resizingPvc,omitempty"`
+	Storage                    *Storage          `json:"storage,omitempty"`
 }
