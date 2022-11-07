@@ -75,6 +75,14 @@ export BA_BEARER_TOKEN=<REDACTED>
 
 After compiling, configuring the `.terraformrc` and fetching a token, the examples in the `./examples` folder can be run.
 
+### Configuring environment variables
+
+In order to access the Biganimal API, you must also configure the following environment variable:
+
+```bash
+export BA_API_URI=https://portal.biganimal.com/api/v2
+```
+
 ## Debugging the provider
 
 If you're using Vscode, you can use the embedded Golang Debugger. Intro to debugging in Vscode is [here](https://code.visualstudio.com/docs/editor/debugging).
