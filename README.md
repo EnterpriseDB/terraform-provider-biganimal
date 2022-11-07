@@ -1,11 +1,15 @@
-# Terraform Provider Biganimal PoC (Terraform Plugin SDK)
+# Terraform Provider Biganimal
 
-This repository is manually created from the [Terraform Plugin Scaffolding](https://github.com/hashicorp/terraform-provider-scaffolding) repository.
-It's in experimental phase, and intends to be the playground for the Biganimal Terraform Provider.
+A Terraform Provider to manage your workloads on [EDB BigAnimal](https://www.enterprisedb.com/products/biganimal-cloud-postgresql) interacting with the BigAnimal API. The provider is licensed under the [MPL v2](https://www.mozilla.org/en-US/MPL/2.0/).
 
-Biganimal Resource and Datasource definitions are under (`biganimal/provider`)
+If you are willing to contribute please read [here](./CONTRIBUTING.md).
 
-For now, we're using the terraform modules within `examples/` for development purposes. You can run `terraform plan` in any of these modules.
+Main links:
+
+- [License](./LICENSE)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Security](./SECURITY.md)
+- [Contributing](./CONTRIBUTING.md)
 
 ## Requirements
 
@@ -46,7 +50,7 @@ provider_installation {
 
 ### Getting an API Token
 
-in order to access the Biganimal API, it's necessary to fetch an api bearer token and export it into your environment.
+In order to access the Biganimal API, it's necessary to fetch an api bearer token and export it into your environment.
 
 This can be done by using the script located [here](https://github.com/EnterpriseDB/cloud-utilities/blob/main/api/get-token.sh) as follows
 
@@ -70,6 +74,14 @@ export BA_BEARER_TOKEN=<REDACTED>
 ```
 
 After compiling, configuring the `.terraformrc` and fetching a token, the examples in the `./examples` folder can be run.
+
+### Configuring environment variables
+
+In order to access the Biganimal API, you must also configure the following environment variable:
+
+```bash
+export BA_API_URI=https://portal.biganimal.com/api/v2
+```
 
 ## Debugging the provider
 
