@@ -50,7 +50,7 @@ provider_installation {
 
 ### Getting an API Token
 
-In order to access the Biganimal API, it's necessary to fetch an api bearer token and export it into your environment.
+In order to access the BigAnimal API, it's necessary to fetch an api bearer token and export it into your environment.
 
 This can be done by using the script located [here](https://github.com/EnterpriseDB/cloud-utilities/blob/main/api/get-token.sh) as follows
 
