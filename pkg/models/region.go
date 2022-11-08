@@ -1,7 +1,7 @@
 package models
 
 type Region struct {
-	Id        string `json:"regionId,omitempty" mapstructure:"id"`
+	Id        string `json:"regionId,omitempty" mapstructure:"region_id"`
 	Name      string `json:"regionName,omitempty" mapstructure:"name,omitempty"`
 	Status    string `json:"status,omitempty" mapstructure:"status,omitempty"`
 	Continent string `json:"continent,omitempty" mapstructure:"continent,omitempty"`
