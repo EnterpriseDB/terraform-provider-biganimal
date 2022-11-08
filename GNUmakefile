@@ -18,6 +18,9 @@ endif
 ifeq ($(shell uname -m),aarch64)
   arch   ?= arm
 endif
+ifeq ($(shell uname -m),arm64)
+  arch   ?= arm64
+endif
 OS_ARCH=${os}_${arch}
 
 default: install
