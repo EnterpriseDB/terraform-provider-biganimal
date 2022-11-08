@@ -361,7 +361,7 @@ func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData,
 			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
 		}
 
-		if !client.HasOkCondition(cluster.Conditions) {
+		if !cluster.IsHealthy() {
 			return resource.RetryableError(errors.New("Instance not yet ready"))
 		}
 
