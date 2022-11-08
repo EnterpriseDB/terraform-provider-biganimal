@@ -37,7 +37,7 @@ resource "biganimal_cluster" "this_resource" {
   }
 
   instance_type = "azure:Standard_D2s_v3"
-  password         = resource.random_password.password.result
+  password      = resource.random_password.password.result
   pg_config {
     name  = "application_name"
     value = "created through terraform"
@@ -64,5 +64,5 @@ resource "biganimal_cluster" "this_resource" {
 
 output "password" {
   sensitive = true
-  value = resource.biganimal_cluster.this_resource.password
+  value     = resource.biganimal_cluster.this_resource.password
 }

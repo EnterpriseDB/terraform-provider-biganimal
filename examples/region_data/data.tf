@@ -9,7 +9,7 @@ terraform {
 
 data "biganimal_region" "this" {
   cloud_provider = var.cloud_provider
-  region_id = "us-east-1"
+  region_id      = "us-east-1"
 }
 
 output "regions" {
