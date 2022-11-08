@@ -77,7 +77,7 @@ After compiling, configuring the `.terraformrc` and fetching a token, the exampl
 
 ### Configuring environment variables
 
-In order to access the Biganimal API, you must also configure the following environment variable:
+In order to access the BigAnimal API, you must also configure the following environment variable:
 
 ```bash
 export BA_API_URI=https://portal.biganimal.com/api/v2
