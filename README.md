@@ -38,7 +38,7 @@ Terraform can be configured by adding the following to your ~/.terraformrc file.
 ```hcl
 provider_installation {
   dev_overrides {
-      "registry.terraform.io/hashicorp/biganimal" = "/Users/YOUR_HOME/.terraform.d/plugins/hashicorp.com/edu/biganimal/0.3.1/darwin_amd64"
+      "registry.terraform.io/hashicorp/biganimal" = "/Users/<YOUR_HOME>/.terraform.d/plugins/hashicorp.com/edu/biganimal/0.3.1/<OS_ARCH>"
   }
 
   # For all other providers, install them directly from their origin provider
