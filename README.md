@@ -1,4 +1,4 @@
-# Terraform Provider Biganimal
+# Terraform Provider BigAnimal
 
 A Terraform Provider to manage your workloads on [EDB BigAnimal](https://www.enterprisedb.com/products/biganimal-cloud-postgresql) interacting with the BigAnimal API. The provider is licensed under the [MPL v2](https://www.mozilla.org/en-US/MPL/2.0/).
 
@@ -38,7 +38,7 @@ Terraform can be configured by adding the following to your ~/.terraformrc file.
 ```hcl
 provider_installation {
   dev_overrides {
-      "registry.terraform.io/hashicorp/biganimal" = "/Users/YOUR_HOME/.terraform.d/plugins/hashicorp.com/edu/biganimal/0.3.1/darwin_amd64"
+      "registry.terraform.io/hashicorp/biganimal" = "/Users/<YOUR_HOME>/.terraform.d/plugins/hashicorp.com/edu/biganimal/0.3.1/<OS_ARCH>"
   }
 
   # For all other providers, install them directly from their origin provider
@@ -50,7 +50,7 @@ provider_installation {
 
 ### Getting an API Token
 
-In order to access the Biganimal API, it's necessary to fetch an api bearer token and export it into your environment.
+In order to access the BigAnimal API, it's necessary to fetch an api bearer token and export it into your environment.
 
 This can be done by using the script located [here](https://github.com/EnterpriseDB/cloud-utilities/blob/main/api/get-token.sh) as follows
 
@@ -77,7 +77,7 @@ After compiling, configuring the `.terraformrc` and fetching a token, the exampl
 
 ### Configuring environment variables
 
-In order to access the Biganimal API, you must also configure the following environment variable:
+In order to access the BigAnimal API, you must also configure the following environment variable:
 
 ```bash
 export BA_API_URI=https://portal.biganimal.com/api/v2
