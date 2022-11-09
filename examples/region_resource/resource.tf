@@ -8,9 +8,8 @@ terraform {
 }
 
 resource "biganimal_region" "this" {
-  cloud_provider = "aws"
-  region_id = "us-east-1"
-  status = "ACTIVE"
+  cloud_provider = var.cloud_provider
+  region_id = var.region_id
 }
 
 output "region_status" {
