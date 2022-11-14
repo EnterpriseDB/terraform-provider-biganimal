@@ -100,4 +100,3 @@ $> TF_REATTACH_PROVIDERS='{"registry.terraform.io/hashicorp/biganimal":{"Protoco
 ```
 
 For more information about Vscode Golang debugging, please refer to [this documentation](https://github.com/golang/vscode-go/blob/master/docs/debugging.md).
-
