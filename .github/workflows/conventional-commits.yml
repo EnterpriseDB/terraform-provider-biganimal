@@ -18,4 +18,3 @@ jobs:
       # Verify conventional commit compliance
       - name: Verify conventional commit compliance
         uses: docker://aevea/commitsar
-
