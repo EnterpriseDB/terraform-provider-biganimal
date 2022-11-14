@@ -24,7 +24,7 @@ repos:
       - id: pretty-format-json
         types: [file]  # override `types: [json]`
         files: \.(json|json\.tpl)$
-        args: [--autofix]
+        args: [--autofix, --indent=4]
 
   # pre-commit hook to verify commit messages are conventional commit compliant
   # NOTE: not using the latest version of commitizen, because it doesn't verify
