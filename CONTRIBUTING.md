@@ -27,7 +27,7 @@ If you want to contribute but you don’t know where to start or can't find a su
 
 We recommend to go through the following steps when wishing to propose a feature.
 
-- Discuss your idea in [Github discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussionssection)
+- Discuss your idea in [Github discussions](https://github.com/EnterpriseDB/terraform-provider-biganimal/discussions)
 - Once there is general agreement that the feature is useful, create a GitHub issue to follow up. The issue should cover why the feature is needed, scope, use cases and any other considerations/limitations
 - If the scope requires, you'll be asked to submit a design, along with technical and implementation details
 - Once the major technical issues are resolved and agreed upon, post a note to summarise design decision and the general execution plan
@@ -69,6 +69,19 @@ Your change should include unit tests and regression tests to protect your featu
 
 - that tests follow the conventions of existing ones;
 - for new features, to cover as many inputs/configurations as possible.
+
+## Naming
+
+Please stick to [the terraform provider naming conventions](https://developer.hashicorp.com/terraform/plugin/sdkv2/best-practices/naming). To highlight a few:
+
+- Resource names should be nouns and start with `biganimal_` e.g. `biganimal_cluster`.
+- Data source names should also be nouns. If the data sources return a list, the name can be plural e.g. `biganimal_available_regions`.
+- Attribute names within Terraform configuration blocks are conventionally named as all-lowercase with underscores.
+- If there is a need for exception to these naming conventions, the reason should be explicitly stated.
+- Data sources should be written in a file named `data_source_<data_source_name>.go`.
+- Resources should be written in a file named `resource_<resource_name>.go`.
+- Test files should be added as `<filename>_test.go`.
+- If you can organize the code into smaller packages, e.g. any helper or library code, you're encouraged to create new packages/directories.
 
 ## Certificate of Origin
 
