@@ -81,5 +81,3 @@ Read-Only:
 - `throughput` (String)
 - `volume_properties` (String)
 - `volume_type` (String)
-
-

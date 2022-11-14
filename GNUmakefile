@@ -39,6 +39,5 @@ tf-plan:
 	terraform -chdir=examples/provider plan
 
 .PHONY: tf-apply
-tf-apply: 
+tf-apply:
 	terraform -chdir=examples/provider apply -auto-approve
-
