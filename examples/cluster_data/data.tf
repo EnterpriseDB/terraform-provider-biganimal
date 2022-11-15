@@ -78,5 +78,3 @@ output "resizing_pvc" {
 output "storage" {
   value = data.biganimal_cluster.this.storage
 }
-
-

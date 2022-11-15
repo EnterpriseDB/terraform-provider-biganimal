@@ -1,0 +1,20 @@
+name: conventional-commits
+
+on:
+  pull_request:
+    types: [assigned, edited, opened, synchronize, reopened]
+
+jobs:
+  commit-compliance:
+    # Set the type of machine to run on
+    runs-on: ubuntu-latest
+    steps:
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - name: Checkout code
+        uses: actions/checkout@v2.4.0
+        with:
+          fetch-depth: '0'
+
+      # Verify conventional commit compliance
+      - name: Verify conventional commit compliance
+        uses: docker://aevea/commitsar

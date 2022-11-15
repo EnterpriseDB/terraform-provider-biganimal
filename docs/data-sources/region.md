@@ -38,5 +38,3 @@ Read-Only:
 - `name` (String)
 - `region_id` (String)
 - `status` (String)
-
-
