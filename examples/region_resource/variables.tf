@@ -3,3 +3,7 @@ variable "cloud_provider" {
   description = "The name of the cloud provider"
 }
 
+variable "region_id" {
+  type        = string
+  description = "region id"
+}
