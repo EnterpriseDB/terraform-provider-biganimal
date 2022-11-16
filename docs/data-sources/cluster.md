@@ -38,6 +38,7 @@ Sample cluster data source in the BigAnimal terraform provider .
 - `pg_version` (String) Postgres version
 - `phase` (String) Current Phase of the cluster.
 - `private_networking` (Boolean) Is private networking enabled
+- `read_only_connections` (Boolean) Is read only connections enabled
 - `region` (String) Region
 - `replicas` (Number) Replicas
 - `resizing_pvc` (List of String) Resizing PVC
