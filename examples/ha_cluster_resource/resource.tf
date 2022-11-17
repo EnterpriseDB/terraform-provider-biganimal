@@ -54,13 +54,13 @@ resource "biganimal_cluster" "this_resource" {
     size              = "4 Gi"
   }
 
-  pg_type            = "epas"
-  pg_version         = "14"
-  private_networking = false
-  cloud_provider     = "aws"
+  pg_type               = "epas"
+  pg_version            = "14"
+  private_networking    = false
+  cloud_provider        = "aws"
   read_only_connections = true
-  region             = "us-east-1"
-  replicas           = 1
+  region                = "us-east-1"
+  replicas              = 1
 }
 
 output "password" {
