@@ -67,3 +67,7 @@ output "password" {
   sensitive = true
   value     = resource.biganimal_cluster.this_resource.password
 }
+
+output "ro_connection_uri" {
+  value = resource.biganimal_cluster.this_resource.ro_connection_uri
+}
