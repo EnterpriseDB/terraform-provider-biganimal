@@ -63,6 +63,14 @@ output "cloud_provider" {
   value = data.biganimal_cluster.this.cloud_provider
 }
 
+output "read_only_connections" {
+  value = data.biganimal_cluster.this.read_only_connections
+}
+
+output "ro_connection_uri" {
+  value = data.biganimal_cluster.this.ro_connection_uri
+}
+
 output "region" {
   value = data.biganimal_cluster.this.region
 }
