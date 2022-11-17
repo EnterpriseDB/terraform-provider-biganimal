@@ -1,0 +1,29 @@
+name: Pre-Commit
+
+on:
+  workflow_dispatch:
+  push:
+
+env:
+  GOLANGCI_LINT_VERSION: "v1.50.1"
+
+jobs:
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+
+      - name: Install required tools
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $HOME/.local/bin ${{ env.GOLANGCI_LINT_VERSION }}
+          golangci-lint --version
+
+      - name: Enforce pre-commit checks
+        uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --hook-stage push --from-ref origin/main --to-ref ${{ github.ref }}
