@@ -111,6 +111,11 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"ro_connection_uri": {
+				Description: "cluster read only connection uri",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"pg_config": {
 				Description: "Instance Type",
 				Type:        schema.TypeList,
@@ -153,6 +158,11 @@ func (c *ClusterData) Schema() *schema.Resource {
 			"cloud_provider": {
 				Description: "Cloud Provider",
 				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"read_only_connections": {
+				Description: "Is read only connection enabled",
+				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 			"region": {
@@ -250,9 +260,11 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	utils.SetOrPanic(d, "region", cluster.Region)
 	utils.SetOrPanic(d, "replicas", cluster.Replicas)
 	utils.SetOrPanic(d, "storage", *cluster.Storage)
+	utils.SetOrPanic(d, "read_only_connections", cluster.ReadOnlyConnections)
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
 	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
+	utils.SetOrPanic(d, "ro_connection_uri", connection.ReadOnlyPgUri)
 
 	d.SetId(*cluster.ClusterId)
 

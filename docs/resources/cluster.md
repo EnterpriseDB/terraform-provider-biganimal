@@ -34,6 +34,7 @@ Create a Postgres Cluster
 - `backup_retention_period` (String) Backup Retention Period.
 - `pg_config` (Block List) Instance Type (see [below for nested schema](#nestedblock--pg_config))
 - `private_networking` (Boolean) Is private networking enabled
+- `read_only_connections` (Boolean) Is read only connections enabled
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
