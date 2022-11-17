@@ -54,13 +54,13 @@ resource "biganimal_cluster" "this_resource" {
     size              = "4 Gi"
   }
 
-  pg_type            = "epas"
-  pg_version         = "14"
-  private_networking = false
-  cloud_provider     = "azure"
+  pg_type               = "epas"
+  pg_version            = "14"
+  private_networking    = false
+  cloud_provider        = "azure"
   read_only_connections = false
-  region             = "eastus2"
-  replicas           = 1
+  region                = "eastus2"
+  replicas              = 1
 }
 
 output "password" {
