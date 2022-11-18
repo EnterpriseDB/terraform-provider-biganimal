@@ -1,8 +1,10 @@
 BigAnimal
 CIDR
+EDB
 GUC
 IOPS
 InstanceType
+MPL
 Postgres
 biganimal
 config
