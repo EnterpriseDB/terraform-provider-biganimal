@@ -22,7 +22,7 @@ func NewClusterResource() *ClusterResource {
 
 func (c *ClusterResource) Schema() *schema.Resource {
 	return &schema.Resource{
-		Description: "Create a Postgres Cluster",
+		Description: "The cluster resource is used to manage BigAnimal clusters. See https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/ for more details.",
 
 		CreateContext: c.Create,
 		ReadContext:   c.Read,
@@ -35,18 +35,18 @@ func (c *ClusterResource) Schema() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
-				Description: "Allowed IP ranges",
+				Description: "Allowed IP ranges.",
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cidr_block": {
-							Description: "CIDR Block",
+							Description: "CIDR Block.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"description": {
-							Description: "CIDR Block Description",
+							Description: "CIDR Block Description.",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
@@ -54,28 +54,31 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"backup_retention_period": {
-				Description: "Backup Retention Period.",
+				// TODO: Add ValidateDiagFunc to validate the string types
+				Description: "Backup Retention Period. e.g. \"7d\", \"2w\" or \"3m\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"cluster_architecture": {
-				Description: "Cluster Architecture",
+				// TODO: Add ValidateDiagFunc for the Cluster Architecture IDs
+				// https://developer.hashicorp.com/terraform/plugin/sdkv2/schemas/schema-behaviors#validatediagfunc
+				Description: "Cluster Architecture. See https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/ for details.",
 				Type:        schema.TypeList,
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "ID",
+							Description: "Cluster Architecture ID. e.g. \"single\", \"ha\" or \"eha\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"name": {
-							Description: "Name",
+							Description: "Name.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"nodes": {
-							Description: "Node Count",
+							Description: "Node Count.",
 							Type:        schema.TypeInt,
 							Required:    true,
 						},
@@ -88,64 +91,66 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"created_at": {
-				Description: "Cluster Creation Time",
+				Description: "Cluster Creation Time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"deleted_at": {
-				Description: "Cluster Deletion Time",
+				Description: "Cluster Deletion Time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"expired_at": {
-				Description: "Cluster Expiry Time",
+				Description: "Cluster Expiry Time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"first_recoverability_point_at": {
-				Description: "Earliest Backup recover time",
+				Description: "Earliest Backup Recover Time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Instance Type",
+				// TODO: Add validation for the instance_type
+				Description: "Instance Type. e.g. \"azure:Standard_D2s_v3\", \"aws:c5.large\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"cluster_id": {
-				Description: "cluster ID",
+				Description: "Cluster ID.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"connection_uri": {
-				Description: "cluster connection uri",
+				Description: "Cluster connection uri.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"ro_connection_uri": {
-				Description: "cluster read only connection uri",
+				Description: "Cluster Read-only connection uri, only available for high availability clusters.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"password": {
-				Description: "Password",
+				// TODO: Add validation for the Password
+				Description: "Password for the user edb_admin. It must be 12 characters or more.",
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
 			},
 			"pg_config": {
-				Description: "Instance Type",
+				Description: "Database Configuration Parameters. See https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/ for details.",
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Description: "GUC Name",
+							Description: "GUC Name.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"value": {
-							Description: "GUC Value",
+							Description: "GUC Value.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
@@ -153,12 +158,14 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"pg_type": {
-				Description: "Postgres type",
+				// TODO: Add validation for the pg_type
+				Description: "Postgres type. e.g. \"epas\", \"pgextended\" or \"postgres\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"pg_version": {
-				Description: "Postgres Version",
+				// TODO: Add validation for the pg_version
+				Description: "Postgres version. See https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions for supported Postgres types and versions.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -168,27 +175,27 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"private_networking": {
-				Description: "Is private networking enabled",
+				Description: "Is private networking enabled.",
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},
 			"cloud_provider": {
-				Description: "Cloud Provider",
+				Description: "Cloud Provider. e.g. \"aws\" or \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"read_only_connections": {
-				Description: "Is read only connection enabled",
+				Description: "Is read only connection enabled.",
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},
 			"region": {
-				Description: "Region",
+				Description: "Region to deploy the cluster. See https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/ for supported regions.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"resizing_pvc": {
-				Description: "Resizing PVC",
+				Description: "Resizing PVC.",
 				Type:        schema.TypeList,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -196,33 +203,33 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed: true,
 			},
 			"storage": {
-				Description: "Storage",
+				Description: "Storage.",
 				Type:        schema.TypeList,
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"iops": {
-							Description: "IOPS",
+							Description: "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
 						"size": {
-							Description: "Size",
+							Description: "Size of the volume. It can be set to different values depending on your volume type and properties.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"throughput": {
-							Description: "Throughput",
+							Description: "Throughput.",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
 						"volume_properties": {
-							Description: "Volume Properties",
+							Description: "Volume Properties in accordance to the selected volume type.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"volume_type": {
-							Description: "Volume Type",
+							Description: "Volume Type. For Azure: \"azurepremiumstorage\" or \"ultradisk\", for AWS: \"gp3\", \"io2\" or \"io2-block-express\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
