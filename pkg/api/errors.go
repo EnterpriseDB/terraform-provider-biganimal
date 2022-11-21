@@ -5,7 +5,7 @@ import "errors"
 var (
 	Error400     = errors.New("Bad Request")
 	Error401     = errors.New("Not Authorized")
-	Error403     = errors.New("Formbidden")
+	Error403     = errors.New("Forbidden")
 	Error404     = errors.New("Resource Not Found")
 	Error409     = errors.New("Conflict")
 	Error412     = errors.New("Precondition Failed")
