@@ -1,10 +1,6 @@
-terraform {
-  required_providers {
-    biganimal = {
-      source  = "biganimal"
-      version = "0.3.1"
-    }
-  }
+variable "cluster_name" {
+  type        = string
+  description = "The name of the cluster"
 }
 
 data "biganimal_cluster" "this" {
