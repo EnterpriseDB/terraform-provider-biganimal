@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -14,17 +13,14 @@ type API struct {
 	httpClient *http.Client
 }
 
-func NewAPI() *API {
-	url := os.Getenv("BA_API_URI")
-	token := os.Getenv("BA_BEARER_TOKEN")
-
+func NewAPI(ba_bearer_token string, ba_api_uri string) *API {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
 	api := &API{
-		url,
-		token,
+		ba_api_uri,
+		ba_bearer_token,
 		httpClient,
 	}
 
