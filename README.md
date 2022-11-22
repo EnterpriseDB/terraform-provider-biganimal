@@ -31,7 +31,7 @@ The binary can also be compiled by `go build`, which will output the binary into
 
 ## Using the provider
 
-Until the provider is accepted into the terraform registry, it's necesary to install the binary into your local terraform cache using `make`, and to configure terraform to look in the right location to find the binary.
+Until the provider is accepted into the terraform registry, it's necessary to install the binary into your local terraform cache using `make`, and to configure terraform to look in the right location to find the binary for the BigAnimal terraform provider.
 
 Terraform can be configured by adding the following to your ~/.terraformrc file.
 
@@ -46,6 +46,24 @@ provider_installation {
   # the dev_overrides block, and so no other providers will be available.
   direct {}
 }
+```
+
+Now, you can configure your BigAnimal provider. This can be done in 2 ways:
+
+### Providing BigAnimal configuration in a provider block
+```hcl
+provider "biganimal" {
+  ba_bearer_token = <redacted> // See Getting and API Token section for details
+  // ba_api_uri   = "https://portal.biganimal.com/api/v2" // Optional
+}
+```
+### Configuring Environment Variables
+
+You can set `BA_BEARER_TOKEN` and `BA_API_URI` env vars.
+
+```bash
+export BA_BEARER_TOKEN=<redacted>
+export BA_API_URI=https://portal.biganimal.com/api/v2
 ```
 
 ### Getting an API Token
@@ -67,21 +85,14 @@ Have you finished the login successfully? (y/N) y
 }
 ```
 
-Once the token has been retrieved, set it in your environment as follows
+Once the `access_token` has been retrieved, you can write it to the provider block as described above.
+Alternatively, you can set it in your environment as follows
 
 ```bash
 export BA_BEARER_TOKEN=<REDACTED>
 ```
 
 After compiling, configuring the `.terraformrc` and fetching a token, the examples in the `./examples` folder can be run.
-
-### Configuring environment variables
-
-In order to access the BigAnimal API, you must also configure the following environment variable:
-
-```bash
-export BA_API_URI=https://portal.biganimal.com/api/v2
-```
 
 ## Debugging the provider
 

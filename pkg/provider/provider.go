@@ -36,11 +36,16 @@ func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
-				"ba_token": {
+				"ba_bearer_token": {
 					Type:        schema.TypeString,
 					Sensitive:   false,
 					Required:    true,
 					DefaultFunc: schema.EnvDefaultFunc("BA_BEARER_TOKEN", nil),
+				},
+				"ba_api_uri": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("BA_API_URI", "https://portal.biganimal.com/api/v2"),
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
@@ -60,13 +65,16 @@ func New(version string) func() *schema.Provider {
 }
 
 func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (any, diag.Diagnostics) {
+
 	return func(ctx context.Context, schema *schema.ResourceData) (any, diag.Diagnostics) {
+		ba_bearer_token := schema.Get("ba_bearer_token").(string)
+		ba_api_uri := schema.Get("ba_api_uri").(string)
 		// set our meta to be a new api.API
 		// this can be turned into concrete clients
 		// by
 		// api.BuildAPI(meta).ClusterClient()
 		// or
 		// api.BuildAPI(meta).RegionClient()
-		return api.NewAPI(), nil
+		return api.NewAPI(ba_bearer_token, ba_api_uri), nil
 	}
 }
