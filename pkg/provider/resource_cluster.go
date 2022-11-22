@@ -256,7 +256,7 @@ func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, me
 	// retry until we get success
 	err = resource.RetryContext(
 		ctx,
-		d.Timeout(schema.TimeoutUpdate)-time.Minute,
+		d.Timeout(schema.TimeoutCreate)-time.Minute,
 		c.retryFunc(ctx, d, meta, clusterId))
 	if err != nil {
 		return diag.FromErr(err)
