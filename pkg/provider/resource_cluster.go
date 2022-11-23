@@ -54,14 +54,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"backup_retention_period": {
-				// TODO: Add ValidateDiagFunc to validate the string types
 				Description: "Backup Retention Period. e.g. \"7d\", \"2w\" or \"3m\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"cluster_architecture": {
-				// TODO: Add ValidateDiagFunc for the Cluster Architecture IDs
-				// https://developer.hashicorp.com/terraform/plugin/sdkv2/schemas/schema-behaviors#validatediagfunc
 				Description: "Cluster Architecture. See https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/ for details.",
 				Type:        schema.TypeList,
 				Required:    true,
@@ -111,7 +108,6 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"instance_type": {
-				// TODO: Add validation for the instance_type
 				Description: "Instance Type. e.g. \"azure:Standard_D2s_v3\", \"aws:c5.large\".",
 				Type:        schema.TypeString,
 				Required:    true,
@@ -132,7 +128,6 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"password": {
-				// TODO: Add validation for the Password
 				Description: "Password for the user edb_admin. It must be 12 characters or more.",
 				Type:        schema.TypeString,
 				Required:    true,
@@ -158,13 +153,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"pg_type": {
-				// TODO: Add validation for the pg_type
 				Description: "Postgres type. e.g. \"epas\", \"pgextended\" or \"postgres\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"pg_version": {
-				// TODO: Add validation for the pg_version
 				Description: "Postgres version. See https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions for supported Postgres types and versions.",
 				Type:        schema.TypeString,
 				Required:    true,
