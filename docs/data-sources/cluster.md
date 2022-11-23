@@ -76,10 +76,6 @@ output "region" {
   value = data.biganimal_cluster.this.region
 }
 
-output "replicas" {
-  value = data.biganimal_cluster.this.replicas
-}
-
 output "resizing_pvc" {
   value = data.biganimal_cluster.this.resizing_pvc
 }

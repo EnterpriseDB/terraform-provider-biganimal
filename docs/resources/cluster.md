@@ -74,7 +74,6 @@ resource "biganimal_cluster" "single_node_cluster" {
   cloud_provider        = "azure"
   read_only_connections = false
   region                = "eastus2"
-  replicas              = 1
 }
 
 output "password" {
@@ -147,7 +146,6 @@ resource "biganimal_cluster" "this_resource" {
   cloud_provider        = "aws"
   read_only_connections = true
   region                = "us-east-1"
-  replicas              = 1
 }
 
 output "password" {
