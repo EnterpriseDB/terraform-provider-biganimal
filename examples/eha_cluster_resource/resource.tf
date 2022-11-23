@@ -32,8 +32,8 @@ resource "biganimal_cluster" "this_resource" {
 
   backup_retention_period = "6d"
   cluster_architecture {
-    id    = "ha"
-    nodes = 3
+    id    = "eha"
+    nodes = 5
   }
 
   instance_type = "aws:c5.large"
@@ -54,12 +54,11 @@ resource "biganimal_cluster" "this_resource" {
     size              = "4 Gi"
   }
 
-  pg_type               = "epas"
-  pg_version            = "14"
-  private_networking    = false
-  cloud_provider        = "aws"
-  read_only_connections = true
-  region                = "us-east-1"
+  pg_type            = "epas"
+  pg_version         = "14"
+  private_networking = false
+  cloud_provider     = "aws"
+  region             = "us-east-1"
 }
 
 output "password" {
@@ -67,6 +66,6 @@ output "password" {
   value     = resource.biganimal_cluster.this_resource.password
 }
 
-output "ro_connection_uri" {
-  value = resource.biganimal_cluster.this_resource.ro_connection_uri
+output "connection_uri" {
+  value = resource.biganimal_cluster.this_resource.connection_uri
 }

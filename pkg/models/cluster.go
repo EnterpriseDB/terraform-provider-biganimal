@@ -69,7 +69,6 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 			Id: utils.GetString(d, "region"),
 		},
 		ReadOnlyConnections: utils.GetBoolP(d, "read_only_connections"),
-		Replicas:            utils.GetIntP(d, "replicas"),
 		Storage:             &storage,
 	}
 
@@ -126,7 +125,6 @@ type Cluster struct {
 	Provider                   *Provider         `json:"provider,omitempty"`
 	ReadOnlyConnections        *bool             `json:"readOnlyConnections,omitempty"`
 	Region                     *Region           `json:"region,omitempty"`
-	Replicas                   *int              `json:"replicas,omitempty"`
 	ResizingPvc                []string          `json:"resizingPvc,omitempty"`
 	Storage                    *Storage          `json:"storage,omitempty"`
 }

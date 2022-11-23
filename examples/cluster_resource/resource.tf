@@ -60,7 +60,6 @@ resource "biganimal_cluster" "this_resource" {
   cloud_provider        = "azure"
   read_only_connections = false
   region                = "eastus2"
-  replicas              = 1
 }
 
 output "password" {
