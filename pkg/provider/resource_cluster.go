@@ -187,11 +187,6 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
-			"replicas": {
-				Description: "Replicas",
-				Type:        schema.TypeInt,
-				Required:    true,
-			},
 			"resizing_pvc": {
 				Description: "Resizing PVC",
 				Type:        schema.TypeList,
@@ -303,7 +298,6 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	utils.SetOrPanic(d, "cloud_provider", cluster.Provider)
 	utils.SetOrPanic(d, "read_only_connections", cluster.ReadOnlyConnections)
 	utils.SetOrPanic(d, "region", cluster.Region)
-	utils.SetOrPanic(d, "replicas", cluster.Replicas)
 	utils.SetOrPanic(d, "storage", cluster.Storage)
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)

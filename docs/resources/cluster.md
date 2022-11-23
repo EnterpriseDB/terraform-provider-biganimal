@@ -25,7 +25,6 @@ Create a Postgres Cluster
 - `pg_type` (String) Postgres type
 - `pg_version` (String) Postgres Version
 - `region` (String) Region
-- `replicas` (Number) Replicas
 - `storage` (Block List, Min: 1) Storage (see [below for nested schema](#nestedblock--storage))
 
 ### Optional

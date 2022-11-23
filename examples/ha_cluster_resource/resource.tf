@@ -60,7 +60,6 @@ resource "biganimal_cluster" "this_resource" {
   cloud_provider        = "aws"
   read_only_connections = true
   region                = "us-east-1"
-  replicas              = 1
 }
 
 output "password" {

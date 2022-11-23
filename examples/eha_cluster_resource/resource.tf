@@ -59,7 +59,6 @@ resource "biganimal_cluster" "this_resource" {
   private_networking = false
   cloud_provider     = "aws"
   region             = "us-east-1"
-  replicas           = 1
 }
 
 output "password" {

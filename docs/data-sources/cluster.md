@@ -40,7 +40,6 @@ Sample cluster data source in the BigAnimal terraform provider .
 - `private_networking` (Boolean) Is private networking enabled
 - `read_only_connections` (Boolean) Is read only connections enabled
 - `region` (String) Region
-- `replicas` (Number) Replicas
 - `resizing_pvc` (List of String) Resizing PVC
 - `storage` (List of Object) Storage (see [below for nested schema](#nestedatt--storage))
 
