@@ -28,7 +28,7 @@ resource "random_password" "password" {
 
 variable "cluster_name" {
   type        = string
-  description = "The name of the cluster"
+  description = "The name of the cluster."
 }
 
 resource "biganimal_cluster" "single_node_cluster" {
@@ -78,7 +78,7 @@ resource "biganimal_cluster" "single_node_cluster" {
 
 output "password" {
   sensitive = true
-  value     = resource.biganimal_cluster.this_resource.password
+  value     = resource.biganimal_cluster.single_node_cluster.password
 }
 ```
 
@@ -103,7 +103,13 @@ resource "random_password" "password" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-resource "biganimal_cluster" "this_resource" {
+variable "cluster_name" {
+  type        = string
+  description = "The name of the cluster."
+}
+
+
+resource "biganimal_cluster" "ha_cluster" {
   cluster_name = var.cluster_name
 
   allowed_ip_ranges {
@@ -150,11 +156,92 @@ resource "biganimal_cluster" "this_resource" {
 
 output "password" {
   sensitive = true
-  value     = resource.biganimal_cluster.this_resource.password
+  value     = resource.biganimal_cluster.ha_cluster.password
 }
 
 output "ro_connection_uri" {
-  value = resource.biganimal_cluster.this_resource.ro_connection_uri
+  value = resource.biganimal_cluster.ha_cluster.ro_connection_uri
+}
+```
+
+## Extreme High Availability Cluster Example
+```terraform
+terraform {
+  required_providers {
+    biganimal = {
+      source  = "biganimal"
+      version = "0.3.1"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.3.1"
+    }
+  }
+}
+
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "The name of the cluster."
+}
+
+
+resource "biganimal_cluster" "eha_cluster" {
+  cluster_name = var.cluster_name
+
+  allowed_ip_ranges {
+    cidr_block  = "127.0.0.1/32"
+    description = "localhost"
+  }
+
+  allowed_ip_ranges {
+    cidr_block  = "192.168.0.1/32"
+    description = "description!"
+  }
+
+  backup_retention_period = "6d"
+  cluster_architecture {
+    id    = "eha"
+    nodes = 5
+  }
+
+  instance_type = "aws:c5.large"
+  password      = resource.random_password.password.result
+  pg_config {
+    name  = "application_name"
+    value = "created through terraform"
+  }
+
+  pg_config {
+    name  = "array_nulls"
+    value = "off"
+  }
+
+  storage {
+    volume_type       = "gp3"
+    volume_properties = "gp3"
+    size              = "4 Gi"
+  }
+
+  pg_type            = "epas"
+  pg_version         = "14"
+  private_networking = false
+  cloud_provider     = "aws"
+  region             = "us-east-1"
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_cluster.eha_cluster.password
+}
+
+output "connection_uri" {
+  value = resource.biganimal_cluster.eha_cluster.connection_uri
 }
 ```
 

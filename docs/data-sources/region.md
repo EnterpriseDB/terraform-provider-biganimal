@@ -13,14 +13,9 @@ variable "cloud_provider" {
   }
 }
 
-variable "region_id" {
-  type        = string
-  description = "region id"
-}
-
 data "biganimal_region" "this" {
   cloud_provider = var.cloud_provider
-  // region_id   = var.region_id //optional
+  // region_id   = "us-west-1" //optional
   // query       = "eu" // optional
 }
 

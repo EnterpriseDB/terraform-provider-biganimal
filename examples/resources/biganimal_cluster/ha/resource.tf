@@ -17,7 +17,13 @@ resource "random_password" "password" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-resource "biganimal_cluster" "this_resource" {
+variable "cluster_name" {
+  type        = string
+  description = "The name of the cluster."
+}
+
+
+resource "biganimal_cluster" "ha_cluster" {
   cluster_name = var.cluster_name
 
   allowed_ip_ranges {
@@ -64,9 +70,9 @@ resource "biganimal_cluster" "this_resource" {
 
 output "password" {
   sensitive = true
-  value     = resource.biganimal_cluster.this_resource.password
+  value     = resource.biganimal_cluster.ha_cluster.password
 }
 
 output "ro_connection_uri" {
-  value = resource.biganimal_cluster.this_resource.ro_connection_uri
+  value = resource.biganimal_cluster.ha_cluster.ro_connection_uri
 }

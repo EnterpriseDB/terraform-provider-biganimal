@@ -19,7 +19,7 @@ resource "random_password" "password" {
 
 variable "cluster_name" {
   type        = string
-  description = "The name of the cluster"
+  description = "The name of the cluster."
 }
 
 resource "biganimal_cluster" "single_node_cluster" {
@@ -69,5 +69,5 @@ resource "biganimal_cluster" "single_node_cluster" {
 
 output "password" {
   sensitive = true
-  value     = resource.biganimal_cluster.this_resource.password
+  value     = resource.biganimal_cluster.single_node_cluster.password
 }
