@@ -103,7 +103,7 @@ output "storage" {
 - `cloud_provider` (String) Cloud Provider.
 - `cluster_architecture` (Block List) Cluster Architecture. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_id` (String) Cluster ID.
-- `connection_uri` (String) Cluster connection uri.
+- `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster Creation Time.
 - `deleted_at` (String) Cluster Deletion Time.
 - `expired_at` (String) Cluster Expiry Time.
@@ -118,7 +118,7 @@ output "storage" {
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `region` (String) Region to deploy the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
-- `ro_connection_uri` (String) Cluster Read-only connection uri, only available for high availability clusters.
+- `ro_connection_uri` (String) Cluster read-only connection URI, only available for high availability clusters.
 - `storage` (List of Object) Storage. (see [below for nested schema](#nestedatt--storage))
 
 <a id="nestedblock--allowed_ip_ranges"></a>

@@ -187,7 +187,7 @@ output "ro_connection_uri" {
 ### Read-Only
 
 - `cluster_id` (String) Cluster ID.
-- `connection_uri` (String) Cluster connection uri.
+- `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster Creation Time.
 - `deleted_at` (String) Cluster Deletion Time.
 - `expired_at` (String) Cluster Expiry Time.
@@ -195,7 +195,7 @@ output "ro_connection_uri" {
 - `id` (String) The ID of this resource.
 - `phase` (String) Current Phase of the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
-- `ro_connection_uri` (String) Cluster Read-only connection uri, only available for high availability clusters.
+- `ro_connection_uri` (String) Cluster read-only connection URI, only available for high availability clusters.
 
 <a id="nestedblock--cluster_architecture"></a>
 ### Nested Schema for `cluster_architecture`
@@ -252,5 +252,3 @@ Required:
 Optional:
 
 - `create` (String)
-
-
