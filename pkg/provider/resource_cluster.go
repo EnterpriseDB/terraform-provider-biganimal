@@ -217,7 +217,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Optional:    true,
 						},
 						"volume_properties": {
-							Description: "Volume Properties in accordance to the selected volume type.",
+							Description: "Volume Properties in accordance with the selected volume type.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},

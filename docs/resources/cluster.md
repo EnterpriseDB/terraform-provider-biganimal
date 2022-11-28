@@ -301,7 +301,7 @@ Read-Only:
 Required:
 
 - `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
-- `volume_properties` (String) Volume Properties in accordance to the selected volume type.
+- `volume_properties` (String) Volume Properties in accordance with the selected volume type.
 - `volume_type` (String) Volume Type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express".
 
 Optional:
