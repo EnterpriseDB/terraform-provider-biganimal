@@ -222,7 +222,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Required:    true,
 						},
 						"volume_type": {
-							Description: "Volume Type. For Azure: \"azurepremiumstorage\" or \"ultradisk\", for AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
+							Description: "Volume Type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
