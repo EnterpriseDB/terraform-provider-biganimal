@@ -40,7 +40,7 @@ func (r *RegionResource) Schema() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cloud_provider": {
-				Description: "Cloud Provider. For example, \"aws\" or \"azure\".",
+				Description: "Cloud provider. For example, \"aws\" or \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -50,12 +50,12 @@ func (r *RegionResource) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"name": {
-				Description: "Region Name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
+				Description: "Region name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"status": {
-				Description: "Region Status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
+				Description: "Region status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     api.REGION_ACTIVE,

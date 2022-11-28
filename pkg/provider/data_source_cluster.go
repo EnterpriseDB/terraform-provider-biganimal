@@ -30,12 +30,12 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cidr_block": {
-							Description: "CIDR Block.",
+							Description: "CIDR block.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"description": {
-							Description: "CIDR Block Description.",
+							Description: "CIDR block description.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
@@ -43,18 +43,18 @@ func (c *ClusterData) Schema() *schema.Resource {
 				},
 			},
 			"backup_retention_period": {
-				Description: "Backup Retention Period.",
+				Description: "Backup retention period.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"cluster_architecture": {
-				Description: "Cluster Architecture.",
+				Description: "Cluster architecture.",
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "Cluster Architecture ID.",
+							Description: "Cluster architecture ID.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
@@ -64,7 +64,7 @@ func (c *ClusterData) Schema() *schema.Resource {
 							Computed:    true,
 						},
 						"nodes": {
-							Description: "Node Count.",
+							Description: "Node count.",
 							Type:        schema.TypeInt,
 							Computed:    true,
 						},
@@ -77,27 +77,27 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"created_at": {
-				Description: "Cluster Creation Time.",
+				Description: "Cluster creation time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"deleted_at": {
-				Description: "Cluster Deletion Time.",
+				Description: "Cluster deletion time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"expired_at": {
-				Description: "Cluster Expiry Time.",
+				Description: "Cluster expiry time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"first_recoverability_point_at": {
-				Description: "Earliest Backup Recover Time.",
+				Description: "Earliest backup recover time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Instance Type.",
+				Description: "Instance type.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -117,18 +117,18 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"pg_config": {
-				Description: "Database Configuration Parameters.",
+				Description: "Database configuration parameters.",
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Description: "GUC Name.",
+							Description: "GUC name.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"value": {
-							Description: "GUC Value.",
+							Description: "GUC value.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
@@ -146,7 +146,7 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"phase": {
-				Description: "Current Phase of the cluster.",
+				Description: "Current phase of the cluster.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -156,7 +156,7 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"cloud_provider": {
-				Description: "Cloud Provider.",
+				Description: "Cloud provider.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -200,12 +200,12 @@ func (c *ClusterData) Schema() *schema.Resource {
 							Computed:    true,
 						},
 						"volume_properties": {
-							Description: "Volume Properties.",
+							Description: "Volume properties.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"volume_type": {
-							Description: "Volume Type.",
+							Description: "Volume type.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},

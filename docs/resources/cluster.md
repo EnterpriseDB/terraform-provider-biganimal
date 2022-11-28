@@ -250,10 +250,10 @@ output "connection_uri" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud Provider. For example, "aws" or "azure".
-- `cluster_architecture` (Block List, Min: 1) Cluster Architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
+- `cloud_provider` (String) Cloud provider. For example, "aws" or "azure".
+- `cluster_architecture` (Block List, Min: 1) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance Type. For example, "azure:Standard_D2s_v3" or "aws:c5.large".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3" or "aws:c5.large".
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
@@ -263,8 +263,8 @@ output "connection_uri" {
 ### Optional
 
 - `allowed_ip_ranges` (Block List) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
-- `backup_retention_period` (String) Backup Retention Period. For example, "7d", "2w", or "3m".
-- `pg_config` (Block List) Database Configuration Parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
+- `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
+- `pg_config` (Block List) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -273,12 +273,12 @@ output "connection_uri" {
 
 - `cluster_id` (String) Cluster ID.
 - `connection_uri` (String) Cluster connection URI.
-- `created_at` (String) Cluster Creation Time.
-- `deleted_at` (String) Cluster Deletion Time.
-- `expired_at` (String) Cluster Expiry Time.
-- `first_recoverability_point_at` (String) Earliest Backup Recover Time.
+- `created_at` (String) Cluster creation time.
+- `deleted_at` (String) Cluster deletion time.
+- `expired_at` (String) Cluster expiry time.
+- `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
-- `phase` (String) Current Phase of the cluster.
+- `phase` (String) Current phase of the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
 
@@ -287,8 +287,8 @@ output "connection_uri" {
 
 Required:
 
-- `id` (String) Cluster Architecture ID. For example, "single", "ha", or "eha".
-- `nodes` (Number) Node Count.
+- `id` (String) Cluster architecture ID. For example, "single", "ha", or "eha".
+- `nodes` (Number) Node count.
 
 Read-Only:
 
@@ -301,8 +301,8 @@ Read-Only:
 Required:
 
 - `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
-- `volume_properties` (String) Volume Properties in accordance with the selected volume type.
-- `volume_type` (String) Volume Type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express".
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express".
 
 Optional:
 
@@ -315,11 +315,11 @@ Optional:
 
 Required:
 
-- `cidr_block` (String) CIDR Block.
+- `cidr_block` (String) CIDR block.
 
 Optional:
 
-- `description` (String) CIDR Block Description.
+- `description` (String) CIDR block description.
 
 
 <a id="nestedblock--pg_config"></a>
@@ -327,8 +327,8 @@ Optional:
 
 Required:
 
-- `name` (String) GUC Name.
-- `value` (String) GUC Value.
+- `name` (String) GUC name.
+- `value` (String) GUC value.
 
 
 <a id="nestedblock--timeouts"></a>

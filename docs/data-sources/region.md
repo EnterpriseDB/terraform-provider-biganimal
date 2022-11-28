@@ -33,12 +33,12 @@ output "cloud_provider_id" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud Provider to list the regions. For example, "aws", "azure".
+- `cloud_provider` (String) Cloud provider to list the regions. For example, "aws" or "azure".
 
 ### Optional
 
 - `query` (String) Query to filter region list.
-- `region_id` (String) Unique Region ID. For example, "germanywestcentral" in the Azure cloud provider, "eu-west-1" in the AWS cloud provider.
+- `region_id` (String) Unique region ID. For example, "germanywestcentral" in the Azure cloud provider, "eu-west-1" in the AWS cloud provider.
 
 ### Read-Only
 

@@ -95,21 +95,21 @@ output "storage" {
 ### Read-Only
 
 - `allowed_ip_ranges` (Block List) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
-- `backup_retention_period` (String) Backup Retention Period.
-- `cloud_provider` (String) Cloud Provider.
-- `cluster_architecture` (Block List) Cluster Architecture. (see [below for nested schema](#nestedblock--cluster_architecture))
+- `backup_retention_period` (String) Backup retention period.
+- `cloud_provider` (String) Cloud provider.
+- `cluster_architecture` (Block List) Cluster architecture. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_id` (String) Cluster ID.
 - `connection_uri` (String) Cluster connection URI.
-- `created_at` (String) Cluster Creation Time.
-- `deleted_at` (String) Cluster Deletion Time.
-- `expired_at` (String) Cluster Expiry Time.
-- `first_recoverability_point_at` (String) Earliest Backup Recover Time.
+- `created_at` (String) Cluster creation time.
+- `deleted_at` (String) Cluster deletion time.
+- `expired_at` (String) Cluster expiry time.
+- `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
-- `instance_type` (String) Instance Type.
-- `pg_config` (List of Object) Database Configuration Parameters. (see [below for nested schema](#nestedatt--pg_config))
+- `instance_type` (String) Instance type.
+- `pg_config` (List of Object) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
 - `pg_version` (String) Postgres version.
-- `phase` (String) Current Phase of the cluster.
+- `phase` (String) Current phase of the cluster.
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `region` (String) Region to deploy the cluster.
@@ -122,8 +122,8 @@ output "storage" {
 
 Read-Only:
 
-- `cidr_block` (String) CIDR Block.
-- `description` (String) CIDR Block Description.
+- `cidr_block` (String) CIDR block.
+- `description` (String) CIDR block description.
 
 
 <a id="nestedblock--cluster_architecture"></a>
@@ -131,9 +131,9 @@ Read-Only:
 
 Read-Only:
 
-- `id` (String) Cluster Architecture ID.
+- `id` (String) Cluster architecture ID.
 - `name` (String) Name.
-- `nodes` (Number) Node Count.
+- `nodes` (Number) Node count.
 
 
 <a id="nestedatt--pg_config"></a>

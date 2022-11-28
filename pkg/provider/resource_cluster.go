@@ -41,12 +41,12 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cidr_block": {
-							Description: "CIDR Block.",
+							Description: "CIDR block.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"description": {
-							Description: "CIDR Block Description.",
+							Description: "CIDR block description.",
 							Type:        schema.TypeString,
 							Optional:    true,
 						},
@@ -54,18 +54,18 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"backup_retention_period": {
-				Description: "Backup Retention Period. For example, \"7d\", \"2w\", or \"3m\".",
+				Description: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"cluster_architecture": {
-				Description: "Cluster Architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
+				Description: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
 				Type:        schema.TypeList,
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "Cluster Architecture ID. For example, \"single\", \"ha\", or \"eha\".",
+							Description: "Cluster architecture ID. For example, \"single\", \"ha\", or \"eha\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
@@ -75,7 +75,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Computed:    true,
 						},
 						"nodes": {
-							Description: "Node Count.",
+							Description: "Node count.",
 							Type:        schema.TypeInt,
 							Required:    true,
 						},
@@ -88,27 +88,27 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"created_at": {
-				Description: "Cluster Creation Time.",
+				Description: "Cluster creation time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"deleted_at": {
-				Description: "Cluster Deletion Time.",
+				Description: "Cluster deletion time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"expired_at": {
-				Description: "Cluster Expiry Time.",
+				Description: "Cluster expiry time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"first_recoverability_point_at": {
-				Description: "Earliest Backup Recover Time.",
+				Description: "Earliest backup recover time.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Instance Type. For example, \"azure:Standard_D2s_v3\" or \"aws:c5.large\".",
+				Description: "Instance type. For example, \"azure:Standard_D2s_v3\" or \"aws:c5.large\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -134,18 +134,18 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Sensitive:   true,
 			},
 			"pg_config": {
-				Description: "Database Configuration Parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
+				Description: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Description: "GUC Name.",
+							Description: "GUC name.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"value": {
-							Description: "GUC Value.",
+							Description: "GUC value.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
@@ -163,7 +163,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"phase": {
-				Description: "Current Phase of the cluster.",
+				Description: "Current phase of the cluster.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -173,7 +173,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Optional:    true,
 			},
 			"cloud_provider": {
-				Description: "Cloud Provider. For example, \"aws\" or \"azure\".",
+				Description: "Cloud provider. For example, \"aws\" or \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -217,12 +217,12 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Optional:    true,
 						},
 						"volume_properties": {
-							Description: "Volume Properties in accordance with the selected volume type.",
+							Description: "Volume properties in accordance with the selected volume type.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
 						"volume_type": {
-							Description: "Volume Type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
+							Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
