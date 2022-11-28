@@ -50,7 +50,7 @@ func (r *RegionResource) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"name": {
-				Description: "Region Name of the region. For example, \"Germany West Central\", \"EU West 1\".",
+				Description: "Region Name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

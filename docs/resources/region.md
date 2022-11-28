@@ -49,7 +49,7 @@ output "region_continent" {
 
 - `continent` (String) Continent that region belongs to. For example, "Asia", "Australia", or "Europe".
 - `id` (String) The ID of this resource.
-- `name` (String) Region Name of the region. For example, "Germany West Central", "EU West 1".
+- `name` (String) Region Name of the region. For example, "Germany West Central" or "EU West 1".
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
