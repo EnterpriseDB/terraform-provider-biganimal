@@ -280,7 +280,7 @@ output "connection_uri" {
 - `id` (String) The ID of this resource.
 - `phase` (String) Current Phase of the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
-- `ro_connection_uri` (String) Cluster read-only connection URI, only available for high availability clusters.
+- `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
 
 <a id="nestedblock--cluster_architecture"></a>
 ### Nested Schema for `cluster_architecture`

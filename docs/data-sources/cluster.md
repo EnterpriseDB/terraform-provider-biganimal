@@ -114,7 +114,7 @@ output "storage" {
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `region` (String) Region to deploy the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
-- `ro_connection_uri` (String) Cluster read-only connection URI, only available for high availability clusters.
+- `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
 - `storage` (List of Object) Storage. (see [below for nested schema](#nestedatt--storage))
 
 <a id="nestedblock--allowed_ip_ranges"></a>

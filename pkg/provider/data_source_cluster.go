@@ -112,7 +112,7 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"ro_connection_uri": {
-				Description: "Cluster read-only connection URI, only available for high availability clusters.",
+				Description: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
