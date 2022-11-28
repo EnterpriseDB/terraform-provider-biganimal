@@ -37,19 +37,19 @@ output "region_continent" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud Provider. e.g. "aws", "azure".
-- `region_id` (String) Region ID of the region. e.g. "germanywestcentral" in the azure cloud provider, "eu-west-1" in the aws cloud provider.
+- `cloud_provider` (String) Cloud Provider. For example, "aws", "azure".
+- `region_id` (String) Region ID of the region. For example, "germanywestcentral" in the azure cloud provider, "eu-west-1" in the aws cloud provider.
 
 ### Optional
 
-- `status` (String) Region Status of the region. e.g. "ACTIVE", "INACTIVE" or "SUSPENDED".
+- `status` (String) Region Status of the region. For example, "ACTIVE", "INACTIVE" or "SUSPENDED".
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- `continent` (String) Continent that region belongs to. e.g. "Asia","Australia","Europe".
+- `continent` (String) Continent that region belongs to. For example, "Asia","Australia","Europe".
 - `id` (String) The ID of this resource.
-- `name` (String) Region Name of the region. e.g. "Germany West Central", "EU West 1".
+- `name` (String) Region Name of the region. For example, "Germany West Central", "EU West 1".
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`

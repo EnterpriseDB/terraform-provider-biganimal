@@ -250,12 +250,12 @@ output "connection_uri" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud Provider. e.g. "aws" or "azure".
+- `cloud_provider` (String) Cloud Provider. For example, "aws" or "azure".
 - `cluster_architecture` (Block List, Min: 1) Cluster Architecture. See https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/ for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance Type. e.g. "azure:Standard_D2s_v3", "aws:c5.large".
+- `instance_type` (String) Instance Type. For example, "azure:Standard_D2s_v3", "aws:c5.large".
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
-- `pg_type` (String) Postgres type. e.g. "epas", "pgextended" or "postgres".
+- `pg_type` (String) Postgres type. For example, "epas", "pgextended" or "postgres".
 - `pg_version` (String) Postgres version. See https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions for supported Postgres types and versions.
 - `region` (String) Region to deploy the cluster. See https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/ for supported regions.
 - `storage` (Block List, Min: 1) Storage. (see [below for nested schema](#nestedblock--storage))
@@ -263,7 +263,7 @@ output "connection_uri" {
 ### Optional
 
 - `allowed_ip_ranges` (Block List) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
-- `backup_retention_period` (String) Backup Retention Period. e.g. "7d", "2w" or "3m".
+- `backup_retention_period` (String) Backup Retention Period. For example, "7d", "2w" or "3m".
 - `pg_config` (Block List) Database Configuration Parameters. See https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/ for details. (see [below for nested schema](#nestedblock--pg_config))
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
@@ -287,7 +287,7 @@ output "connection_uri" {
 
 Required:
 
-- `id` (String) Cluster Architecture ID. e.g. "single", "ha" or "eha".
+- `id` (String) Cluster Architecture ID. For example, "single", "ha" or "eha".
 - `nodes` (Number) Node Count.
 
 Read-Only:

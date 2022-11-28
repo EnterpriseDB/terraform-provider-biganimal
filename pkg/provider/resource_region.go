@@ -40,28 +40,28 @@ func (r *RegionResource) Schema() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cloud_provider": {
-				Description: "Cloud Provider. e.g. \"aws\", \"azure\".",
+				Description: "Cloud Provider. For example, \"aws\", \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"region_id": {
-				Description: "Region ID of the region. e.g. \"germanywestcentral\" in the azure cloud provider, \"eu-west-1\" in the aws cloud provider.",
+				Description: "Region ID of the region. For example, \"germanywestcentral\" in the azure cloud provider, \"eu-west-1\" in the aws cloud provider.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"name": {
-				Description: "Region Name of the region. e.g. \"Germany West Central\", \"EU West 1\".",
+				Description: "Region Name of the region. For example, \"Germany West Central\", \"EU West 1\".",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"status": {
-				Description: "Region Status of the region. e.g. \"ACTIVE\", \"INACTIVE\" or \"SUSPENDED\".",
+				Description: "Region Status of the region. For example, \"ACTIVE\", \"INACTIVE\" or \"SUSPENDED\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     api.REGION_ACTIVE,
 			},
 			"continent": {
-				Description: "Continent that region belongs to. e.g. \"Asia\",\"Australia\",\"Europe\".",
+				Description: "Continent that region belongs to. For example, \"Asia\",\"Australia\",\"Europe\".",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

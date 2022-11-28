@@ -54,7 +54,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"backup_retention_period": {
-				Description: "Backup Retention Period. e.g. \"7d\", \"2w\" or \"3m\".",
+				Description: "Backup Retention Period. For example, \"7d\", \"2w\" or \"3m\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -65,7 +65,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "Cluster Architecture ID. e.g. \"single\", \"ha\" or \"eha\".",
+							Description: "Cluster Architecture ID. For example, \"single\", \"ha\" or \"eha\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
@@ -108,7 +108,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Instance Type. e.g. \"azure:Standard_D2s_v3\", \"aws:c5.large\".",
+				Description: "Instance Type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -153,7 +153,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"pg_type": {
-				Description: "Postgres type. e.g. \"epas\", \"pgextended\" or \"postgres\".",
+				Description: "Postgres type. For example, \"epas\", \"pgextended\" or \"postgres\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -173,7 +173,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Optional:    true,
 			},
 			"cloud_provider": {
-				Description: "Cloud Provider. e.g. \"aws\" or \"azure\".",
+				Description: "Cloud Provider. For example, \"aws\" or \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},

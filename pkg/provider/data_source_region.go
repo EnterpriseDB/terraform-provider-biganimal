@@ -62,7 +62,7 @@ func (r *RegionData) Schema() *schema.Resource {
 				},
 			},
 			"cloud_provider": {
-				Description: "Cloud Provider to list the regions. e.g. \"aws\", \"azure\".",
+				Description: "Cloud Provider to list the regions. For example, \"aws\", \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -72,7 +72,7 @@ func (r *RegionData) Schema() *schema.Resource {
 				Optional:    true,
 			},
 			"region_id": {
-				Description: "Unique Region ID. e.g. \"germanywestcentral\" in the azure cloud provider, \"eu-west-1\" in the aws cloud provider.",
+				Description: "Unique Region ID. For example, \"germanywestcentral\" in the azure cloud provider, \"eu-west-1\" in the aws cloud provider.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
