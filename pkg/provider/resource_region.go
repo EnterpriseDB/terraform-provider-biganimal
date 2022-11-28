@@ -55,13 +55,13 @@ func (r *RegionResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"status": {
-				Description: "Region Status of the region. For example, \"ACTIVE\", \"INACTIVE\" or \"SUSPENDED\".",
+				Description: "Region Status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     api.REGION_ACTIVE,
 			},
 			"continent": {
-				Description: "Continent that region belongs to. For example, \"Asia\",\"Australia\",\"Europe\".",
+				Description: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

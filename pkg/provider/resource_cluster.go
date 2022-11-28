@@ -54,7 +54,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"backup_retention_period": {
-				Description: "Backup Retention Period. For example, \"7d\", \"2w\" or \"3m\".",
+				Description: "Backup Retention Period. For example, \"7d\", \"2w\", or \"3m\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -65,7 +65,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "Cluster Architecture ID. For example, \"single\", \"ha\" or \"eha\".",
+							Description: "Cluster Architecture ID. For example, \"single\", \"ha\", or \"eha\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
@@ -153,7 +153,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				},
 			},
 			"pg_type": {
-				Description: "Postgres type. For example, \"epas\", \"pgextended\" or \"postgres\".",
+				Description: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -222,7 +222,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Required:    true,
 						},
 						"volume_type": {
-							Description: "Volume Type. For Azure: \"azurepremiumstorage\" or \"ultradisk\", for AWS: \"gp3\", \"io2\" or \"io2-block-express\".",
+							Description: "Volume Type. For Azure: \"azurepremiumstorage\" or \"ultradisk\", for AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},

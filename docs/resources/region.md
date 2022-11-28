@@ -42,12 +42,12 @@ output "region_continent" {
 
 ### Optional
 
-- `status` (String) Region Status of the region. For example, "ACTIVE", "INACTIVE" or "SUSPENDED".
+- `status` (String) Region Status of the region. For example, "ACTIVE", "INACTIVE", or "SUSPENDED".
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- `continent` (String) Continent that region belongs to. For example, "Asia","Australia","Europe".
+- `continent` (String) Continent that region belongs to. For example, "Asia", "Australia", or "Europe".
 - `id` (String) The ID of this resource.
 - `name` (String) Region Name of the region. For example, "Germany West Central", "EU West 1".
 
