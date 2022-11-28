@@ -1,5 +1,5 @@
 # biganimal_cluster (Resource)
-The cluster resource is used to manage BigAnimal clusters. See https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/ for more details.
+The cluster resource is used to manage BigAnimal clusters. See [Creating a cluster](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/) for more details.
 
 !> Any note about cluster resources should come here
 
@@ -251,20 +251,20 @@ output "connection_uri" {
 ### Required
 
 - `cloud_provider` (String) Cloud Provider. For example, "aws" or "azure".
-- `cluster_architecture` (Block List, Min: 1) Cluster Architecture. See https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/ for details. (see [below for nested schema](#nestedblock--cluster_architecture))
+- `cluster_architecture` (Block List, Min: 1) Cluster Architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
 - `instance_type` (String) Instance Type. For example, "azure:Standard_D2s_v3" or "aws:c5.large".
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
-- `pg_version` (String) Postgres version. See https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions for supported Postgres types and versions.
-- `region` (String) Region to deploy the cluster. See https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/ for supported regions.
+- `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
+- `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `storage` (Block List, Min: 1) Storage. (see [below for nested schema](#nestedblock--storage))
 
 ### Optional
 
 - `allowed_ip_ranges` (Block List) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup Retention Period. For example, "7d", "2w", or "3m".
-- `pg_config` (Block List) Database Configuration Parameters. See https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/ for details. (see [below for nested schema](#nestedblock--pg_config))
+- `pg_config` (Block List) Database Configuration Parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

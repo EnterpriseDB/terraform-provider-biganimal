@@ -1,5 +1,5 @@
 # biganimal_region (Resource)
-The region resource is used to manage regions for a given cloud provider. See https://www.enterprisedb.com/docs/biganimal/latest/getting_started/activating_regions/ for more details.
+The region resource is used to manage regions for a given cloud provider. See [Activating regions](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/activating_regions/) for more details.
 
 !> Creation of region resources is not supported for now.
 

@@ -22,7 +22,7 @@ func NewClusterResource() *ClusterResource {
 
 func (c *ClusterResource) Schema() *schema.Resource {
 	return &schema.Resource{
-		Description: "The cluster resource is used to manage BigAnimal clusters. See https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/ for more details.",
+		Description: "The cluster resource is used to manage BigAnimal clusters. See [Creating a cluster](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/) for more details.",
 
 		CreateContext: c.Create,
 		ReadContext:   c.Read,
@@ -59,7 +59,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Optional:    true,
 			},
 			"cluster_architecture": {
-				Description: "Cluster Architecture. See https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/ for details.",
+				Description: "Cluster Architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
 				Type:        schema.TypeList,
 				Required:    true,
 				Elem: &schema.Resource{
@@ -134,7 +134,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Sensitive:   true,
 			},
 			"pg_config": {
-				Description: "Database Configuration Parameters. See https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/ for details.",
+				Description: "Database Configuration Parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem: &schema.Resource{
@@ -158,7 +158,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"pg_version": {
-				Description: "Postgres version. See https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions for supported Postgres types and versions.",
+				Description: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -183,7 +183,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Optional:    true,
 			},
 			"region": {
-				Description: "Region to deploy the cluster. See https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/ for supported regions.",
+				Description: "Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
