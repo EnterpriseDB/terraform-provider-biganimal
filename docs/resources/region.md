@@ -38,7 +38,7 @@ output "region_continent" {
 ### Required
 
 - `cloud_provider` (String) Cloud Provider. For example, "aws", "azure".
-- `region_id` (String) Region ID of the region. For example, "germanywestcentral" in the azure cloud provider, "eu-west-1" in the aws cloud provider.
+- `region_id` (String) Region ID of the region. For example, "germanywestcentral" in the Azure cloud provider, "eu-west-1" in the AWS cloud provider.
 
 ### Optional
 
