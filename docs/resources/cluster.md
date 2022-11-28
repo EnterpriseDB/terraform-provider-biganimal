@@ -253,7 +253,7 @@ output "connection_uri" {
 - `cloud_provider` (String) Cloud Provider. For example, "aws" or "azure".
 - `cluster_architecture` (Block List, Min: 1) Cluster Architecture. See https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/ for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance Type. For example, "azure:Standard_D2s_v3", "aws:c5.large".
+- `instance_type` (String) Instance Type. For example, "azure:Standard_D2s_v3" or "aws:c5.large".
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions for supported Postgres types and versions.

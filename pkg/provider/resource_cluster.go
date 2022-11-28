@@ -108,7 +108,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Instance Type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\".",
+				Description: "Instance Type. For example, \"azure:Standard_D2s_v3\" or \"aws:c5.large\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
