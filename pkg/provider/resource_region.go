@@ -40,7 +40,7 @@ func (r *RegionResource) Schema() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cloud_provider": {
-				Description: "Cloud Provider. For example, \"aws\", \"azure\".",
+				Description: "Cloud Provider. For example, \"aws\" or \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
