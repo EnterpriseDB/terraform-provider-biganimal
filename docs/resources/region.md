@@ -9,7 +9,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "biganimal"
-      version = "0.3.1"
+      version = "0.1.0"
     }
   }
 }
