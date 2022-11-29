@@ -22,7 +22,7 @@ see [Getting started with the BigAnimal free trial.](https://www.enterprisedb.co
 ```terraform
 # Configure the BigAnimal Provider
 provider "biganimal" {
-  ba_token = "<redacted>"
+  ba_bearer_token = "<redacted>"
   //ba_api_uri   = "https://portal.biganimal.com/api/v2" // Optional
 }
 # Manage the resources
