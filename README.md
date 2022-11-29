@@ -48,7 +48,7 @@ provider_installation {
 }
 ```
 
-Now, you can configure your BigAnimal provider. This can be done in 2 ways:
+Now, you can configure your BigAnimal provider. This can be done in one of these two ways:
 
 ### Providing BigAnimal configuration in a provider block
 ```hcl
