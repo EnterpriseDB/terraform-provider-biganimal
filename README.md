@@ -23,8 +23,8 @@ Builds are done via make targets.  Running `make` will build and install the pro
 ```bash
 $ make
 go build -o terraform-provider-biganimal
-mkdir -p ~/.terraform.d/plugins/hashicorp.com/edu/biganimal/0.3.1/darwin_amd64
-mv terraform-provider-biganimal ~/.terraform.d/plugins/hashicorp.com/edu/biganimal/0.3.1/darwin_amd64
+mkdir -p ~/.terraform.d/plugins/EnterpriseDB/biganimal/0.1.0/darwin_amd64
+mv terraform-provider-biganimal ~/.terraform.d/plugins/EnterpriseDB/biganimal/0.1.0/darwin_amd64
 ```
 
 The binary can also be compiled by `go build`, which will output the binary into the current directory.
@@ -38,7 +38,7 @@ Terraform can be configured by adding the following to your ~/.terraformrc file.
 ```hcl
 provider_installation {
   dev_overrides {
-      "registry.terraform.io/hashicorp/biganimal" = "/Users/<YOUR_HOME>/.terraform.d/plugins/hashicorp.com/edu/biganimal/0.3.1/<OS_ARCH>"
+      "registry.terraform.io/EnterpriseDB/biganimal" = "/Users/<YOUR_HOME>/.terraform.d/plugins/EnterpriseDB/biganimal/0.1.0/<OS_ARCH>"
   }
 
   # For all other providers, install them directly from their origin provider
@@ -101,13 +101,13 @@ If you're using Vscode, you can use the embedded Golang Debugger. Intro to debug
 There is already a .vscode/launch.json file, so you can easily run `Debug - Attach External CLI` in the Run and Debug section, which is going to print a `TF_REATTACH_PROVIDERS` env var if your code builds successfully. The env var looks similar to this one:
 
 ```bash
-$> TF_REATTACH_PROVIDERS='{"registry.terraform.io/hashicorp/biganimal":{"Protocol":"grpc","ProtocolVersion":5,"Pid":14123,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/99/kt3b7rgn7wbcc55jt9zv_rch0000gn/T/plugin608643082"}}}'
+$> TF_REATTACH_PROVIDERS='{"registry.terraform.io/EnterpriseDB/biganimal":{"Protocol":"grpc","ProtocolVersion":5,"Pid":14123,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/99/kt3b7rgn7wbcc55jt9zv_rch0000gn/T/plugin608643082"}}}'
 ```
 
-You can navigate to `examples/provider` directory and run your terraform commands with this env var:
+You can navigate to the folders under `examples/` directory and run your terraform commands with this env var:
 
 ```bash
-$> TF_REATTACH_PROVIDERS='{"registry.terraform.io/hashicorp/biganimal":{"Protocol":"grpc","ProtocolVersion":5,"Pid":14123,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/99/kt3b7rgn7wbcc55jt9zv_rch0000gn/T/plugin608643082"}}}' terraform plan
+$> TF_REATTACH_PROVIDERS='{"registry.terraform.io/EnterpriseDB/biganimal":{"Protocol":"grpc","ProtocolVersion":5,"Pid":14123,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/99/kt3b7rgn7wbcc55jt9zv_rch0000gn/T/plugin608643082"}}}' terraform plan
 ```
 
 For more information about Vscode Golang debugging, please refer to [this documentation](https://github.com/golang/vscode-go/blob/master/docs/debugging.md).

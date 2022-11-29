@@ -35,8 +35,7 @@ func main() {
 	opts := &plugin.ServeOpts{
 		Debug: debugMode,
 
-		// TODO: update this string with the full name of your provider as used in your configs
-		ProviderAddr: "registry.terraform.io/hashicorp/biganimal",
+		ProviderAddr: "registry.terraform.io/EnterpriseDB/biganimal",
 
 		ProviderFunc: provider.New(version),
 	}

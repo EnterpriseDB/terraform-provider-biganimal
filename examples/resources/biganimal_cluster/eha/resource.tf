@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     biganimal = {
-      source  = "biganimal"
-      version = "0.3.1"
+      source  = "EnterpriseDB/biganimal"
+      version = "0.1.0"
     }
     random = {
       source  = "hashicorp/random"

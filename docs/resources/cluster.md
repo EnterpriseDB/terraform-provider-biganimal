@@ -8,8 +8,8 @@ The cluster resource is used to manage BigAnimal clusters. See [Creating a clust
 terraform {
   required_providers {
     biganimal = {
-      source  = "biganimal"
-      version = "0.3.1"
+      source  = "EnterpriseDB/biganimal"
+      version = "0.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -85,8 +85,8 @@ output "password" {
 terraform {
   required_providers {
     biganimal = {
-      source  = "biganimal"
-      version = "0.3.1"
+      source  = "EnterpriseDB/biganimal"
+      version = "0.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -167,8 +167,8 @@ output "ro_connection_uri" {
 terraform {
   required_providers {
     biganimal = {
-      source  = "biganimal"
-      version = "0.3.1"
+      source  = "EnterpriseDB/biganimal"
+      version = "0.1.0"
     }
     random = {
       source  = "hashicorp/random"
