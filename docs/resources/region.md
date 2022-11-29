@@ -8,7 +8,7 @@ The region resource is used to manage regions for a given cloud provider. See [A
 terraform {
   required_providers {
     biganimal = {
-      source  = "biganimal"
+      source  = "EnterpriseDB/biganimal"
       version = "0.1.0"
     }
   }
