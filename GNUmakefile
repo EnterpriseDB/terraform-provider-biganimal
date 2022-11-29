@@ -1,6 +1,7 @@
 
 TEST?=$$(go list ./... | grep -v 'vendor')
-HOSTNAME=EnterpriseDB
+HOSTNAME=registry.terraform.io
+NAMESPACE=EnterpriseDB
 NAME=biganimal
 BINARY=terraform-provider-${NAME}
 VERSION=0.1.0
@@ -35,8 +36,8 @@ release:
 	goreleaser release --rm-dist --snapshot --skip-publish  --skip-sign
 
 install: build
-	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAME}/${VERSION}/${OS_ARCH}
-	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAME}/${VERSION}/${OS_ARCH}
+	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 test:
 	go test -i $(TEST) || exit 1
