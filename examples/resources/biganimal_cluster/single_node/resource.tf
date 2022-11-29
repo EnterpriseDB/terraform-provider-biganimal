@@ -17,7 +17,12 @@ resource "random_password" "password" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-resource "biganimal_cluster" "this_resource" {
+variable "cluster_name" {
+  type        = string
+  description = "The name of the cluster."
+}
+
+resource "biganimal_cluster" "single_node_cluster" {
   cluster_name = var.cluster_name
 
   allowed_ip_ranges {
@@ -32,11 +37,11 @@ resource "biganimal_cluster" "this_resource" {
 
   backup_retention_period = "6d"
   cluster_architecture {
-    id    = "ha"
-    nodes = 3
+    id    = "single"
+    nodes = 1
   }
 
-  instance_type = "aws:c5.large"
+  instance_type = "azure:Standard_D2s_v3"
   password      = resource.random_password.password.result
   pg_config {
     name  = "application_name"
@@ -49,24 +54,20 @@ resource "biganimal_cluster" "this_resource" {
   }
 
   storage {
-    volume_type       = "gp3"
-    volume_properties = "gp3"
+    volume_type       = "azurepremiumstorage"
+    volume_properties = "P1"
     size              = "4 Gi"
   }
 
   pg_type               = "epas"
   pg_version            = "14"
   private_networking    = false
-  cloud_provider        = "aws"
-  read_only_connections = true
-  region                = "us-east-1"
+  cloud_provider        = "azure"
+  read_only_connections = false
+  region                = "eastus2"
 }
 
 output "password" {
   sensitive = true
-  value     = resource.biganimal_cluster.this_resource.password
-}
-
-output "ro_connection_uri" {
-  value = resource.biganimal_cluster.this_resource.ro_connection_uri
+  value     = resource.biganimal_cluster.single_node_cluster.password
 }

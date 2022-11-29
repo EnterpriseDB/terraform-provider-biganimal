@@ -25,7 +25,7 @@ func NewRegionResource() *RegionResource {
 
 func (r *RegionResource) Schema() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manage a region",
+		Description: "The region resource is used to manage regions for a given cloud provider. See [Activating regions](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/activating_regions/) for more details.",
 
 		CreateContext: r.Create,
 		ReadContext:   r.Read,
@@ -40,28 +40,28 @@ func (r *RegionResource) Schema() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"cloud_provider": {
-				Description: "Cloud Provider",
+				Description: "Cloud provider. For example, \"aws\" or \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"region_id": {
-				Description: "Region ID",
+				Description: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"name": {
-				Description: "Region Name",
+				Description: "Region name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"status": {
-				Description: "Region Status",
+				Description: "Region status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     api.REGION_ACTIVE,
 			},
 			"continent": {
-				Description: "Continent",
+				Description: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

@@ -22,39 +22,39 @@ func NewRegionData() *RegionData {
 
 func (r *RegionData) Schema() *schema.Resource {
 	return &schema.Resource{
-		Description: "The available regions within a cloud provider",
+		Description: "The region data source shows the available regions within a cloud provider.",
 		ReadContext: r.Read,
 
-		// {
-		// 	"regionId": "azure:Canada East",
-		// 	"regionName": "Canada East",
-		// 	"status": "Active",
-		// 	"continent": "Americas"
-		//   }
+		//{
+		//	"regionId": "eu-west-1",
+		//	"regionName": "EU West 1",
+		//	"status": "ACTIVE",
+		//	"continent": "Europe"
+		//}
 		Schema: map[string]*schema.Schema{
 			"regions": {
-				Description: "Region ID",
+				Description: "Region information.",
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"region_id": {
-							Description: "Region ID",
+							Description: "Region ID of the region.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"name": {
-							Description: "Region Name",
+							Description: "Region name of the region.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"status": {
-							Description: "Region Status",
+							Description: "Region status of the region.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"continent": {
-							Description: "Continent",
+							Description: "Continent that region belongs to.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
@@ -62,17 +62,17 @@ func (r *RegionData) Schema() *schema.Resource {
 				},
 			},
 			"cloud_provider": {
-				Description: "Cloud Provider",
+				Description: "Cloud provider to list the regions. For example, \"aws\" or \"azure\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"query": {
-				Description: "Query to filter region list",
+				Description: "Query to filter region list.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"region_id": {
-				Description: "Unique Region ID",
+				Description: "Unique region ID. For example, \"germanywestcentral\" in the Azure cloud provider, \"eu-west-1\" in the AWS cloud provider.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
