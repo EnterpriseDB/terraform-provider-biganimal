@@ -37,14 +37,17 @@ Terraform can be configured by adding the following to your ~/.terraformrc file.
 
 ```hcl
 provider_installation {
-  dev_overrides {
-      "registry.terraform.io/EnterpriseDB/biganimal" = "/Users/<YOUR_HOME>/.terraform.d/plugins/EnterpriseDB/biganimal/0.1.0/<OS_ARCH>"
+  # For all other providers, install them directly from their origin provider
+  # registries as normal. Until terraform-provider-biganimal is registered 
+  # in the terraform registry, we can use a filesystem_mirror.
+  filesystem_mirror {
+    path    = "/Users/<YOUR_HOME>/.terraform.d/plugins"
+    include = ["registry.terraform.io/hashicorp/biganimal"]
   }
 
-  # For all other providers, install them directly from their origin provider
-  # registries as normal. If you omit this, Terraform will _only_ use
-  # the dev_overrides block, and so no other providers will be available.
-  direct {}
+  direct {
+    exclude = ["registry.terraform.io/hashicorp/biganimal"]
+  }
 }
 ```
 
