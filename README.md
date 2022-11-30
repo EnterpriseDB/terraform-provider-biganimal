@@ -16,29 +16,55 @@ Main links:
 - [Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
 - [Go](https://golang.org/doc/install) >= 1.18
 
-## Building
-
-Builds are done via make targets.  Running `make` will build and install the provider binary into `~/.terraform.d/plugins/...`
-
-```bash
-$ make
-go build -o terraform-provider-biganimal
-mkdir -p ~/.terraform.d/plugins/EnterpriseDB/biganimal/0.1.0/darwin_amd64
-mv terraform-provider-biganimal ~/.terraform.d/plugins/EnterpriseDB/biganimal/0.1.0/darwin_amd64
-```
-
-The binary can also be compiled by `go build`, which will output the binary into the current directory.
-
 ## Using the provider
 
-Until the provider is accepted into the terraform registry, it's necessary to install the binary into your local terraform cache using `make`, and to configure terraform to look in the right location to find the binary for the BigAnimal terraform provider.
-
-Terraform can be configured by adding the following to your ~/.terraformrc file.
+To install the BigAnimal provider, copy and paste this code into your Terraform configuration. Then, run `terraform init`.
 
 ```hcl
+terraform {
+  required_providers {
+    biganimal = {
+      source = "EnterpriseDB/biganimal"
+      version = "0.1.0"
+    }
+  }
+}
+
+provider "biganimal" {
+  # Configuration options
+    ba_bearer_token = <redacted> // See Getting an API Token section for details
+  // ba_api_uri   = "https://portal.biganimal.com/api/v2" // Optional
+}
+```
+
+You can also set the `BA_BEARER_TOKEN` and `BA_API_URI` env vars. When those environment variables are present, you don't need to add any configuration options to the provider block described above.
+
+```bash
+export BA_BEARER_TOKEN=<redacted>
+export BA_API_URI=https://portal.biganimal.com/api/v2
+```
+
+### Getting an API Token
+
+In order to access the BigAnimal API, it's necessary to fetch an api bearer token and either export it into your environment or add this token to the provider block.
+
+Please visit [Using the get-token script](https://www.enterprisedb.com/docs/biganimal/latest/reference/api/#using-the-get-token-script) for more details.
+
+## Development
+
+Please make sure to read the [Contributing guideline](./CONTRIBUTING.md) first.
+
+### dev overrides
+Terraform can be configured by adding the following to your `~/.terraformrc` file.
+
+```
 provider_installation {
+  # Use /home/developer/tmp/terraform-provider-biganimal as an overridden package directory
+  # for the EnterpriseDB/biganimal provider. This disables the version and checksum
+  # verifications for this provider and forces Terraform to look for the
+  # null provider plugin in the given directory.
   dev_overrides {
-      "registry.terraform.io/EnterpriseDB/biganimal" = "/Users/<YOUR_HOME>/.terraform.d/plugins/EnterpriseDB/biganimal/0.1.0/<OS_ARCH>"
+      "registry.terraform.io/EnterpriseDB/biganimal" = "/home/developer/tmp/terraform-provider-biganimal"
   }
 
   # For all other providers, install them directly from their origin provider
@@ -48,53 +74,7 @@ provider_installation {
 }
 ```
 
-Now, you can configure your BigAnimal provider. This can be done in one of these two ways:
-
-### Providing BigAnimal configuration in a provider block
-```hcl
-provider "biganimal" {
-  ba_bearer_token = <redacted> // See Getting and API Token section for details
-  // ba_api_uri   = "https://portal.biganimal.com/api/v2" // Optional
-}
-```
-### Configuring Environment Variables
-
-You can set `BA_BEARER_TOKEN` and `BA_API_URI` env vars.
-
-```bash
-export BA_BEARER_TOKEN=<redacted>
-export BA_API_URI=https://portal.biganimal.com/api/v2
-```
-
-### Getting an API Token
-
-In order to access the BigAnimal API, it's necessary to fetch an api bearer token and export it into your environment.
-
-This can be done by using the script located [here](https://github.com/EnterpriseDB/cloud-utilities/blob/main/api/get-token.sh) as follows
-
-```bash
-sh ~/hackery/edb/cloud-utilities/api/get-token.sh
-Please login to https://auth.biganimal.com/activate?user_code=JWPL-RCXL with your BigAnimal account
-Have you finished the login successfully? (y/N) y
-{
-  "access_token": "<REDACTED>",
-  "refresh_token": "<REDACTED>",
-  "scope": "openid profile email offline_access",
-  "expires_in": 86400,
-  "token_type": "Bearer"
-}
-```
-
-Once the `access_token` has been retrieved, you can write it to the provider block as described above.
-Alternatively, you can set it in your environment as follows
-
-```bash
-export BA_BEARER_TOKEN=<REDACTED>
-```
-
-After compiling, configuring the `.terraformrc` and fetching a token, the examples in the `./examples` folder can be run.
-
-## Debugging the provider
+### Debugging the provider
 
 If you're using Vscode, you can use the embedded Golang Debugger. Intro to debugging in Vscode is [here](https://code.visualstudio.com/docs/editor/debugging).
 
