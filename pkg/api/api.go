@@ -7,33 +7,34 @@ import (
 )
 
 type API struct {
-	Url   string
-	Token string
-
-	httpClient *http.Client
+	BaseURL    string
+	Token      string
+	UserAgent  string
+	HTTPClient http.Client
 }
 
-func NewAPI(ba_bearer_token string, ba_api_uri string) *API {
-	httpClient := &http.Client{
+func NewAPI(ba_bearer_token, ba_api_uri, userAgent string) *API {
+	httpClient := http.Client{
 		Timeout: 10 * time.Second,
 	}
 
 	api := &API{
-		ba_api_uri,
-		ba_bearer_token,
-		httpClient,
+		BaseURL:    ba_api_uri,
+		Token:      ba_bearer_token,
+		UserAgent:  userAgent,
+		HTTPClient: httpClient,
 	}
 
 	return api
 }
 
 func (api *API) ClusterClient() *ClusterClient {
-	c := NewClusterClient(api.Url, api.Token)
+	c := NewClusterClient(*api)
 	return c
 }
 
 func (api *API) RegionClient() *RegionClient {
-	c := NewRegionClient(api.Url, api.Token)
+	c := NewRegionClient(*api)
 	return c
 }
 
