@@ -17,25 +17,15 @@ const (
 	REGION_SUSPENDED = "SUSPENDED"
 )
 
-type RegionClient struct {
-	// Add whatever fields, client or connection info, etc. here
-	// you would need to setup to communicate with the upstream
-	// API.
-	URL        string
-	Token      string
-	HTTPClient *http.Client
-}
+type RegionClient struct{ API }
 
-func NewRegionClient(url, token string) *RegionClient {
-	httpClient := &http.Client{
+func NewRegionClient(api API) *RegionClient {
+	httpClient := http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	c := RegionClient{
-		URL:        url,
-		Token:      token,
-		HTTPClient: httpClient,
-	}
+	api.HTTPClient = httpClient
+	c := RegionClient{API: api}
 
 	return &c
 }
@@ -63,12 +53,12 @@ func (c RegionClient) List(ctx context.Context, csp_id, query string) ([]*models
 		Data []*models.Region `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("%s/cloud-providers/%s/regions", c.URL, csp_id)
+	url := fmt.Sprintf("cloud-providers/%s/regions", csp_id)
 	if query != "" {
 		url += fmt.Sprintf("?q=%s", query)
 	}
 
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return response.Data, err
 	}
@@ -79,7 +69,7 @@ func (c RegionClient) List(ctx context.Context, csp_id, query string) ([]*models
 }
 
 func (c RegionClient) Update(ctx context.Context, action, csp_id, region_id string) error {
-	url := fmt.Sprintf("%s/cloud-providers/%s/regions/%s", c.URL, csp_id, region_id)
+	url := fmt.Sprintf("cloud-providers/%s/regions/%s", csp_id, region_id)
 
 	switch action {
 	case REGION_ACTIVE:
@@ -92,6 +82,6 @@ func (c RegionClient) Update(ctx context.Context, action, csp_id, region_id stri
 		return errors.New("unknown region action")
 	}
 
-	_, err := doRequest(ctx, *c.HTTPClient, http.MethodPost, url, c.Token, nil)
+	_, err := c.doRequest(ctx, http.MethodPost, url, nil)
 	return err
 }

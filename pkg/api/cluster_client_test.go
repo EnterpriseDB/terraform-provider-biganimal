@@ -20,7 +20,7 @@ func init() {
 func TestConnectionString(t *testing.T) {
 	RegisterTestingT(t)
 	defer gock.Off()
-	client := NewClusterClient(testAPIURL, "TOKEN")
+	client := NewClusterClient(API{BaseURL: testAPIURL, Token: "TOKEN"})
 
 	var cases = []struct {
 		id       string

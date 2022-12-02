@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -75,6 +76,8 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		// api.BuildAPI(meta).ClusterClient()
 		// or
 		// api.BuildAPI(meta).RegionClient()
-		return api.NewAPI(ba_bearer_token, ba_api_uri), nil
+
+		userAgent := fmt.Sprintf("%s/%s", "terraform-provider-biganimal", version)
+		return api.NewAPI(ba_bearer_token, ba_api_uri, userAgent), nil
 	}
 }

@@ -2,13 +2,15 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-func doRequest(ctx context.Context, c http.Client, httpMethod, url, token string, body io.Reader) ([]byte, error) {
+func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.Reader) ([]byte, error) {
+	var url = fmt.Sprintf("%s/%s", api.BaseURL, path)
 	req, err := http.NewRequest(httpMethod, url, body)
 	if err != nil {
 		return nil, err
@@ -16,11 +18,11 @@ func doRequest(ctx context.Context, c http.Client, httpMethod, url, token string
 
 	tflog.Debug(ctx, url)
 
-	req.Header.Add("user-agent", userAgent)
-	req.Header.Add("authorization", "Bearer "+token)
+	req.Header.Add("user-agent", api.UserAgent)
+	req.Header.Add("authorization", "Bearer "+api.Token)
 	req.Header.Add("content-type", "application/json")
 
-	res, err := c.Do(req)
+	res, err := api.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -33,4 +35,5 @@ func doRequest(ctx context.Context, c http.Client, httpMethod, url, token string
 	}
 
 	return out, err
+
 }

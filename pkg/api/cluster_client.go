@@ -11,30 +11,15 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-const (
-	userAgent = "terraform-provider-biganimal"
-)
+type ClusterClient struct{ API }
 
-type ClusterClient struct {
-	// Add whatever fields, client or connection info, etc. here
-	// you would need to setup to communicate with the upstream
-	// API.
-	URL        string
-	Token      string
-	HTTPClient *http.Client
-}
-
-func NewClusterClient(url, token string) *ClusterClient {
-	httpClient := &http.Client{
+func NewClusterClient(api API) *ClusterClient {
+	httpClient := http.Client{
 		Timeout: 60 * time.Second,
 	}
 
-	c := ClusterClient{
-		URL:        url,
-		Token:      token,
-		HTTPClient: httpClient,
-	}
-
+	api.HTTPClient = httpClient
+	c := ClusterClient{API: api}
 	return &c
 }
 
@@ -47,13 +32,12 @@ func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
 
 	cluster := model.(models.Cluster)
 
-	url := fmt.Sprintf("%s/clusters", c.URL)
 	b, err := json.Marshal(cluster)
 	if err != nil {
 		return "", err
 	}
 
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodPost, url, c.Token, bytes.NewBuffer(b))
+	body, err := c.doRequest(ctx, http.MethodPost, "clusters", bytes.NewBuffer(b))
 
 	if err != nil {
 		return "", err
@@ -68,8 +52,8 @@ func (c ClusterClient) Read(ctx context.Context, id string) (*models.Cluster, er
 		Data models.Cluster `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	url := fmt.Sprintf("clusters/%s", id)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return &response.Data, err
 	}
@@ -84,8 +68,8 @@ func (c ClusterClient) ReadByName(ctx context.Context, name string) (*models.Clu
 		Data []models.Cluster `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("%s/clusters?name=%s", c.URL, name)
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	url := fmt.Sprintf("clusters?name=%s", name)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return &models.Cluster{}, err
 	}
@@ -106,8 +90,8 @@ func (c ClusterClient) ConnectionString(ctx context.Context, id string) (*models
 		Data models.ClusterConnection `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("%s/clusters/%s/connection/", c.URL, id)
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodGet, url, c.Token, nil)
+	url := fmt.Sprintf("clusters/%s/connection/", id)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return &models.ClusterConnection{}, err
 	}
@@ -125,14 +109,14 @@ func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, id s
 		} `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
+	url := fmt.Sprintf("clusters/%s", id)
 
 	b, err := json.Marshal(cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := doRequest(ctx, *c.HTTPClient, http.MethodPut, url, c.Token, bytes.NewBuffer(b))
+	body, err := c.doRequest(ctx, http.MethodPut, url, bytes.NewBuffer(b))
 	if err != nil {
 		return &models.Cluster{}, err
 	}
@@ -142,8 +126,8 @@ func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, id s
 }
 
 func (c ClusterClient) Delete(ctx context.Context, id string) error {
-	url := fmt.Sprintf("%s/clusters/%s", c.URL, id)
-	_, err := doRequest(ctx, *c.HTTPClient, http.MethodDelete, url, c.Token, nil)
+	url := fmt.Sprintf("clusters/%s", id)
+	_, err := c.doRequest(ctx, http.MethodDelete, url, nil)
 	return err
 }
 
