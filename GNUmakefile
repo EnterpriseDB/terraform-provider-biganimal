@@ -47,6 +47,8 @@ testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
 
 .PHONY: docs
+unexport BA_BEARER_TOKEN
+unexport BA_API_URI
 docs:
 	go generate
 
