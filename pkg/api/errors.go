@@ -18,6 +18,20 @@ var (
 	ErrorUnknown = errors.New("Unknown API Error")
 )
 
+type APIError struct {
+	Error struct {
+		Status    int      `json:"status"`
+		Message   string   `json:"message"`
+		Errors    []ErrorMessage `json:"errors"`
+		Reference string   `json:"reference"`
+		Source    string   `json:"source"`
+	} `json:"error"`
+}
+
+type ErrorMessage struct {
+	Message string `json:"message"`
+}
+
 func getStatusError(code int, body []byte) error {
 	if code <= 299 {
 		return nil
@@ -25,11 +39,14 @@ func getStatusError(code int, body []byte) error {
 
 	apiErr := APIError{}
 
-	err := json.Unmarshal(body, &apiErr)
-	if err != nil {
-		return err
+	if json.Unmarshal(body, &apiErr) != nil {
+		// FIXME: Is ErrorUnknown correct in that case?
+		return ErrorUnknown
 	}
-	return fmt.Errorf("%s %v", apiErr.Error.Status, apiErr.Error.Errors)
+	// FIXME: Not only the first message, but we need to print all the messages.
+	errmessage := apiErr.Error.Errors[0].Message
+
+	return fmt.Errorf("API Error %d: %s", apiErr.Error.Status, errmessage)
 
 	// switch code {
 	// case 200:
@@ -57,14 +74,4 @@ func getStatusError(code int, body []byte) error {
 	// default:
 	// 	return Error500
 	// }
-}
-
-type APIError struct {
-	Error struct {
-		Status    int      `json:"status"`
-		Message   string   `json:"message"`
-		Errors    []string `json:"errors"`
-		Reference string   `json:"reference"`
-		Source    string   `json:"source"`
-	} `json:"error"`
 }
