@@ -29,7 +29,8 @@ func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.R
 
 	defer res.Body.Close()
 	out, _ := io.ReadAll(res.Body)
-	err = getStatusError(res.StatusCode)
+
+	err = getStatusError(res.StatusCode, out)
 	if err != nil {
 		tflog.Debug(ctx, string(out))
 	}
@@ -37,3 +38,8 @@ func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.R
 	return out, err
 
 }
+
+
+│ Error: http error 400 {"error":{"status":400,"message":"Bad Request","errors":[{"message":"Read-only workloads are not supported for Single Node."}],"reference":"upmrid/KTE-ZJy4m62w-h0V_h72p/OVVNptXNpQZpmKkuYuRCE","source":"API"}}
+
+
