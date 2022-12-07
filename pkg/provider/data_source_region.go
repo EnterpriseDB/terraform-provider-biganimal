@@ -93,7 +93,7 @@ func (r *RegionData) Read(ctx context.Context, d *schema.ResourceData, meta any)
 
 	regions, err := client.List(ctx, cloud_provider, query)
 	if err != nil {
-		return BigAnimalFromErr(err)
+		return FromBigAnimalErr(err)
 	}
 
 	if id != "" && len(regions) != 1 {
