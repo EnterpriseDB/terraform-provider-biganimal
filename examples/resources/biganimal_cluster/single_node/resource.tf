@@ -63,7 +63,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_version            = "14"
   private_networking    = false
   cloud_provider        = "azure"
-  read_only_connections = true
+  read_only_connections = false
   region                = "eastus2"
 }
 
