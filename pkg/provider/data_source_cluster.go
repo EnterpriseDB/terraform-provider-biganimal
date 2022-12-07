@@ -227,7 +227,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 
 	cluster, err := client.ReadByName(ctx, clusterName)
 	if err != nil {
-		return api.FromErr(err)
+		return BigAnimalFromErr(err)
 	}
 	tflog.Debug(ctx, pretty.Sprint(cluster))
 

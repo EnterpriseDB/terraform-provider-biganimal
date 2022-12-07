@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 var (
@@ -36,30 +34,12 @@ func (baerr *BigAnimalError) Error() string {
 	return fmt.Sprintf("status: %d - %v", baerr.APIError.Error.Status, baerr.APIError.Error.Message)
 }
 
-func (baerr *BigAnimalError) getDetails() string {
+func (baerr *BigAnimalError) GetDetails() string {
 	var details string
 	for _, err := range baerr.APIError.Error.Errors {
 		details += fmt.Sprintln(err.Message)
 	}
 	return details
-}
-
-func FromErr(err error) diag.Diagnostics {
-	if err == nil {
-		return nil
-	}
-
-	baerr, ok := err.(*BigAnimalError)
-	if ok {
-		return diag.Diagnostics{
-			diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprint(baerr.Err),
-				Detail:   baerr.getDetails(),
-			},
-		}
-	}
-	return diag.FromErr(err)
 }
 
 func getStatusError(code int, body []byte) error {
