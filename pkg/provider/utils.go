@@ -2,7 +2,6 @@ package provider
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 
@@ -19,7 +18,7 @@ func FromBigAnimalErr(err error) diag.Diagnostics {
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  fmt.Sprint(baError.Err),
+				Summary:  baError.Error(),
 				Detail:   baError.GetDetails(),
 			},
 		}

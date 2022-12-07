@@ -27,7 +27,6 @@ type ErrorMessage struct {
 
 type BigAnimalError struct {
 	APIError APIError
-	Err      error
 }
 
 func (baerr *BigAnimalError) Error() string {
@@ -55,6 +54,5 @@ func getStatusError(code int, body []byte) error {
 
 	return &BigAnimalError{
 		APIError: apiErr,
-		Err:      fmt.Errorf("status: %d - %v", apiErr.Error.Status, apiErr.Error.Message),
 	}
 }
