@@ -243,7 +243,7 @@ func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, me
 
 	clusterId, err := client.Create(ctx, *cluster)
 	if err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 
 	d.SetId(clusterId)
@@ -261,7 +261,7 @@ func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, me
 
 func (c *ClusterResource) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	if err := c.read(ctx, d, meta); err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 	return diag.Diagnostics{}
 }
@@ -336,7 +336,7 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 
 	_, err = client.Update(ctx, cluster, d.Id())
 	if err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 
 	// retry until we get success
@@ -354,7 +354,7 @@ func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, me
 	client := api.BuildAPI(meta).ClusterClient()
 	clusterId := d.Id()
 	if err := client.Delete(ctx, clusterId); err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 	return diag.Diagnostics{}
 }

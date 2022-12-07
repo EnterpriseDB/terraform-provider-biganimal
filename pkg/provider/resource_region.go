@@ -75,7 +75,7 @@ func (r *RegionResource) Create(ctx context.Context, d *schema.ResourceData, met
 
 func (r *RegionResource) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	if err := r.read(ctx, d, meta); err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 	return diag.Diagnostics{}
 }
@@ -107,7 +107,7 @@ func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, met
 
 	region, err := client.Read(ctx, cloudProvider, id)
 	if err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 
 	utils.SetOrPanic(d, "name", region.Name)
@@ -121,7 +121,7 @@ func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, met
 
 	tflog.Debug(ctx, fmt.Sprintf("updating region from %s to %s", region.Status, desiredState))
 	if err = client.Update(ctx, desiredState, cloudProvider, id); err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 
 	// retry until we get success
@@ -142,7 +142,7 @@ func (r *RegionResource) Delete(ctx context.Context, d *schema.ResourceData, met
 	id := d.Get("region_id").(string)
 	desiredState := api.REGION_INACTIVE
 	if err := client.Update(ctx, api.REGION_INACTIVE, cloudProvider, id); err != nil {
-		return FromBigAnimalErr(err)
+		return fromBigAnimalErr(err)
 	}
 
 	// retry until we get success

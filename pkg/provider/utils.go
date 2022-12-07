@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
-func FromBigAnimalErr(err error) diag.Diagnostics {
+func fromBigAnimalErr(err error) diag.Diagnostics {
 	if err == nil {
 		return nil
 	}
