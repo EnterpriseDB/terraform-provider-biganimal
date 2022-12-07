@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestConnectionString(t *testing.T) {
 			id:       "some-id",
 			connInfo: &models.ClusterConnection{},
 			code:     404,
-			err:      Error404,
+			err:      errors.New("resource Not Found"),
 		},
 	}
 
