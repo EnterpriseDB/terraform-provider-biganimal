@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -80,7 +79,7 @@ func (c ClusterClient) ReadByName(ctx context.Context, name string) (*models.Clu
 	}
 
 	if len(clusters.Data) != 1 {
-		return &models.Cluster{}, errors.New("resource Not Found")
+		return &models.Cluster{}, Error404
 	}
 
 	return &clusters.Data[0], err

@@ -8,6 +8,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
+var (
+	Error404     = errors.New("resource not found")
+	ErrorUnknown = errors.New("unknown API error")
+)
+
 type APIError struct {
 	Error struct {
 		Status    int            `json:"status"`
@@ -65,7 +70,7 @@ func getStatusError(code int, body []byte) error {
 	apiErr := APIError{}
 
 	if json.Unmarshal(body, &apiErr) != nil {
-		return errors.New("unknown API Error")
+		return ErrorUnknown
 	}
 
 	return &BigAnimalError{
