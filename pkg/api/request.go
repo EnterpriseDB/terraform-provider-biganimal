@@ -29,7 +29,8 @@ func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.R
 
 	defer res.Body.Close()
 	out, _ := io.ReadAll(res.Body)
-	err = getStatusError(res.StatusCode)
+
+	err = getStatusError(res.StatusCode, out)
 	if err != nil {
 		tflog.Debug(ctx, string(out))
 	}
