@@ -14,6 +14,10 @@ func stringRef(s string) *string {
 	return &s
 }
 
+func boolRef(b bool) *bool {
+	return &b
+}
+
 var testResource = &schema.Resource{
 	Description: "Create a Postgres Cluster",
 
@@ -54,6 +58,11 @@ var testResource = &schema.Resource{
 		"int": {
 			Description: "int",
 			Type:        schema.TypeInt,
+			Optional:    true,
+		},
+		"bool": {
+			Description: "bool",
+			Type:        schema.TypeBool,
 			Optional:    true,
 		},
 		"float": {
@@ -168,10 +177,35 @@ func TestSetOrPanic(t *testing.T) {
 		in   any
 		out  any
 	}{
+		{ // bool nil value
+			kind: "bool",
+			in:   (*bool)(nil),
+			out:  false,
+		},
 		{ // simple values
 			kind: "int",
 			in:   int(1),
 			out:  int(1),
+		},
+		{
+			kind: "bool",
+			in:   true,
+			out:  true,
+		},
+		{
+			kind: "bool",
+			in:   false,
+			out:  false,
+		},
+		{ // bool pointer
+			kind: "bool",
+			in:   boolRef(true),
+			out:  true,
+		},
+		{ // bool pointer
+			kind: "bool",
+			in:   boolRef(false),
+			out:  false,
 		},
 		{
 			kind: "float",
