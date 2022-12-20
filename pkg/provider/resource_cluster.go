@@ -58,6 +58,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"csp_auth": {
+				Description: "Is authentication handled by the cloud service provider.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
 			"cluster_architecture": {
 				Description: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
 				Type:        schema.TypeList,

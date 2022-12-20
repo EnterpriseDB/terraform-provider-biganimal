@@ -23,6 +23,10 @@ output "created_at" {
   value = data.biganimal_cluster.this.created_at
 }
 
+output "csp_auth" {
+  value = data.biganimal_cluster.this.csp_auth
+}
+
 output "deleted_at" {
   value = data.biganimal_cluster.this.deleted_at
 }

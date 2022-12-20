@@ -165,6 +165,11 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
+			"csp_auth": {
+				Description: "Is authentication handled by the cloud service provider.",
+				Type:        schema.TypeBool,
+				Computed:    true,
+			},
 			"region": {
 				Description: "Region to deploy the cluster.",
 				Type:        schema.TypeString,
@@ -241,6 +246,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
 	utils.SetOrPanic(d, "cluster_architecture", *cluster.ClusterArchitecture)
 	utils.SetOrPanic(d, "created_at", cluster.CreatedAt)
+	utils.SetOrPanic(d, "csp_auth", cluster.CSPAuth)
 	utils.SetOrPanic(d, "deleted_at", cluster.DeletedAt)
 	utils.SetOrPanic(d, "expired_at", cluster.ExpiredAt)
 	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)

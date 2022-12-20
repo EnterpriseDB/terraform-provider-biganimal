@@ -112,6 +112,7 @@ type Cluster struct {
 	ClusterName                *string           `json:"clusterName,omitempty"`
 	Conditions                 []Condition       `json:"conditions,omitempty"`
 	CreatedAt                  *PointInTime      `json:"createdAt,omitempty"`
+	CSPAuth                    *bool             `json:"cspAuth,omitempty"`
 	DeletedAt                  *PointInTime      `json:"deletedAt,omitempty"`
 	ExpiredAt                  *PointInTime      `json:"expiredAt,omitempty"`
 	FirstRecoverabilityPointAt *PointInTime      `json:"firstRecoverabilityPointAt,omitempty"`

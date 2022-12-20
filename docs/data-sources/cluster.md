@@ -28,6 +28,10 @@ output "created_at" {
   value = data.biganimal_cluster.this.created_at
 }
 
+output "csp_auth" {
+  value = data.biganimal_cluster.this.csp_auth
+}
+
 output "deleted_at" {
   value = data.biganimal_cluster.this.deleted_at
 }
@@ -101,6 +105,7 @@ output "storage" {
 - `cluster_id` (String) Cluster ID.
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
+- `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
 - `deleted_at` (String) Cluster deletion time.
 - `expired_at` (String) Cluster expiry time.
 - `first_recoverability_point_at` (String) Earliest backup recover time.
