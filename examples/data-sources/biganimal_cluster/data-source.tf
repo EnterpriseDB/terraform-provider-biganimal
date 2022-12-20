@@ -24,7 +24,7 @@ output "created_at" {
 }
 
 output "csp_auth" {
-  value = data.biganimal_cluster.this.csp_auth
+  value = coalesce(data.biganimal_cluster.this.csp_auth, false)
 }
 
 output "deleted_at" {
@@ -56,7 +56,7 @@ output "phase" {
 }
 
 output "private_networking" {
-  value = data.biganimal_cluster.this.private_networking
+  value = coalesce(data.biganimal_cluster.this.private_networking, false)
 }
 
 output "cloud_provider" {
@@ -64,7 +64,7 @@ output "cloud_provider" {
 }
 
 output "read_only_connections" {
-  value = data.biganimal_cluster.this.read_only_connections
+  value = coalesce(data.biganimal_cluster.this.read_only_connections, false)
 }
 
 output "ro_connection_uri" {
