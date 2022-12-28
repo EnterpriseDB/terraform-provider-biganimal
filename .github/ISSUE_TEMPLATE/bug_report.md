@@ -34,5 +34,5 @@ Please list the resources as a list, for example:
 - biganimal_region resource
 
 **Additional context**
-Add any other context about the problem here, for example: 
+Add any other context about the problem here, for example:
 - Any other GitHub Issues or PRs
