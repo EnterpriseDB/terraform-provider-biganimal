@@ -10,7 +10,7 @@ require (
 	github.com/kr/pretty v0.3.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/gomega v1.24.2
-	github.com/thoas/go-funk v0.9.2
+	github.com/thoas/go-funk v0.9.3
 	gotest.tools/v3 v3.4.0
 )
 
