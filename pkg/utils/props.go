@@ -40,7 +40,12 @@ func Set(d *schema.ResourceData, key string, value any) error {
 
 	// if it's a stringer, then stringify it
 	if stringer, ok := value.(fmt.Stringer); ok {
-		value = stringer.String()
+		if reflect.ValueOf(value).Kind() == reflect.Ptr && reflect.ValueOf(stringer).IsNil() {
+			value = ""
+		} else {
+			value = stringer.String()
+		}
+
 		err := d.Set(key, value)
 		if err != nil {
 			return err

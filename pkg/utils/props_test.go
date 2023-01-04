@@ -244,6 +244,11 @@ func TestSetOrPanic(t *testing.T) {
 		},
 		{ // stringables
 			kind: "string",
+			in:   (*testStringable)(nil),
+			out:  string(""),
+		},
+		{ // stringables
+			kind: "string",
 			in:   &testStringable{S: "Hello"},
 			out:  string("Hello"),
 		},
@@ -311,6 +316,13 @@ func TestSetAndReset(t *testing.T) {
 			setOut:   false,
 			reset:    boolRef(true),
 			resetOut: true,
+		},
+		{ // stringables
+			kind:     "string",
+			set:      testStringable{S: "Hello"},
+			setOut:   string("Hello"),
+			reset:    (*testStringable)(nil),
+			resetOut: string(""),
 		},
 	}
 
