@@ -265,3 +265,69 @@ func TestSetOrPanic(t *testing.T) {
 		assert.DeepEqual(t, out, tcase.out)
 	}
 }
+
+func TestSetAndReset(t *testing.T) {
+	cr := testResource
+
+	testCases := []struct {
+		name     string
+		kind     string
+		set      any
+		setOut   any
+		reset    any
+		resetOut any
+	}{
+		{ // bool nil value
+			kind:     "bool",
+			set:      (*bool)(nil),
+			setOut:   false,
+			reset:    false,
+			resetOut: false,
+		},
+		{
+			kind:     "bool",
+			set:      true,
+			setOut:   true,
+			reset:    false,
+			resetOut: false,
+		},
+		{
+			kind:     "bool",
+			set:      false,
+			setOut:   false,
+			reset:    true,
+			resetOut: true,
+		},
+		{ // bool pointer
+			kind:     "bool",
+			set:      boolRef(true),
+			setOut:   true,
+			reset:    boolRef(false),
+			resetOut: false,
+		},
+		{ // bool pointer
+			kind:     "bool",
+			set:      boolRef(false),
+			setOut:   false,
+			reset:    boolRef(true),
+			resetOut: true,
+		},
+	}
+
+	for num, tcase := range testCases {
+		t.Logf("testing SetAndReset #%d", num)
+		config := map[string]interface{}{}
+
+		d := schema.TestResourceDataRaw(t, cr.Schema, config)
+		SetOrPanic(d, tcase.kind, tcase.set)
+
+		out := d.Get(tcase.kind)
+		assert.DeepEqual(t, out, tcase.setOut)
+
+		SetOrPanic(d, tcase.kind, tcase.reset)
+
+		out = d.Get(tcase.kind)
+		assert.DeepEqual(t, out, tcase.resetOut)
+
+	}
+}

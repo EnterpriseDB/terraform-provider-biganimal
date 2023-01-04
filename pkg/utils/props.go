@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/mapstructure"
-	"github.com/thoas/go-funk"
 )
 
 func StructFromProps[S any](blobs any) (S, error) {
@@ -31,16 +30,11 @@ func StructFromProps[S any](blobs any) (S, error) {
 }
 
 func Set(d *schema.ResourceData, key string, value any) error {
-	// short circuit on empty value
-	if funk.IsEmpty(value) {
-		return nil
-	}
-
 	// if it's a pointer we dereference it right away
 	// references that get passed in will be confused by the
 	// stringer check below, as stringer isn't implemented with
 	// pointer receivers
-	if reflect.ValueOf(value).Kind() == reflect.Ptr {
+	if reflect.ValueOf(value).Kind() == reflect.Ptr && !reflect.ValueOf(value).IsZero() {
 		value = reflect.Indirect(reflect.ValueOf(value)).Interface()
 	}
 
