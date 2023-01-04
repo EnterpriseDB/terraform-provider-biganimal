@@ -302,6 +302,7 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	utils.SetOrPanic(d, "private_networking", cluster.PrivateNetworking)
 	utils.SetOrPanic(d, "cloud_provider", cluster.Provider)
 	utils.SetOrPanic(d, "read_only_connections", cluster.ReadOnlyConnections)
+	utils.SetOrPanic(d, "csp_auth", cluster.CSPAuth)
 	utils.SetOrPanic(d, "region", cluster.Region)
 	utils.SetOrPanic(d, "storage", cluster.Storage)
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
