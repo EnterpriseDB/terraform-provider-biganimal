@@ -59,7 +59,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Optional:    true,
 			},
 			"csp_auth": {
-				Description: "Is authentication handled by the cloud service provider.",
+				Description: "Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.",
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},

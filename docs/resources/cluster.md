@@ -47,6 +47,7 @@ resource "biganimal_cluster" "single_node_cluster" {
     id    = "single"
     nodes = 1
   }
+  csp_auth = false
 
   instance_type = "azure:Standard_D2s_v3"
   password      = resource.random_password.password.result
@@ -262,7 +263,7 @@ output "connection_uri" {
 
 - `allowed_ip_ranges` (Block List) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
-- `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
+- `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
 - `pg_config` (Block List) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
