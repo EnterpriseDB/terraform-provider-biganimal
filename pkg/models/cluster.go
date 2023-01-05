@@ -37,6 +37,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		ClusterArchitecture:   &clusterArchitecture,
 		ClusterId:             utils.GetStringP(d, "cluster_id"),
 		ClusterName:           utils.GetStringP(d, "cluster_name"),
+		CSPAuth:               utils.GetBoolP(d, "csp_auth"),
 
 		//  these are readonly attributes, that come from the cluster api,
 		// and end up in the resourceData.  we don't set these from the
