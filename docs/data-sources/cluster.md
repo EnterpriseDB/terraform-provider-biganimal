@@ -28,6 +28,10 @@ output "created_at" {
   value = data.biganimal_cluster.this.created_at
 }
 
+output "csp_auth" {
+  value = coalesce(data.biganimal_cluster.this.csp_auth, false)
+}
+
 output "deleted_at" {
   value = data.biganimal_cluster.this.deleted_at
 }
@@ -57,7 +61,7 @@ output "phase" {
 }
 
 output "private_networking" {
-  value = data.biganimal_cluster.this.private_networking
+  value = coalesce(data.biganimal_cluster.this.private_networking, false)
 }
 
 output "cloud_provider" {
@@ -65,7 +69,7 @@ output "cloud_provider" {
 }
 
 output "read_only_connections" {
-  value = data.biganimal_cluster.this.read_only_connections
+  value = coalesce(data.biganimal_cluster.this.read_only_connections, false)
 }
 
 output "ro_connection_uri" {
@@ -101,6 +105,7 @@ output "storage" {
 - `cluster_id` (String) Cluster ID.
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
+- `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
 - `deleted_at` (String) Cluster deletion time.
 - `expired_at` (String) Cluster expiry time.
 - `first_recoverability_point_at` (String) Earliest backup recover time.

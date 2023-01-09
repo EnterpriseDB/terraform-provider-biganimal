@@ -14,6 +14,10 @@ func stringRef(s string) *string {
 	return &s
 }
 
+func boolRef(b bool) *bool {
+	return &b
+}
+
 var testResource = &schema.Resource{
 	Description: "Create a Postgres Cluster",
 
@@ -54,6 +58,11 @@ var testResource = &schema.Resource{
 		"int": {
 			Description: "int",
 			Type:        schema.TypeInt,
+			Optional:    true,
+		},
+		"bool": {
+			Description: "bool",
+			Type:        schema.TypeBool,
 			Optional:    true,
 		},
 		"float": {
@@ -168,10 +177,35 @@ func TestSetOrPanic(t *testing.T) {
 		in   any
 		out  any
 	}{
+		{ // bool nil value
+			kind: "bool",
+			in:   (*bool)(nil),
+			out:  false,
+		},
 		{ // simple values
 			kind: "int",
 			in:   int(1),
 			out:  int(1),
+		},
+		{
+			kind: "bool",
+			in:   true,
+			out:  true,
+		},
+		{
+			kind: "bool",
+			in:   false,
+			out:  false,
+		},
+		{ // bool pointer
+			kind: "bool",
+			in:   boolRef(true),
+			out:  true,
+		},
+		{ // bool pointer
+			kind: "bool",
+			in:   boolRef(false),
+			out:  false,
 		},
 		{
 			kind: "float",
@@ -210,6 +244,11 @@ func TestSetOrPanic(t *testing.T) {
 		},
 		{ // stringables
 			kind: "string",
+			in:   (*testStringable)(nil),
+			out:  string(""),
+		},
+		{ // stringables
+			kind: "string",
 			in:   &testStringable{S: "Hello"},
 			out:  string("Hello"),
 		},
@@ -229,5 +268,78 @@ func TestSetOrPanic(t *testing.T) {
 
 		out := d.Get(tcase.kind)
 		assert.DeepEqual(t, out, tcase.out)
+	}
+}
+
+func TestSetAndReset(t *testing.T) {
+	cr := testResource
+
+	testCases := []struct {
+		name     string
+		kind     string
+		set      any
+		setOut   any
+		reset    any
+		resetOut any
+	}{
+		{ // bool nil value
+			kind:     "bool",
+			set:      (*bool)(nil),
+			setOut:   false,
+			reset:    false,
+			resetOut: false,
+		},
+		{
+			kind:     "bool",
+			set:      true,
+			setOut:   true,
+			reset:    false,
+			resetOut: false,
+		},
+		{
+			kind:     "bool",
+			set:      false,
+			setOut:   false,
+			reset:    true,
+			resetOut: true,
+		},
+		{ // bool pointer
+			kind:     "bool",
+			set:      boolRef(true),
+			setOut:   true,
+			reset:    boolRef(false),
+			resetOut: false,
+		},
+		{ // bool pointer
+			kind:     "bool",
+			set:      boolRef(false),
+			setOut:   false,
+			reset:    boolRef(true),
+			resetOut: true,
+		},
+		{ // stringables
+			kind:     "string",
+			set:      testStringable{S: "Hello"},
+			setOut:   string("Hello"),
+			reset:    (*testStringable)(nil),
+			resetOut: string(""),
+		},
+	}
+
+	for num, tcase := range testCases {
+		t.Logf("testing SetAndReset #%d", num)
+		config := map[string]interface{}{}
+
+		d := schema.TestResourceDataRaw(t, cr.Schema, config)
+		SetOrPanic(d, tcase.kind, tcase.set)
+
+		out := d.Get(tcase.kind)
+		assert.DeepEqual(t, out, tcase.setOut)
+
+		SetOrPanic(d, tcase.kind, tcase.reset)
+
+		out = d.Get(tcase.kind)
+		assert.DeepEqual(t, out, tcase.resetOut)
+
 	}
 }

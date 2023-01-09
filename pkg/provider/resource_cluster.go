@@ -58,6 +58,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"csp_auth": {
+				Description: "Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
 			"cluster_architecture": {
 				Description: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
 				Type:        schema.TypeList,
@@ -297,6 +302,7 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	utils.SetOrPanic(d, "private_networking", cluster.PrivateNetworking)
 	utils.SetOrPanic(d, "cloud_provider", cluster.Provider)
 	utils.SetOrPanic(d, "read_only_connections", cluster.ReadOnlyConnections)
+	utils.SetOrPanic(d, "csp_auth", cluster.CSPAuth)
 	utils.SetOrPanic(d, "region", cluster.Region)
 	utils.SetOrPanic(d, "storage", cluster.Storage)
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
