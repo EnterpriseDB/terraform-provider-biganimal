@@ -101,6 +101,16 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"logs_url": {
+				Description: "The URL to find the logs of this cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"metrics_url": {
+				Description: "The URL to find the metrics of this cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"cluster_id": {
 				Description: "Cluster ID.",
 				Type:        schema.TypeString,
@@ -252,6 +262,8 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)
 	utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt)
 	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)
+	utils.SetOrPanic(d, "logs_url", cluster.LogsUrl)
+	utils.SetOrPanic(d, "metrics_url", cluster.MetricsUrl)
 	utils.SetOrPanic(d, "pg_config", cluster.PgConfig)
 	utils.SetOrPanic(d, "pg_type", cluster.PgType)
 	utils.SetOrPanic(d, "pg_version", cluster.PgVersion)

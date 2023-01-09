@@ -48,6 +48,8 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		// DeletedAt
 		// ExpiredAt
 		// FirstRecoverabilityPointAt
+		// LogsUrl
+		// MetricsUrl
 		// Phase
 		// ResizingPvc
 
@@ -118,6 +120,8 @@ type Cluster struct {
 	ExpiredAt                  *PointInTime      `json:"expiredAt,omitempty"`
 	FirstRecoverabilityPointAt *PointInTime      `json:"firstRecoverabilityPointAt,omitempty"`
 	InstanceType               *InstanceType     `json:"instanceType,omitempty"`
+	LogsUrl                    *string           `json:"logsUrl,omitempty"`
+	MetricsUrl                 *string           `json:"metricsUrl,omitempty"`
 	Password                   *string           `json:"password,omitempty"`
 	PgConfig                   *[]KeyValue       `json:"pgConfig,omitempty"`
 	PgType                     *PgType           `json:"pgType,omitempty"`

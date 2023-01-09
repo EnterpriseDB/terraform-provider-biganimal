@@ -39,6 +39,14 @@ output "instance_type" {
   value = data.biganimal_cluster.this.instance_type
 }
 
+output "metrics_url" {
+  value = data.biganimal_cluster.this.metrics_url
+}
+
+output "logs_url" {
+  value = data.biganimal_cluster.this.logs_url
+}
+
 output "pg_config" {
   value = data.biganimal_cluster.this.pg_config
 }
