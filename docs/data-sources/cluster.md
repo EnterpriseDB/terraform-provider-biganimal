@@ -44,6 +44,14 @@ output "instance_type" {
   value = data.biganimal_cluster.this.instance_type
 }
 
+output "metrics_url" {
+  value = data.biganimal_cluster.this.metrics_url
+}
+
+output "logs_url" {
+  value = data.biganimal_cluster.this.logs_url
+}
+
 output "pg_config" {
   value = data.biganimal_cluster.this.pg_config
 }
@@ -111,6 +119,8 @@ output "storage" {
 - `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
 - `instance_type` (String) Instance type.
+- `logs_url` (String) The URL to find the logs of this cluster.
+- `metrics_url` (String) The URL to find the metrics of this cluster.
 - `pg_config` (List of Object) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
 - `pg_version` (String) Postgres version.

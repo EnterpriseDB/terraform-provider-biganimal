@@ -295,6 +295,8 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)
 	utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt)
 	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)
+	utils.SetOrPanic(d, "logs_url", cluster.LogsUrl)
+	utils.SetOrPanic(d, "metrics_url", cluster.MetricsUrl)
 	utils.SetOrPanic(d, "pg_config", cluster.PgConfig)
 	utils.SetOrPanic(d, "pg_type", cluster.PgType)
 	utils.SetOrPanic(d, "pg_version", cluster.PgVersion)
