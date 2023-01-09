@@ -40,9 +40,9 @@ resource "biganimal_cluster" "single_node_cluster" {
     id    = "single"
     nodes = 1
   }
-  csp_auth = false
+  csp_auth = true
 
-  instance_type = "azure:Standard_D2s_v3"
+  instance_type = "aws:m5.large"
   password      = resource.random_password.password.result
   pg_config {
     name  = "application_name"
@@ -55,17 +55,17 @@ resource "biganimal_cluster" "single_node_cluster" {
   }
 
   storage {
-    volume_type       = "azurepremiumstorage"
-    volume_properties = "P1"
+    volume_type       = "gp3"
+    volume_properties = "gp3"
     size              = "4 Gi"
   }
 
   pg_type               = "epas"
   pg_version            = "14"
   private_networking    = false
-  cloud_provider        = "azure"
+  cloud_provider        = "aws"
   read_only_connections = false
-  region                = "eastus2"
+  region                = "us-east-1"
 }
 
 output "password" {
