@@ -66,6 +66,11 @@ func (r *RegionData) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"project_id": {
+				Description: "BigAnimal Project ID.",
+				Type:        schema.TypeString,
+				Required:    true,
+			},
 			"query": {
 				Description: "Query to filter region list.",
 				Type:        schema.TypeString,
@@ -84,6 +89,8 @@ func (r *RegionData) Read(ctx context.Context, d *schema.ResourceData, meta any)
 	diags := diag.Diagnostics{}
 	client := api.BuildAPI(meta).RegionClient()
 	cloud_provider := d.Get("cloud_provider").(string)
+	projectId := d.Get("project_id").(string)
+
 	query := d.Get("query").(string)
 
 	id, ok := d.Get("region_id").(string)
@@ -91,7 +98,7 @@ func (r *RegionData) Read(ctx context.Context, d *schema.ResourceData, meta any)
 		query = id
 	}
 
-	regions, err := client.List(ctx, cloud_provider, query)
+	regions, err := client.List(ctx, projectId, cloud_provider, query)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}
