@@ -13,8 +13,14 @@ variable "cloud_provider" {
   }
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
+
 data "biganimal_region" "this" {
   cloud_provider = var.cloud_provider
+  project_id     = var.project_id
   // region_id   = "us-west-1" //optional
   // query       = "eu" // optional
 }
@@ -34,6 +40,7 @@ output "cloud_provider_id" {
 ### Required
 
 - `cloud_provider` (String) Cloud provider to list the regions. For example, "aws" or "azure".
+- `project_id` (String) BigAnimal Project ID.
 
 ### Optional
 
