@@ -25,6 +25,11 @@ variable "cluster_name" {
 variable "project_id" {
   type        = string
   description = "BigAnimal Project ID"
+
+  validation {
+    condition     = can(regex("^prj_[[:alnum:]]{16}$", var.project_id))
+    error_message = "Please provide a valid name for the project_id, for example: prj_abcdABCD01234567."
+  }
 }
 
 resource "biganimal_cluster" "eha_cluster" {
