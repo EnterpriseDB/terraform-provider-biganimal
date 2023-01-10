@@ -22,9 +22,14 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
 
 resource "biganimal_cluster" "ha_cluster" {
   cluster_name = var.cluster_name
+  project_id   = var.project_id
 
   allowed_ip_ranges {
     cidr_block  = "127.0.0.1/32"

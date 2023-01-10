@@ -23,7 +23,7 @@ func NewClusterClient(api API) *ClusterClient {
 	return &c
 }
 
-func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
+func (c ClusterClient) Create(ctx context.Context, projectId string, model any) (string, error) {
 	response := struct {
 		Data struct {
 			ClusterId string `json:"clusterId"`
@@ -37,7 +37,8 @@ func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
 		return "", err
 	}
 
-	body, err := c.doRequest(ctx, http.MethodPost, "clusters", bytes.NewBuffer(b))
+	url := fmt.Sprintf("projects/%s/clusters", projectId)
+	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
 
 	if err != nil {
 		return "", err
@@ -47,12 +48,12 @@ func (c ClusterClient) Create(ctx context.Context, model any) (string, error) {
 	return response.Data.ClusterId, err
 }
 
-func (c ClusterClient) Read(ctx context.Context, id string) (*models.Cluster, error) {
+func (c ClusterClient) Read(ctx context.Context, projectId, id string) (*models.Cluster, error) {
 	response := struct {
 		Data models.Cluster `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("clusters/%s", id)
+	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, id)
 	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return &response.Data, err
@@ -63,12 +64,12 @@ func (c ClusterClient) Read(ctx context.Context, id string) (*models.Cluster, er
 	return &response.Data, err
 }
 
-func (c ClusterClient) ReadByName(ctx context.Context, name string) (*models.Cluster, error) {
+func (c ClusterClient) ReadByName(ctx context.Context, projectId, name string) (*models.Cluster, error) {
 	clusters := struct {
 		Data []models.Cluster `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("clusters?name=%s", name)
+	url := fmt.Sprintf("projects/%s/clusters?name=%s", projectId, name)
 	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return &models.Cluster{}, err
@@ -85,12 +86,12 @@ func (c ClusterClient) ReadByName(ctx context.Context, name string) (*models.Clu
 	return &clusters.Data[0], err
 }
 
-func (c ClusterClient) ConnectionString(ctx context.Context, id string) (*models.ClusterConnection, error) {
+func (c ClusterClient) ConnectionString(ctx context.Context, projectId, id string) (*models.ClusterConnection, error) {
 	response := struct {
 		Data models.ClusterConnection `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("clusters/%s/connection/", id)
+	url := fmt.Sprintf("projects/%s/clusters/%s/connection/", projectId, id)
 	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return &models.ClusterConnection{}, err
@@ -102,14 +103,14 @@ func (c ClusterClient) ConnectionString(ctx context.Context, id string) (*models
 	return &response.Data, nil
 }
 
-func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, id string) (*models.Cluster, error) {
+func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, projectId, id string) (*models.Cluster, error) {
 	response := struct {
 		Data struct {
 			ClusterId string `json:"clusterId"`
 		} `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("clusters/%s", id)
+	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, id)
 
 	b, err := json.Marshal(cluster)
 	if err != nil {
@@ -125,8 +126,8 @@ func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, id s
 	return nil, err
 }
 
-func (c ClusterClient) Delete(ctx context.Context, id string) error {
-	url := fmt.Sprintf("clusters/%s", id)
+func (c ClusterClient) Delete(ctx context.Context, projectId, id string) error {
+	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, id)
 	_, err := c.doRequest(ctx, http.MethodDelete, url, nil)
 	return err
 }

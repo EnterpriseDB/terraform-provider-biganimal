@@ -117,6 +117,16 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"logs_url": {
+				Description: "The URL to find the logs of this cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"metrics_url": {
+				Description: "The URL to find the metrics of this cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"cluster_id": {
 				Description: "Cluster ID.",
 				Type:        schema.TypeString,
@@ -176,6 +186,11 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Description: "Is private networking enabled.",
 				Type:        schema.TypeBool,
 				Optional:    true,
+			},
+			"project_id": {
+				Description: "BigAnimal Project ID.",
+				Type:        schema.TypeString,
+				Required:    true,
 			},
 			"cloud_provider": {
 				Description: "Cloud provider. For example, \"aws\" or \"azure\".",
@@ -246,7 +261,12 @@ func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	clusterId, err := client.Create(ctx, *cluster)
+	projectId, ok := d.Get("project_id").(string)
+	if !ok {
+		return diag.FromErr(errors.New("unable to find a project ID"))
+	}
+
+	clusterId, err := client.Create(ctx, projectId, *cluster)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}
@@ -275,12 +295,16 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	client := api.BuildAPI(meta).ClusterClient()
 
 	clusterId := d.Id()
-	cluster, err := client.Read(ctx, clusterId)
+	projectId, ok := d.Get("project_id").(string)
+	if !ok {
+		return errors.New("unable to find a project ID")
+	}
+	cluster, err := client.Read(ctx, projectId, clusterId)
 	if err != nil {
 		return err
 	}
 
-	connection, err := client.ConnectionString(ctx, clusterId)
+	connection, err := client.ConnectionString(ctx, projectId, clusterId)
 	if err != nil {
 		return err
 	}
@@ -341,8 +365,12 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	clusterId := d.Id()
+	projectId, ok := d.Get("project_id").(string)
+	if !ok {
+		return diag.FromErr(errors.New("unable to find a project ID"))
+	}
 
-	_, err = client.Update(ctx, cluster, d.Id())
+	_, err = client.Update(ctx, cluster, projectId, clusterId)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}
@@ -361,7 +389,11 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).ClusterClient()
 	clusterId := d.Id()
-	if err := client.Delete(ctx, clusterId); err != nil {
+	projectId, ok := d.Get("project_id").(string)
+	if !ok {
+		return diag.FromErr(errors.New("unable to find a project ID"))
+	}
+	if err := client.Delete(ctx, projectId, clusterId); err != nil {
 		return fromBigAnimalErr(err)
 	}
 	return diag.Diagnostics{}
@@ -370,13 +402,17 @@ func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, me
 func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) resource.RetryFunc {
 	client := api.BuildAPI(meta).ClusterClient()
 	return func() *resource.RetryError {
-		cluster, err := client.Read(ctx, clusterId)
+		projectId, ok := d.Get("project_id").(string)
+		if !ok {
+			return resource.NonRetryableError(fmt.Errorf("unable to find a project ID"))
+		}
+		cluster, err := client.Read(ctx, projectId, clusterId)
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
+			return resource.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
 		if !cluster.IsHealthy() {
-			return resource.RetryableError(errors.New("Instance not yet ready"))
+			return resource.RetryableError(errors.New("instance not yet ready"))
 		}
 
 		if err := c.read(ctx, d, meta); err != nil {

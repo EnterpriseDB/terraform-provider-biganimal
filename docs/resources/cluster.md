@@ -29,8 +29,14 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
+
 resource "biganimal_cluster" "single_node_cluster" {
   cluster_name = var.cluster_name
+  project_id   = var.project_id
 
   allowed_ip_ranges {
     cidr_block  = "127.0.0.1/32"
@@ -107,9 +113,14 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
 
 resource "biganimal_cluster" "ha_cluster" {
   cluster_name = var.cluster_name
+  project_id   = var.project_id
 
   allowed_ip_ranges {
     cidr_block  = "127.0.0.1/32"
@@ -189,9 +200,14 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
 
 resource "biganimal_cluster" "eha_cluster" {
   cluster_name = var.cluster_name
+  project_id   = var.project_id
 
   allowed_ip_ranges {
     cidr_block  = "127.0.0.1/32"
@@ -256,6 +272,7 @@ output "connection_uri" {
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
+- `project_id` (String) BigAnimal Project ID.
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `storage` (Block List, Min: 1) Storage. (see [below for nested schema](#nestedblock--storage))
 
@@ -278,6 +295,8 @@ output "connection_uri" {
 - `expired_at` (String) Cluster expiry time.
 - `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
+- `logs_url` (String) The URL to find the logs of this cluster.
+- `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
