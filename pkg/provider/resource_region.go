@@ -45,9 +45,10 @@ func (r *RegionResource) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"project_id": {
-				Description: "BigAnimal Project ID.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "BigAnimal Project ID.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
 			},
 			"region_id": {
 				Description: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",

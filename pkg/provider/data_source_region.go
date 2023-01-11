@@ -67,9 +67,10 @@ func (r *RegionData) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"project_id": {
-				Description: "BigAnimal Project ID.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "BigAnimal Project ID.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
 			},
 			"query": {
 				Description: "Query to filter region list.",

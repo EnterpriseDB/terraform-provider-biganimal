@@ -166,9 +166,10 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"project_id": {
-				Description: "BigAnimal Project ID.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "BigAnimal Project ID.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
 			},
 			"cloud_provider": {
 				Description: "Cloud provider.",

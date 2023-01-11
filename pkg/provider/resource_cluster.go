@@ -188,9 +188,10 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Optional:    true,
 			},
 			"project_id": {
-				Description: "BigAnimal Project ID.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "BigAnimal Project ID.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
 			},
 			"cloud_provider": {
 				Description: "Cloud provider. For example, \"aws\" or \"azure\".",
