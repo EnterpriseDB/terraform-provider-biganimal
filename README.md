@@ -33,7 +33,7 @@ terraform {
 provider "biganimal" {
   # Configuration options
     ba_bearer_token = <redacted> // See Getting an API Token section for details
-  // ba_api_uri   = "https://portal.biganimal.com/api/v2" // Optional
+  // ba_api_uri   = "https://portal.biganimal.com/api/v3" // Optional
 }
 ```
 
@@ -41,7 +41,7 @@ You can also set the `BA_BEARER_TOKEN` and `BA_API_URI` env vars. When those env
 
 ```bash
 export BA_BEARER_TOKEN=<redacted>
-export BA_API_URI=https://portal.biganimal.com/api/v2
+export BA_API_URI=https://portal.biganimal.com/api/v3
 ```
 
 ### Getting an API Token

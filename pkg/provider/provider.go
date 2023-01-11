@@ -46,7 +46,7 @@ func New(version string) func() *schema.Provider {
 				"ba_api_uri": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("BA_API_URI", "https://portal.biganimal.com/api/v2"),
+					DefaultFunc: schema.EnvDefaultFunc("BA_API_URI", "https://portal.biganimal.com/api/v3"),
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{

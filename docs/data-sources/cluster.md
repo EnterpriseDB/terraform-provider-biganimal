@@ -8,8 +8,14 @@ variable "cluster_name" {
   description = "The name of the cluster"
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
+
 data "biganimal_cluster" "this" {
   cluster_name = var.cluster_name
+  project_id   = var.project_id
 }
 
 output "cluster_architecture" {
@@ -103,6 +109,7 @@ output "storage" {
 ### Required
 
 - `cluster_name` (String) Name of the cluster.
+- `project_id` (String) BigAnimal Project ID.
 
 ### Read-Only
 

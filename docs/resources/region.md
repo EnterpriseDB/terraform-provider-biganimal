@@ -12,9 +12,15 @@ terraform {
   }
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
+
 resource "biganimal_region" "this" {
   cloud_provider = "aws"
   region_id      = "eu-west-1"
+  project_id     = var.project_id
 }
 
 output "region_status" {
@@ -36,6 +42,7 @@ output "region_continent" {
 ### Required
 
 - `cloud_provider` (String) Cloud provider. For example, "aws" or "azure".
+- `project_id` (String) BigAnimal Project ID.
 - `region_id` (String) Region ID of the region. For example, "germanywestcentral" in the Azure cloud provider or "eu-west-1" in the AWS cloud provider.
 
 ### Optional
