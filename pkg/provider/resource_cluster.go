@@ -262,10 +262,7 @@ func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	projectId, ok := d.Get("project_id").(string)
-	if !ok {
-		return diag.FromErr(errors.New("unable to find a project ID"))
-	}
+	projectId := d.Get("project_id").(string)
 
 	clusterId, err := client.Create(ctx, projectId, *cluster)
 	if err != nil {
@@ -296,10 +293,7 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	client := api.BuildAPI(meta).ClusterClient()
 
 	clusterId := d.Id()
-	projectId, ok := d.Get("project_id").(string)
-	if !ok {
-		return errors.New("unable to find a project ID")
-	}
+	projectId := d.Get("project_id").(string)
 	cluster, err := client.Read(ctx, projectId, clusterId)
 	if err != nil {
 		return err
@@ -366,11 +360,7 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	clusterId := d.Id()
-	projectId, ok := d.Get("project_id").(string)
-	if !ok {
-		return diag.FromErr(errors.New("unable to find a project ID"))
-	}
-
+	projectId := d.Get("project_id").(string)
 	_, err = client.Update(ctx, cluster, projectId, clusterId)
 	if err != nil {
 		return fromBigAnimalErr(err)
@@ -390,10 +380,7 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).ClusterClient()
 	clusterId := d.Id()
-	projectId, ok := d.Get("project_id").(string)
-	if !ok {
-		return diag.FromErr(errors.New("unable to find a project ID"))
-	}
+	projectId := d.Get("project_id").(string)
 	if err := client.Delete(ctx, projectId, clusterId); err != nil {
 		return fromBigAnimalErr(err)
 	}
@@ -403,10 +390,7 @@ func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, me
 func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) resource.RetryFunc {
 	client := api.BuildAPI(meta).ClusterClient()
 	return func() *resource.RetryError {
-		projectId, ok := d.Get("project_id").(string)
-		if !ok {
-			return resource.NonRetryableError(fmt.Errorf("unable to find a project ID"))
-		}
+		projectId := d.Get("project_id").(string)
 		cluster, err := client.Read(ctx, projectId, clusterId)
 		if err != nil {
 			return resource.NonRetryableError(fmt.Errorf("error describing instance: %s", err))

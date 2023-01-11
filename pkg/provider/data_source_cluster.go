@@ -245,10 +245,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	if !ok {
 		return diag.FromErr(errors.New("unable to find cluster name"))
 	}
-	projectId, ok := d.Get("project_id").(string)
-	if !ok {
-		return diag.FromErr(errors.New("unable to find a project ID"))
-	}
+	projectId := d.Get("project_id").(string)
 
 	cluster, err := client.ReadByName(ctx, projectId, clusterName)
 	if err != nil {
