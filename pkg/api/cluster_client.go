@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -64,7 +65,7 @@ func (c ClusterClient) Read(ctx context.Context, projectId, id string) (*models.
 	return &response.Data, err
 }
 
-func (c ClusterClient) ReadByName(ctx context.Context, projectId, name string) (*models.Cluster, error) {
+func (c ClusterClient) ReadByName(ctx context.Context, projectId, name string, most_recent bool) (*models.Cluster, error) {
 	clusters := struct {
 		Data []models.Cluster `json:"data"`
 	}{}
@@ -80,7 +81,11 @@ func (c ClusterClient) ReadByName(ctx context.Context, projectId, name string) (
 	}
 
 	if len(clusters.Data) != 1 {
-		return &models.Cluster{}, Error404
+		if most_recent {
+			sort.Slice(clusters.Data, func(i, j int) bool { return clusters.Data[i].CreatedAt.Seconds > clusters.Data[j].CreatedAt.Seconds })
+		} else {
+			return &models.Cluster{}, Error404
+		}
 	}
 
 	return &clusters.Data[0], err
