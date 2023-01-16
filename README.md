@@ -64,7 +64,7 @@ provider_installation {
   # verifications for this provider and forces Terraform to look for the
   # null provider plugin in the given directory.
   dev_overrides {
-      "registry.terraform.io/EnterpriseDB/biganimal" = "/home/developer/tmp/terraform-provider-biganimal"
+      "registry.terraform.io/EnterpriseDB/biganimal" = "/home/<YOUR_HOME>/tmp/terraform-provider-biganimal"
   }
 
   # For all other providers, install them directly from their origin provider
@@ -83,7 +83,7 @@ provider_installation {
     exclude = ["registry.terraform.io/EnterpriseDB/biganimal"]
   }
   filesystem_mirror {
-    path    = "/Users/developer/.terraform.d/plugins"
+    path    = "/Users/<YOUR_HOME>/.terraform.d/plugins"
     include = ["registry.terraform.io/EnterpriseDB/biganimal"]
   }
 }
