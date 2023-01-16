@@ -64,7 +64,7 @@ provider_installation {
   # verifications for this provider and forces Terraform to look for the
   # null provider plugin in the given directory.
   dev_overrides {
-      "registry.terraform.io/EnterpriseDB/biganimal" = "/home/developer/tmp/terraform-provider-biganimal"
+      "registry.terraform.io/EnterpriseDB/biganimal" = "/home/<YOUR_HOME>/tmp/terraform-provider-biganimal"
   }
 
   # For all other providers, install them directly from their origin provider
@@ -73,6 +73,22 @@ provider_installation {
   direct {}
 }
 ```
+### filesystem mirror
+Another way to test the local code is using the filesystem_mirror declaration in your `~/.terraformrc` file.
+After you compile and install your local copy with the `make install` command, the following ~/.terraformrc` configuration allows you to declare installation path explicitly.
+```
+provider_installation {
+
+  direct {
+    exclude = ["registry.terraform.io/EnterpriseDB/biganimal"]
+  }
+  filesystem_mirror {
+    path    = "/Users/<YOUR_HOME>/.terraform.d/plugins"
+    include = ["registry.terraform.io/EnterpriseDB/biganimal"]
+  }
+}
+```
+For more info about `filesystem_mirror`, please visit [Terraform Documentation of `Explicit Installation Method Configuration`](https://developer.hashicorp.com/terraform/cli/config/config-file#explicit-installation-method-configuration)
 
 ### Debugging the provider
 
