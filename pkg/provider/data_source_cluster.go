@@ -77,7 +77,7 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Required:    true,
 			},
 			"most_recent": {
-				Description: "Show the most recent cluster.",
+				Description: "Show the most recent cluster when there are multiple clusters with the same name. It defaults to true.",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
