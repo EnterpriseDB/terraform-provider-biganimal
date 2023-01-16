@@ -1,4 +1,15 @@
-## 0.1.2 (Unreleased)
+## v0.2.0 (January 16. 2023)
+
+BigAnimal provider now uses the BigAnimal API v3.
+
+## v0.1.2 (January 10, 2023)
+
+Enhancements:
+* New fields are added to biganimal_cluster resource and data-sources
+ - csp_auth field for IAM authentication in AWS
+ - logs_url and metrics_url fields
+* Various dependency updates
+* GitHub Issue Templates are updated.
 
 ## 0.1.1 (December 9, 2022)
 
