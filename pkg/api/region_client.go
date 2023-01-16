@@ -34,8 +34,8 @@ func (c RegionClient) Create(ctx context.Context, model any) (string, error) {
 	panic("Create not implemented")
 }
 
-func (c RegionClient) Read(ctx context.Context, csp_id, id string) (*models.Region, error) {
-	regions, err := c.List(ctx, csp_id, id)
+func (c RegionClient) Read(ctx context.Context, project_id, csp_id, id string) (*models.Region, error) {
+	regions, err := c.List(ctx, project_id, csp_id, id)
 	if err != nil {
 		return nil, err
 	}
@@ -48,12 +48,12 @@ func (c RegionClient) Read(ctx context.Context, csp_id, id string) (*models.Regi
 	return nil, errors.New("unable to find a unique region")
 }
 
-func (c RegionClient) List(ctx context.Context, csp_id, query string) ([]*models.Region, error) {
+func (c RegionClient) List(ctx context.Context, project_id, csp_id, query string) ([]*models.Region, error) {
 	response := struct {
 		Data []*models.Region `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("cloud-providers/%s/regions", csp_id)
+	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions", project_id, csp_id)
 	if query != "" {
 		url += fmt.Sprintf("?q=%s", query)
 	}
@@ -68,8 +68,8 @@ func (c RegionClient) List(ctx context.Context, csp_id, query string) ([]*models
 	return response.Data, err
 }
 
-func (c RegionClient) Update(ctx context.Context, action, csp_id, region_id string) error {
-	url := fmt.Sprintf("cloud-providers/%s/regions/%s", csp_id, region_id)
+func (c RegionClient) Update(ctx context.Context, action, project_id, csp_id, region_id string) error {
+	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s", project_id, csp_id, region_id)
 
 	switch action {
 	case REGION_ACTIVE:

@@ -44,6 +44,12 @@ func (r *RegionResource) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"project_id": {
+				Description:      "BigAnimal Project ID.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
+			},
 			"region_id": {
 				Description: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",
 				Type:        schema.TypeString,
@@ -82,10 +88,11 @@ func (r *RegionResource) Read(ctx context.Context, d *schema.ResourceData, meta 
 
 func (r *RegionResource) read(ctx context.Context, d *schema.ResourceData, meta any) error {
 	client := api.BuildAPI(meta).RegionClient()
+	projectId := d.Get("project_id").(string)
 	cloud_provider := d.Get("cloud_provider").(string)
 
 	id := d.Get("region_id").(string)
-	region, err := client.Read(ctx, cloud_provider, id)
+	region, err := client.Read(ctx, projectId, cloud_provider, id)
 	if err != nil {
 		return err
 	}
@@ -103,9 +110,10 @@ func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, met
 
 	cloudProvider := d.Get("cloud_provider").(string)
 	id := d.Get("region_id").(string)
+	projectId := d.Get("project_id").(string)
 	desiredState := d.Get("status").(string)
 
-	region, err := client.Read(ctx, cloudProvider, id)
+	region, err := client.Read(ctx, projectId, cloudProvider, id)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}
@@ -120,7 +128,7 @@ func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("updating region from %s to %s", region.Status, desiredState))
-	if err = client.Update(ctx, desiredState, cloudProvider, id); err != nil {
+	if err = client.Update(ctx, desiredState, projectId, cloudProvider, id); err != nil {
 		return fromBigAnimalErr(err)
 	}
 
@@ -138,10 +146,11 @@ func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, met
 func (r *RegionResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).RegionClient()
 
+	projectId := d.Get("project_id").(string)
 	cloudProvider := d.Get("cloud_provider").(string)
 	id := d.Get("region_id").(string)
 	desiredState := api.REGION_INACTIVE
-	if err := client.Update(ctx, api.REGION_INACTIVE, cloudProvider, id); err != nil {
+	if err := client.Update(ctx, api.REGION_INACTIVE, projectId, cloudProvider, id); err != nil {
 		return fromBigAnimalErr(err)
 	}
 
@@ -160,13 +169,14 @@ func (r *RegionResource) Delete(ctx context.Context, d *schema.ResourceData, met
 func (r *RegionResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, cloudProvider, regionId, desiredState string) resource.RetryFunc {
 	client := api.BuildAPI(meta).RegionClient()
 	return func() *resource.RetryError {
-		region, err := client.Read(ctx, cloudProvider, regionId)
+		projectId := d.Get("project_id").(string)
+		region, err := client.Read(ctx, projectId, cloudProvider, regionId)
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error describing instance: %s", err))
+			return resource.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
 		if region.Status != desiredState {
-			return resource.RetryableError(errors.New("Operation incomplete"))
+			return resource.RetryableError(errors.New("operation incomplete"))
 		}
 
 		if err := r.read(ctx, d, meta); err != nil {

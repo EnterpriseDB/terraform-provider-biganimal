@@ -165,6 +165,12 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
+			"project_id": {
+				Description:      "BigAnimal Project ID.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
+			},
 			"cloud_provider": {
 				Description: "Cloud provider.",
 				Type:        schema.TypeString,
@@ -237,16 +243,17 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 
 	clusterName, ok := d.Get("cluster_name").(string)
 	if !ok {
-		return diag.FromErr(errors.New("Unable to find cluster name"))
+		return diag.FromErr(errors.New("unable to find cluster name"))
 	}
+	projectId := d.Get("project_id").(string)
 
-	cluster, err := client.ReadByName(ctx, clusterName)
+	cluster, err := client.ReadByName(ctx, projectId, clusterName)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}
 	tflog.Debug(ctx, pretty.Sprint(cluster))
 
-	connection, err := client.ConnectionString(ctx, *cluster.ClusterId)
+	connection, err := client.ConnectionString(ctx, projectId, *cluster.ClusterId)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -8,8 +8,15 @@ variable "cloud_provider" {
   }
 }
 
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+
+}
+
 data "biganimal_region" "this" {
   cloud_provider = var.cloud_provider
+  project_id     = var.project_id
   // region_id   = "us-west-1" //optional
   // query       = "eu" // optional
 }
