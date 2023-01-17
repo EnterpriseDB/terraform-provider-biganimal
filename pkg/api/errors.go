@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	Error404     = errors.New("resource not found")
-	ErrorUnknown = errors.New("unknown API error")
+	Error404              = errors.New("resource not found")
+	ErrorUnknown          = errors.New("unknown API error")
+	ErrorClustersSameName = NewMultipleClustersSameNameError()
 )
 
 type APIError struct {
@@ -39,6 +40,17 @@ func (baerr *BigAnimalError) GetDetails() string {
 		details += fmt.Sprintln(err.Message)
 	}
 	return details
+}
+
+func NewMultipleClustersSameNameError() error {
+	apiErr := &APIError{}
+	apiErr.Error.Status = 400
+	apiErr.Error.Message = "Bad Request - multiple clusters with the same name"
+	apiErr.Error.Errors = []ErrorMessage{{Message: "There are more than one clusters with the same name. Please use most_recent=true to get the latest one."}}
+
+	return &BigAnimalError{
+		APIError: *apiErr,
+	}
 }
 
 func getStatusError(code int, body []byte) error {

@@ -84,7 +84,7 @@ func (c ClusterClient) ReadByName(ctx context.Context, projectId, name string, m
 		if most_recent {
 			sort.Slice(clusters.Data, func(i, j int) bool { return clusters.Data[i].CreatedAt.Seconds > clusters.Data[j].CreatedAt.Seconds })
 		} else {
-			return &models.Cluster{}, Error404
+			return &models.Cluster{}, ErrorClustersSameName
 		}
 	}
 
