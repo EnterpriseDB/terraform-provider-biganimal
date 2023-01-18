@@ -76,6 +76,12 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"most_recent": {
+				Description: "Show the most recent cluster when there are multiple clusters with the same name.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
 			"created_at": {
 				Description: "Cluster creation time.",
 				Type:        schema.TypeString,
@@ -246,8 +252,9 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 		return diag.FromErr(errors.New("unable to find cluster name"))
 	}
 	projectId := d.Get("project_id").(string)
+	mostRecent := d.Get("most_recent").(bool)
 
-	cluster, err := client.ReadByName(ctx, projectId, clusterName)
+	cluster, err := client.ReadByName(ctx, projectId, clusterName, mostRecent)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}
