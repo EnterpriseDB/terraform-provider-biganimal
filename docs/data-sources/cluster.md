@@ -113,7 +113,7 @@ output "storage" {
 
 ### Optional
 
-- `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name. It defaults to true.
+- `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
 
 ### Read-Only
 
