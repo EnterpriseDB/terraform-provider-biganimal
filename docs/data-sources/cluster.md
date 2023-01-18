@@ -111,6 +111,10 @@ output "storage" {
 - `cluster_name` (String) Name of the cluster.
 - `project_id` (String) BigAnimal Project ID.
 
+### Optional
+
+- `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
+
 ### Read-Only
 
 - `allowed_ip_ranges` (Block List) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
