@@ -226,6 +226,16 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Description: "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
 							Type:        schema.TypeString,
 							Optional:    true,
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								// iops is an optional field.
+								// If there is already a value set (old != "")
+								// and there is no new value (new == ""),
+								// we can suppress this Diff
+								if new == "" && old != "" {
+									return true
+								}
+								return false
+							},
 						},
 						"size": {
 							Description: "Size of the volume. It can be set to different values depending on your volume type and properties.",
@@ -233,9 +243,9 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Required:    true,
 						},
 						"throughput": {
-							Description: "Throughput.",
+							Description: "Throughput is automatically calculated by BigAnimal based on the IOPS input.",
 							Type:        schema.TypeString,
-							Optional:    true,
+							Computed:    true,
 						},
 						"volume_properties": {
 							Description: "Volume properties in accordance with the selected volume type.",
