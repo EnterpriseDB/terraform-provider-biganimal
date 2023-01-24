@@ -23,7 +23,8 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		clusterArchitecture  *Architecture = new(Architecture)
 	)
 
-	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
+	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges").(*schema.Set).List())
+
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		}
 	}
 
-	pgConfig, err := utils.StructFromProps[[]KeyValue](d.Get("pg_config"))
+	pgConfig, err := utils.StructFromProps[[]KeyValue](d.Get("pg_config").(*schema.Set).List())
 	if err != nil {
 		return nil, err
 	}
