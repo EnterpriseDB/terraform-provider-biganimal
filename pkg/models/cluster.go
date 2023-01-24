@@ -12,18 +12,11 @@ const (
 
 func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 
-	// ips := schema.Set{}
-	// err := mapstructure.Decode(d.Get("allowed_ip_ranges"), &ips)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// allowedIpRanges, err := utils.StructFromProps[schema.Set](d.Get("allowed_ip_ranges"))
-	// if err != nil {
-	// 	return nil, err
-	// }
 	ips := d.Get("allowed_ip_ranges").(*schema.Set)
-	allowedIps := schema.CopySet(ips)
+	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](ips.List())
+	if err != nil {
+		return nil, err
+	}
 
 	clusterArchitecture, err := utils.StructFromProps[Architecture](d.Get("cluster_architecture"))
 	if err != nil {
@@ -41,7 +34,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 	}
 
 	cluster := &Cluster{
-		AllowedIpRanges:       allowedIps,
+		AllowedIpRanges:       &allowedIpRanges,
 		BackupRetentionPeriod: utils.GetStringP(d, "backup_retention_period"),
 		ClusterArchitecture:   &clusterArchitecture,
 		ClusterId:             utils.GetStringP(d, "cluster_id"),
@@ -117,31 +110,31 @@ func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 // everything is omitempty,
 // and everything is either nullable, or empty-able
 type Cluster struct {
-	AllowedIpRanges            *schema.Set   `json:"allowedIpRanges,omitempty"`
-	BackupRetentionPeriod      *string       `json:"backupRetentionPeriod,omitempty"`
-	ClusterArchitecture        *Architecture `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
-	ClusterId                  *string       `json:"clusterId,omitempty"`
-	ClusterName                *string       `json:"clusterName,omitempty"`
-	Conditions                 []Condition   `json:"conditions,omitempty"`
-	CreatedAt                  *PointInTime  `json:"createdAt,omitempty"`
-	CSPAuth                    *bool         `json:"cspAuth,omitempty"`
-	DeletedAt                  *PointInTime  `json:"deletedAt,omitempty"`
-	ExpiredAt                  *PointInTime  `json:"expiredAt,omitempty"`
-	FirstRecoverabilityPointAt *PointInTime  `json:"firstRecoverabilityPointAt,omitempty"`
-	InstanceType               *InstanceType `json:"instanceType,omitempty"`
-	LogsUrl                    *string       `json:"logsUrl,omitempty"`
-	MetricsUrl                 *string       `json:"metricsUrl,omitempty"`
-	Password                   *string       `json:"password,omitempty"`
-	PgConfig                   *[]KeyValue   `json:"pgConfig,omitempty"`
-	PgType                     *PgType       `json:"pgType,omitempty"`
-	PgVersion                  *PgVersion    `json:"pgVersion,omitempty"`
-	Phase                      *string       `json:"phase,omitempty"`
-	PrivateNetworking          *bool         `json:"privateNetworking,omitempty"`
-	Provider                   *Provider     `json:"provider,omitempty"`
-	ReadOnlyConnections        *bool         `json:"readOnlyConnections,omitempty"`
-	Region                     *Region       `json:"region,omitempty"`
-	ResizingPvc                []string      `json:"resizingPvc,omitempty"`
-	Storage                    *Storage      `json:"storage,omitempty"`
+	AllowedIpRanges            *[]AllowedIpRange `json:"allowedIpRanges,omitempty"`
+	BackupRetentionPeriod      *string           `json:"backupRetentionPeriod,omitempty"`
+	ClusterArchitecture        *Architecture     `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
+	ClusterId                  *string           `json:"clusterId,omitempty"`
+	ClusterName                *string           `json:"clusterName,omitempty"`
+	Conditions                 []Condition       `json:"conditions,omitempty"`
+	CreatedAt                  *PointInTime      `json:"createdAt,omitempty"`
+	CSPAuth                    *bool             `json:"cspAuth,omitempty"`
+	DeletedAt                  *PointInTime      `json:"deletedAt,omitempty"`
+	ExpiredAt                  *PointInTime      `json:"expiredAt,omitempty"`
+	FirstRecoverabilityPointAt *PointInTime      `json:"firstRecoverabilityPointAt,omitempty"`
+	InstanceType               *InstanceType     `json:"instanceType,omitempty"`
+	LogsUrl                    *string           `json:"logsUrl,omitempty"`
+	MetricsUrl                 *string           `json:"metricsUrl,omitempty"`
+	Password                   *string           `json:"password,omitempty"`
+	PgConfig                   *[]KeyValue       `json:"pgConfig,omitempty"`
+	PgType                     *PgType           `json:"pgType,omitempty"`
+	PgVersion                  *PgVersion        `json:"pgVersion,omitempty"`
+	Phase                      *string           `json:"phase,omitempty"`
+	PrivateNetworking          *bool             `json:"privateNetworking,omitempty"`
+	Provider                   *Provider         `json:"provider,omitempty"`
+	ReadOnlyConnections        *bool             `json:"readOnlyConnections,omitempty"`
+	Region                     *Region           `json:"region,omitempty"`
+	ResizingPvc                []string          `json:"resizingPvc,omitempty"`
+	Storage                    *Storage          `json:"storage,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
