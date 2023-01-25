@@ -93,7 +93,7 @@ func Set(d *schema.ResourceData, key string, value any) error {
 		value = pl
 
 	// however if we're a simple structure then we
-	// decode that scruct and set it.
+	// decode that struct and set it.
 	case reflect.Struct:
 		m := map[string]interface{}{}
 		pl := []interface{}{}
