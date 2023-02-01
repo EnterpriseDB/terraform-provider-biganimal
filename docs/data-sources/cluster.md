@@ -117,7 +117,7 @@ output "storage" {
 
 ### Read-Only
 
-- `allowed_ip_ranges` (Block Set) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
+- `allowed_ip_ranges` (Block List) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period.
 - `cloud_provider` (String) Cloud provider.
 - `cluster_architecture` (Block List) Cluster architecture. (see [below for nested schema](#nestedblock--cluster_architecture))
@@ -132,7 +132,7 @@ output "storage" {
 - `instance_type` (String) Instance type.
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
-- `pg_config` (Set of Object) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
+- `pg_config` (List of Object) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
 - `pg_version` (String) Postgres version.
 - `phase` (String) Current phase of the cluster.

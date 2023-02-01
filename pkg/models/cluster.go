@@ -11,7 +11,7 @@ const (
 )
 
 func NewCluster(d *schema.ResourceData) (*Cluster, error) {
-	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges").(*schema.Set).List())
+	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +21,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		return nil, err
 	}
 
-	pgConfig, err := utils.StructFromProps[[]KeyValue](d.Get("pg_config").(*schema.Set).List())
+	pgConfig, err := utils.StructFromProps[[]KeyValue](d.Get("pg_config"))
 	if err != nil {
 		return nil, err
 	}

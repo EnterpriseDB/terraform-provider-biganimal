@@ -25,7 +25,7 @@ func (c *ClusterData) Schema() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
 				Description: "Allowed IP ranges.",
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -134,7 +134,7 @@ func (c *ClusterData) Schema() *schema.Resource {
 			},
 			"pg_config": {
 				Description: "Database configuration parameters.",
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
