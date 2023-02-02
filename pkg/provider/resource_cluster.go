@@ -231,10 +231,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 								// If there is already a value set (old != "")
 								// and there is no new value (new == ""),
 								// we can suppress this Diff
-								if new == "" && old != "" {
-									return true
-								}
-								return false
+								return new == "" && old != ""
 							},
 						},
 						"size": {
