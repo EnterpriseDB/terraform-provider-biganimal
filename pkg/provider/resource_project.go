@@ -7,7 +7,6 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -150,13 +149,4 @@ func (p *ProjectResource) Delete(ctx context.Context, d *schema.ResourceData, me
 		return fromBigAnimalErr(err)
 	}
 	return diag.Diagnostics{}
-}
-
-func (p *ProjectResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, projectId string) resource.RetryFunc {
-	return func() *resource.RetryError {
-		if err := p.read(ctx, d, meta); err != nil {
-			return resource.NonRetryableError(err)
-		}
-		return nil
-	}
 }
