@@ -93,13 +93,7 @@ func (p *ProjectResource) Create(ctx context.Context, d *schema.ResourceData, me
 
 	d.SetId(projectId)
 
-	// retry until we get success
-	err = resource.RetryContext(
-		ctx,
-		d.Timeout(schema.TimeoutCreate)-time.Minute,
-		p.retryFunc(ctx, d, meta, projectId))
-
-	if err != nil {
+	if err := p.read(ctx, d, meta); err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}
@@ -140,12 +134,7 @@ func (p *ProjectResource) Update(ctx context.Context, d *schema.ResourceData, me
 		if err != nil {
 			return fromBigAnimalErr(err)
 		}
-		err = resource.RetryContext(
-			ctx,
-			d.Timeout(schema.TimeoutCreate)-time.Minute,
-			p.retryFunc(ctx, d, meta, projectId))
-
-		if err != nil {
+		if err := p.read(ctx, d, meta); err != nil {
 			return diag.FromErr(err)
 		}
 		return diag.Diagnostics{}
