@@ -38,6 +38,11 @@ func (api *API) RegionClient() *RegionClient {
 	return c
 }
 
+func (api *API) ProjectClient() *ProjectClient {
+	c := NewProjectClient(*api)
+	return c
+}
+
 func BuildAPI(meta any) *API {
 	api, ok := meta.(*API)
 	if !ok {

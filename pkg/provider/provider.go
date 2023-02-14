@@ -12,9 +12,11 @@ import (
 var (
 	resourceRegion  = NewRegionResource()
 	resourceCluster = NewClusterResource()
+	resourceProject = NewProjectResource()
 
-	dataRegion  = NewRegionData()
-	dataCluster = NewClusterData()
+	dataRegion   = NewRegionData()
+	dataCluster  = NewClusterData()
+	dataProjects = NewProjectsData()
 )
 
 func init() {
@@ -50,12 +52,14 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster": dataCluster.Schema(),
-				"biganimal_region":  dataRegion.Schema(),
+				"biganimal_cluster":  dataCluster.Schema(),
+				"biganimal_region":   dataRegion.Schema(),
+				"biganimal_projects": dataProjects.Schema(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"biganimal_cluster": resourceCluster.Schema(),
 				"biganimal_region":  resourceRegion.Schema(),
+				"biganimal_project": resourceProject.Schema(),
 			},
 		}
 
