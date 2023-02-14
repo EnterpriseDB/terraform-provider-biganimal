@@ -20,6 +20,7 @@ io
 ip
 nestedatt
 nestedblock
+nestedobjatt
 pgextended
 postgres
 terraform
