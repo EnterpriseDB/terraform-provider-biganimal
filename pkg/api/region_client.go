@@ -21,7 +21,7 @@ type RegionClient struct{ API }
 
 func NewRegionClient(api API) *RegionClient {
 	httpClient := http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	api.HTTPClient = httpClient
