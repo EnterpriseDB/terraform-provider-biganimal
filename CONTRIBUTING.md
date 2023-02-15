@@ -94,3 +94,5 @@ Signed-off-by: Jane Doe <jane.doe@example.com>
 Please use your real name (sorry, no pseudonyms or anonymous contributions).
 If you set your `user.name` and `user.email` in your Git Config, you can sign your
 commit automatically with `git commit -s`.
+
+You can find more information in the Github documentation for [Signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
