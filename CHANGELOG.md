@@ -1,3 +1,12 @@
+## v0.3.0 (February 15. 2023)
+
+Enhancements:
+* `most_recent` field for biganimal_cluster data-source
+* Improvements in drift detection
+* New `biganimal_project` resource and `biganimal_projects` data-source
+* Timeout increase in the region client.
+* Various dependency updates
+
 ## v0.2.0 (January 16. 2023)
 
 BigAnimal provider now uses the BigAnimal API v3.
