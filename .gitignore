@@ -27,6 +27,7 @@ terraform.tfvars
 *.iml
 .dccache
 website/vendor
+vendor/**
 
 # Test exclusions
 !command/test-fixtures/**/*.tfstate

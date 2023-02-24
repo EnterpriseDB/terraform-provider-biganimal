@@ -5,57 +5,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	CONDITION_DEPLOYED = "biganimal.com/deployed"
-	PHASE_HEALTHY      = "Cluster in healthy state"
-)
+//const (
+//	CONDITION_DEPLOYED = "biganimal.com/deployed"
+//	PHASE_HEALTHY      = "Cluster in healthy state"
+//)
 
-func NewCluster(d *schema.ResourceData) (*Cluster, error) {
-	// define variables which have different values for a faraway-replica and a cluster
-	var (
-		SourceId             *string
-		clusterPassword      *string
-		ClusterType          *string
-		clusterPgType        *PgType    = new(PgType)
-		clusterPgVersion     *PgVersion = new(PgVersion)
-		clusterCloudProvider *Provider  = new(Provider)
-		clusterRoConn        *bool
-		clusterArchitecture  *Architecture = new(Architecture)
-	)
-
+func NewFAReplica(d *schema.ResourceData) (*FAReplicaCluster, error) {
 	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
 	if err != nil {
 		return nil, err
 	}
 
-	// determine if ClusterType is either faraway_replica or a cluster
-	ClusterType = utils.GetStringP(d, "cluster_type")
-
-	//if d.Get("cluster_type") == "faraway_replica" {
-	if *ClusterType == "faraway_replica" {
-		SourceId = utils.GetStringP(d, "source_cluster_id")
-		//*ClusterType = "faraway_replica"
-		//clusterPassword = nil
-		//clusterPgType = nil
-		//clusterPgVersion = nil
-		//clusterCloudProvider = nil
-		//clusterRoConn = nil
-		//clusterArchitecture = nil
-
-	}
-
-	if *ClusterType == "cluster" || *ClusterType == "" {
-		//SourceId = nil
-		clusterPassword = utils.GetStringP(d, "password")
-		//*ClusterType = "cluster"
-		clusterPgType.PgTypeId = utils.GetString(d, "pg_type")
-		clusterPgVersion.PgVersionId = utils.GetString(d, "pg_version") //d.Get("pg_version").(string),
-		clusterCloudProvider.CloudProviderId = utils.GetString(d, "cloud_provider")
-		clusterRoConn = utils.GetBoolP(d, "read_only_connections")
-		*clusterArchitecture, err = utils.StructFromProps[Architecture](d.Get("cluster_architecture"))
-		if err != nil {
-			return nil, err
-		}
+	clusterArchitecture, err := utils.StructFromProps[Architecture](d.Get("cluster_architecture"))
+	if err != nil {
+		return nil, err
 	}
 
 	pgConfig, err := utils.StructFromProps[[]KeyValue](d.Get("pg_config"))
@@ -68,15 +31,13 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		return nil, err
 	}
 
-	cluster := &Cluster{
-		ReplicaSourceClusterId: SourceId,
-		ClusterType:            ClusterType,
-		AllowedIpRanges:        &allowedIpRanges,
-		BackupRetentionPeriod:  utils.GetStringP(d, "backup_retention_period"),
-		ClusterArchitecture:    clusterArchitecture,
-		ClusterId:              utils.GetStringP(d, "cluster_id"),
-		ClusterName:            utils.GetStringP(d, "cluster_name"),
-		CSPAuth:                utils.GetBoolP(d, "csp_auth"),
+	cluster := &FAReplicaCluster{
+		AllowedIpRanges:       &allowedIpRanges,
+		BackupRetentionPeriod: utils.GetStringP(d, "backup_retention_period"),
+		ClusterArchitecture:   &clusterArchitecture,
+		ClusterId:             utils.GetStringP(d, "cluster_id"),
+		ClusterName:           utils.GetStringP(d, "cluster_name"),
+		CSPAuth:               utils.GetBoolP(d, "csp_auth"),
 
 		//  these are readonly attributes, that come from the cluster api,
 		// and end up in the resourceData.  we don't set these from the
@@ -95,16 +56,22 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		InstanceType: &InstanceType{
 			InstanceTypeId: utils.GetString(d, "instance_type"),
 		},
-		Password:          clusterPassword,
-		PgConfig:          &pgConfig,
-		PgType:            clusterPgType,
-		PgVersion:         clusterPgVersion,
+		Password: utils.GetStringP(d, "password"),
+		PgConfig: &pgConfig,
+		PgType: &PgType{
+			PgTypeId: utils.GetString(d, "pg_type"),
+		},
+		PgVersion: &PgVersion{
+			PgVersionId: d.Get("pg_version").(string),
+		},
 		PrivateNetworking: utils.GetBoolP(d, "private_networking"),
-		Provider:          clusterCloudProvider,
+		Provider: &Provider{
+			CloudProviderId: utils.GetString(d, "cloud_provider"),
+		},
 		Region: &Region{
 			Id: utils.GetString(d, "region"),
 		},
-		ReadOnlyConnections: clusterRoConn,
+		ReadOnlyConnections: utils.GetBoolP(d, "read_only_connections"),
 		Storage:             &storage,
 	}
 
@@ -122,14 +89,14 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 // the openapi because we had different struct types
 // and these fields were omitted from some of those types
 
-func NewClusterForCreate(d *schema.ResourceData) (*Cluster, error) {
-	c, err := NewCluster(d)
+func NewFAReplicaForCreate(d *schema.ResourceData) (*FAReplicaCluster, error) {
+	c, err := NewFAReplica(d)
 	c.ClusterId = nil
 	return c, err
 }
 
-func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
-	c, err := NewCluster(d)
+func NewFAReplicaForUpdate(d *schema.ResourceData) (*FAReplicaCluster, error) {
+	c, err := NewFAReplica(d)
 	c.ClusterId = nil
 	c.PgType = nil
 	c.PgVersion = nil
@@ -140,9 +107,7 @@ func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 
 // everything is omitempty,
 // and everything is either nullable, or empty-able
-type Cluster struct {
-	ClusterType                *string           `json:"clusterType,omitempty"`
-	ReplicaSourceClusterId     *string           `json:"replicaSourceClusterId,omitempty"`
+type FAReplicaCluster struct {
 	AllowedIpRanges            *[]AllowedIpRange `json:"allowedIpRanges,omitempty"`
 	BackupRetentionPeriod      *string           `json:"backupRetentionPeriod,omitempty"`
 	ClusterArchitecture        *Architecture     `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
@@ -172,7 +137,7 @@ type Cluster struct {
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
 // as well as the correct 'healthy' phase.  '
-func (c Cluster) IsHealthy() bool {
+func (c FAReplicaCluster) IsHealthy() bool {
 	if *c.Phase != PHASE_HEALTHY {
 		return false
 	}
