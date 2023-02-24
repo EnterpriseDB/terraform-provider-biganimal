@@ -15,6 +15,7 @@ var (
 	resourceProject         = NewProjectResource()
 	resourceAWSConnection   = NewAWSConnectionResource()
 	resourceAzureConnection = NewAzureConnectionResource()
+	resourceFAReplica       = NewFAReplicaResource()
 
 	dataRegion        = NewRegionData()
 	dataCluster       = NewClusterData()
@@ -69,6 +70,7 @@ func New(version string) func() *schema.Provider {
 				"biganimal_project":          resourceProject.Schema(),
 				"biganimal_aws_connection":   resourceAWSConnection.Schema(),
 				"biganimal_azure_connection": resourceAzureConnection.Schema(),
+				"biganimal_fareplica":        resourceFAReplica.Schema(),
 			},
 		}
 
