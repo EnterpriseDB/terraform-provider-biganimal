@@ -19,7 +19,7 @@ terraform {
 
 variable "cluster_name" {
   type        = string
-  description = "The name of the cluster."
+  description = "The name of the faraway replica cluster."
 }
 
 variable "source_cluster_id" {
@@ -32,7 +32,7 @@ variable "project_id" {
   description = "BigAnimal Project ID"
 }
 
-resource "biganimal_fareplica" "single_node_cluster" {
+resource "biganimal_fareplica" "faraway_replica" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   source_cluster_id = var.source_cluster_id
