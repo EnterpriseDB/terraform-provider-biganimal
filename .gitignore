@@ -36,3 +36,6 @@ website/vendor
 *.winfile eol=crlf
 
 .envrc
+vendor
+
+.env

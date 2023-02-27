@@ -43,6 +43,11 @@ func (api *API) ProjectClient() *ProjectClient {
 	return c
 }
 
+func (api *API) ProviderClient() *ProviderClient {
+	c := NewProviderClient(*api)
+	return c
+}
+
 func BuildAPI(meta any) *API {
 	api, ok := meta.(*API)
 	if !ok {
