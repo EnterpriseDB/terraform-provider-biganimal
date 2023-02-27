@@ -33,12 +33,15 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 
 	//if d.Get("cluster_type") == "faraway_replica" {
 	if *ClusterType == "faraway_replica" {
+		clusterArchitecture = nil
+		clusterCloudProvider = nil
+		clusterPgType = nil
+		clusterPgVersion = nil
+
 		SourceId = utils.GetStringP(d, "source_cluster_id")
 		//*ClusterType = "faraway_replica"
 		//clusterPassword = nil
-		//clusterPgType = nil
-		//clusterPgVersion = nil
-		//clusterCloudProvider = nil
+
 		//clusterRoConn = nil
 		//clusterArchitecture = nil
 

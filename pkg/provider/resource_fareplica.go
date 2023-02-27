@@ -250,7 +250,7 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 						"size": {
 							Description: "Size of the volume. It can be set to different values depending on your volume type and properties.",
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 						},
 						"throughput": {
 							Description: "Throughput is automatically calculated by BigAnimal based on the IOPS input.",
