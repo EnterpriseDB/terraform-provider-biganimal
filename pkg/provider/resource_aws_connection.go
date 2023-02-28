@@ -36,19 +36,21 @@ o obtain the necessary input parameters, please refer to [Connect CSP](https://w
 
 		Schema: map[string]*schema.Schema{
 			"project_id": {
-				Description: "Project ID of the project.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Project ID of the project.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
 			},
 			"external_id": {
-				Description: "Project Name of the project.",
+				Description: "The AWS external ID provided by BigAnimal.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"role_arn": {
-				Description: "Project Name of the project.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "the AWS iam role used by BigAnimal.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateARN,
 			},
 		},
 	}
@@ -105,7 +107,7 @@ func (a *AWSConnectionResource) read(ctx context.Context, d *schema.ResourceData
 }
 
 func (a *AWSConnectionResource) Update(ctx context.Context, data *schema.ResourceData, meta any) diag.Diagnostics {
-	return a.create(ctx, data, meta)
+	return unsupportedWarning("aws_connection can't be updated")
 }
 
 func (a *AWSConnectionResource) Delete(ctx context.Context, data *schema.ResourceData, i interface{}) diag.Diagnostics {

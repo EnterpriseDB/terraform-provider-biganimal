@@ -10,20 +10,20 @@ import (
 	"time"
 )
 
-type ProviderClient struct{ API }
+type CloudProviderClient struct{ API }
 
-func NewProviderClient(api API) *ProviderClient {
+func NewCloudProviderClient(api API) *CloudProviderClient {
 	httpClient := http.Client{
 		Timeout: 60 * time.Second,
 	}
 
 	api.HTTPClient = httpClient
-	c := ProviderClient{API: api}
+	c := CloudProviderClient{API: api}
 
 	return &c
 }
 
-func (c ProviderClient) CreateAWSConnection(ctx context.Context, projectID string, conn models.AWSConnection) error {
+func (c CloudProviderClient) CreateAWSConnection(ctx context.Context, projectID string, conn models.AWSConnection) error {
 	b, err := json.Marshal(conn)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (c ProviderClient) CreateAWSConnection(ctx context.Context, projectID strin
 	return err
 }
 
-func (c ProviderClient) GetAWSConnection(ctx context.Context, projectID string) (*models.AWSConnection, error) {
+func (c CloudProviderClient) GetAWSConnection(ctx context.Context, projectID string) (*models.AWSConnection, error) {
 	url := fmt.Sprintf("/projects/%s/cloud-providers/aws/register", projectID)
 	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -51,7 +51,7 @@ func (c ProviderClient) GetAWSConnection(ctx context.Context, projectID string) 
 	return &resp, err
 }
 
-func (c ProviderClient) RegisterAzure(ctx context.Context, projectID string, conn models.AzureConnection) error {
+func (c CloudProviderClient) CreateAzureConnection(ctx context.Context, projectID string, conn models.AzureConnection) error {
 	b, err := json.Marshal(conn)
 	if err != nil {
 		return err

@@ -43,8 +43,8 @@ func (api *API) ProjectClient() *ProjectClient {
 	return c
 }
 
-func (api *API) ProviderClient() *ProviderClient {
-	c := NewProviderClient(*api)
+func (api *API) ProviderClient() *CloudProviderClient {
+	c := NewCloudProviderClient(*api)
 	return c
 }
 

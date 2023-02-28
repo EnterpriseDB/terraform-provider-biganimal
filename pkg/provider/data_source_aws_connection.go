@@ -20,9 +20,10 @@ func (d *AWSConnectionData) Schema() *schema.Resource {
 		ReadContext: d.Read,
 		Schema: map[string]*schema.Schema{
 			"project_id": {
-				Description: "Project ID of the project.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Project ID of the project.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
 			},
 			"external_id": {
 				Description: "The AWS external ID provided by BigAnimal.",

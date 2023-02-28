@@ -33,24 +33,28 @@ To obtain the necessary input parameters, please refer to [Connect CSP](https://
 		},
 		Schema: map[string]*schema.Schema{
 			"project_id": {
-				Description: "Project ID of the project.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Project ID of the project.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateProjectId,
 			},
 			"tenant_id": {
-				Description: "Your Azure tenant identity.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Your Azure tenant identity.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateUUID,
 			},
 			"subscription_id": {
-				Description: "Your Azure subscription identity.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Your Azure subscription identity.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateUUID,
 			},
 			"client_id": {
-				Description: "Azure APP client identity for BigAnimal.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Azure APP client identity for BigAnimal.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateUUID,
 			},
 			"client_secret": {
 				Description: "Azure APP client secret for BigAnimal.",
@@ -76,7 +80,7 @@ func (a *AzureConnectionResource) Create(ctx context.Context, data *schema.Resou
 		TenantId:       tenantID,
 	}
 
-	if err := client.RegisterAzure(ctx, projectID, model); err != nil {
+	if err := client.CreateAzureConnection(ctx, projectID, model); err != nil {
 		return fromBigAnimalErr(err)
 	}
 	// azure_connection is unique for one project

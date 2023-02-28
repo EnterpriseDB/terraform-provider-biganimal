@@ -19,13 +19,6 @@ func TestAccBiganimalAWSConnectionResource(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: awsConnConfig(projectID, roleARN, "fakeExternalID"),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("biganimal_aws_connection.test_aws_conn", "role_arn", roleARN),
-					resource.TestCheckResourceAttr("biganimal_aws_connection.test_aws_conn", "external_id", "fakeExternalID"),
-				),
-			},
-			{
 				Config: awsConnConfig(projectID, roleARN, externalID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("biganimal_aws_connection.test_aws_conn", "role_arn", roleARN),
