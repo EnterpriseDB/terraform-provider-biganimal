@@ -97,7 +97,7 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 			"cluster_type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				//Default: "faraway_replica",
+				Default:  "faraway_replica",
 			},
 
 			"cluster_name": {
@@ -362,6 +362,10 @@ func (c *FAReplicaResource) read(ctx context.Context, d *schema.ResourceData, me
 
 func (c *FAReplicaResource) Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).ClusterClient()
+	err := d.Set("cluster_type", "faraway_replica")
+	if err != nil {
+		return nil
+	}
 	// short circuit early for these types of changes
 	//if d.HasChange("pg_type") {
 	//	return diag.FromErr(errors.New("pg_type is immutable"))
