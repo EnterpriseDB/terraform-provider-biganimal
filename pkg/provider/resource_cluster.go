@@ -91,7 +91,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 			"cluster_type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				//Default: "cluster",
+				Default:  "cluster",
 			},
 
 			"cluster_name": {
@@ -364,6 +364,10 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 
 func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client := api.BuildAPI(meta).ClusterClient()
+	err := d.Set("cluster_type", "cluster")
+	if err != nil {
+		return nil
+	}
 	// short circuit early for these types of changes
 	if d.HasChange("pg_type") {
 		return diag.FromErr(errors.New("pg_type is immutable"))

@@ -138,6 +138,10 @@ func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 	c.PgVersion = nil
 	c.Provider = nil
 	c.Region = nil
+	if *utils.GetStringP(d, "cluster_type") == "faraway_replica" {
+		c.ReplicaSourceClusterId = nil
+		c.BackupRetentionPeriod = nil
+	}
 	return c, err
 }
 

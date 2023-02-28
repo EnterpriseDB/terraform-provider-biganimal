@@ -72,7 +72,7 @@ resource "biganimal_fareplica" "faraway_replica" {
   storage {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-//    size              = "4 Gi"
+    size              = "4 Gi"
   }
 
 //  pg_type               = "epas"
