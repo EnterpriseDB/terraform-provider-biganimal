@@ -11,12 +11,6 @@ terraform {
   }
 }
 
-//resource "random_password" "password" {
-//  length           = 16
-//  special          = true
-//  override_special = "!#$%&*()-_=+[]{}<>:?"
-//}
-
 variable "cluster_name" {
   type        = string
   description = "The name of the faraway replica cluster."
@@ -48,15 +42,8 @@ resource "biganimal_fareplica" "faraway_replica" {
   }
 
   backup_retention_period = "6d"
-//  cluster_architecture {
-//    id    = "single"
-//    nodes = 1
-//  }
-
   csp_auth = false
-
   instance_type = "azure:Standard_D2s_v3"
-//  password      = resource.random_password.password.result
 
   // todo: add some other example for pgConfig, below values are not modifyable for farep
 //  pg_config {
@@ -75,15 +62,6 @@ resource "biganimal_fareplica" "faraway_replica" {
     size              = "4 Gi"
   }
 
-//  pg_type               = "epas"
-//  pg_version            = "14"
   private_networking    = false
-//  cloud_provider        = "azure"
-//  read_only_connections = false
   region                = "australiaeast"
 }
-
-//output "password" {
-//  sensitive = true
-//  value     = resource.biganimal_cluster.single_node_cluster.password
-//}

@@ -18,7 +18,6 @@ var (
 	dataRegion   = NewRegionData()
 	dataCluster  = NewClusterData()
 	dataProjects = NewProjectsData()
-	//dataFAReplica = NewFAReplicaData()
 )
 
 func init() {
@@ -57,7 +56,6 @@ func New(version string) func() *schema.Provider {
 				"biganimal_cluster":  dataCluster.Schema(),
 				"biganimal_region":   dataRegion.Schema(),
 				"biganimal_projects": dataProjects.Schema(),
-				//"biganimal_fareplica": dataFAReplica.Schema(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"biganimal_cluster":   resourceCluster.Schema(),
