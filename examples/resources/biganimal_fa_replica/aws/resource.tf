@@ -11,12 +11,6 @@ terraform {
   }
 }
 
-//resource "random_password" "password" {
-//  length           = 16
-//  special          = true
-//  override_special = "!#$%&*()-_=+[]{}<>:?"
-//}
-
 variable "cluster_name" {
   type        = string
   description = "The name of the faraway replica cluster."
@@ -39,7 +33,7 @@ resource "biganimal_fareplica" "faraway_replica" {
 
   allowed_ip_ranges {
     cidr_block  = "127.0.0.1/32"
-    description = "localhoster"
+    description = "localhost"
   }
 
   allowed_ip_ranges {
@@ -48,17 +42,10 @@ resource "biganimal_fareplica" "faraway_replica" {
   }
 
   backup_retention_period = "6d"
-//  cluster_architecture {
-//    id    = "single"
-//    nodes = 1
-//  }
-
   csp_auth = true
-
   instance_type = "aws:m5.large"
-//  password      = resource.random_password.password.result
 
-  // todo: add some other example for pgConfig, below values are not modifyable for farep
+  // todo: add some other example for pgConfig, below values are not modify-able for farep
 //  pg_config {
 //    name  = "application_name"
 //    value = "created through terraform"
@@ -74,16 +61,6 @@ resource "biganimal_fareplica" "faraway_replica" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
-
-//  pg_type               = "epas"
-//  pg_version            = "14"
   private_networking    = false
-//  cloud_provider        = "aws"
-//  read_only_connections = false
   region                = "eu-west-2"
 }
-
-//output "password" {
-//  sensitive = true
-//  value     = resource.biganimal_cluster.single_node_cluster.password
-//}
