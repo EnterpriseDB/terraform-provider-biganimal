@@ -109,6 +109,8 @@ func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 // everything is omitempty,
 // and everything is either nullable, or empty-able
 type Cluster struct {
+	ClusterType                *string           `json:"clusterType,omitempty"`
+	ReplicaSourceClusterId     *string           `json:"replicaSourceClusterId,omitempty"`
 	AllowedIpRanges            *[]AllowedIpRange `json:"allowedIpRanges,omitempty"`
 	BackupRetentionPeriod      *string           `json:"backupRetentionPeriod,omitempty"`
 	ClusterArchitecture        *Architecture     `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`

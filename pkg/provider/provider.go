@@ -20,6 +20,7 @@ var (
 	dataCluster       = NewClusterData()
 	dataProjects      = NewProjectsData()
 	dataAWSConnection = NewAWSConnectionData()
+	dataFaReplica     = NewFAReplicaData()
 )
 
 func init() {
@@ -59,6 +60,7 @@ func New(version string) func() *schema.Provider {
 				"biganimal_region":         dataRegion.Schema(),
 				"biganimal_projects":       dataProjects.Schema(),
 				"biganimal_aws_connection": dataAWSConnection.Schema(),
+				"biganimal_fa_replica":     dataFaReplica.Schema(),
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
