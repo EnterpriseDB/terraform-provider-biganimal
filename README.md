@@ -136,7 +136,7 @@ to [Acceptance Tests](https://developer.hashicorp.com/terraform/plugin/sdkv2/tes
 
 It's necessary to get API token for running acceptance test successfully
 
-To run the test, you must fill in the appropriate environment variables in the [.env](.env.example) file. Please refer
+To run the test, you must create a copy of [.env.example](.env.example) with name `.env` and fill it with the appropriate environment variables.  Please refer
 to .env for the specific values.
 
 
