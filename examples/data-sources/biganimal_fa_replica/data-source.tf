@@ -85,14 +85,6 @@ output "cloud_provider" {
   value = data.biganimal_fa_replica.this.cloud_provider
 }
 
-//output "read_only_connections" {
-//  value = coalesce(data.biganimal_fa_replica.this.read_only_connections, false)
-//}
-//
-//output "ro_connection_uri" {
-//  value = data.biganimal_fa_replica.this.ro_connection_uri
-//}
-
 output "region" {
   value = data.biganimal_fa_replica.this.region
 }

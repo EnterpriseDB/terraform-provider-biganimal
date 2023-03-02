@@ -138,11 +138,6 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			//"ro_connection_uri": {
-			//	Description: "Cluster read-only connection URI. Only available for high availability clusters.",
-			//	Type:        schema.TypeString,
-			//	Computed:    true,
-			//},
 			"pg_config": {
 				Description: "Database configuration parameters.",
 				Type:        schema.TypeList,
@@ -193,11 +188,6 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			//"read_only_connections": {
-			//	Description: "Is read only connection enabled.",
-			//	Type:        schema.TypeBool,
-			//	Computed:    true,
-			//},
 			"csp_auth": {
 				Description: "Is authentication handled by the cloud service provider.",
 				Type:        schema.TypeBool,
@@ -254,9 +244,6 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 	}
 }
 
-//clusterType
-//Password
-
 //
 func (c *FAReplicaData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	diags := diag.Diagnostics{}
@@ -303,11 +290,9 @@ func (c *FAReplicaData) Read(ctx context.Context, d *schema.ResourceData, meta a
 	utils.SetOrPanic(d, "cloud_provider", cluster.Provider)
 	utils.SetOrPanic(d, "region", cluster.Region)
 	utils.SetOrPanic(d, "storage", *cluster.Storage)
-	//utils.SetOrPanic(d, "read_only_connections", cluster.ReadOnlyConnections)
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
 	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
-	//utils.SetOrPanic(d, "ro_connection_uri", connection.ReadOnlyPgUri)
 
 	d.SetId(*cluster.ClusterId)
 
