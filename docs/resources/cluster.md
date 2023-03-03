@@ -293,6 +293,7 @@ output "connection_uri" {
 - `created_at` (String) Cluster creation time.
 - `deleted_at` (String) Cluster deletion time.
 - `expired_at` (String) Cluster expiry time.
+- `faraway_replica_ids` (List of String)
 - `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
 - `logs_url` (String) The URL to find the logs of this cluster.

@@ -257,6 +257,13 @@ func (c *ClusterResource) Schema() *schema.Resource {
 					},
 				},
 			},
+			"faraway_replica_ids": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -319,6 +326,7 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	utils.SetOrPanic(d, "deleted_at", cluster.DeletedAt)
 	utils.SetOrPanic(d, "expired_at", cluster.ExpiredAt)
 	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)
+
 	utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt)
 	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)
 	utils.SetOrPanic(d, "logs_url", cluster.LogsUrl)
@@ -337,6 +345,7 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
 	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
 	utils.SetOrPanic(d, "ro_connection_uri", connection.ReadOnlyPgUri)
+	utils.SetOrPanic(d, "faraway_replica_ids", cluster.FarawayReplicaIds)
 
 	d.SetId(*cluster.ClusterId)
 	return nil

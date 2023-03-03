@@ -81,3 +81,7 @@ output "password" {
 output "ro_connection_uri" {
   value = resource.biganimal_cluster.ha_cluster.ro_connection_uri
 }
+
+output "faraway_replica_ids" {
+  value = resource.biganimal_cluster.ha_cluster.faraway_replica_ids
+}
