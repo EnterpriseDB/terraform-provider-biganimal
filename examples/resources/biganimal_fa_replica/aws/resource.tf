@@ -27,8 +27,8 @@ variable "project_id" {
 }
 
 resource "biganimal_fareplica" "faraway_replica" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
+  cluster_name      = var.cluster_name
+  project_id        = var.project_id
   source_cluster_id = var.source_cluster_id
 
   allowed_ip_ranges {
@@ -42,25 +42,25 @@ resource "biganimal_fareplica" "faraway_replica" {
   }
 
   backup_retention_period = "6d"
-  csp_auth = true
-  instance_type = "aws:m5.large"
+  csp_auth                = true
+  instance_type           = "aws:m5.large"
 
   // todo: add some other example for pgConfig, below values are not modify-able for farep
-//  pg_config {
-//    name  = "application_name"
-//    value = "created through terraform"
-//  }
-//
-//  pg_config {
-//    name  = "array_nulls"
-//    value = "off"
-//  }
+  //  pg_config {
+  //    name  = "application_name"
+  //    value = "created through terraform"
+  //  }
+  //
+  //  pg_config {
+  //    name  = "array_nulls"
+  //    value = "off"
+  //  }
 
   storage {
     volume_type       = "gp3"
     volume_properties = "gp3"
     size              = "4 Gi"
   }
-  private_networking    = false
-  region                = "eu-west-2"
+  private_networking = false
+  region             = "eu-west-2"
 }
