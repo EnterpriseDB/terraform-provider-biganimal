@@ -72,8 +72,7 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 
 			"cluster_type": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "faraway_replica",
+				Computed: true,
 			},
 
 			"cluster_name": {
@@ -224,7 +223,7 @@ func (c *FAReplicaResource) Create(ctx context.Context, d *schema.ResourceData, 
 
 	err := d.Set("cluster_type", "faraway_replica")
 	if err != nil {
-		return nil
+		return diag.FromErr(err)
 	}
 	cluster, err := models.NewClusterForCreate(d)
 	if err != nil {
@@ -274,6 +273,7 @@ func (c *FAReplicaResource) read(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	// set the outputs
+	utils.SetOrPanic(d, "cluster_type", "faraway_replica")
 	utils.SetOrPanic(d, "source_cluster_id", cluster.ReplicaSourceClusterId)      // Required
 	utils.SetOrPanic(d, "allowed_ip_ranges", cluster.AllowedIpRanges)             // optional
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod) // optional
@@ -304,7 +304,7 @@ func (c *FAReplicaResource) Update(ctx context.Context, d *schema.ResourceData, 
 	client := api.BuildAPI(meta).ClusterClient()
 	err := d.Set("cluster_type", "faraway_replica")
 	if err != nil {
-		return nil
+		return diag.FromErr(err)
 	}
 	// short circuit early for these types of changes
 	if d.HasChange("region") {
@@ -312,7 +312,7 @@ func (c *FAReplicaResource) Update(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if d.HasChange("backup_retention_period") {
-		return diag.FromErr(errors.New("backup_retention_period is immutable"))
+		return diag.FromErr(errors.New("backup retention period is immutable"))
 	}
 
 	cluster, err := models.NewClusterForUpdate(d)
