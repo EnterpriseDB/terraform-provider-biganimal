@@ -90,8 +90,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 
 			"cluster_type": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "cluster",
+				Computed: true,
 			},
 
 			"cluster_name": {
@@ -280,7 +279,7 @@ func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, me
 
 	err := d.Set("cluster_type", "cluster")
 	if err != nil {
-		return nil
+		return diag.FromErr(err)
 	}
 	cluster, err := models.NewClusterForCreate(d)
 	if err != nil {
@@ -330,6 +329,7 @@ func (c *ClusterResource) read(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	// set the outputs
+	utils.SetOrPanic(d, "cluster_type", "cluster")
 	utils.SetOrPanic(d, "allowed_ip_ranges", cluster.AllowedIpRanges)
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
 	utils.SetOrPanic(d, "cluster_architecture", cluster.ClusterArchitecture)
@@ -366,7 +366,7 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 	client := api.BuildAPI(meta).ClusterClient()
 	err := d.Set("cluster_type", "cluster")
 	if err != nil {
-		return nil
+		return diag.FromErr(err)
 	}
 	// short circuit early for these types of changes
 	if d.HasChange("pg_type") {
