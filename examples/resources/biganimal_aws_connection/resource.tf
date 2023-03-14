@@ -24,4 +24,3 @@ resource "biganimal_aws_connection" "project_aws_conn" {
   role_arn    = var.role_arn
   external_id = var.external_id
 }
-

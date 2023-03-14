@@ -50,5 +50,3 @@ Read-Only:
 
 - `cloud_provider_id` (String)
 - `cloud_provider_name` (String)
-
-

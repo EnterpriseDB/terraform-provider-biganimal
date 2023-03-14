@@ -138,5 +138,3 @@ It's necessary to get API token for running acceptance test successfully
 
 To run the test, you must create a copy of [.env.example](.env.example) with name `.env` and fill it with the appropriate environment variables.  Please refer
 to .env for the specific values.
-
-
