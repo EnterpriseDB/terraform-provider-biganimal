@@ -44,5 +44,3 @@ output "role_arn" {
 - `external_id` (String) The AWS external ID provided by BigAnimal.
 - `id` (String) The ID of this resource.
 - `role_arn` (String) the AWS iam role used by BigAnimal.
-
-
