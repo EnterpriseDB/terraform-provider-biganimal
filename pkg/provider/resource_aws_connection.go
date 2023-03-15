@@ -47,7 +47,7 @@ o obtain the necessary input parameters, please refer to [Connect CSP](https://w
 				Required:    true,
 			},
 			"role_arn": {
-				Description:      "the AWS iam role used by BigAnimal.",
+				Description:      "The AWS IAM role used by BigAnimal.",
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validateARN,
