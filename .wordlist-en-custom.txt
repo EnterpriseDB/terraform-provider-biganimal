@@ -1,12 +1,16 @@
 BigAnimal
 CIDR
+CSP
 EDB
 GUC
+IAM
 IOPS
 InstanceType
 MPL
 Postgres
 aws
+awsconnection
+azureconnection
 azurepremiumstorage
 biganimal
 config
