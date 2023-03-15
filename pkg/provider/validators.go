@@ -33,7 +33,7 @@ func validateARN(v interface{}, _ cty.Path) diag.Diagnostics {
 		return diag.Diagnostics{{
 			Severity: diag.Error,
 			Summary:  "invalid arn",
-			Detail:   fmt.Sprintf("%v is a invliad aws role arn", v),
+			Detail:   fmt.Sprintf("%v is a invalid aws role arn", v),
 		}}
 	}
 
