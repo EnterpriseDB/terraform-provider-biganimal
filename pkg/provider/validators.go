@@ -46,7 +46,7 @@ func validateUUID(v interface{}, _ cty.Path) diag.Diagnostics {
 		return diag.Diagnostics{{
 			Severity: diag.Error,
 			Summary:  "invalid uuid",
-			Detail:   fmt.Sprintf("%v is a invliad uuid", v),
+			Detail:   fmt.Sprintf("%v is a invalid uuid", v),
 		}}
 	}
 	return nil
