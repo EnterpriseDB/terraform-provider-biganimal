@@ -2,8 +2,11 @@ package provider
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"regexp"
+	"strings"
 
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
@@ -22,4 +25,29 @@ func validateProjectId(v interface{}, path cty.Path) diag.Diagnostics {
 		diags = append(diags, diag)
 	}
 	return diags
+}
+
+func validateARN(v interface{}, _ cty.Path) diag.Diagnostics {
+	a, err := arn.Parse(v.(string))
+	if err != nil || a.Service != "iam" || !strings.HasPrefix(a.Resource, "role") {
+		return diag.Diagnostics{{
+			Severity: diag.Error,
+			Summary:  "invalid arn",
+			Detail:   fmt.Sprintf("%v is a invalid aws role arn", v),
+		}}
+	}
+
+	return nil
+}
+
+func validateUUID(v interface{}, _ cty.Path) diag.Diagnostics {
+	_, err := uuid.Parse(v.(string))
+	if err != nil {
+		return diag.Diagnostics{{
+			Severity: diag.Error,
+			Summary:  "invalid uuid",
+			Detail:   fmt.Sprintf("%v is a invalid uuid", v),
+		}}
+	}
+	return nil
 }

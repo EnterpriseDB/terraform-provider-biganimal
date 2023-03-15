@@ -10,14 +10,19 @@ import (
 )
 
 var (
+
 	resourceRegion    = NewRegionResource()
 	resourceCluster   = NewClusterResource()
 	resourceProject   = NewProjectResource()
 	resourceFAReplica = NewFAReplicaResource()
+	resourceAWSConnection   = NewAWSConnectionResource()
+	resourceAzureConnection = NewAzureConnectionResource()
 
-	dataRegion   = NewRegionData()
-	dataCluster  = NewClusterData()
-	dataProjects = NewProjectsData()
+
+	dataRegion        = NewRegionData()
+	dataCluster       = NewClusterData()
+	dataProjects      = NewProjectsData()
+	dataAWSConnection = NewAWSConnectionData()
 )
 
 func init() {
@@ -53,15 +58,19 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster":  dataCluster.Schema(),
-				"biganimal_region":   dataRegion.Schema(),
-				"biganimal_projects": dataProjects.Schema(),
+				"biganimal_cluster":        dataCluster.Schema(),
+				"biganimal_region":         dataRegion.Schema(),
+				"biganimal_projects":       dataProjects.Schema(),
+				"biganimal_aws_connection": dataAWSConnection.Schema(),
 			},
+
 			ResourcesMap: map[string]*schema.Resource{
 				"biganimal_cluster":         resourceCluster.Schema(),
 				"biganimal_region":          resourceRegion.Schema(),
 				"biganimal_project":         resourceProject.Schema(),
 				"biganimal_faraway_replica": resourceFAReplica.Schema(),
+				"biganimal_aws_connection":   resourceAWSConnection.Schema(),
+				"biganimal_azure_connection": resourceAzureConnection.Schema(),
 			},
 		}
 
