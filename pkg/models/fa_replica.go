@@ -5,11 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//const (
-//	CONDITION_DEPLOYED = "biganimal.com/deployed"
-//	PHASE_HEALTHY      = "Cluster in healthy state"
-//)
-
 func NewFAReplica(d *schema.ResourceData) (*FAReplicaCluster, error) {
 	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
 	if err != nil {

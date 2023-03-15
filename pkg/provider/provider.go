@@ -70,7 +70,7 @@ func New(version string) func() *schema.Provider {
 				"biganimal_project":          resourceProject.Schema(),
 				"biganimal_aws_connection":   resourceAWSConnection.Schema(),
 				"biganimal_azure_connection": resourceAzureConnection.Schema(),
-				"biganimal_fareplica":        resourceFAReplica.Schema(),
+				"biganimal_faraway_replica":  resourceFAReplica.Schema(),
 			},
 		}
 
