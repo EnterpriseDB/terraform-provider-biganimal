@@ -58,10 +58,10 @@ func New(version string) func() *schema.Provider {
 				"biganimal_projects": dataProjects.Schema(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"biganimal_cluster":   resourceCluster.Schema(),
-				"biganimal_region":    resourceRegion.Schema(),
-				"biganimal_project":   resourceProject.Schema(),
-				"biganimal_fareplica": resourceFAReplica.Schema(),
+				"biganimal_cluster":         resourceCluster.Schema(),
+				"biganimal_region":          resourceRegion.Schema(),
+				"biganimal_project":         resourceProject.Schema(),
+				"biganimal_faraway_replica": resourceFAReplica.Schema(),
 			},
 		}
 
