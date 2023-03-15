@@ -40,7 +40,7 @@ func (d *AWSConnectionData) Schema() *schema.Resource {
 }
 
 func (d *AWSConnectionData) Read(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := api.BuildAPI(meta).ProviderClient()
+	client := api.BuildAPI(meta).CloudProviderClient()
 
 	projectID := data.Get("project_id").(string)
 

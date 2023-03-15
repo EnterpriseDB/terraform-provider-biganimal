@@ -64,7 +64,7 @@ func (a *AWSConnectionResource) create(ctx context.Context, d *schema.ResourceDa
 	projectID := d.Get("project_id").(string)
 	externalID := d.Get("external_id").(string)
 	roleArn := d.Get("role_arn").(string)
-	client := api.BuildAPI(meta).ProviderClient()
+	client := api.BuildAPI(meta).CloudProviderClient()
 	var model models.AWSConnection
 
 	model.RoleArn = roleArn
@@ -93,7 +93,7 @@ func (a *AWSConnectionResource) Read(ctx context.Context, d *schema.ResourceData
 }
 
 func (a *AWSConnectionResource) read(ctx context.Context, d *schema.ResourceData, meta any) error {
-	client := api.BuildAPI(meta).ProviderClient()
+	client := api.BuildAPI(meta).CloudProviderClient()
 
 	projectId := d.Id()
 	conn, err := client.GetAWSConnection(ctx, projectId)

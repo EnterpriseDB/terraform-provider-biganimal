@@ -50,7 +50,7 @@ resource "biganimal_aws_connection" "project_aws_conn" {
 
 - `external_id` (String) The AWS external ID provided by BigAnimal.
 - `project_id` (String) Project ID of the project.
-- `role_arn` (String) the AWS iam role used by BigAnimal.
+- `role_arn` (String) The AWS IAM role used by BigAnimal.
 
 ### Optional
 
@@ -68,3 +68,5 @@ Optional:
 - `create` (String)
 - `delete` (String)
 - `update` (String)
+
+

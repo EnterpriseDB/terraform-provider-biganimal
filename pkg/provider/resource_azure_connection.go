@@ -72,7 +72,7 @@ func (a *AzureConnectionResource) Create(ctx context.Context, data *schema.Resou
 	subscriptionID := data.Get("subscription_id").(string)
 	tenantID := data.Get("tenant_id").(string)
 
-	client := api.BuildAPI(meta).ProviderClient()
+	client := api.BuildAPI(meta).CloudProviderClient()
 	model := models.AzureConnection{
 		ClientId:       clientID,
 		ClientSecret:   clientSecret,
