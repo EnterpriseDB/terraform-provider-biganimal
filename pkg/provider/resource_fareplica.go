@@ -22,7 +22,7 @@ func NewFAReplicaResource() *FAReplicaResource {
 
 func (c *FAReplicaResource) Schema() *schema.Resource {
 	return &schema.Resource{
-		//todo: Description: "The cluster resource is used to manage BigAnimal clusters. See [Creating a cluster](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/) for more details.",
+		Description: "The faraway replica resource is used to manage cluster faraway-replicas on different active regions in the cloud. See [Managing replicas](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_replicas/) for more details.",
 
 		CreateContext: c.Create,
 		ReadContext:   c.Read,
