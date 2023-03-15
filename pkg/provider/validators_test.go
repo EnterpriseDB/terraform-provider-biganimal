@@ -45,7 +45,7 @@ func Test_validateARN(t *testing.T) {
 			want: diag.Diagnostics{{
 				Severity: diag.Error,
 				Summary:  "invalid arn",
-				Detail:   fmt.Sprintf("%v is a invliad aws role arn", "arn:aws:rds:eu-west-1:123456789012:db:mysql-db"),
+				Detail:   fmt.Sprintf("%v is a invalid aws role arn", "arn:aws:rds:eu-west-1:123456789012:db:mysql-db"),
 			}},
 		},
 		{
