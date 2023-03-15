@@ -74,7 +74,7 @@ func Test_validateUUID(t *testing.T) {
 			want: diag.Diagnostics{{
 				Severity: diag.Error,
 				Summary:  "invalid uuid",
-				Detail:   fmt.Sprintf("%v is a invliad uuid", "xyz"),
+				Detail:   fmt.Sprintf("%v is a invalid uuid", "xyz"),
 			}},
 		},
 		{
