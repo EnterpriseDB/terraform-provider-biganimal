@@ -21,7 +21,7 @@ func NewFAReplicaData() *FAReplicaData {
 //
 func (c *FAReplicaData) Schema() *schema.Resource {
 	return &schema.Resource{
-		Description: "The cluster data source describes a BigAnimal cluster. The data source requires your cluster name.",
+		Description: "The faraway replica cluster data source describes a BigAnimal faraway replica connected to the cluster. The data source requires faraway replica cluster ID.",
 		ReadContext: c.Read,
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
@@ -83,9 +83,10 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"cluster_name": {
-				Description: "Name of the cluster.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Name of the faraway replica cluster.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateClusterName,
 			},
 			"most_recent": {
 				Description: "Show the most recent cluster when there are multiple clusters with the same name.",
@@ -261,6 +262,10 @@ func (c *FAReplicaData) Read(ctx context.Context, d *schema.ResourceData, meta a
 		return fromBigAnimalErr(err)
 	}
 	tflog.Debug(ctx, pretty.Sprint(cluster))
+
+	if *cluster.ClusterType != "faraway_replica" {
+		return diag.FromErr(errors.New("specified cluster is not a 'faraway replica', please use 'biganimal_cluster' data source to fetch details about this cluster"))
+	}
 
 	connection, err := client.ConnectionString(ctx, projectId, *cluster.ClusterId)
 	if err != nil {

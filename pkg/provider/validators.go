@@ -51,3 +51,17 @@ func validateUUID(v interface{}, _ cty.Path) diag.Diagnostics {
 	}
 	return nil
 }
+
+func validateClusterName(v interface{}, _ cty.Path) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if v.(string) == "" {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Empty value not allowed",
+			Detail:   "Cluster name should not be an empty string",
+		})
+		return diags
+	}
+	return nil
+}
