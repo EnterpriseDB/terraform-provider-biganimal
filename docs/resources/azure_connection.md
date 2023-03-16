@@ -9,7 +9,7 @@ description: |-
 
 # biganimal_azure_connection (Resource)
 
-The azure_connection resource is used to make connection between your project and Azure. 
+The azure_connection resource is used to make connection between your project and Azure.
 To obtain the necessary input parameters, please refer to [Connect CSP](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/02_connecting_to_your_cloud/connecting_azure/).
 
 ## Example Usage
