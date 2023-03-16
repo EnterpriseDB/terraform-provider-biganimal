@@ -45,17 +45,6 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   csp_auth                = false
   instance_type           = "azure:Standard_D2s_v3"
 
-  // todo: add some other example for pgConfig, below values are not modifyable for farep
-  //  pg_config {
-  //    name  = "application_name"
-  //    value = "created through terraform"
-  //  }
-  //
-  //  pg_config {
-  //    name  = "array_nulls"
-  //    value = "off"
-  //  }
-
 
   // only following parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
