@@ -3,7 +3,7 @@ module github.com/EnterpriseDB/terraform-provider-biganimal
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go v1.44.222
+	github.com/aws/aws-sdk-go v1.44.224
 	github.com/google/uuid v1.3.0
 	github.com/h2non/gock v1.2.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
@@ -13,7 +13,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/kr/pretty v0.3.1
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/onsi/gomega v1.27.3
+	github.com/onsi/gomega v1.27.4
 	gotest.tools/v3 v3.4.0
 )
 
