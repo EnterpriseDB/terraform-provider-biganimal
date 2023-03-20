@@ -267,6 +267,10 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	}
 	tflog.Debug(ctx, pretty.Sprint(cluster))
 
+	if *cluster.ClusterType != "cluster" {
+		return diag.FromErr(errors.New("this is a 'faraway replica', and not a cluster, please use the 'biganimal_faraway_replica' data source to fetch details about this cluster"))
+	}
+
 	connection, err := client.ConnectionString(ctx, projectId, *cluster.ClusterId)
 	if err != nil {
 		return diag.FromErr(err)
