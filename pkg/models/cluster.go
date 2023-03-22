@@ -135,6 +135,7 @@ func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 	return c, err
 }
 
+// Cluster struct
 // everything is omitempty,
 // and everything is either nullable, or empty-able
 type Cluster struct {
@@ -165,6 +166,7 @@ type Cluster struct {
 	Region                     *Region           `json:"region,omitempty"`
 	ResizingPvc                []string          `json:"resizingPvc,omitempty"`
 	Storage                    *Storage          `json:"storage,omitempty"`
+	FarawayReplicaIds          *[]string         `json:"farawayReplicaIds,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'

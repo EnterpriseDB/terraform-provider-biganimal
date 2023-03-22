@@ -78,3 +78,7 @@ output "password" {
   sensitive = true
   value     = resource.biganimal_cluster.single_node_cluster.password
 }
+
+output "faraway_replica_ids" {
+  value = biganimal_cluster.single_node_cluster.faraway_replica_ids
+}

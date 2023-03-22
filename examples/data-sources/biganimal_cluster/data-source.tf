@@ -96,3 +96,7 @@ output "resizing_pvc" {
 output "storage" {
   value = data.biganimal_cluster.this.storage
 }
+
+output "faraway_replica_ids" {
+  value = data.biganimal_cluster.this.faraway_replica_ids
+}
