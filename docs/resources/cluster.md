@@ -85,6 +85,10 @@ output "password" {
   sensitive = true
   value     = resource.biganimal_cluster.single_node_cluster.password
 }
+
+output "faraway_replica_ids" {
+  value = biganimal_cluster.single_node_cluster.faraway_replica_ids
+}
 ```
 
 ## High Availability Cluster Example
@@ -171,6 +175,10 @@ output "password" {
 
 output "ro_connection_uri" {
   value = resource.biganimal_cluster.ha_cluster.ro_connection_uri
+}
+
+output "faraway_replica_ids" {
+  value = resource.biganimal_cluster.ha_cluster.faraway_replica_ids
 }
 ```
 
@@ -293,7 +301,7 @@ output "connection_uri" {
 - `created_at` (String) Cluster creation time.
 - `deleted_at` (String) Cluster deletion time.
 - `expired_at` (String) Cluster expiry time.
-- `faraway_replica_ids` (List of String)
+- `faraway_replica_ids` (Set of String)
 - `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
 - `logs_url` (String) The URL to find the logs of this cluster.

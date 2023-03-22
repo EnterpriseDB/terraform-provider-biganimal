@@ -102,6 +102,7 @@ output "storage" {
   value = data.biganimal_cluster.this.storage
 }
 
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
@@ -131,7 +132,7 @@ output "faraway_replica_ids" {
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
 - `deleted_at` (String) Cluster deletion time.
 - `expired_at` (String) Cluster expiry time.
-- `faraway_replica_ids` (List of String)
+- `faraway_replica_ids` (Set of String)
 - `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
 - `instance_type` (String) Instance type.
