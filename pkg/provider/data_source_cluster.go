@@ -239,6 +239,13 @@ func (c *ClusterData) Schema() *schema.Resource {
 					},
 				},
 			},
+			"faraway_replica_ids": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -291,6 +298,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
 	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
 	utils.SetOrPanic(d, "ro_connection_uri", connection.ReadOnlyPgUri)
+	utils.SetOrPanic(d, "faraway_replica_ids", cluster.FarawayReplicaIds)
 
 	d.SetId(*cluster.ClusterId)
 
