@@ -1,6 +1,11 @@
 name: Pre-Commit
 
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      
   workflow_dispatch:
   push:
 
