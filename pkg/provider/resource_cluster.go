@@ -10,8 +10,8 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 type ClusterResource struct{}
