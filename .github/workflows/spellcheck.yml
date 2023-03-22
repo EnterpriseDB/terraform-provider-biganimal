@@ -1,6 +1,10 @@
 name: spellcheck-woke
 on:
   push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
   workflow_dispatch:
 
 jobs:
@@ -12,6 +16,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
 
       - name: woke
         uses: get-woke/woke-action@v0
@@ -26,6 +33,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
 
       - name: Spellcheck
         uses: rojopolis/spellcheck-github-actions@0.30.0

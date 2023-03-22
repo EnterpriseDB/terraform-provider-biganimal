@@ -1,6 +1,10 @@
 name: Pre-Commit
 
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
   workflow_dispatch:
   push:
 
@@ -32,4 +36,4 @@ jobs:
       - name: Enforce pre-commit checks
         uses: pre-commit/action@v3.0.0
         with:
-          extra_args: --hook-stage push --from-ref origin/main --to-ref ${{ github.ref }}
+          extra_args: --hook-stage push --from-ref origin/main --to-ref ${{ github.event.pull_request.head.sha || github.ref }}
