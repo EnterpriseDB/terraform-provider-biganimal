@@ -10,7 +10,6 @@ on:
     paths-ignore:
       - 'README.md'
       - '.github/**'
-    
   push:
     paths-ignore:
       - 'README.md'
@@ -33,7 +32,6 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
-
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
@@ -56,8 +54,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      
-      
       - uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod'
@@ -93,7 +89,6 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
-
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
