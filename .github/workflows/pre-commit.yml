@@ -2,7 +2,6 @@ name: Pre-Commit
 
 on:
   pull_request:
-    types: [assigned, edited, opened, synchronize, reopened]
   workflow_dispatch:
   push:
     branches:
