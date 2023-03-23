@@ -10,8 +10,8 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 // RegionResource is a struct to namespace all the functions
@@ -133,7 +133,7 @@ func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	// retry until we get success
-	err = resource.RetryContext(
+	err = retry.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutCreate)-time.Minute,
 		r.retryFunc(ctx, d, meta, cloudProvider, id, desiredState))
@@ -155,7 +155,7 @@ func (r *RegionResource) Delete(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	// retry until we get success
-	err := resource.RetryContext(
+	err := retry.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutDelete)-time.Minute,
 		r.retryFunc(ctx, d, meta, cloudProvider, id, desiredState))
@@ -166,21 +166,21 @@ func (r *RegionResource) Delete(ctx context.Context, d *schema.ResourceData, met
 	return diag.Diagnostics{}
 }
 
-func (r *RegionResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, cloudProvider, regionId, desiredState string) resource.RetryFunc {
+func (r *RegionResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, cloudProvider, regionId, desiredState string) retry.RetryFunc {
 	client := api.BuildAPI(meta).RegionClient()
-	return func() *resource.RetryError {
+	return func() *retry.RetryError {
 		projectId := d.Get("project_id").(string)
 		region, err := client.Read(ctx, projectId, cloudProvider, regionId)
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
+			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
 		if region.Status != desiredState {
-			return resource.RetryableError(errors.New("operation incomplete"))
+			return retry.RetryableError(errors.New("operation incomplete"))
 		}
 
 		if err := r.read(ctx, d, meta); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		return nil
