@@ -4,9 +4,7 @@
 name: Tests
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
+    types: [assigned, edited, opened, synchronize, reopened]
     paths-ignore:
       - 'README.md'
       - '.github/**'

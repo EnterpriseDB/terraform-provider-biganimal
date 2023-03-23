@@ -2,9 +2,7 @@ name: spellcheck-woke
 on:
   push:
   pull_request:
-    types:
-      - opened
-      - synchronize
+    types: [assigned, edited, opened, synchronize, reopened]
   workflow_dispatch:
 
 jobs:
