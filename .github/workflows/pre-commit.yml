@@ -8,8 +8,8 @@ on:
       - main
 
 env:
-  GOLANGCI_LINT_VERSION: "v1.50.1"
-  GOLANG_VERSION: "1.18.x"
+  GOLANGCI_LINT_VERSION: "v1.52.1"
+  GOLANG_VERSION: "1.19.x"
 
 jobs:
 
