@@ -1,6 +1,8 @@
 name: spellcheck-woke
 on:
   push:
+    branches:
+      - main
   pull_request:
     types: [assigned, edited, opened, synchronize, reopened]
   workflow_dispatch:

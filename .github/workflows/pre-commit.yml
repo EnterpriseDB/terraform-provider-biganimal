@@ -5,6 +5,8 @@ on:
     types: [assigned, edited, opened, synchronize, reopened]
   workflow_dispatch:
   push:
+    branches:
+      - main
 
 env:
   GOLANGCI_LINT_VERSION: "v1.50.1"
