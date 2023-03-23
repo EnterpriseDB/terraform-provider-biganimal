@@ -1,6 +1,6 @@
-variable "cluster_name" {
+variable "cluster_id" {
   type        = string
-  description = "The name of the cluster"
+  description = "Id of the faraway replica cluster"
 }
 
 variable "project_id" {
@@ -9,7 +9,7 @@ variable "project_id" {
 }
 
 data "biganimal_faraway_replica" "this" {
-  cluster_name = var.cluster_name
+  cluster_id = var.cluster_id
   project_id   = var.project_id
 }
 

@@ -18,7 +18,6 @@ func NewFAReplicaData() *FAReplicaData {
 	return &FAReplicaData{}
 }
 
-//
 func (c *FAReplicaData) Schema() *schema.Resource {
 	return &schema.Resource{
 		Description: "The faraway replica cluster data source describes a BigAnimal faraway replica connected to the cluster. The data source requires faraway replica cluster ID.",
@@ -78,15 +77,14 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"cluster_type": {
-				Description: "Source Cluster Type.",
+				Description: "Type of the Specified Cluster .",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"cluster_name": {
-				Description:      "Name of the faraway replica cluster.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validateClusterName,
+				Description: "Name of the faraway replica cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"most_recent": {
 				Description: "Show the most recent cluster when there are multiple clusters with the same name.",
@@ -130,9 +128,9 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"cluster_id": {
-				Description: "Cluster ID.",
+				Description: "Faraway Replica Cluster ID.",
 				Type:        schema.TypeString,
-				Computed:    true,
+				Required:    true,
 			},
 			"connection_uri": {
 				Description: "Cluster connection URI.",
@@ -245,19 +243,17 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 	}
 }
 
-//
 func (c *FAReplicaData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	diags := diag.Diagnostics{}
 	client := api.BuildAPI(meta).ClusterClient()
 
-	clusterName, ok := d.Get("cluster_name").(string)
+	clusterId, ok := d.Get("cluster_id").(string)
 	if !ok {
-		return diag.FromErr(errors.New("unable to find cluster name"))
+		return diag.FromErr(errors.New("unable to find cluster ID"))
 	}
 	projectId := d.Get("project_id").(string)
-	mostRecent := d.Get("most_recent").(bool)
 
-	cluster, err := client.ReadByName(ctx, projectId, clusterName, mostRecent)
+	cluster, err := client.Read(ctx, projectId, clusterId)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}

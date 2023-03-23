@@ -71,11 +71,20 @@ func (c *ClusterData) Schema() *schema.Resource {
 					},
 				},
 			},
+
 			"cluster_name": {
-				Description: "Name of the cluster.",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:      "Name of the cluster.",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateClusterName,
 			},
+
+			"cluster_type": {
+				Description: "Type of the Specified Cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
 			"most_recent": {
 				Description: "Show the most recent cluster when there are multiple clusters with the same name.",
 				Type:        schema.TypeBool,
@@ -277,6 +286,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	// set the outputs
+	utils.SetOrPanic(d, "cluster_type", cluster.ClusterType)
 	utils.SetOrPanic(d, "allowed_ip_ranges", cluster.AllowedIpRanges)
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
 	utils.SetOrPanic(d, "cluster_architecture", *cluster.ClusterArchitecture)
