@@ -12,15 +12,15 @@ import (
 	"github.com/kr/pretty"
 )
 
-type ClusterData struct{}
+type FAReplicaData struct{}
 
-func NewClusterData() *ClusterData {
-	return &ClusterData{}
+func NewFAReplicaData() *FAReplicaData {
+	return &FAReplicaData{}
 }
 
-func (c *ClusterData) Schema() *schema.Resource {
+func (c *FAReplicaData) Schema() *schema.Resource {
 	return &schema.Resource{
-		Description: "The cluster data source describes a BigAnimal cluster. The data source requires your cluster name.",
+		Description: "The faraway replica cluster data source describes a BigAnimal faraway replica connected to the cluster. The data source requires faraway replica cluster ID.",
 		ReadContext: c.Read,
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
@@ -71,20 +71,21 @@ func (c *ClusterData) Schema() *schema.Resource {
 					},
 				},
 			},
-
-			"cluster_name": {
-				Description:      "Name of the cluster.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validateClusterName,
-			},
-
-			"cluster_type": {
-				Description: "Type of the Specified Cluster.",
+			"source_cluster_id": {
+				Description: "Source Cluster ID.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-
+			"cluster_type": {
+				Description: "Type of the Specified Cluster .",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"cluster_name": {
+				Description: "Name of the faraway replica cluster.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"most_recent": {
 				Description: "Show the most recent cluster when there are multiple clusters with the same name.",
 				Type:        schema.TypeBool,
@@ -127,17 +128,12 @@ func (c *ClusterData) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"cluster_id": {
-				Description: "Cluster ID.",
+				Description: "Faraway Replica Cluster ID.",
 				Type:        schema.TypeString,
-				Computed:    true,
+				Required:    true,
 			},
 			"connection_uri": {
 				Description: "Cluster connection URI.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"ro_connection_uri": {
-				Description: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -189,11 +185,6 @@ func (c *ClusterData) Schema() *schema.Resource {
 			"cloud_provider": {
 				Description: "Cloud provider.",
 				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"read_only_connections": {
-				Description: "Is read only connection enabled.",
-				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 			"csp_auth": {
@@ -248,36 +239,28 @@ func (c *ClusterData) Schema() *schema.Resource {
 					},
 				},
 			},
-			"faraway_replica_ids": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
 		},
 	}
 }
 
-func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+func (c *FAReplicaData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	diags := diag.Diagnostics{}
 	client := api.BuildAPI(meta).ClusterClient()
 
-	clusterName, ok := d.Get("cluster_name").(string)
+	clusterId, ok := d.Get("cluster_id").(string)
 	if !ok {
-		return diag.FromErr(errors.New("unable to find cluster name"))
+		return diag.FromErr(errors.New("unable to find cluster ID"))
 	}
 	projectId := d.Get("project_id").(string)
-	mostRecent := d.Get("most_recent").(bool)
 
-	cluster, err := client.ReadByName(ctx, projectId, clusterName, mostRecent)
+	cluster, err := client.Read(ctx, projectId, clusterId)
 	if err != nil {
 		return fromBigAnimalErr(err)
 	}
 	tflog.Debug(ctx, pretty.Sprint(cluster))
 
-	if *cluster.ClusterType != "cluster" {
-		return diag.FromErr(errors.New("this is a 'faraway replica', and not a cluster, please use the 'biganimal_faraway_replica' data source to fetch details about this cluster"))
+	if *cluster.ClusterType != "faraway_replica" {
+		return diag.FromErr(errors.New("specified cluster is not a 'faraway replica', please use 'biganimal_cluster' data source to fetch details about this cluster"))
 	}
 
 	connection, err := client.ConnectionString(ctx, projectId, *cluster.ClusterId)
@@ -286,6 +269,7 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	}
 
 	// set the outputs
+	utils.SetOrPanic(d, "source_cluster_id", cluster.ReplicaSourceClusterId)
 	utils.SetOrPanic(d, "cluster_type", cluster.ClusterType)
 	utils.SetOrPanic(d, "allowed_ip_ranges", cluster.AllowedIpRanges)
 	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
@@ -307,12 +291,9 @@ func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any
 	utils.SetOrPanic(d, "cloud_provider", cluster.Provider)
 	utils.SetOrPanic(d, "region", cluster.Region)
 	utils.SetOrPanic(d, "storage", *cluster.Storage)
-	utils.SetOrPanic(d, "read_only_connections", cluster.ReadOnlyConnections)
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
 	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
-	utils.SetOrPanic(d, "ro_connection_uri", connection.ReadOnlyPgUri)
-	utils.SetOrPanic(d, "faraway_replica_ids", cluster.FarawayReplicaIds)
 
 	d.SetId(*cluster.ClusterId)
 

@@ -10,8 +10,8 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 type ClusterResource struct{}
@@ -286,7 +286,7 @@ func (c *ClusterResource) Create(ctx context.Context, d *schema.ResourceData, me
 	d.SetId(clusterId)
 
 	// retry until we get success
-	err = resource.RetryContext(
+	err = retry.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutCreate)-time.Minute,
 		c.retryFunc(ctx, d, meta, clusterId))
@@ -383,7 +383,7 @@ func (c *ClusterResource) Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	// retry until we get success
-	err = resource.RetryContext(
+	err = retry.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutUpdate)-time.Minute,
 		c.retryFunc(ctx, d, meta, clusterId))
@@ -403,21 +403,21 @@ func (c *ClusterResource) Delete(ctx context.Context, d *schema.ResourceData, me
 	return diag.Diagnostics{}
 }
 
-func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) resource.RetryFunc {
+func (c *ClusterResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) retry.RetryFunc {
 	client := api.BuildAPI(meta).ClusterClient()
-	return func() *resource.RetryError {
+	return func() *retry.RetryError {
 		projectId := d.Get("project_id").(string)
 		cluster, err := client.Read(ctx, projectId, clusterId)
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
+			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
 		if !cluster.IsHealthy() {
-			return resource.RetryableError(errors.New("instance not yet ready"))
+			return retry.RetryableError(errors.New("instance not yet ready"))
 		}
 
 		if err := c.read(ctx, d, meta); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
 	}
