@@ -4,13 +4,12 @@
 name: Tests
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
     paths-ignore:
       - 'README.md'
       - '.github/**'
   push:
+    branches:
+      - main
     paths-ignore:
       - 'README.md'
   # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
