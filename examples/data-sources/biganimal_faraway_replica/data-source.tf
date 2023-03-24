@@ -10,7 +10,7 @@ variable "project_id" {
 
 data "biganimal_faraway_replica" "this" {
   cluster_id = var.cluster_id
-  project_id   = var.project_id
+  project_id = var.project_id
 }
 
 output "source_cluster_id" {
