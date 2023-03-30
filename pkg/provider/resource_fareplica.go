@@ -71,8 +71,9 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 			},
 
 			"cluster_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"cluster_name": {
