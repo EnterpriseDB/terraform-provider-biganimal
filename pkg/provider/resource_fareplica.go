@@ -10,7 +10,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -240,7 +240,7 @@ func (c *FAReplicaResource) Create(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(clusterId)
 
 	// retry until we get success
-	err = resource.RetryContext(
+	err = retry.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutCreate)-time.Minute,
 		c.retryFunc(ctx, d, meta, clusterId))
@@ -328,7 +328,7 @@ func (c *FAReplicaResource) Update(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	// retry until we get success
-	err = resource.RetryContext(
+	err = retry.RetryContext(
 		ctx,
 		d.Timeout(schema.TimeoutUpdate)-time.Minute,
 		c.retryFunc(ctx, d, meta, clusterId))
@@ -348,21 +348,21 @@ func (c *FAReplicaResource) Delete(ctx context.Context, d *schema.ResourceData, 
 	return diag.Diagnostics{}
 }
 
-func (c *FAReplicaResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) resource.RetryFunc {
+func (c *FAReplicaResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) retry.RetryFunc {
 	client := api.BuildAPI(meta).ClusterClient()
-	return func() *resource.RetryError {
+	return func() *retry.RetryError {
 		projectId := d.Get("project_id").(string)
 		cluster, err := client.Read(ctx, projectId, clusterId)
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
+			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
 		if !cluster.IsHealthy() {
-			return resource.RetryableError(errors.New("instance not yet ready"))
+			return retry.RetryableError(errors.New("instance not yet ready"))
 		}
 
 		if err := c.read(ctx, d, meta); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 		return nil
 	}
