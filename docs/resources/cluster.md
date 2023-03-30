@@ -297,6 +297,7 @@ output "connection_uri" {
 ### Read-Only
 
 - `cluster_id` (String) Cluster ID.
+- `cluster_type` (String)
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
 - `deleted_at` (String) Cluster deletion time.
