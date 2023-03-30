@@ -50,19 +50,27 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   // it is highly recommend setting these values to be equal to or greater than the source cluster's
   pg_config {
     name  = "max_connections"
-    value = "100"}
+    value = "100"
+  }
+
   pg_config {
     name  = "max_locks_per_transaction"
-    value= "64"}
+    value = "64"
+  }
+
   pg_config {
     name  = "max_prepared_transactions"
-    value= "0"}
+    value = "0"
+  }
+
   pg_config {
     name  = "max_wal_senders"
-    value = "10"}
+    value = "10"
+  }
+
   pg_config {
     name  = "max_worker_processes"
-    value= "32"
+    value = "32"
   }
 
 
