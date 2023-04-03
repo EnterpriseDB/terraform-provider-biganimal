@@ -6,11 +6,11 @@ type CloudProvider struct {
 }
 
 type Project struct {
-	ProjectId      string           `json:"projectId,omitempty" mapstructure:"project_id"`
-	ProjectName    string           `json:"projectName,omitempty" mapstructure:"name"`
-	UserCount      int              `json:"userCount,omitempty" mapstructure:"user_count"`
-	ClusterCount   int              `json:"clusterCount,omitempty" mapstructure:"cluster_count"`
-	CloudProviders *[]CloudProvider `json:"cloudProviders" mapstructure:"cloud_providers"`
+	ProjectId      string           `json:"projectId,omitempty" tfsdk:"project_id"`
+	ProjectName    string           `json:"projectName,omitempty" tfsdk:"name"`
+	UserCount      int              `json:"userCount,omitempty" tfsdk:"user_count"`
+	ClusterCount   int              `json:"clusterCount,omitempty" tfsdk:"cluster_count"`
+	CloudProviders *[]CloudProvider `json:"cloudProviders" tfsdk:"cloud_providers"`
 }
 
 // Check the return value, if ProjectName is also needed
