@@ -47,7 +47,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
-  // it is highly recommend setting these values to be equal to or greater than the source cluster's
+  // it is highly recommended setting these values to be equal to or greater than the source cluster's.
   pg_config {
     name  = "max_connections"
     value = "100"
