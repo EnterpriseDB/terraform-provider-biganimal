@@ -8,7 +8,7 @@
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
       - id: check-yaml
         args: [--allow-multiple-documents]
@@ -31,16 +31,28 @@ repos:
   #       the commit, if it's committed with `git commit -v`. Probably a bug
   #       in the commitizen side. Needs more investigation
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v2.20.5
+    rev: v2.42.1
     hooks:
       - id: commitizen
         stages: [commit-msg]
+
+  # tfupdate hook should run before go-generate, so that we can see if the docs
+  # are properly updated.
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.77.1
+    hooks:
+      - id: terraform_fmt
+      - id: tfupdate
+        name: Auto update hashicorp/random provider version
+        args:
+          - --args=provider random
 
   # pre-commit hooks for golang
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
     hooks:
       - id: go-fmt
+      - id: go-generate
       - id: go-vet
         exclude: tools
       - id: golangci-lint
@@ -48,13 +60,13 @@ repos:
 
   # Lint: Dockerfile
   - repo: https://github.com/hadolint/hadolint.git
-    rev: v2.12.0
+    rev: v2.12.1-beta
     hooks:
       - id: hadolint-docker
 
   # Lint: protofile
   - repo: https://github.com/yoheimuta/protolint
-    rev: v0.42.0
+    rev: v0.43.1
     hooks:
       - id: protolint
 
@@ -66,7 +78,7 @@ repos:
 
   # Lint: Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.8.0.4
+    rev: v0.9.0.2
     hooks:
       - id: shellcheck
         args: [ "-x" ]
