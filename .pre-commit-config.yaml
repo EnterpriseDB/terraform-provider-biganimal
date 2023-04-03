@@ -36,6 +36,17 @@ repos:
       - id: commitizen
         stages: [commit-msg]
 
+  # tfupdate hook should run before go-generate, so that we can see if the docs
+  # are properly updated.
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.77.1
+    hooks:
+      - id: terraform_fmt
+      - id: tfupdate
+        name: Auto update hashicorp/random provider version
+        args:
+          - --args=provider random
+
   # pre-commit hooks for golang
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
@@ -46,15 +57,6 @@ repos:
         exclude: tools
       - id: golangci-lint
       - id: go-mod-tidy
-
-  - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.77.1
-    hooks:
-      - id: terraform_fmt
-      - id: tfupdate
-        name: Auto update hashicorp/random provider version
-        args:
-          - --args=provider random
 
   # Lint: Dockerfile
   - repo: https://github.com/hadolint/hadolint.git
