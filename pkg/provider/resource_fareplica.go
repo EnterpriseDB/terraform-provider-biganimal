@@ -264,6 +264,12 @@ func (c *FAReplicaResource) read(ctx context.Context, d *schema.ResourceData, me
 	clusterId := d.Id()
 	projectId := d.Get("project_id").(string)
 	cluster, err := client.Read(ctx, projectId, clusterId)
+
+	// return error if faraway-replica is promoted to a cluster
+	if *cluster.ClusterType != "faraway_replica" {
+		return fmt.Errorf("the specified cluster is no longer a 'faraway replica' and has likely been promoted to a standalone cluster. Please use the 'biganimal_cluster' data source to retrieve information about this cluster")
+	}
+
 	if err != nil {
 		return err
 	}
