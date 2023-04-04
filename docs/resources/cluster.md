@@ -1,4 +1,5 @@
 # biganimal_cluster (Resource)
+
 The cluster resource is used to manage BigAnimal clusters. See [Creating a cluster](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/) for more details.
 
 
