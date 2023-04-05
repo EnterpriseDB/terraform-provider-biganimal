@@ -11,14 +11,44 @@ const (
 )
 
 func NewCluster(d *schema.ResourceData) (*Cluster, error) {
+	// define variables which have different values for a faraway-replica and a cluster
+	var (
+		SourceId             *string
+		clusterPassword      *string
+		ClusterType          *string
+		clusterPgType        *PgType    = new(PgType)
+		clusterPgVersion     *PgVersion = new(PgVersion)
+		clusterCloudProvider *Provider  = new(Provider)
+		clusterRoConn        *bool
+		clusterArchitecture  *Architecture = new(Architecture)
+	)
+
 	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges"))
 	if err != nil {
 		return nil, err
 	}
 
-	clusterArchitecture, err := utils.StructFromProps[Architecture](d.Get("cluster_architecture"))
-	if err != nil {
-		return nil, err
+	// determine if ClusterType is either faraway_replica or a cluster
+	ClusterType = utils.GetStringP(d, "cluster_type")
+
+	if *ClusterType == "faraway_replica" {
+		clusterArchitecture = nil
+		clusterCloudProvider = nil
+		clusterPgType = nil
+		clusterPgVersion = nil
+		SourceId = utils.GetStringP(d, "source_cluster_id")
+	}
+
+	if *ClusterType == "cluster" || *ClusterType == "" {
+		clusterPassword = utils.GetStringP(d, "password")
+		clusterPgType.PgTypeId = utils.GetString(d, "pg_type")
+		clusterPgVersion.PgVersionId = utils.GetString(d, "pg_version") //d.Get("pg_version").(string),
+		clusterCloudProvider.CloudProviderId = utils.GetString(d, "cloud_provider")
+		clusterRoConn = utils.GetBoolP(d, "read_only_connections")
+		*clusterArchitecture, err = utils.StructFromProps[Architecture](d.Get("cluster_architecture"))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	pgConfig, err := utils.StructFromProps[[]KeyValue](d.Get("pg_config"))
@@ -32,12 +62,14 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 	}
 
 	cluster := &Cluster{
-		AllowedIpRanges:       &allowedIpRanges,
-		BackupRetentionPeriod: utils.GetStringP(d, "backup_retention_period"),
-		ClusterArchitecture:   &clusterArchitecture,
-		ClusterId:             utils.GetStringP(d, "cluster_id"),
-		ClusterName:           utils.GetStringP(d, "cluster_name"),
-		CSPAuth:               utils.GetBoolP(d, "csp_auth"),
+		ReplicaSourceClusterId: SourceId,
+		ClusterType:            ClusterType,
+		AllowedIpRanges:        &allowedIpRanges,
+		BackupRetentionPeriod:  utils.GetStringP(d, "backup_retention_period"),
+		ClusterArchitecture:    clusterArchitecture,
+		ClusterId:              utils.GetStringP(d, "cluster_id"),
+		ClusterName:            utils.GetStringP(d, "cluster_name"),
+		CSPAuth:                utils.GetBoolP(d, "csp_auth"),
 
 		//  these are readonly attributes, that come from the cluster api,
 		// and end up in the resourceData.  we don't set these from the
@@ -56,22 +88,16 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		InstanceType: &InstanceType{
 			InstanceTypeId: utils.GetString(d, "instance_type"),
 		},
-		Password: utils.GetStringP(d, "password"),
-		PgConfig: &pgConfig,
-		PgType: &PgType{
-			PgTypeId: utils.GetString(d, "pg_type"),
-		},
-		PgVersion: &PgVersion{
-			PgVersionId: d.Get("pg_version").(string),
-		},
+		Password:          clusterPassword,
+		PgConfig:          &pgConfig,
+		PgType:            clusterPgType,
+		PgVersion:         clusterPgVersion,
 		PrivateNetworking: utils.GetBoolP(d, "private_networking"),
-		Provider: &Provider{
-			CloudProviderId: utils.GetString(d, "cloud_provider"),
-		},
+		Provider:          clusterCloudProvider,
 		Region: &Region{
 			Id: utils.GetString(d, "region"),
 		},
-		ReadOnlyConnections: utils.GetBoolP(d, "read_only_connections"),
+		ReadOnlyConnections: clusterRoConn,
 		Storage:             &storage,
 	}
 
@@ -102,6 +128,10 @@ func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 	c.PgVersion = nil
 	c.Provider = nil
 	c.Region = nil
+	if *utils.GetStringP(d, "cluster_type") == "faraway_replica" {
+		c.ReplicaSourceClusterId = nil
+		c.BackupRetentionPeriod = nil
+	}
 	return c, err
 }
 

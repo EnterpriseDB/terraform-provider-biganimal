@@ -297,6 +297,7 @@ output "connection_uri" {
 ### Read-Only
 
 - `cluster_id` (String) Cluster ID.
+- `cluster_type` (String) Type of the cluster. For example, "cluster" for biganimal_cluster resources, or "faraway_replica" for biganimal_faraway_replica resources.
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
 - `deleted_at` (String) Cluster deletion time.

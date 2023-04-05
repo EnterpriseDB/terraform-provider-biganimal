@@ -1,0 +1,26 @@
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{ tffile .ExampleFile }}
+{{- end }}
+
+## Example of Creating a Single Node Cluster and Its Faraway Replica
+
+BigAnimal does not currently support provisioning a replica on a different cloud provider from the source cluster.
+That's why both the cluster and the faraway replica in this example are running on the same cloud provider.
+
+{{ tffile "examples/resources/biganimal_faraway_replica/cluster_and_faraway_replica/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
+{{- if .HasImport }}
+
+## Import
+
+Import is supported using the following syntax:
+
+{{ printf "{{codefile \"shell\" %q}}" .ImportFile }}
+{{- end }}
