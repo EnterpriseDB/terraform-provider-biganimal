@@ -1,3 +1,19 @@
+## v0.4.0 (April 05. 2023)
+Features:
+* New Data Source: `biganimal_aws_connection`
+* New Data Source: `biganimal_faraway_replica`
+* New Resource: `biganimal_aws_connection`
+* New Resource: `biganimal_azure_connection`
+* New Resource: `biganimal_faraway_replica`
+
+Enhancements:
+* data-source/biganimal_cluster: `faraway_replica_ids` and `cluster_type` fields are added.
+* resource/biganimal_cluster: `faraway_replica_ids` and `cluster_type` fields are added.
+* Initial skeleton for the acceptance tests implemented.
+* Switched to terraform-plugin-testing module
+* Dependencies updated.
+* Various CI improvements.
+
 ## v0.3.0 (February 15. 2023)
 
 Enhancements:
