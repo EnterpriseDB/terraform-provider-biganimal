@@ -39,7 +39,7 @@ If you want to skip submitting an issue and instead prefer to just send a pull r
 
 ## Developer Environment Setup
 
-Please refer to the [README](https://github.com/EnterpriseDB/terraform-provider-biganimal/blob/main/README.md).
+Please refer to the [DEVELOPMENT.md](./DEVELOPMENT.md).
 
 ## How to make a Pull Request
 
