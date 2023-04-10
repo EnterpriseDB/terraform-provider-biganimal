@@ -46,7 +46,7 @@ func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Description: "Project ID of the project.",
 							Computed:    true,
 						},
-						"name": schema.StringAttribute{
+						"project_name": schema.StringAttribute{
 							Description: "Project Name of the project.",
 							Required:    true,
 						},

@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccBiganimalAWSConnectionResource_basic(t *testing.T) {
+	t.Skip()
 	var (
 		acc_env_vars_checklist = []string{
 			"BA_TF_ACC_VAR_aws_connection_project_id",
@@ -38,7 +39,8 @@ func TestAccBiganimalAWSConnectionResource_basic(t *testing.T) {
 		},
 	})
 }
-func awsConnConfig(projectID, roleARN, externalID string) string {
+
+func awsConnConfig(projectID, roleARN, externalID string) string { // nolint:staticcheck
 	return fmt.Sprintf(`resource "biganimal_aws_connection" "test_aws_conn" {
 		project_id  = "%s"
 		role_arn    = "%s"

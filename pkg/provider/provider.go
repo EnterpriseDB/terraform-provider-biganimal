@@ -16,7 +16,6 @@ import (
 var (
 	resourceRegion          = NewRegionResource()
 	resourceCluster         = NewClusterResource()
-	resourceProject         = NewProjectResource()
 	resourceAWSConnection   = NewAWSConnectionResource()
 	resourceAzureConnection = NewAzureConnectionResource()
 	resourceFAReplica       = NewFAReplicaResource()
@@ -59,7 +58,6 @@ func New(version string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"biganimal_cluster":          resourceCluster.Schema(),
 				"biganimal_region":           resourceRegion.Schema(),
-				"biganimal_project":          resourceProject.Schema(),
 				"biganimal_aws_connection":   resourceAWSConnection.Schema(),
 				"biganimal_azure_connection": resourceAzureConnection.Schema(),
 				"biganimal_faraway_replica":  resourceFAReplica.Schema(),
@@ -108,7 +106,7 @@ func NewProvider(version string) func() provider.Provider {
 }
 
 func (b bigAnimalProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "bigAnimal"
+	resp.TypeName = "biganimal"
 	resp.Version = b.version
 }
 
@@ -155,7 +153,7 @@ func (b bigAnimalProvider) Schema(ctx context.Context, request provider.SchemaRe
 			"ba_bearer_token": schema2.StringAttribute{
 				MarkdownDescription: "BigAnimal Bearer Token",
 				Sensitive:           false,
-				Required:            true,
+				Optional:            true,
 			},
 			"ba_api_uri": schema2.StringAttribute{
 				MarkdownDescription: "BigAnimal API URL",
@@ -172,5 +170,7 @@ func (b bigAnimalProvider) DataSources(ctx context.Context) []func() datasource.
 }
 
 func (b bigAnimalProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return nil
+	return []func() resource.Resource{
+		NewProjectResource,
+	}
 }

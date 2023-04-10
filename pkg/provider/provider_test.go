@@ -5,16 +5,25 @@ import (
 	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var testAccProviderFactories map[string]func() (*schema.Provider, error)
+var (
+	testAccProviderFactories        map[string]func() (*schema.Provider, error)
+	testAccProtoV6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error)
+)
 
 func init() {
 	testAccProviderFactories = map[string]func() (*schema.Provider, error){
 		"biganimal": func() (*schema.Provider, error) {
 			return New("test")(), nil
 		},
+	}
+
+	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+		"biganimal": providerserver.NewProtocol6WithError(NewProvider("debug")()),
 	}
 
 }
@@ -42,6 +51,6 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatal("BA_API_URI must be set for acceptance tests")
 	}
 	if os.Getenv("BA_BEARER_TOKEN") == "" {
-		t.Fatal("BA_BEARER_TOKEN= must be set for acceptance tests")
+		t.Fatal("BA_BEARER_TOKEN must be set for acceptance tests")
 	}
 }
