@@ -37,8 +37,8 @@ Credentials can be provided by using the `BA_BEARER_TOKEN` and optionally `BA_AP
 
 ### Required
 
-- `ba_bearer_token` (String)
+- `ba_bearer_token` (String) BigAnimal Bearer Token
 
 ### Optional
 
-- `ba_api_uri` (String)
+- `ba_api_uri` (String) BigAnimal API URL
