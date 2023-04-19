@@ -23,7 +23,7 @@ func init() {
 	}
 
 	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-		"biganimal": providerserver.NewProtocol6WithError(NewProvider("debug")()),
+		"biganimal": providerserver.NewProtocol6WithError(NewProvider("test")()),
 	}
 
 }
