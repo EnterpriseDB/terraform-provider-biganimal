@@ -336,9 +336,6 @@ Required:
 Optional:
 
 - `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
-
-Read-Only:
-
 - `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input.
 
 

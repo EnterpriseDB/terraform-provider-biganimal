@@ -249,7 +249,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 						"throughput": {
 							Description: "Throughput is automatically calculated by BigAnimal based on the IOPS input.",
 							Type:        schema.TypeString,
-							Computed:    true,
+							Optional:    true,
 						},
 						"volume_properties": {
 							Description: "Volume properties in accordance with the selected volume type.",
