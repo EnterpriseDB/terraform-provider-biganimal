@@ -250,6 +250,13 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Description: "Throughput is automatically calculated by BigAnimal based on the IOPS input.",
 							Type:        schema.TypeString,
 							Optional:    true,
+							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+								// throughput is an optional field.
+								// If there is already a value set (old != "")
+								// and there is no new value (new == ""),
+								// we can suppress this Diff
+								return new == "" && old != ""
+							},
 						},
 						"volume_properties": {
 							Description: "Volume properties in accordance with the selected volume type.",
