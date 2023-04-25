@@ -1,3 +1,13 @@
+## v0.4.1 (April 24. 2023)
+Bug Fixes:
+* Throughput field in the `biganimal_cluster` and `biganimal_faraway_replica` resources is now configurable.
+* Big fixes on drift-detection of allowedIpRanges and pgConfig fields of the `biganimal_cluster` and `biganimal_faraway_replica` resources.
+
+Enhancements:
+* Dependency updates
+* Extended developer documentation
+
+
 ## v0.4.0 (April 05. 2023)
 Features:
 * New Data Source: `biganimal_aws_connection`
