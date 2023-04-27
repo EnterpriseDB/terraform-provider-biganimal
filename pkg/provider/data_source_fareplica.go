@@ -25,7 +25,7 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
 				Description: "Allowed IP ranges.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -139,7 +139,7 @@ func (c *FAReplicaData) Schema() *schema.Resource {
 			},
 			"pg_config": {
 				Description: "Database configuration parameters.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
