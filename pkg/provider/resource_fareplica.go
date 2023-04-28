@@ -36,7 +36,7 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"allowed_ip_ranges": {
 				Description: "Allowed IP ranges.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -128,7 +128,7 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 			},
 			"pg_config": {
 				Description: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
