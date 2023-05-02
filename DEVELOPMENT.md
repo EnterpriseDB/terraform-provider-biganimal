@@ -51,6 +51,16 @@ $> export_BA_env_vars ba-user1
 ba-user1 BA_BEARER_TOKEN and BA_API_URI are exported.
 TF_VAR_project_id terraform variable is also exported. Value is prj_0123456789abcdef
 ```
+5. If you would like to enable bash completion for the `export_BA_env_vars` command, you can add the following lines to your shellrc file:
+```
+# Bash Completion for export_BA_env_vars
+_export_BA_env_vars_completions()
+{
+  COMPREPLY=($(compgen -W "$(biganimal show-credentials -o json | jq '.[].name')" -- "${COMP_WORDS[1]}"))
+}
+
+complete -F _export_BA_env_vars_completions export_BA_env_vars
+```
 
 
 ## How to test your local copy of the provider?
