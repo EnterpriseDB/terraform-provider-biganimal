@@ -27,11 +27,8 @@ repos:
         args: [--autofix]
 
   # pre-commit hook to verify commit messages are conventional commit compliant
-  # NOTE: not using the latest version of commitizen, because it doesn't verify
-  #       the commit, if it's committed with `git commit -v`. Probably a bug
-  #       in the commitizen side. Needs more investigation
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v2.42.1
+    rev: 3.2.1
     hooks:
       - id: commitizen
         stages: [commit-msg]
@@ -39,7 +36,7 @@ repos:
   # tfupdate hook should run before go-generate, so that we can see if the docs
   # are properly updated.
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.77.1
+    rev: v1.79.1
     hooks:
       - id: terraform_fmt
       - id: tfupdate
@@ -66,7 +63,7 @@ repos:
 
   # Lint: protofile
   - repo: https://github.com/yoheimuta/protolint
-    rev: v0.43.1
+    rev: v0.44.0
     hooks:
       - id: protolint
 
