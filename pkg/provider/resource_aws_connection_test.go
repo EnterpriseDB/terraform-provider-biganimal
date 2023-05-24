@@ -2,13 +2,15 @@ package provider
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"os"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccBiganimalAWSConnectionResource_basic(t *testing.T) {
 	t.Skip()
+
 	var (
 		acc_env_vars_checklist = []string{
 			"BA_TF_ACC_VAR_aws_connection_project_id",

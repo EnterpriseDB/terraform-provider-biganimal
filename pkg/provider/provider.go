@@ -9,6 +9,7 @@ import (
 	schema2 "github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	diagv2 "github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"os"
 )
@@ -30,6 +31,7 @@ func init() {
 	// Set descriptions to support markdown syntax, this will be used in document generation
 	// and the language server.
 	schema.DescriptionKind = schema.StringMarkdown
+
 }
 
 func New(version string) func() *schema.Provider {
@@ -38,14 +40,14 @@ func New(version string) func() *schema.Provider {
 			Schema: map[string]*schema.Schema{
 				"ba_bearer_token": {
 					Type:        schema.TypeString,
+					Description: "BigAnimal Bearer Token",
 					Sensitive:   false,
-					Required:    true,
-					DefaultFunc: schema.EnvDefaultFunc("BA_BEARER_TOKEN", nil),
+					Optional:    true,
 				},
 				"ba_api_uri": {
 					Type:        schema.TypeString,
+					Description: "BigAnimal API URL",
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("BA_API_URI", "https://portal.biganimal.com/api/v3"),
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
@@ -83,6 +85,27 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		// api.BuildAPI(meta).RegionClient()
 
 		userAgent := fmt.Sprintf("%s/%s", "terraform-provider-biganimal", version)
+		diags := diag.Diagnostics{}
+
+		if ba_bearer_token == "" {
+			ba_bearer_token = os.Getenv("BA_BEARER_TOKEN")
+		}
+
+		if ba_bearer_token == "" {
+			diags = append(diags, diagv2.Diagnostic{
+				Severity: diagv2.Error,
+				Summary:  "Unable to find ba_nearer_token",
+				Detail:   "ba_nearer_token cannot be an empty string"})
+			return nil, diags
+		}
+
+		if ba_api_uri == "" {
+			ba_api_uri = os.Getenv("BA_API_URI")
+		}
+		if ba_api_uri == "" {
+			ba_api_uri = "https://portal.biganimal.com/api/v3"
+		}
+
 		return api.NewAPI(ba_bearer_token, ba_api_uri, userAgent), nil
 	}
 }
@@ -93,8 +116,8 @@ type bigAnimalProvider struct {
 
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
-	BaBearerToken string `tfsdk:"ba_bearer_token"`
-	BaAPIUri      string `tfsdk:"ba_api_uri"`
+	BaBearerToken *string `tfsdk:"ba_bearer_token"`
+	BaAPIUri      *string `tfsdk:"ba_api_uri"`
 }
 
 func NewProvider(version string) func() provider.Provider {
@@ -121,8 +144,8 @@ func (b bigAnimalProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	var token = os.Getenv("BA_BEARER_TOKEN")
-	if data.BaBearerToken != "" {
-		token = data.BaBearerToken
+	if data.BaBearerToken != nil {
+		token = *data.BaBearerToken
 	}
 
 	if token == "" {
@@ -137,8 +160,8 @@ func (b bigAnimalProvider) Configure(ctx context.Context, req provider.Configure
 	if os.Getenv("BA_API_URI") != "" {
 		host = os.Getenv("BA_API_URI")
 	}
-	if data.BaAPIUri != "" {
-		host = data.BaAPIUri
+	if data.BaAPIUri != nil {
+		host = *data.BaAPIUri
 	}
 
 	userAgent := fmt.Sprintf("%s/%s", "terraform-provider-biganimal", b.version)
