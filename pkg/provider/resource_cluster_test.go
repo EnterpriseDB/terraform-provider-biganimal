@@ -2,17 +2,17 @@ package provider_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-const cluster_name = "TF-ACCTestCluster"
+const acc_default_cluster_name = "TF-ACCTestCluster"
 
 func TestAccResourceCluster(t *testing.T) {
 	var (
-		projectID = os.Getenv("TF_VAR_project_id")
+		acc_cluster_name = getResourceVarOrDefault("cluster", "cluster_name", acc_default_cluster_name)
+		acc_projectID    = getResourceVarOrDefault("cluster", "project_id", acc_default_projectID)
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -22,7 +22,7 @@ func TestAccResourceCluster(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: clusterResourceConfig(projectID),
+				Config: clusterResourceConfig(acc_cluster_name, acc_projectID),
 				Check:  resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "instance_type", "aws:m5.large"),
 				// Otherwise, it gives the following error:
 				// resource_cluster_test.go:16: Step 1/1 error: After applying this test step, the plan was not empty.
@@ -34,7 +34,7 @@ func TestAccResourceCluster(t *testing.T) {
 	})
 }
 
-func clusterResourceConfig(projectID string) string {
+func clusterResourceConfig(cluster_name, projectID string) string {
 	return fmt.Sprintf(`resource "biganimal_cluster" "acctest_cluster" {
   cluster_name = "%s"
   project_id   = "%s"

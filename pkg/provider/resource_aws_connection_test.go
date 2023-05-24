@@ -9,9 +9,9 @@ import (
 
 func TestAccBiganimalAWSConnectionResource(t *testing.T) {
 	var (
-		projectID  = envForDatasourceVar("aws_connection", "PROJECT")
-		roleARN    = envForDatasourceVar("aws_connection", "ROLE_ARN")
-		externalID = envForDatasourceVar("aws_connection", "EXTERNAL_ID")
+		projectID  = getDataSourceVarOrDefault("aws_connection", "PROJECT", acc_default_projectID)
+		roleARN    = getDataSourceVarOrDefault("aws_connection", "ROLE_ARN", acc_default_roleARN)
+		externalID = getDataSourceVarOrDefault("aws_connection", "EXTERNAL_ID", acc_default_externalID)
 	)
 
 	resource.Test(t, resource.TestCase{

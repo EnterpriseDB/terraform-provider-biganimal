@@ -9,9 +9,9 @@ import (
 
 func TestAccResourceRegion(t *testing.T) {
 	var (
-		projectID = envForResourceVar("region", "project")
-		provider  = envForResourceVar("region", "provider")
-		regionID  = envForResourceVar("region", "region")
+		projectID = getResourceVarOrDefault("region", "project", acc_default_projectID)
+		provider  = getResourceVarOrDefault("region", "provider", acc_default_provider)
+		regionID  = getResourceVarOrDefault("region", "region", acc_default_region)
 
 		regionConfig = `resource "biganimal_region" "this" {
   status 		 = "%s"

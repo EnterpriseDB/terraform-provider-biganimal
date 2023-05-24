@@ -1,11 +1,10 @@
 package provider_test
 
 import (
-	"fmt"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/provider"
 	"os"
-	"strings"
 	"testing"
+
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/provider"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -19,18 +18,6 @@ func init() {
 		},
 	}
 
-}
-
-func envForResourceVar(resourceName, varName string) string {
-	return os.Getenv(fmt.Sprintf("BA_TF_ACC_RESOURCE_%s_%s",
-		strings.ToUpper(resourceName),
-		strings.ToUpper(varName)))
-}
-
-func envForDatasourceVar(resourceName, varName string) string {
-	return os.Getenv(fmt.Sprintf("BA_TF_ACC_DATASOURCE_%s_%s",
-		strings.ToUpper(resourceName),
-		strings.ToUpper(varName)))
 }
 
 func testAccPreCheck(t *testing.T) {
