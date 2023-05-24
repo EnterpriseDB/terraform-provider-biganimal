@@ -1,8 +1,7 @@
-package provider
+package provider_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -10,9 +9,9 @@ import (
 
 func TestAccBiganimalAWSConnectionResource(t *testing.T) {
 	var (
-		projectID  = os.Getenv("BA_TF_PROJECT")
-		roleARN    = os.Getenv("BA_TF_AWS_ROLE_ARN")
-		externalID = os.Getenv("BA_TF_AWS_EXTERNAL_ID")
+		projectID  = envForDatasourceVar("aws_connection", "PROJECT")
+		roleARN    = envForDatasourceVar("aws_connection", "ROLE_ARN")
+		externalID = envForDatasourceVar("aws_connection", "EXTERNAL_ID")
 	)
 
 	resource.Test(t, resource.TestCase{
