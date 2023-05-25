@@ -16,9 +16,11 @@ func TestAccResourceCluster_basic(t *testing.T) {
 		// e.g. for biganimal_cluster resource, the project_id variable can be fetched
 		acc_env_vars_checklist = []string{
 			"BA_TF_ACC_VAR_cluster_project_id",
+			"BA_TF_ACC_VAR_cluster_region",
 		}
 		accClusterName = "acctest_cluster_basic"
 		accProjectID   = os.Getenv("BA_TF_ACC_VAR_cluster_project_id")
+		accRegion      = os.Getenv("BA_TF_ACC_VAR_cluster_region")
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -29,19 +31,14 @@ func TestAccResourceCluster_basic(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: clusterResourceConfig(accClusterName, accProjectID),
+				Config: clusterResourceConfig(accClusterName, accProjectID, accRegion),
 				Check:  resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "instance_type", "aws:m5.large"),
-				// Otherwise, it gives the following error:
-				// resource_cluster_test.go:16: Step 1/1 error: After applying this test step, the plan was not empty.
-				// Remove this ExpectNonEmptyPlan: true, when the following PR is merged:
-				// https://github.com/EnterpriseDB/terraform-provider-biganimal/pull/128
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
 }
 
-func clusterResourceConfig(cluster_name, projectID string) string {
+func clusterResourceConfig(cluster_name, projectID, region string) string {
 	return fmt.Sprintf(`resource "biganimal_cluster" "acctest_cluster" {
   cluster_name = "%s"
   project_id   = "%s"
@@ -86,6 +83,6 @@ func clusterResourceConfig(cluster_name, projectID string) string {
   private_networking    = false
   cloud_provider        = "aws"
   read_only_connections = false
-  region                = "us-east-1"
-}`, cluster_name, projectID)
+  region                = "%s"
+}`, cluster_name, projectID, region)
 }
