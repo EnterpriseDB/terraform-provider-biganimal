@@ -1,17 +1,25 @@
-package provider_test
+package provider
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"testing"
 )
 
-func TestAccResourceRegion(t *testing.T) {
+func TestAccResourceRegion_basic(t *testing.T) {
 	var (
-		projectID = getResourceVarOrDefault("region", "project", acc_default_projectID)
-		provider  = getResourceVarOrDefault("region", "provider", acc_default_provider)
-		regionID  = getResourceVarOrDefault("region", "region", acc_default_region)
+		acc_env_vars_checklist = []string{
+			"BA_TF_ACC_VAR_region_project_id",
+			"BA_TF_ACC_VAR_region_provider",
+			"BA_TF_ACC_VAR_region_region_id",
+		}
+
+		projectID = os.Getenv("BA_TF_ACC_VAR_region_project_id")
+		provider  = os.Getenv("BA_TF_ACC_VAR_region_provider")
+		regionID  = os.Getenv("BA_TF_ACC_VAR_region_region_id")
 
 		regionConfig = `resource "biganimal_region" "this" {
   status 		 = "%s"
@@ -22,7 +30,11 @@ func TestAccResourceRegion(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		//PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccResourcePreCheck(t, "region", acc_env_vars_checklist)
+		},
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{

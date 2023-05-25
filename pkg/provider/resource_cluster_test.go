@@ -1,28 +1,35 @@
-package provider_test
+package provider
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-const acc_default_cluster_name = "TF-ACCTestCluster"
-
-func TestAccResourceCluster(t *testing.T) {
+func TestAccResourceCluster_basic(t *testing.T) {
 	var (
-		acc_cluster_name = getResourceVarOrDefault("cluster", "cluster_name", acc_default_cluster_name)
-		acc_projectID    = getResourceVarOrDefault("cluster", "project_id", acc_default_projectID)
+		// Add env vars to fetch to the following checklist
+		// The variable naming scheme is as follows:
+		// BA_TF_ACC_VAR_<resource_type>_<variable_name>
+		// e.g. for biganimal_cluster resource, the project_id variable can be fetched
+		acc_env_vars_checklist = []string{
+			"BA_TF_ACC_VAR_cluster_project_id",
+		}
+		accClusterName = "acctest_cluster_basic"
+		accProjectID   = os.Getenv("BA_TF_ACC_VAR_cluster_project_id")
 	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
+			testAccResourcePreCheck(t, "cluster", acc_env_vars_checklist)
 		},
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: clusterResourceConfig(acc_cluster_name, acc_projectID),
+				Config: clusterResourceConfig(accClusterName, accProjectID),
 				Check:  resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "instance_type", "aws:m5.large"),
 				// Otherwise, it gives the following error:
 				// resource_cluster_test.go:16: Step 1/1 error: After applying this test step, the plan was not empty.
