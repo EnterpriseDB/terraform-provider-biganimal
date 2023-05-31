@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -18,7 +19,7 @@ func TestAccResourceCluster_basic(t *testing.T) {
 			"BA_TF_ACC_VAR_cluster_project_id",
 			"BA_TF_ACC_VAR_cluster_region",
 		}
-		accClusterName = "acctest_cluster_basic"
+		accClusterName = fmt.Sprintf("acctest_cluster_basic_%v", time.Now().Unix())
 		accProjectID   = os.Getenv("BA_TF_ACC_VAR_cluster_project_id")
 		accRegion      = os.Getenv("BA_TF_ACC_VAR_cluster_region")
 	)

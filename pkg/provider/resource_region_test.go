@@ -30,7 +30,6 @@ func TestAccResourceRegion_basic(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		//PreCheck:          func() { testAccPreCheck(t) },
 		PreCheck: func() {
 			testAccPreCheck(t)
 			testAccResourcePreCheck(t, "region", acc_env_vars_checklist)
