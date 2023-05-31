@@ -8,15 +8,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccBiganimalAWSConnectionResource(t *testing.T) {
+func TestAccBiganimalAWSConnectionResource_basic(t *testing.T) {
 	var (
-		projectID  = os.Getenv("BA_TF_PROJECT")
-		roleARN    = os.Getenv("BA_TF_AWS_ROLE_ARN")
-		externalID = os.Getenv("BA_TF_AWS_EXTERNAL_ID")
+		acc_env_vars_checklist = []string{
+			"BA_TF_ACC_VAR_aws_connection_project_id",
+			"BA_TF_ACC_VAR_aws_connection_role_arn",
+			"BA_TF_ACC_VAR_aws_connection_region_id",
+		}
+
+		projectID  = os.Getenv("BA_TF_ACC_VAR_aws_connection_project_id")
+		roleARN    = os.Getenv("BA_TF_ACC_VAR_aws_connection_role_arn")
+		externalID = os.Getenv("BA_TF_ACC_VAR_aws_connection_external_id")
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccResourcePreCheck(t, "aws_connection", acc_env_vars_checklist)
+		},
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
