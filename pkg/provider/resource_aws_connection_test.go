@@ -11,9 +11,9 @@ import (
 func TestAccBiganimalAWSConnectionResource_basic(t *testing.T) {
 	var (
 		acc_env_vars_checklist = []string{
-			"BA_TF_ACC_VAR_region_project_id",
-			"BA_TF_ACC_VAR_region_role_arn",
-			"BA_TF_ACC_VAR_region_region_id",
+			"BA_TF_ACC_VAR_aws_connection_project_id",
+			"BA_TF_ACC_VAR_aws_connection_role_arn",
+			"BA_TF_ACC_VAR_aws_connection_region_id",
 		}
 
 		projectID  = os.Getenv("BA_TF_ACC_VAR_aws_connection_project_id")
