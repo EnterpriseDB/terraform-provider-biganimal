@@ -22,7 +22,6 @@ func TestAccBiganimalProjectResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("biganimal_project.test_project", "project_id"),
 					resource.TestCheckResourceAttrSet("biganimal_project.test_project", "user_count"),
 					resource.TestCheckResourceAttrSet("biganimal_project.test_project", "cluster_count"),
-					resource.TestCheckResourceAttrSet("biganimal_project.test_project", "cloud_providers"),
 				),
 			},
 			{

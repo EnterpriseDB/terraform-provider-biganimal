@@ -57,32 +57,18 @@ output "project" {
 
 - `project_name` (String) Project Name of the project.
 
-### Optional
-
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-
 ### Read-Only
 
-- `cloud_providers` (Set of Object) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--cloud_providers))
+- `cloud_providers` (Attributes Set) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--cloud_providers))
 - `cluster_count` (Number) User Count of the project.
-- `id` (String) The ID of this resource.
-- `project_id` (String) Project ID of the project.
+- `id` (String) Project ID of the project.
+- `project_id` (String, Deprecated) Project ID of the project.
 - `user_count` (Number) User Count of the project.
-
-<a id="nestedblock--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
-- `delete` (String)
-- `update` (String)
-
 
 <a id="nestedatt--cloud_providers"></a>
 ### Nested Schema for `cloud_providers`
 
 Read-Only:
 
-- `cloud_provider_id` (String)
-- `cloud_provider_name` (String)
+- `cloud_provider_id` (String) Cloud Provider ID.
+- `cloud_provider_name` (String) Cloud Provider Name.
