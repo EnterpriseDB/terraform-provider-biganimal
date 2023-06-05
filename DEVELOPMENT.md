@@ -6,17 +6,15 @@ Please make sure to read the [Contributing guideline](./CONTRIBUTING.md) first.
 
 As described in the [Readme](./README.md#getting-an-api-token) file, you can use the `get-token.sh` script to fetch a Bearer Token.
 
-Another common practice is using the [Biganimal CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/).
+Another common practice is using the [Biganimal CLI](https://cli.biganimal.com/).
 
 ### Using BA CLI to help initializing Provider credentials
 
-1. [Install the BA CLI](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/#installing-the-cli) and [jq - Command Line JSON Processor ](https://stedolan.github.io/jq/).
+1. [Install the BA CLI v2.0.0 or later](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/#installing-the-cli) and [jq - Command Line JSON Processor ](https://stedolan.github.io/jq/).
 1. [Authenticate as a valid user and create a credential](https://www.enterprisedb.com/docs/biganimal/latest/reference/cli/#installing-the-cli). This command will direct you to your browser.
 ```shell
-biganimal create-credential \
-  --name "ba-user1" \
-  --address "portal.biganimal.com" \
-  --port "443"
+biganimal credential create \
+  --name "ba-user1"
 ```
 3. Add the following bash functions to your shellrc file (For example: `.bashrc` if you're using bash, `.zshrc` if you're using ZSH) and start a new shell.
 ```bash
@@ -31,14 +29,14 @@ ba_get_default_proj_id () {
 
 export_BA_env_vars () {
 	cred_name="${1:-ba-user1}" ## Replace "ba-user1" with your credential name, if you're using something different
-	if ! biganimal show-clusters -c $cred_name > /dev/null
+	if ! biganimal cluster show -c $cred_name > /dev/null
 	then
-		echo "!!! Running the reset-credential command now !!!"
-		biganimal reset-credential $cred_name
+		echo "!!! Running the credential reset command now !!!"
+		biganimal credential reset $cred_name
 	fi
-	biganimal show-clusters -c $cred_name >&/dev/null
-	export BA_BEARER_TOKEN=$(biganimal show-credentials -o json| jq -r --arg CREDNAME "$cred_name" '.[]|select(.name==$CREDNAME).accessToken')
-	export BA_API_URI="https://"$(biganimal show-credentials -o json | jq -r --arg CREDNAME "$cred_name" '.[]|select(.name==$CREDNAME).address')/api/v3
+	biganimal cluster show -c $cred_name >&/dev/null
+	export BA_BEARER_TOKEN=$(biganimal credential show -o json| jq -r --arg CREDNAME "$cred_name" '.[]|select(.name==$CREDNAME).accessToken')
+	export BA_API_URI="https://"$(biganimal credential show -o json | jq -r --arg CREDNAME "$cred_name" '.[]|select(.name==$CREDNAME).address')/api/v3
 	export BA_CRED_NAME="$cred_name"
 	echo "$cred_name BA_BEARER_TOKEN and BA_API_URI are exported."
 	export TF_VAR_project_id="prj_$(ba_get_default_proj_id)"
@@ -56,7 +54,7 @@ TF_VAR_project_id terraform variable is also exported. Value is prj_0123456789ab
 # Bash Completion for export_BA_env_vars
 _export_BA_env_vars_completions()
 {
-  COMPREPLY=($(compgen -W "$(biganimal show-credentials -o json | jq '.[].name')" -- "${COMP_WORDS[1]}"))
+  COMPREPLY=($(compgen -W "$(biganimal credential show -o json | jq '.[].name')" -- "${COMP_WORDS[1]}"))
 }
 
 complete -F _export_BA_env_vars_completions export_BA_env_vars
