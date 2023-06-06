@@ -1,10 +1,10 @@
 package create
 
 type ClusterCreateWitnessGroup struct {
-	ClusterArchitecture *ClusterClusterArchitecture `json:"clusterArchitecture"`
-	ClusterType         string                      `json:"clusterType"`
-	InstanceType        *ClusterInstanceType        `json:"instanceType"`
-	Provider            *ClusterCloudProvider       `json:"provider"`
-	Region              *ClusterRegion              `json:"region"`
-	Storage             *ClusterStorage             `json:"storage"`
+	ClusterArchitecture *ClusterClusterArchitecture `json:"clusterArchitecture" tfsdk:"cluster_architecture"`
+	ClusterType         string                      `json:"clusterType" tfsdk:"cluster_type"`
+	InstanceType        *ClusterInstanceType        `json:"instanceType" tfsdk:"instance_type"`
+	Provider            *ClusterCloudProvider       `json:"provider" tfsdk:"provider"`
+	Region              *ClusterRegion              `json:"region" tfsdk:"region"`
+	Storage             *ClusterStorage             `json:"storage" tfsdk:"storage"`
 }
