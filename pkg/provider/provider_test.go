@@ -1,10 +1,10 @@
 package provider
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"fmt"
 	"os"
 	"testing"
 )

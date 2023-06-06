@@ -78,7 +78,7 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		ba_bearer_token := schema.Get("ba_bearer_token").(string)
 		ba_api_uri := schema.Get("ba_api_uri").(string)
 		// set our meta to be a new api.API
-		// this can be turned into concrete cba_api_uri := schema.Get("ba_api_uri").(string)lients
+		// this can be turned into concrete clients
 		// by
 		// api.BuildAPI(meta).ClusterClient()
 		// or
@@ -94,8 +94,8 @@ func configure(version string, p *schema.Provider) func(context.Context, *schema
 		if ba_bearer_token == "" {
 			diags = append(diags, diagv2.Diagnostic{
 				Severity: diagv2.Error,
-				Summary:  "Unable to find ba_nearer_token",
-				Detail:   "ba_nearer_token cannot be an empty string"})
+				Summary:  "Unable to find ba_bearer_token",
+				Detail:   "ba_bearer_token cannot be an empty string"})
 			return nil, diags
 		}
 
