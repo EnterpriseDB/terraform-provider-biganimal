@@ -1,3 +1,13 @@
+## v0.4.2 (June 6. 2023)
+Bug Fixes:
+* Regression fix for Faraway Replicas
+* Fix for Projects data source
+
+Enhancements:
+* Acceptance tests are introduced.
+* Dependencies updated.
+* Development documents improved.
+
 ## v0.4.1 (April 24. 2023)
 Bug Fixes:
 * Throughput field in the `biganimal_cluster` and `biganimal_faraway_replica` resources is now configurable.
