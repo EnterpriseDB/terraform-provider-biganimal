@@ -27,7 +27,7 @@ type regionResource struct {
 	client *api.API
 }
 
-func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *regionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = fschema.Schema{
 		MarkdownDescription: "The region resource is used to manage regions for a given cloud provider. See [Activating regions](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/activating_regions/) for more details.",
 		Blocks: map[string]fschema.Block{
@@ -88,11 +88,11 @@ type Region struct {
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
-func (r regionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *regionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_region"
 }
 
-func (r regionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *regionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var config Region
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -102,10 +102,9 @@ func (r regionResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	diags = r.update(ctx, config, resp.State)
 	resp.Diagnostics.Append(diags...)
-	return
 }
 
-func (r regionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *regionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state Region
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -116,7 +115,7 @@ func (r regionResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	resp.Diagnostics.Append(r.read(ctx, state, resp.State)...)
 }
 
-func (r regionResource) read(ctx context.Context, region Region, state tfsdk.State) fdiag.Diagnostics {
+func (r *regionResource) read(ctx context.Context, region Region, state tfsdk.State) fdiag.Diagnostics {
 	read, err := r.client.RegionClient().Read(ctx, region.ProjectID, region.CloudProvider, region.RegionID)
 	if err != nil {
 		return fromErr(err, "Error reading region %v", region.RegionID)
@@ -128,7 +127,7 @@ func (r regionResource) read(ctx context.Context, region Region, state tfsdk.Sta
 	return state.Set(ctx, &region)
 }
 
-func (r regionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *regionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan Region
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -139,7 +138,7 @@ func (r regionResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	resp.Diagnostics.Append(r.update(ctx, plan, resp.State)...)
 }
 
-func (r regionResource) update(ctx context.Context, region Region, state tfsdk.State) fdiag.Diagnostics {
+func (r *regionResource) update(ctx context.Context, region Region, state tfsdk.State) fdiag.Diagnostics {
 	current, err := r.client.RegionClient().Read(ctx, region.ProjectID, region.CloudProvider, region.RegionID)
 	if err != nil {
 		return fromErr(err, "Error reading region %v", region.RegionID)
@@ -170,7 +169,7 @@ func (r regionResource) update(ctx context.Context, region Region, state tfsdk.S
 	return r.read(ctx, region, state)
 }
 
-func (r regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state Region
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -202,7 +201,7 @@ func (r regionResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 }
 
-func (r regionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *regionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -210,7 +209,7 @@ func (r regionResource) Configure(ctx context.Context, req resource.ConfigureReq
 	r.client = req.ProviderData.(*api.API)
 }
 
-func (r regionResource) retryFunc(ctx context.Context, region Region) retry.RetryFunc {
+func (r *regionResource) retryFunc(ctx context.Context, region Region) retry.RetryFunc {
 	return func() *retry.RetryError {
 		curr, err := r.client.RegionClient().Read(ctx, region.ProjectID, region.CloudProvider, region.RegionID)
 		if err != nil {
