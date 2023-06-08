@@ -171,8 +171,35 @@ func (r regionResource) update(ctx context.Context, region Region, state tfsdk.S
 }
 
 func (r regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	//TODO implement me
-	panic("implement me")
+	var state Region
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if state.Status == api.REGION_INACTIVE {
+		return
+	}
+
+	if err := r.client.RegionClient().Update(ctx, api.REGION_INACTIVE, state.ProjectID, state.CloudProvider, state.RegionID); err != nil {
+		resp.Diagnostics.Append(fromErr(err, "Error deleting region %v", state.RegionID)...)
+		return
+	}
+
+	timeout, diagnostics := state.Timeouts.Create(ctx, 60*time.Minute)
+	resp.Diagnostics.Append(diagnostics...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := retry.RetryContext(
+		ctx,
+		timeout-time.Minute,
+		r.retryFunc(ctx, state))
+	if err != nil {
+		resp.Diagnostics.Append(fromErr(err, "")...)
+	}
 }
 
 func (r regionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {

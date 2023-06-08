@@ -2,114 +2,133 @@ package provider
 
 import (
 	"context"
-	"errors"
-	"fmt"
-
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-// RegionResource is a struct to namespace all the functions
-// involved in the Region Resource.  When multiple resources and objects
-// are in the same pkg/provider, then it's difficult to namespace things well
-type RegionData struct{}
-
-func NewRegionData() *RegionData {
-	return &RegionData{}
+// NewRegionDataSource is a helper function to simplify the provider implementation.
+func NewRegionDataSource() datasource.DataSource {
+	return &regionDataSource{}
 }
 
-func (r *RegionData) Schema() *schema.Resource {
-	return &schema.Resource{
-		Description: "The region data source shows the available regions within a cloud provider.",
-		ReadContext: r.Read,
+// regionDataSource is the data source implementation.
+type regionDataSource struct {
+	client *api.API
+}
 
-		//{
-		//	"regionId": "eu-west-1",
-		//	"regionName": "EU West 1",
-		//	"status": "ACTIVE",
-		//	"continent": "Europe"
-		//}
-		Schema: map[string]*schema.Schema{
-			"regions": {
+// Configure adds the provider configured client to the data source.
+func (r *regionDataSource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	r.client = req.ProviderData.(*api.API)
+}
+
+func (r *regionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_region"
+
+}
+
+func (r *regionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "",
+		Attributes: map[string]schema.Attribute{
+			"regions": schema.ListNestedAttribute{
 				Description: "Region information.",
-				Type:        schema.TypeList,
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"region_id": {
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"region_id": schema.StringAttribute{
 							Description: "Region ID of the region.",
-							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"name": {
+						"name": schema.StringAttribute{
 							Description: "Region name of the region.",
-							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"status": {
+						"status": schema.StringAttribute{
 							Description: "Region status of the region.",
-							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"continent": {
+						"continent": schema.StringAttribute{
 							Description: "Continent that region belongs to.",
-							Type:        schema.TypeString,
 							Computed:    true,
 						},
 					},
 				},
 			},
-			"cloud_provider": {
+
+			"cloud_provider": schema.StringAttribute{
 				Description: "Cloud provider to list the regions. For example, \"aws\" or \"azure\".",
-				Type:        schema.TypeString,
 				Required:    true,
 			},
-			"project_id": {
-				Description:      "BigAnimal Project ID.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validateProjectId,
+			"project_id": schema.StringAttribute{
+				Description: "BigAnimal Project ID.",
+				Required:    true,
+				Validators: []validator.String{
+					ProjectIdValidator(),
+				},
 			},
-			"query": {
+			"query": schema.StringAttribute{
 				Description: "Query to filter region list.",
-				Type:        schema.TypeString,
 				Optional:    true,
 			},
-			"region_id": {
+			"region_id": schema.StringAttribute{
 				Description: "Unique region ID. For example, \"germanywestcentral\" in the Azure cloud provider, \"eu-west-1\" in the AWS cloud provider.",
-				Type:        schema.TypeString,
 				Optional:    true,
 			},
 		},
 	}
 }
 
-func (r *RegionData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	diags := diag.Diagnostics{}
-	client := api.BuildAPI(meta).RegionClient()
-	cloud_provider := d.Get("cloud_provider").(string)
-	projectId := d.Get("project_id").(string)
+type regionDatasource struct {
+	Regions       []Region `tfsdk:"regions,omitempty"`
+	CloudProvider string   `tfsdk:"cloudProvider,omitempty"`
+	ProjectId     string   `tfsdk:"projectId,omitempty"`
+	Query         string   `tfsdk:"query,omitempty"`
+	RegionId      string   `tfsdk:"regionId,omitempty"`
+}
 
-	query := d.Get("query").(string)
-
-	id, ok := d.Get("region_id").(string)
-	if ok {
-		query = id
+func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var cfg regionDatasource
+	diags := req.Config.Get(ctx, &cfg)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	regions, err := client.List(ctx, projectId, cloud_provider, query)
-	if err != nil {
-		return fromBigAnimalErr(err)
+	regions := []*models.Region{}
+	if cfg.RegionId != "" {
+		region, err := r.client.RegionClient().Read(ctx, cfg.ProjectId, cfg.CloudProvider, cfg.RegionId)
+		if err != nil {
+			resp.Diagnostics.Append(fromErr(err, "Error reading region by id: %v", cfg.RegionId)...)
+			return
+		}
+		regions = append(regions, region)
+
+	} else {
+		respRegions, err := r.client.RegionClient().List(ctx, cfg.ProjectId, cfg.CloudProvider, cfg.Query)
+		if err != nil {
+			return
+		}
+		regions = respRegions
 	}
 
-	if id != "" && len(regions) != 1 {
-		return diag.FromErr(errors.New("unable to find a unique region"))
+	for _, region := range regions {
+		cfg.Regions = append(cfg.Regions, Region{
+			ProjectID:     cfg.ProjectId,
+			CloudProvider: cfg.CloudProvider,
+			RegionID:      region.Id,
+			Name:          region.Name,
+			Status:        region.Status,
+			Continent:     region.Continent,
+		})
 	}
 
-	utils.SetOrPanic(d, "regions", regions)
-	d.SetId(fmt.Sprintf("%s/%s", cloud_provider, query))
-
-	return diags
+	resp.Diagnostics.Append(resp.State.Set(ctx, &cfg)...)
 }
