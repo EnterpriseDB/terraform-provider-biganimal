@@ -29,8 +29,8 @@ func (d *projectsDataSource) Configure(_ context.Context, req datasource.Configu
 }
 
 type projectsDataSourceData struct {
-	Query    string            `tfsdk:"query"`
-	Projects []*models.Project `tfsdk:"items"`
+	Query    *string           `tfsdk:"query"`
+	Projects []*models.Project `tfsdk:"projects"`
 }
 
 func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -95,7 +95,11 @@ func (p projectsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	tflog.Trace(ctx, "read projects data source")
-	list, err := p.client.ProjectClient().List(ctx, data.Query)
+	var query string
+	if data.Query != nil {
+		query = *data.Query
+	}
+	list, err := p.client.ProjectClient().List(ctx, query)
 	if err != nil {
 		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to call read project, got error: %s", err))
 		return

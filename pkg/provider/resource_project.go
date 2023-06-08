@@ -173,7 +173,7 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.UserCount = types.Int64Value(int64(project.UserCount))
 	state.ClusterCount = types.Int64Value(int64(project.ClusterCount))
 	if cps := project.CloudProviders; cps != nil {
-		for _, provider := range *cps {
+		for _, provider := range cps {
 			state.CloudProviders = append(state.CloudProviders, cloudProvider{
 				CloudProviderId:   provider.CloudProviderId,
 				CloudProviderName: provider.CloudProviderName,
