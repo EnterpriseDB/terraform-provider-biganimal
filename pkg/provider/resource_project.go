@@ -15,7 +15,7 @@ import (
 )
 
 type projectResource struct {
-	client *api.API
+	client *api.ProjectClient
 }
 
 func (p projectResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -103,7 +103,7 @@ func (r *projectResource) Configure(_ context.Context, req resource.ConfigureReq
 		return
 	}
 
-	r.client = req.ProviderData.(*api.API)
+	r.client = req.ProviderData.(*api.API).ProjectClient()
 }
 
 type cloudProvider struct {
@@ -129,13 +129,13 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	projectId, err := p.client.ProjectClient().Create(ctx, config.ProjectName.ValueString())
+	projectId, err := p.client.Create(ctx, config.ProjectName.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating project", "Could not create project, unexpected error: "+err.Error())
 		return
 	}
 
-	project, err := p.client.ProjectClient().Read(ctx, projectId)
+	project, err := p.client.Read(ctx, projectId)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
@@ -164,7 +164,7 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	project, err := p.client.ProjectClient().Read(ctx, state.ID.ValueString())
+	project, err := p.client.Read(ctx, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
@@ -198,7 +198,7 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	_, err := p.client.ProjectClient().Update(ctx, plan.ID.ValueString(), plan.ProjectName.ValueString())
+	_, err := p.client.Update(ctx, plan.ID.ValueString(), plan.ProjectName.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
 		return
@@ -221,7 +221,7 @@ func (p projectResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	if err := p.client.ProjectClient().Delete(ctx, state.ID.ValueString()); err != nil {
+	if err := p.client.Delete(ctx, state.ID.ValueString()); err != nil {
 		resp.Diagnostics.AddError("Error deleting project", "Could not delete project, unexpected error: "+err.Error())
 		return
 	}

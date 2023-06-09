@@ -42,7 +42,7 @@ func main() {
 	upgradedSdkServer, err := tf5to6server.UpgradeServer(
 		ctx,
 		func() tfprotov5.ProviderServer {
-			return schema.NewGRPCProviderServer(provider.New(version)())
+			return schema.NewGRPCProviderServer(provider.NewSDKProvider(version)())
 		},
 	)
 	if err != nil {
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	providers := []func() tfprotov6.ProviderServer{
-		providerserver.NewProtocol6(provider.NewProvider(version)()),
+		providerserver.NewProtocol6(provider.NewFrameworkProvider(version)()),
 		func() tfprotov6.ProviderServer {
 			return upgradedSdkServer
 		},
