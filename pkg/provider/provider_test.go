@@ -2,11 +2,12 @@ package provider
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"os"
-	"testing"
 )
 
 var (

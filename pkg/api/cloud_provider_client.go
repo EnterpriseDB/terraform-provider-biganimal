@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"net/http"
 	"time"
+
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
 type CloudProviderClient struct{ API }

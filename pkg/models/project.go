@@ -6,10 +6,10 @@ type CloudProvider struct {
 }
 
 type Project struct {
-	ProjectId      string           `json:"projectId,omitempty" tfsdk:"project_id"`
-	ProjectName    string           `json:"projectName,omitempty" tfsdk:"project_name"`
-	UserCount      int              `json:"userCount,omitempty" tfsdk:"user_count"`
-	ClusterCount   int              `json:"clusterCount,omitempty" tfsdk:"cluster_count"`
+	ProjectId      string          `json:"projectId,omitempty" tfsdk:"project_id"`
+	ProjectName    string          `json:"projectName,omitempty" tfsdk:"project_name"`
+	UserCount      int             `json:"userCount,omitempty" tfsdk:"user_count"`
+	ClusterCount   int             `json:"clusterCount,omitempty" tfsdk:"cluster_count"`
 	CloudProviders []CloudProvider `json:"cloudProviders" tfsdk:"cloud_providers"`
 }
 
