@@ -142,13 +142,13 @@ func (b bigAnimalProvider) Configure(ctx context.Context, req provider.Configure
 }
 
 func checkProviderConfig(data *providerData) (ok bool, summary, detail string) {
-	if data.BaBearerToken == nil {
+	if data.BaBearerToken == nil || *data.BaBearerToken == "" {
 		token := os.Getenv("BA_BEARER_TOKEN")
 		data.BaBearerToken = &token
 	}
 
 	if *data.BaBearerToken == "" {
-		return false, "Unable to find ba_nearer_token", "ba_nearer_token cannot be an empty string"
+		return false, "Unable to find BA_BEARER_TOKEN", "BA_BEARER_TOKEN cannot be an empty string"
 	}
 
 	if data.BaAPIUri == nil {
