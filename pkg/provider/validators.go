@@ -2,8 +2,12 @@ package provider
 
 import (
 	"fmt"
+
 	"regexp"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
 	"github.com/google/uuid"
 
@@ -26,6 +30,13 @@ func validateProjectId(v interface{}, path cty.Path) diag.Diagnostics {
 		diags = append(diags, diag)
 	}
 	return diags
+}
+
+func ProjectIdValidator() validator.String {
+	return stringvalidator.RegexMatches(
+		regexp.MustCompile("^prj_[0-9A-Za-z_]{16}$"),
+		"Please provide a valid name for the project_id, for example: prj_abcdABCD01234567",
+	)
 }
 
 func validateARN(v interface{}, _ cty.Path) diag.Diagnostics {

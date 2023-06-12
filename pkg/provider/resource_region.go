@@ -7,182 +7,192 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	fdiag "github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	fschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// RegionResource is a struct to namespace all the functions
-// involved in the Region Resource.  When multiple resources and objects
-// are in the same pkg/provider, then it's difficult to namespace things well
-type RegionResource struct{}
-
-func NewRegionResource() *RegionResource {
-	return &RegionResource{}
+func NewRegionResource() resource.Resource {
+	return &regionResource{}
 }
 
-func (r *RegionResource) Schema() *schema.Resource {
-	return &schema.Resource{
-		Description: "The region resource is used to manage regions for a given cloud provider. See [Activating regions](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/activating_regions/) for more details.",
+type regionResource struct {
+	client *api.API
+}
 
-		CreateContext: r.Create,
-		ReadContext:   r.Read,
-		UpdateContext: r.Update,
-		DeleteContext: r.Delete,
-
-		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(60 * time.Minute),
-			Update: schema.DefaultTimeout(60 * time.Minute),
-			Delete: schema.DefaultTimeout(60 * time.Minute),
+func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = fschema.Schema{
+		MarkdownDescription: "The region resource is used to manage regions for a given cloud provider. See [Activating regions](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/activating_regions/) for more details.",
+		Blocks: map[string]fschema.Block{
+			"timeouts": timeouts.Block(ctx,
+				timeouts.Opts{Create: true, Delete: true, Update: true}),
 		},
 
-		Schema: map[string]*schema.Schema{
-			"cloud_provider": {
-				Description: "Cloud provider. For example, \"aws\" or \"azure\".",
-				Type:        schema.TypeString,
-				Required:    true,
+		Attributes: map[string]fschema.Attribute{
+			"cloud_provider": fschema.StringAttribute{
+				MarkdownDescription: "Cloud provider. For example, \"aws\" or \"azure\".",
+				Required:            true,
 			},
-			"project_id": {
-				Description:      "BigAnimal Project ID.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validateProjectId,
+			"project_id": fschema.StringAttribute{
+				MarkdownDescription: "BigAnimal Project ID.",
+				Required:            true,
+				Validators: []validator.String{
+					ProjectIdValidator(),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"region_id": {
-				Description: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",
-				Type:        schema.TypeString,
-				Required:    true,
+			"region_id": fschema.StringAttribute{
+				MarkdownDescription: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",
+				Required:            true,
 			},
-			"name": {
-				Description: "Region name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"name": fschema.StringAttribute{
+				MarkdownDescription: "Region name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"status": {
-				Description: "Region status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     api.REGION_ACTIVE,
+			"status": fschema.StringAttribute{
+				MarkdownDescription: "Region status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
+				Optional:            true,
+				Default:             DefaultString("The default of region desired status", api.REGION_ACTIVE),
 			},
-			"continent": {
-				Description: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"continent": fschema.StringAttribute{
+				MarkdownDescription: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
 }
 
-func (r *RegionResource) Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	return r.Update(ctx, d, meta)
+type Region struct {
+	ProjectID     string `tfsdk:"project_id"`
+	CloudProvider string `tfsdk:"cloud_provider"`
+	RegionID      string `tfsdk:"region_id"`
+	Name          string `tfsdk:"name"`
+	Status        string `tfsdk:"status"`
+	Continent     string `tfsdk:"continent"`
+
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
-func (r *RegionResource) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if err := r.read(ctx, d, meta); err != nil {
-		return fromBigAnimalErr(err)
+func (r regionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_region"
+}
+
+func (r regionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var config Region
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return diag.Diagnostics{}
+
+	diags = r.update(ctx, config, resp.State)
+	resp.Diagnostics.Append(diags...)
+	return
 }
 
-func (r *RegionResource) read(ctx context.Context, d *schema.ResourceData, meta any) error {
-	client := api.BuildAPI(meta).RegionClient()
-	projectId := d.Get("project_id").(string)
-	cloud_provider := d.Get("cloud_provider").(string)
+func (r regionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state Region
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	id := d.Get("region_id").(string)
-	region, err := client.Read(ctx, projectId, cloud_provider, id)
+	resp.Diagnostics.Append(r.read(ctx, state, resp.State)...)
+}
+
+func (r regionResource) read(ctx context.Context, region Region, state tfsdk.State) fdiag.Diagnostics {
+	read, err := r.client.RegionClient().Read(ctx, region.ProjectID, region.CloudProvider, region.RegionID)
 	if err != nil {
-		return err
+		return fromErr(err, "Error reading region %v", region.RegionID)
 	}
 
-	utils.SetOrPanic(d, "name", region.Name)
-	utils.SetOrPanic(d, "status", region.Status)
-	utils.SetOrPanic(d, "continent", region.Continent)
-	d.SetId(fmt.Sprintf("%s/%s", cloud_provider, id))
-
-	return nil
+	region.Name = read.Name
+	region.Status = read.Status
+	region.Continent = read.Continent
+	return state.Set(ctx, &region)
 }
 
-func (r *RegionResource) Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta).RegionClient()
+func (r regionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan Region
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	cloudProvider := d.Get("cloud_provider").(string)
-	id := d.Get("region_id").(string)
-	projectId := d.Get("project_id").(string)
-	desiredState := d.Get("status").(string)
+	resp.Diagnostics.Append(r.update(ctx, plan, resp.State)...)
+}
 
-	region, err := client.Read(ctx, projectId, cloudProvider, id)
+func (r regionResource) update(ctx context.Context, region Region, state tfsdk.State) fdiag.Diagnostics {
+	current, err := r.client.RegionClient().Read(ctx, region.ProjectID, region.CloudProvider, region.RegionID)
 	if err != nil {
-		return fromBigAnimalErr(err)
+		return fromErr(err, "Error reading region %v", region.RegionID)
+	}
+	if current.Status == region.Status { // no change, exit early
+		return nil
 	}
 
-	utils.SetOrPanic(d, "name", region.Name)
-	utils.SetOrPanic(d, "continent", region.Continent)
-	utils.SetOrPanic(d, "status", desiredState)
-	d.SetId(fmt.Sprintf("%s/%s", cloudProvider, id))
+	tflog.Debug(ctx, fmt.Sprintf("updating region from %s to %s", current.Status, region.Status))
 
-	if desiredState == region.Status { // no change, exit early
-		return diag.Diagnostics{}
+	if err := r.client.RegionClient().Update(ctx, region.Status, region.ProjectID, region.CloudProvider, region.RegionID); err != nil {
+		return fromErr(err, "Error updating region %v", region.RegionID)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("updating region from %s to %s", region.Status, desiredState))
-	if err = client.Update(ctx, desiredState, projectId, cloudProvider, id); err != nil {
-		return fromBigAnimalErr(err)
+	timeout, diagnostics := region.Timeouts.Create(ctx, 60*time.Minute)
+	if diagnostics != nil {
+		return diagnostics
 	}
 
-	// retry until we get success
 	err = retry.RetryContext(
 		ctx,
-		d.Timeout(schema.TimeoutCreate)-time.Minute,
-		r.retryFunc(ctx, d, meta, cloudProvider, id, desiredState))
+		timeout-time.Minute,
+		r.retryFunc(ctx, region))
 	if err != nil {
-		return diag.FromErr(err)
+		return fromErr(err, "")
 	}
-	return diag.Diagnostics{}
+
+	return r.read(ctx, region, state)
 }
 
-func (r *RegionResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta).RegionClient()
-
-	projectId := d.Get("project_id").(string)
-	cloudProvider := d.Get("cloud_provider").(string)
-	id := d.Get("region_id").(string)
-	desiredState := api.REGION_INACTIVE
-	if err := client.Update(ctx, api.REGION_INACTIVE, projectId, cloudProvider, id); err != nil {
-		return fromBigAnimalErr(err)
-	}
-
-	// retry until we get success
-	err := retry.RetryContext(
-		ctx,
-		d.Timeout(schema.TimeoutDelete)-time.Minute,
-		r.retryFunc(ctx, d, meta, cloudProvider, id, desiredState))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diag.Diagnostics{}
+func (r regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (r *RegionResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, cloudProvider, regionId, desiredState string) retry.RetryFunc {
-	client := api.BuildAPI(meta).RegionClient()
+func (r regionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	r.client = req.ProviderData.(*api.API)
+}
+
+func (r regionResource) retryFunc(ctx context.Context, region Region) retry.RetryFunc {
 	return func() *retry.RetryError {
-		projectId := d.Get("project_id").(string)
-		region, err := client.Read(ctx, projectId, cloudProvider, regionId)
+		curr, err := r.client.RegionClient().Read(ctx, region.ProjectID, region.CloudProvider, region.RegionID)
 		if err != nil {
 			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
-		if region.Status != desiredState {
+		if curr.Status != region.Status {
 			return retry.RetryableError(errors.New("operation incomplete"))
 		}
-
-		if err := r.read(ctx, d, meta); err != nil {
-			return retry.NonRetryableError(err)
-		}
-
 		return nil
 	}
 }

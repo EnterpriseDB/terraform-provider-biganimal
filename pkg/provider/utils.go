@@ -3,7 +3,10 @@ package provider
 import (
 	"errors"
 
+	"fmt"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	diag2 "github.com/hashicorp/terraform-plugin-framework/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
@@ -33,5 +36,14 @@ func unsupportedWarning(message string) diag.Diagnostics {
 			Summary:  "Unsupported",
 			Detail:   message,
 		},
+	}
+}
+
+func fromErr(err error, summary string, args ...any) diag2.Diagnostics {
+	summary = fmt.Sprintf(summary, args...)
+	return diag2.Diagnostics{
+		diag2.NewErrorDiagnostic(
+			summary, err.Error(),
+		),
 	}
 }

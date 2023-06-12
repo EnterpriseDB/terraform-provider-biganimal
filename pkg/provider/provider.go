@@ -60,7 +60,6 @@ func NewSDKProvider(version string) func() *sdkschema.Provider {
 
 			ResourcesMap: map[string]*sdkschema.Resource{
 				"biganimal_cluster":          resourceCluster.Schema(),
-				"biganimal_region":           resourceRegion.Schema(),
 				"biganimal_aws_connection":   resourceAWSConnection.Schema(),
 				"biganimal_azure_connection": resourceAzureConnection.Schema(),
 				"biganimal_faraway_replica":  resourceFAReplica.Schema(),
@@ -186,5 +185,6 @@ func (b bigAnimalProvider) DataSources(ctx context.Context) []func() datasource.
 func (b bigAnimalProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewProjectResource,
+		NewRegionResource,
 	}
 }
