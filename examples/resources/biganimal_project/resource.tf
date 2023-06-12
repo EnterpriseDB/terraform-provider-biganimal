@@ -24,7 +24,7 @@ output "project_name" {
 }
 
 output "project_id" {
-  value = resource.biganimal_project.this.project_id
+  value = resource.biganimal_project.this.id
 }
 
 output "project" {
