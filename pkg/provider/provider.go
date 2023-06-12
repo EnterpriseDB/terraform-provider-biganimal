@@ -33,7 +33,6 @@ func init() {
 	// Set descriptions to support markdown syntax, this will be used in document generation
 	// and the language server.
 	sdkschema.DescriptionKind = sdkschema.StringMarkdown
-
 }
 
 func NewSDKProvider(version string) func() *sdkschema.Provider {
