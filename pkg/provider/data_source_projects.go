@@ -21,12 +21,12 @@ func (p projectsDataSource) Metadata(_ context.Context, req datasource.MetadataR
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *projectsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (p *projectsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	d.client = req.ProviderData.(*api.API)
+	p.client = req.ProviderData.(*api.API)
 }
 
 type projectsDataSourceData struct {
