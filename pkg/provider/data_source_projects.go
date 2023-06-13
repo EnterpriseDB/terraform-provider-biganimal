@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -12,7 +14,7 @@ import (
 )
 
 type projectsDataSource struct {
-	client *api.API
+	client *api.ProjectClient
 }
 
 func (p projectsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -26,18 +28,24 @@ func (p *projectsDataSource) Configure(_ context.Context, req datasource.Configu
 		return
 	}
 
-	p.client = req.ProviderData.(*api.API)
+	p.client = req.ProviderData.(*api.API).ProjectClient()
 }
 
 type projectsDataSourceData struct {
+	ID       *string           `tfsdk:"id"`
 	Query    *string           `tfsdk:"query"`
 	Projects []*models.Project `tfsdk:"projects"`
 }
 
 func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+
 		MarkdownDescription: "The projects data source shows the BigAnimal Projects.",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "Datasource ID.",
+				Computed:    true,
+			},
 			"projects": schema.SetNestedAttribute{
 				Description: "List of the organization's projects.",
 				Computed:    true,
@@ -100,13 +108,15 @@ func (p projectsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if data.Query != nil {
 		query = *data.Query
 	}
-	list, err := p.client.ProjectClient().List(ctx, query)
+	list, err := p.client.List(ctx, query)
 	if err != nil {
 		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to call read project, got error: %s", err))
 		return
 	}
 
 	data.Projects = list
+	resourceID := strconv.FormatInt(time.Now().Unix(), 10)
+	data.ID = &resourceID
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 

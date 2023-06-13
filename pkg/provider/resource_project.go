@@ -56,7 +56,7 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				},
 			},
 			"cluster_count": schema.Int64Attribute{
-				MarkdownDescription: "User Count of the project.",
+				MarkdownDescription: "Cluster Count of the project.",
 				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
