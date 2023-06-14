@@ -33,6 +33,7 @@ output "number_of_projects" {
 
 ### Read-Only
 
+- `id` (String) Datasource ID.
 - `projects` (Attributes Set) List of the organization's projects. (see [below for nested schema](#nestedatt--projects))
 
 <a id="nestedatt--projects"></a>

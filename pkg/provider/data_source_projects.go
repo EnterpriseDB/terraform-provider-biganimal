@@ -39,7 +39,6 @@ type projectsDataSourceData struct {
 
 func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-
 		MarkdownDescription: "The projects data source shows the BigAnimal Projects.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{

@@ -60,8 +60,8 @@ output "project" {
 ### Read-Only
 
 - `cloud_providers` (Attributes Set) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--cloud_providers))
-- `cluster_count` (Number) User Count of the project.
-- `id` (String) Project ID of the project.
+- `cluster_count` (Number) Cluster Count of the project.
+- `id` (String) Resource ID of the project.
 - `project_id` (String, Deprecated) Project ID of the project.
 - `user_count` (Number) User Count of the project.
 
