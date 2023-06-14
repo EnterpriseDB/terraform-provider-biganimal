@@ -72,3 +72,12 @@ Read-Only:
 
 - `cloud_provider_id` (String) Cloud Provider ID.
 - `cloud_provider_name` (String) Cloud Provider Name.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# terraform import biganimal_project.<resource_name> <project_id>
+terraform import biganimal_project.this prj_deadbeef01234567
+```
