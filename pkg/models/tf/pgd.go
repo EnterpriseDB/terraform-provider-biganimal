@@ -22,7 +22,7 @@ type DataGroupData struct {
 	PrivateNetworking          bool                                `tfsdk:"private_networking"`
 	Provider                   *CloudProvider                      `tfsdk:"cloud_provider"`
 	CspAuth                    *bool                               `tfsdk:"csp_auth"`
-	Region                     *CloudProviderRegion                `tfsdk:"region"`
+	Region                     *string                             `tfsdk:"region"`
 	ResizingPvc                *[]string                           `tfsdk:"resizing_pvc"`
 	Storage                    *ClusterStorageResponse             `tfsdk:"storage"`
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	apiModels "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/tf"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -66,7 +67,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
-							Optional:    true,
+							Computed:    true,
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
@@ -92,43 +93,43 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
-							Optional:    true,
+							Computed:    true,
 						},
 						"created_at": schema.StringAttribute{
 							Description: "Cluster creation time.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"deleted_at": schema.StringAttribute{
 							Description: "Cluster deletion time.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"expired_at": schema.StringAttribute{
 							Description: "Cluster expiry time.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"first_recoverability_point_at": schema.StringAttribute{
 							Description: "Earliest backup recover time.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"instance_type": schema.StringAttribute{
 							Description: "Instance type.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"metrics_url": schema.StringAttribute{
 							Description: "The URL to find the metrics of this cluster.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"connection_uri": schema.StringAttribute{
 							Description: "Cluster connection URI.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
@@ -148,35 +149,35 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"pg_type": schema.StringAttribute{
 							Description: "Postgres type.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"pg_version": schema.StringAttribute{
 							Description: "Postgres version.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the cluster group.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"private_networking": schema.BoolAttribute{
 							Description: "Is private networking enabled.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"cloud_provider": schema.StringAttribute{
 							Description: "Cloud provider.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"region": schema.StringAttribute{
 							Description: "Data group region.",
-							Optional:    true,
+							Computed:    true,
 						},
 						"resizing_pvc": schema.SetAttribute{
 							ElementType: types.StringType,
-							Optional:    true,
+							Computed:    true,
 						},
 						"storage": schema.SingleNestedAttribute{
 							Description: "Storage.",
@@ -214,22 +215,22 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 					Attributes: map[string]schema.Attribute{
 						"region": schema.StringAttribute{
 							Description: "Witness group region.",
-							Optional:    true,
+							Computed:    true,
 						},
 					},
 				},
 			},
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
-				Optional:    true,
+				Required:    true,
 			},
 			"cluster_id": schema.StringAttribute{
 				Description: "Cluster ID.",
-				Optional:    true,
+				Computed:    true,
 			},
 			"cluster_name": schema.StringAttribute{
 				Description: "cluster name",
-				Optional:    true,
+				Required:    true,
 			},
 			"most_recent": schema.BoolAttribute{
 				Description: "Show the most recent cluster when there are multiple clusters with the same name",
@@ -266,24 +267,27 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ClusterID = cluster.ClusterId
 
 	for _, v := range *cluster.Groups {
-		switch group := v.(type) {
+		switch apiGroupResp := v.(type) {
 		case map[string]interface{}:
-			if group["clusterType"] == "data_group" {
+			if apiGroupResp["clusterType"] == "data_group" {
+				apiDgModel := apiModels.ClusterDataGroup{}
 				tfDg := tf.DataGroupData{}
 
-				if err := utils.CopyObjectJson(group, &tfDg); err != nil {
+				if err := utils.CopyObjectJson(apiGroupResp, &apiDgModel); err != nil {
 					if err != nil {
 						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
 						return
 					}
 				}
+
+				tfDg.Region = utils.ToPointer(apiDgModel.Region.RegionId)
 				data.DataGroups = append(data.DataGroups, tfDg)
 			}
 
-			if group["clusterType"] == "witness_group" {
+			if apiGroupResp["clusterType"] == "witness_group" {
 				tfWg := tf.WitnessGroupData{}
 
-				if err := utils.CopyObjectJson(group, &tfWg); err != nil {
+				if err := utils.CopyObjectJson(apiGroupResp, &tfWg); err != nil {
 					if err != nil {
 						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
 						return

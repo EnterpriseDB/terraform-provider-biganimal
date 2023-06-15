@@ -14,6 +14,10 @@ type ClusterStorageResponse struct {
 	VolumeTypeId       string `tfsdk:"volume_type"`
 }
 
+func (r ClusterStorageResponse) String() string {
+	return r.VolumePropertiesId
+}
+
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
 func (recv *ClusterStorageResponse) UnmarshalJSON(d []byte) error {
 	var apiResult api.ClusterStorageResponse
