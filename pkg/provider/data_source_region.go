@@ -30,8 +30,7 @@ func (r *regionDataSource) Configure(_ context.Context, req resource.ConfigureRe
 }
 
 func (r *regionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_region"
-
+	resp.TypeName = req.ProviderTypeName + "_regions"
 }
 
 func (r *regionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
