@@ -6,8 +6,8 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // NewRegionDataSource is a helper function to simplify the provider implementation.
@@ -17,16 +17,16 @@ func NewRegionDataSource() datasource.DataSource {
 
 // regionDataSource is the data source implementation.
 type regionDataSource struct {
-	client *api.API
+	client *api.RegionClient
 }
 
 // Configure adds the provider configured client to the data source.
-func (r *regionDataSource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+func (r *regionDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	r.client = req.ProviderData.(*api.API)
+	r.client = req.ProviderData.(*api.API).RegionClient()
 }
 
 func (r *regionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -86,11 +86,11 @@ func (r *regionDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 }
 
 type regionDatasource struct {
-	Regions       []Region `tfsdk:"regions,omitempty"`
-	CloudProvider string   `tfsdk:"cloudProvider,omitempty"`
-	ProjectId     string   `tfsdk:"projectId,omitempty"`
-	Query         string   `tfsdk:"query,omitempty"`
-	RegionId      string   `tfsdk:"regionId,omitempty"`
+	Regions       []*models.Region `tfsdk:"regions"`
+	CloudProvider *string          `tfsdk:"cloud_provider"`
+	ProjectId     *string          `tfsdk:"project_id"`
+	Query         types.String     `tfsdk:"query"`
+	RegionId      *string          `tfsdk:"region_id"`
 }
 
 func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -102,8 +102,8 @@ func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	regions := []*models.Region{}
-	if cfg.RegionId != "" {
-		region, err := r.client.RegionClient().Read(ctx, cfg.ProjectId, cfg.CloudProvider, cfg.RegionId)
+	if cfg.RegionId != nil {
+		region, err := r.client.Read(ctx, *cfg.ProjectId, *cfg.CloudProvider, *cfg.RegionId)
 		if err != nil {
 			resp.Diagnostics.Append(fromErr(err, "Error reading region by id: %v", cfg.RegionId)...)
 			return
@@ -111,7 +111,7 @@ func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		regions = append(regions, region)
 
 	} else {
-		respRegions, err := r.client.RegionClient().List(ctx, cfg.ProjectId, cfg.CloudProvider, cfg.Query)
+		respRegions, err := r.client.List(ctx, *cfg.ProjectId, *cfg.CloudProvider, cfg.Query.ValueString())
 		if err != nil {
 			return
 		}
@@ -119,14 +119,7 @@ func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	for _, region := range regions {
-		cfg.Regions = append(cfg.Regions, Region{
-			ProjectID:     cfg.ProjectId,
-			CloudProvider: cfg.CloudProvider,
-			RegionID:      region.Id,
-			Name:          region.Name,
-			Status:        region.Status,
-			Continent:     region.Continent,
-		})
+		cfg.Regions = append(cfg.Regions, region)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &cfg)...)

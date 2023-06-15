@@ -184,6 +184,6 @@ func (b bigAnimalProvider) DataSources(ctx context.Context) []func() datasource.
 func (b bigAnimalProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewProjectResource,
-		NewRegionResource,
+		//NewRegionResource,
 	}
 }
