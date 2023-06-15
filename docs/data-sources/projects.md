@@ -13,10 +13,22 @@ The projects data source shows the BigAnimal Projects.
 ## Example Usage
 
 ```terraform
-data "biganimal_projects" "this" {}
+data "biganimal_projects" "this" {
+  query = var.query
+}
 
 output "projects" {
   value = data.biganimal_projects.this.projects
+}
+
+output "number_of_projects" {
+  value = length(data.biganimal_projects.this.projects)
+}
+
+variable "query" {
+  type        = string
+  description = "Query string for the projects"
+  default     = ""
 }
 ```
 
@@ -29,24 +41,30 @@ output "projects" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `projects` (Set of Object) List of the organization's projects. (see [below for nested schema](#nestedatt--projects))
+- `id` (String) Datasource ID.
+- `projects` (Attributes Set) List of the organization's projects. (see [below for nested schema](#nestedatt--projects))
 
 <a id="nestedatt--projects"></a>
 ### Nested Schema for `projects`
 
+Required:
+
+- `project_name` (String) Project Name of the project.
+
+Optional:
+
+- `cloud_providers` (Attributes Set) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--projects--cloud_providers))
+
 Read-Only:
 
-- `cloud_providers` (Set of Object) (see [below for nested schema](#nestedobjatt--projects--cloud_providers))
-- `cluster_count` (Number)
-- `name` (String)
-- `project_id` (String)
-- `user_count` (Number)
+- `cluster_count` (Number) User Count of the project.
+- `project_id` (String) Project ID of the project.
+- `user_count` (Number) User Count of the project.
 
-<a id="nestedobjatt--projects--cloud_providers"></a>
+<a id="nestedatt--projects--cloud_providers"></a>
 ### Nested Schema for `projects.cloud_providers`
 
 Read-Only:
 
-- `cloud_provider_id` (String)
-- `cloud_provider_name` (String)
+- `cloud_provider_id` (String) Cloud Provider ID.
+- `cloud_provider_name` (String) Cloud Provider Name.

@@ -42,7 +42,7 @@ output "project_name" {
 }
 
 output "project_id" {
-  value = resource.biganimal_project.this.project_id
+  value = resource.biganimal_project.this.id
 }
 
 output "project" {
@@ -57,32 +57,27 @@ output "project" {
 
 - `project_name` (String) Project Name of the project.
 
-### Optional
-
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-
 ### Read-Only
 
-- `cloud_providers` (Set of Object) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--cloud_providers))
-- `cluster_count` (Number) User Count of the project.
-- `id` (String) The ID of this resource.
-- `project_id` (String) Project ID of the project.
+- `cloud_providers` (Attributes Set) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--cloud_providers))
+- `cluster_count` (Number) Cluster Count of the project.
+- `id` (String) Resource ID of the project.
+- `project_id` (String, Deprecated) Project ID of the project.
 - `user_count` (Number) User Count of the project.
-
-<a id="nestedblock--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
-- `delete` (String)
-- `update` (String)
-
 
 <a id="nestedatt--cloud_providers"></a>
 ### Nested Schema for `cloud_providers`
 
 Read-Only:
 
-- `cloud_provider_id` (String)
-- `cloud_provider_name` (String)
+- `cloud_provider_id` (String) Cloud Provider ID.
+- `cloud_provider_name` (String) Cloud Provider Name.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# terraform import biganimal_project.<resource_name> <project_id>
+terraform import biganimal_project.this prj_deadbeef01234567
+```

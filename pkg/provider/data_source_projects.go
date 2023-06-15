@@ -2,68 +2,82 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-type ProjectsData struct{}
-
-func NewProjectsData() *ProjectsData {
-	return &ProjectsData{}
+type projectsDataSource struct {
+	client *api.ProjectClient
 }
 
-func (p *ProjectsData) Schema() *schema.Resource {
-	return &schema.Resource{
-		Description: "The projects data source shows the BigAnimal Projects.",
-		ReadContext: p.Read,
+func (p projectsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_projects"
 
-		Schema: map[string]*schema.Schema{
-			"projects": {
-				Description: "List of the organization's projects.",
-				Type:        schema.TypeSet,
+}
+
+// Configure adds the provider configured client to the data source.
+func (p *projectsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	p.client = req.ProviderData.(*api.API).ProjectClient()
+}
+
+type projectsDataSourceData struct {
+	ID       *string           `tfsdk:"id"`
+	Query    *string           `tfsdk:"query"`
+	Projects []*models.Project `tfsdk:"projects"`
+}
+
+func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "The projects data source shows the BigAnimal Projects.",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "Datasource ID.",
 				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"project_id": {
+			},
+			"projects": schema.SetNestedAttribute{
+				Description: "List of the organization's projects.",
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"project_id": schema.StringAttribute{
 							Description: "Project ID of the project.",
-							Type:        schema.TypeString,
 							Computed:    true,
 						},
-						"name": {
+						"project_name": schema.StringAttribute{
 							Description: "Project Name of the project.",
-							Type:        schema.TypeString,
 							Required:    true,
 						},
-						"user_count": {
+						"user_count": schema.Int64Attribute{
 							Description: "User Count of the project.",
-							Type:        schema.TypeInt,
 							Computed:    true,
 						},
-						"cluster_count": {
+						"cluster_count": schema.Int64Attribute{
 							Description: "User Count of the project.",
-							Type:        schema.TypeInt,
 							Computed:    true,
 						},
-						"cloud_providers": {
+						"cloud_providers": schema.SetNestedAttribute{
 							Description: "Enabled Cloud Providers.",
-							Type:        schema.TypeSet,
 							Computed:    true,
 							Optional:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"cloud_provider_id": {
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"cloud_provider_id": schema.StringAttribute{
 										Description: "Cloud Provider ID.",
-										Type:        schema.TypeString,
 										Computed:    true,
 									},
-									"cloud_provider_name": {
+									"cloud_provider_name": schema.StringAttribute{
 										Description: "Cloud Provider Name.",
-										Type:        schema.TypeString,
 										Computed:    true,
 									},
 								},
@@ -72,29 +86,41 @@ func (p *ProjectsData) Schema() *schema.Resource {
 					},
 				},
 			},
-			"query": {
+			"query": schema.StringAttribute{
 				Description: "Query to filter project list.",
-				Type:        schema.TypeString,
 				Optional:    true,
 			},
 		},
 	}
 }
 
-func (p *ProjectsData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	diags := diag.Diagnostics{}
-	client := api.BuildAPI(meta).ProjectClient()
-
-	query := d.Get("query").(string)
-
-	projects, err := client.List(ctx, query)
-	if err != nil {
-		return fromBigAnimalErr(err)
+func (p projectsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data projectsDataSourceData
+	diags := req.Config.Get(ctx, &data)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	utils.SetOrPanic(d, "projects", projects)
-	// FIXME: Check if there is a better way to set the ID.
-	d.SetId(strconv.FormatInt(time.Now().Unix(), 10))
+	tflog.Trace(ctx, "read projects data source")
+	var query string
+	if data.Query != nil {
+		query = *data.Query
+	}
+	list, err := p.client.List(ctx, query)
+	if err != nil {
+		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to call read project, got error: %s", err))
+		return
+	}
 
-	return diags
+	data.Projects = list
+	resourceID := strconv.FormatInt(time.Now().Unix(), 10)
+	data.ID = &resourceID
+	diags = resp.State.Set(ctx, &data)
+	resp.Diagnostics.Append(diags...)
+
+}
+
+func NewProjectsDataSource() datasource.DataSource {
+	return &projectsDataSource{}
 }

@@ -3,13 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"time"
 )
 
 type AWSConnectionResource struct{}

@@ -2,12 +2,13 @@ package provider
 
 import (
 	"context"
+	"time"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"time"
 )
 
 type AzureConnectionResource struct{}

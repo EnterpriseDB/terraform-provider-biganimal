@@ -2,76 +2,93 @@ package provider
 
 import (
 	"context"
-	"time"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
-type ProjectResource struct{}
-
-func NewProjectResource() *ProjectResource {
-	return &ProjectResource{}
+type projectResource struct {
+	client *api.ProjectClient
 }
 
-func (p *ProjectResource) Schema() *schema.Resource {
-	return &schema.Resource{
-		Description: "The project resource is used to manage projects in your organization. " +
+func (p projectResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_project"
+}
+
+func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "The project resource is used to manage projects in your organization. " +
 			"See [Managing projects](https://www.enterprisedb.com/docs/biganimal/latest/administering_cluster/projects/) for more details.\n\n" +
 			"Newly created projects are not automatically connected to your cloud providers. " +
 			"Please visit [Connecting your cloud](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/02_connecting_to_your_cloud/) for more details.",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "Resource ID of the project.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"project_id": schema.StringAttribute{
+				MarkdownDescription: "Project ID of the project.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+				DeprecationMessage: "The usage of 'project_id' is no longer recommended and has been deprecated. We suggest using 'id' instead.",
+			},
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "Project Name of the project.",
+				Required:            true,
+			},
+			"user_count": schema.Int64Attribute{
+				MarkdownDescription: "User Count of the project.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
+			},
+			"cluster_count": schema.Int64Attribute{
+				MarkdownDescription: "Cluster Count of the project.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
+			},
 
-		CreateContext: p.Create,
-		ReadContext:   p.Read,
-		UpdateContext: p.Update,
-		DeleteContext: p.Delete,
-
-		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(60 * time.Minute),
-			Update: schema.DefaultTimeout(60 * time.Minute),
-			Delete: schema.DefaultTimeout(60 * time.Minute),
-		},
-
-		Schema: map[string]*schema.Schema{
-			"project_id": {
-				Description: "Project ID of the project.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"project_name": {
-				Description: "Project Name of the project.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"user_count": {
-				Description: "User Count of the project.",
-				Type:        schema.TypeInt,
-				Computed:    true,
-			},
-			"cluster_count": {
-				Description: "User Count of the project.",
-				Type:        schema.TypeInt,
-				Computed:    true,
-			},
 			// We don't have a mechanism to automate the csp connection right now
 			// So, the `cloud_providers` value is computed only.
-			"cloud_providers": {
-				Description: "Enabled Cloud Providers.",
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"cloud_provider_id": {
-							Description: "Cloud Provider ID.",
-							Type:        schema.TypeString,
-							Computed:    true,
+			"cloud_providers": schema.SetNestedAttribute{
+				MarkdownDescription: "Enabled Cloud Providers.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					PlanModifiers: []planmodifier.Object{
+						objectplanmodifier.UseStateForUnknown(),
+					},
+					Attributes: map[string]schema.Attribute{
+						"cloud_provider_id": schema.StringAttribute{
+							MarkdownDescription: "Cloud Provider ID.",
+							Computed:            true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
-						"cloud_provider_name": {
-							Description: "Cloud Provider Name.",
-							Type:        schema.TypeString,
-							Computed:    true,
+						"cloud_provider_name": schema.StringAttribute{
+							MarkdownDescription: "Cloud Provider Name.",
+							Computed:            true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 					},
 				},
@@ -80,73 +97,145 @@ func (p *ProjectResource) Schema() *schema.Resource {
 	}
 }
 
-func (p *ProjectResource) Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta).ProjectClient()
-	project_name := d.Get("project_name").(string)
+// Configure adds the provider configured client to the data source.
+func (p *projectResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
 
-	projectId, err := client.Create(ctx, project_name)
+	p.client = req.ProviderData.(*api.API).ProjectClient()
+}
 
+type cloudProvider struct {
+	CloudProviderId   string `tfsdk:"cloud_provider_id"`
+	CloudProviderName string `tfsdk:"cloud_provider_name"`
+}
+
+type Project struct {
+	ID             *string         `tfsdk:"id"`
+	ProjectID      *string         `tfsdk:"project_id"`
+	ProjectName    *string         `tfsdk:"project_name"`
+	UserCount      *int            `tfsdk:"user_count"`
+	ClusterCount   *int            `tfsdk:"cluster_count"`
+	CloudProviders []cloudProvider `tfsdk:"cloud_providers"`
+}
+
+// Create creates the resource and sets the initial Terraform state.
+func (p projectResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var config Project
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	projectId, err := p.client.Create(ctx, *config.ProjectName)
 	if err != nil {
-		return fromBigAnimalErr(err)
+		resp.Diagnostics.AddError("Error creating project", "Could not create project, unexpected error: "+err.Error())
+		return
 	}
 
-	d.SetId(projectId)
-
-	if err := p.read(ctx, d, meta); err != nil {
-		return diag.FromErr(err)
-	}
-	return diag.Diagnostics{}
-}
-
-func (p *ProjectResource) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if err := p.read(ctx, d, meta); err != nil {
-		return fromBigAnimalErr(err)
-	}
-	return diag.Diagnostics{}
-}
-
-func (p *ProjectResource) read(ctx context.Context, d *schema.ResourceData, meta any) error {
-	// read the given project
-	client := api.BuildAPI(meta).ProjectClient()
-
-	projectId := d.Id()
-	project, err := client.Read(ctx, projectId)
+	project, err := p.client.Read(ctx, projectId)
 	if err != nil {
-		return err
+		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
+		return
 	}
-	utils.SetOrPanic(d, "project_id", project.ProjectId)
-	utils.SetOrPanic(d, "project_name", project.ProjectName)
-	utils.SetOrPanic(d, "user_count", project.UserCount)
-	utils.SetOrPanic(d, "cluster_count", project.ClusterCount)
-	utils.SetOrPanic(d, "cloud_providers", project.CloudProviders)
 
-	d.SetId(project.ProjectId)
-	return nil
+	config.ID = &project.ProjectId
+	config.ProjectID = &project.ProjectId
+	config.ProjectName = &project.ProjectName
+	config.UserCount = &project.UserCount
+	config.ClusterCount = &project.ClusterCount
+	for _, provider := range project.CloudProviders {
+		config.CloudProviders = append(config.CloudProviders, cloudProvider{
+			CloudProviderId:   provider.CloudProviderId,
+			CloudProviderName: provider.CloudProviderName,
+		})
+	}
+
+	diags = resp.State.Set(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func (p *ProjectResource) Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if d.HasChange("project_name") {
-		client := api.BuildAPI(meta).ProjectClient()
-		projectId := d.Id()
-		projectName := d.Get("project_name").(string)
-		_, err := client.Update(ctx, projectId, projectName)
-		if err != nil {
-			return fromBigAnimalErr(err)
-		}
-		if err := p.read(ctx, d, meta); err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Diagnostics{}
+// Read refreshes the Terraform state with the latest data.
+func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state Project
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return nil
+
+	project, err := p.client.Read(ctx, *state.ID)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
+		return
+	}
+
+	state.ProjectID = &project.ProjectId
+	state.ProjectName = &project.ProjectName
+	state.UserCount = &project.UserCount
+	state.ClusterCount = &project.ClusterCount
+	state.CloudProviders = nil
+	for _, provider := range project.CloudProviders {
+		state.CloudProviders = append(state.CloudProviders, cloudProvider{
+			CloudProviderId:   provider.CloudProviderId,
+			CloudProviderName: provider.CloudProviderName,
+		})
+	}
+
+	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func (p *ProjectResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	// Delete a project
-	client := api.BuildAPI(meta).ProjectClient()
-	projectId := d.Id()
-	if err := client.Delete(ctx, projectId); err != nil {
-		return fromBigAnimalErr(err)
+// Update updates the resource and sets the updated Terraform state on success.
+func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan Project
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return diag.Diagnostics{}
+
+	_, err := p.client.Update(ctx, *plan.ProjectID, *plan.ProjectName)
+	if err != nil {
+		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
+		return
+	}
+
+	diags = resp.State.Set(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+// Delete deletes the resource and removes the Terraform state on success.
+func (p projectResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	// Retrieve values from state
+	var state Project
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := p.client.Delete(ctx, *state.ProjectID); err != nil {
+		resp.Diagnostics.AddError("Error deleting project", "Could not delete project, unexpected error: "+err.Error())
+		return
+	}
+}
+
+func (p projectResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func NewProjectResource() resource.Resource {
+	return &projectResource{}
 }

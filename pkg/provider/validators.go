@@ -2,9 +2,10 @@ package provider
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"regexp"
 	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/hashicorp/go-cty/cty"
