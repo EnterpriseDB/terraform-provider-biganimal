@@ -13,10 +13,22 @@ The projects data source shows the BigAnimal Projects.
 ## Example Usage
 
 ```terraform
-data "biganimal_projects" "this" {}
+data "biganimal_projects" "this" {
+  query = var.query
+}
 
 output "projects" {
   value = data.biganimal_projects.this.projects
+}
+
+output "number_of_projects" {
+  value = length(data.biganimal_projects.this.projects)
+}
+
+variable "query" {
+  type        = string
+  description = "Query string for the projects"
+  default     = ""
 }
 ```
 
@@ -29,6 +41,7 @@ output "projects" {
 
 ### Read-Only
 
+- `id` (String) Datasource ID.
 - `projects` (Attributes Set) List of the organization's projects. (see [below for nested schema](#nestedatt--projects))
 
 <a id="nestedatt--projects"></a>

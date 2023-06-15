@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
@@ -13,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type projectResource struct {
@@ -32,7 +30,7 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			"Please visit [Connecting your cloud](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/02_connecting_to_your_cloud/) for more details.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Project ID of the project.",
+				MarkdownDescription: "Resource ID of the project.",
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -58,7 +56,7 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				},
 			},
 			"cluster_count": schema.Int64Attribute{
-				MarkdownDescription: "User Count of the project.",
+				MarkdownDescription: "Cluster Count of the project.",
 				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
@@ -100,12 +98,12 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 }
 
 // Configure adds the provider configured client to the data source.
-func (r *projectResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+func (p *projectResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	r.client = req.ProviderData.(*api.API).ProjectClient()
+	p.client = req.ProviderData.(*api.API).ProjectClient()
 }
 
 type cloudProvider struct {
@@ -114,11 +112,11 @@ type cloudProvider struct {
 }
 
 type Project struct {
-	ID             types.String    `tfsdk:"id"`
-	ProjectID      types.String    `tfsdk:"project_id"`
-	ProjectName    types.String    `tfsdk:"project_name"`
-	UserCount      types.Int64     `tfsdk:"user_count"`
-	ClusterCount   types.Int64     `tfsdk:"cluster_count"`
+	ID             *string         `tfsdk:"id"`
+	ProjectID      *string         `tfsdk:"project_id"`
+	ProjectName    *string         `tfsdk:"project_name"`
+	UserCount      *int            `tfsdk:"user_count"`
+	ClusterCount   *int            `tfsdk:"cluster_count"`
 	CloudProviders []cloudProvider `tfsdk:"cloud_providers"`
 }
 
@@ -131,7 +129,7 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	projectId, err := p.client.Create(ctx, config.ProjectName.ValueString())
+	projectId, err := p.client.Create(ctx, *config.ProjectName)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating project", "Could not create project, unexpected error: "+err.Error())
 		return
@@ -143,12 +141,17 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	config.ID = types.StringValue(project.ProjectId)
-	config.ProjectID = types.StringValue(project.ProjectId)
-	config.ProjectName = types.StringValue(project.ProjectName)
-	config.UserCount = types.Int64Value(int64(project.UserCount))
-	config.ClusterCount = types.Int64Value(int64(project.ClusterCount))
-	config.CloudProviders = []cloudProvider{}
+	config.ID = &project.ProjectId
+	config.ProjectID = &project.ProjectId
+	config.ProjectName = &project.ProjectName
+	config.UserCount = &project.UserCount
+	config.ClusterCount = &project.ClusterCount
+	for _, provider := range project.CloudProviders {
+		config.CloudProviders = append(config.CloudProviders, cloudProvider{
+			CloudProviderId:   provider.CloudProviderId,
+			CloudProviderName: provider.CloudProviderName,
+		})
+	}
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -166,22 +169,22 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	project, err := p.client.Read(ctx, state.ID.ValueString())
+	project, err := p.client.Read(ctx, *state.ID)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
 	}
 
-	state.ProjectName = types.StringValue(project.ProjectName)
-	state.UserCount = types.Int64Value(int64(project.UserCount))
-	state.ClusterCount = types.Int64Value(int64(project.ClusterCount))
-	if cps := project.CloudProviders; cps != nil {
-		for _, provider := range cps {
-			state.CloudProviders = append(state.CloudProviders, cloudProvider{
-				CloudProviderId:   provider.CloudProviderId,
-				CloudProviderName: provider.CloudProviderName,
-			})
-		}
+	state.ProjectID = &project.ProjectId
+	state.ProjectName = &project.ProjectName
+	state.UserCount = &project.UserCount
+	state.ClusterCount = &project.ClusterCount
+	state.CloudProviders = nil
+	for _, provider := range project.CloudProviders {
+		state.CloudProviders = append(state.CloudProviders, cloudProvider{
+			CloudProviderId:   provider.CloudProviderId,
+			CloudProviderName: provider.CloudProviderName,
+		})
 	}
 
 	diags = resp.State.Set(ctx, &state)
@@ -200,7 +203,7 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	_, err := p.client.Update(ctx, plan.ID.ValueString(), plan.ProjectName.ValueString())
+	_, err := p.client.Update(ctx, *plan.ProjectID, *plan.ProjectName)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
 		return
@@ -223,7 +226,7 @@ func (p projectResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	if err := p.client.Delete(ctx, state.ID.ValueString()); err != nil {
+	if err := p.client.Delete(ctx, *state.ProjectID); err != nil {
 		resp.Diagnostics.AddError("Error deleting project", "Could not delete project, unexpected error: "+err.Error())
 		return
 	}
