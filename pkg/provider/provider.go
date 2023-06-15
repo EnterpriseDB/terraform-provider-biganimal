@@ -52,14 +52,12 @@ func NewSDKProvider(version string) func() *sdkschema.Provider {
 			},
 			DataSourcesMap: map[string]*sdkschema.Resource{
 				"biganimal_cluster":         dataCluster.Schema(),
-				"biganimal_region":          dataRegion.Schema(),
 				"biganimal_faraway_replica": dataFaReplica.Schema(),
 				"biganimal_aws_connection":  dataAWSConnection.Schema(),
 			},
 
 			ResourcesMap: map[string]*sdkschema.Resource{
 				"biganimal_cluster":          resourceCluster.Schema(),
-				"biganimal_region":           resourceRegion.Schema(),
 				"biganimal_aws_connection":   resourceAWSConnection.Schema(),
 				"biganimal_azure_connection": resourceAzureConnection.Schema(),
 				"biganimal_faraway_replica":  resourceFAReplica.Schema(),
