@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	apiModels "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/api"
@@ -240,8 +241,48 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 	}
 }
 
+type DataGroupData struct {
+	GroupId                    string                                        `tfsdk:"group_id"`
+	AllowedIpRanges            []apiModels.ClusterAllowedIpRange             `tfsdk:"allowed_ip_ranges"`
+	BackupRetentionPeriod      string                                        `tfsdk:"backup_retention_period"`
+	ClusterArchitecture        *apiModels.ClusterClusterArchitectureResponse `tfsdk:"cluster_architecture"`
+	ClusterName                string                                        `tfsdk:"cluster_name"`
+	ClusterType                string                                        `tfsdk:"cluster_type"`
+	CreatedAt                  *string                                       `tfsdk:"created_at"`
+	DeletedAt                  *string                                       `tfsdk:"deleted_at"`
+	ExpiredAt                  *string                                       `tfsdk:"expired_at"`
+	FirstRecoverabilityPointAt *string                                       `tfsdk:"first_recoverability_point_at"`
+	InstanceType               *string                                       `tfsdk:"instance_type"`
+	LogsUrl                    *string                                       `tfsdk:"logs_url"`
+	MetricsUrl                 *string                                       `tfsdk:"metrics_url"`
+	Connection                 *string                                       `tfsdk:"connection_uri"`
+	PgConfig                   *[]apiModels.ArrayOfNameValueObjectsInner     `tfsdk:"pg_config"`
+	PgType                     *string                                       `tfsdk:"pg_type"`
+	PgVersion                  *string                                       `tfsdk:"pg_version"`
+	Phase                      string                                        `tfsdk:"phase"`
+	PrivateNetworking          bool                                          `tfsdk:"private_networking"`
+	Provider                   *string                                       `tfsdk:"cloud_provider"`
+	CspAuth                    *bool                                         `tfsdk:"csp_auth"`
+	Region                     *string                                       `tfsdk:"region"`
+	ResizingPvc                *[]string                                     `tfsdk:"resizing_pvc"`
+	Storage                    *tf.ClusterStorageResponse                    `tfsdk:"storage"`
+}
+
+type WitnessGroupData struct {
+	Region *string `tfsdk:"region"`
+}
+
+type PGDDataSourceData struct {
+	ProjectID     string             `tfsdk:"project_id"`
+	ClusterID     *string            `tfsdk:"cluster_id"`
+	ClusterName   string             `tfsdk:"cluster_name"`
+	MostRecent    *bool              `tfsdk:"most_recent"`
+	DataGroups    []DataGroupData    `tfsdk:"data_groups"`
+	WitnessGroups []WitnessGroupData `tfsdk:"witness_groups"`
+}
+
 func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data tf.PGDDataSourceData
+	var data PGDDataSourceData
 	diags := req.Config.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -271,7 +312,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		case map[string]interface{}:
 			if apiGroupResp["clusterType"] == "data_group" {
 				apiDgModel := apiModels.ClusterDataGroup{}
-				tfDg := tf.DataGroupData{}
+				tfDgModel := DataGroupData{}
 
 				if err := utils.CopyObjectJson(apiGroupResp, &apiDgModel); err != nil {
 					if err != nil {
@@ -280,20 +321,96 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 					}
 				}
 
-				tfDg.Region = utils.ToPointer(apiDgModel.Region.RegionId)
-				data.DataGroups = append(data.DataGroups, tfDg)
+				tfDgModel.GroupId = apiDgModel.GroupId
+				tfDgModel.AllowedIpRanges = apiDgModel.AllowedIpRanges
+				tfDgModel.BackupRetentionPeriod = apiDgModel.BackupRetentionPeriod
+				tfDgModel.ClusterArchitecture = apiDgModel.ClusterArchitecture
+				tfDgModel.ClusterName = apiDgModel.ClusterName
+				tfDgModel.ClusterType = apiDgModel.ClusterType
+
+				if apiDgModel.CreatedAt != nil {
+					tfDgModel.CreatedAt = utils.ToPointer(time.Unix(int64(apiDgModel.CreatedAt.Seconds), int64(apiDgModel.CreatedAt.Nanos)).String())
+				}
+
+				if apiDgModel.DeletedAt != nil {
+					tfDgModel.DeletedAt = utils.ToPointer(time.Unix(int64(apiDgModel.DeletedAt.Seconds), int64(apiDgModel.DeletedAt.Nanos)).String())
+				}
+
+				if apiDgModel.ExpiredAt != nil {
+					tfDgModel.ExpiredAt = utils.ToPointer(time.Unix(int64(apiDgModel.ExpiredAt.Seconds), int64(apiDgModel.ExpiredAt.Nanos)).String())
+				}
+
+				if apiDgModel.FirstRecoverabilityPointAt != nil {
+					tfDgModel.FirstRecoverabilityPointAt = utils.ToPointer(time.Unix(int64(apiDgModel.FirstRecoverabilityPointAt.Seconds), int64(apiDgModel.FirstRecoverabilityPointAt.Nanos)).String())
+				}
+
+				if apiDgModel.InstanceType != nil {
+					tfDgModel.InstanceType = utils.ToPointer(apiDgModel.InstanceType.InstanceTypeId)
+				}
+
+				tfDgModel.LogsUrl = apiDgModel.LogsUrl
+				tfDgModel.MetricsUrl = apiDgModel.MetricsUrl
+
+				if apiDgModel.Connection != nil {
+					tfDgModel.Connection = apiDgModel.Connection.PgUri
+				}
+
+				if apiDgModel.PgConfig != nil {
+					tfDgModel.PgConfig = apiDgModel.PgConfig
+				}
+
+				if apiDgModel.PgType != nil {
+					tfDgModel.PgType = &apiDgModel.PgType.PgTypeId
+				}
+
+				tfDgModel.PgVersion = &apiDgModel.PgVersion.PgVersionId
+
+				tfDgModel.Phase = apiDgModel.Phase
+				tfDgModel.PrivateNetworking = apiDgModel.PrivateNetworking
+
+				if apiDgModel.Provider != nil {
+					tfDgModel.Provider = &apiDgModel.Provider.CloudProviderId
+				}
+
+				tfDgModel.CspAuth = apiDgModel.CspAuth
+
+				if apiDgModel.Region != nil {
+					tfDgModel.Region = &apiDgModel.Region.RegionId
+				}
+
+				if apiDgModel.ResizingPvc != nil {
+					tfDgModel.ResizingPvc = apiDgModel.ResizingPvc
+				}
+
+				if apiDgModel.Storage != nil {
+					tfDgModel.Storage = &tf.ClusterStorageResponse{
+						Iops:               apiDgModel.Storage.Iops,
+						Size:               apiDgModel.Storage.Size,
+						Throughput:         apiDgModel.Storage.Throughput,
+						VolumePropertiesId: apiDgModel.Storage.VolumePropertiesId,
+						VolumeTypeId:       apiDgModel.Storage.VolumeTypeId,
+					}
+				}
+
+				data.DataGroups = append(data.DataGroups, tfDgModel)
 			}
 
 			if apiGroupResp["clusterType"] == "witness_group" {
-				tfWg := tf.WitnessGroupData{}
+				apiWgModel := apiModels.ClusterWitnessGroup{}
+				tfWgModel := WitnessGroupData{}
 
-				if err := utils.CopyObjectJson(apiGroupResp, &tfWg); err != nil {
+				if err := utils.CopyObjectJson(apiGroupResp, &apiWgModel); err != nil {
 					if err != nil {
 						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
 						return
 					}
 				}
-				data.WitnessGroups = append(data.WitnessGroups, tfWg)
+
+				if apiWgModel.Region != nil {
+					tfWgModel.Region = &apiWgModel.Region.RegionId
+				}
+
+				data.WitnessGroups = append(data.WitnessGroups, tfWgModel)
 			}
 		}
 	}
