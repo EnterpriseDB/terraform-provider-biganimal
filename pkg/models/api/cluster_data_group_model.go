@@ -4,7 +4,6 @@ package api
 type ClusterDataGroup struct {
 	AllowedIpRanges            []ClusterAllowedIpRange             `json:"allowedIpRanges"`
 	BackupRetentionPeriod      string                              `json:"backupRetentionPeriod"`
-	CanAddFarawayReplica       *bool                               `json:"canAddFarawayReplica,omitempty"`
 	ClusterArchitecture        *ClusterClusterArchitectureResponse `json:"clusterArchitecture,omitempty"`
 	ClusterName                string                              `json:"clusterName"`
 	ClusterType                string                              `json:"clusterType"`
