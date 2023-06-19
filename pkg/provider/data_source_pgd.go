@@ -291,21 +291,16 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 			}
 
 			if apiGroupResp["clusterType"] == "witness_group" {
-				// apiWgModel := apiModels.ClusterWitnessGroup{}
-				// tfWgModel := WitnessGroupData{}
+				model := pgd_read.WitnessGroup{}
 
-				// if err := utils.CopyObjectJson(apiGroupResp, &apiWgModel); err != nil {
-				// 	if err != nil {
-				// 		resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
-				// 		return
-				// 	}
-				// }
+				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+					if err != nil {
+						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
+						return
+					}
+				}
 
-				// if apiWgModel.Region != nil {
-				// 	tfWgModel.Region = &apiWgModel.Region.RegionId
-				// }
-
-				// data.WitnessGroups = append(data.WitnessGroups, tfWgModel)
+				data.WitnessGroups = append(data.WitnessGroups, model)
 			}
 		}
 	}
