@@ -1,7 +1,6 @@
 package models
 
 import (
-	pgd "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -140,35 +139,35 @@ func NewClusterForUpdate(d *schema.ResourceData) (*Cluster, error) {
 // everything is omitempty,
 // and everything is either nullable, or empty-able
 type Cluster struct {
-	ClusterType                *string                        `json:"clusterType,omitempty"`
-	ReplicaSourceClusterId     *string                        `json:"replicaSourceClusterId,omitempty"`
-	AllowedIpRanges            *[]AllowedIpRange              `json:"allowedIpRanges,omitempty"`
-	BackupRetentionPeriod      *string                        `json:"backupRetentionPeriod,omitempty"`
-	ClusterArchitecture        *Architecture                  `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
-	ClusterId                  *string                        `json:"clusterId,omitempty"`
-	ClusterName                *string                        `json:"clusterName,omitempty"`
-	Conditions                 []Condition                    `json:"conditions,omitempty"`
-	CreatedAt                  *PointInTime                   `json:"createdAt,omitempty"`
-	CSPAuth                    *bool                          `json:"cspAuth,omitempty"`
-	DeletedAt                  *PointInTime                   `json:"deletedAt,omitempty"`
-	ExpiredAt                  *PointInTime                   `json:"expiredAt,omitempty"`
-	FirstRecoverabilityPointAt *PointInTime                   `json:"firstRecoverabilityPointAt,omitempty"`
-	InstanceType               *InstanceType                  `json:"instanceType,omitempty"`
-	LogsUrl                    *string                        `json:"logsUrl,omitempty"`
-	MetricsUrl                 *string                        `json:"metricsUrl,omitempty"`
-	Password                   *string                        `json:"password,omitempty"`
-	PgConfig                   *[]KeyValue                    `json:"pgConfig,omitempty"`
-	PgType                     *PgType                        `json:"pgType,omitempty"`
-	PgVersion                  *PgVersion                     `json:"pgVersion,omitempty"`
-	Phase                      *string                        `json:"phase,omitempty"`
-	PrivateNetworking          *bool                          `json:"privateNetworking,omitempty"`
-	Provider                   *Provider                      `json:"provider,omitempty"`
-	ReadOnlyConnections        *bool                          `json:"readOnlyConnections,omitempty"`
-	Region                     *Region                        `json:"region,omitempty"`
-	ResizingPvc                []string                       `json:"resizingPvc,omitempty"`
-	Storage                    *Storage                       `json:"storage,omitempty"`
-	FarawayReplicaIds          *[]string                      `json:"farawayReplicaIds,omitempty"`
-	Groups                     *[]pgd.OneOfclusterGroupsItems `json:"groups,omitempty"`
+	ClusterType                *string           `json:"clusterType,omitempty"`
+	ReplicaSourceClusterId     *string           `json:"replicaSourceClusterId,omitempty"`
+	AllowedIpRanges            *[]AllowedIpRange `json:"allowedIpRanges,omitempty"`
+	BackupRetentionPeriod      *string           `json:"backupRetentionPeriod,omitempty"`
+	ClusterArchitecture        *Architecture     `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
+	ClusterId                  *string           `json:"clusterId,omitempty"`
+	ClusterName                *string           `json:"clusterName,omitempty"`
+	Conditions                 []Condition       `json:"conditions,omitempty"`
+	CreatedAt                  *PointInTime      `json:"createdAt,omitempty"`
+	CSPAuth                    *bool             `json:"cspAuth,omitempty"`
+	DeletedAt                  *PointInTime      `json:"deletedAt,omitempty"`
+	ExpiredAt                  *PointInTime      `json:"expiredAt,omitempty"`
+	FirstRecoverabilityPointAt *PointInTime      `json:"firstRecoverabilityPointAt,omitempty"`
+	InstanceType               *InstanceType     `json:"instanceType,omitempty"`
+	LogsUrl                    *string           `json:"logsUrl,omitempty"`
+	MetricsUrl                 *string           `json:"metricsUrl,omitempty"`
+	Password                   *string           `json:"password,omitempty"`
+	PgConfig                   *[]KeyValue       `json:"pgConfig,omitempty"`
+	PgType                     *PgType           `json:"pgType,omitempty"`
+	PgVersion                  *PgVersion        `json:"pgVersion,omitempty"`
+	Phase                      *string           `json:"phase,omitempty"`
+	PrivateNetworking          *bool             `json:"privateNetworking,omitempty"`
+	Provider                   *Provider         `json:"provider,omitempty"`
+	ReadOnlyConnections        *bool             `json:"readOnlyConnections,omitempty"`
+	Region                     *Region           `json:"region,omitempty"`
+	ResizingPvc                []string          `json:"resizingPvc,omitempty"`
+	Storage                    *Storage          `json:"storage,omitempty"`
+	FarawayReplicaIds          *[]string         `json:"farawayReplicaIds,omitempty"`
+	Groups                     *[]any            `json:"groups,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'

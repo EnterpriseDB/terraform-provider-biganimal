@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd_read"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -240,44 +239,13 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 	}
 }
 
-type DataGroupData struct {
-	GroupId                    string                        `json:"groupId" tfsdk:"group_id"`
-	AllowedIpRanges            []models.AllowedIpRange       `json:"allowedIpRanges" tfsdk:"allowed_ip_ranges"`
-	BackupRetentionPeriod      string                        `json:"backupRetentionPeriod" tfsdk:"backup_retention_period"`
-	ClusterArchitecture        *pgd_read.ClusterArchitecture `json:"clusterArchitecture,omitempty" tfsdk:"cluster_architecture"`
-	ClusterName                string                        `json:"clusterName" tfsdk:"cluster_name"`
-	ClusterType                string                        `json:"clusterType" tfsdk:"cluster_type"`
-	Connection                 *pgd_read.ClusterConnection   `json:"connection,omitempty" tfsdk:"connection_uri"`
-	CreatedAt                  *pgd_read.PointInTime         `json:"createdAt,omitempty" tfsdk:"created_at"`
-	CspAuth                    *bool                         `json:"cspAuth,omitempty" tfsdk:"csp_auth"`
-	DeletedAt                  *pgd_read.PointInTime         `json:"deletedAt,omitempty" tfsdk:"deleted_at"`
-	ExpiredAt                  *pgd_read.PointInTime         `json:"expiredAt,omitempty" tfsdk:"expired_at"`
-	FirstRecoverabilityPointAt *pgd_read.PointInTime         `json:"firstRecoverabilityPointAt,omitempty" tfsdk:"first_recoverability_point_at"`
-	InstanceType               *pgd_read.InstanceType        `json:"instanceType,omitempty" tfsdk:"instance_type"`
-	LogsUrl                    *string                       `json:"logsUrl,omitempty" tfsdk:"logs_url"`
-	MetricsUrl                 *string                       `json:"metricsUrl,omitempty" tfsdk:"metrics_url"`
-	PgConfig                   *[]models.KeyValue            `json:"pgConfig,omitempty" tfsdk:"pg_config"`
-	PgType                     *pgd_read.PgType              `json:"pgType,omitempty" tfsdk:"pg_type"`
-	PgVersion                  *pgd_read.PgVersion           `json:"pgVersion,omitempty" tfsdk:"pg_version"`
-	Phase                      string                        `json:"phase" tfsdk:"phase"`
-	PrivateNetworking          bool                          `json:"privateNetworking" tfsdk:"private_networking"`
-	Provider                   *pgd_read.CloudProvider       `json:"provider,omitempty" tfsdk:"cloud_provider"`
-	Region                     *pgd_read.Region              `json:"region,omitempty" tfsdk:"region"`
-	ResizingPvc                *[]string                     `json:"resizingPvc,omitempty" tfsdk:"resizing_pvc"`
-	Storage                    *models.Storage               `json:"storage,omitempty" tfsdk:"storage"`
-}
-
-type WitnessGroupData struct {
-	Region *string `tfsdk:"region"`
-}
-
 type PGDDataSourceData struct {
-	ProjectID     string             `tfsdk:"project_id"`
-	ClusterID     *string            `tfsdk:"cluster_id"`
-	ClusterName   string             `tfsdk:"cluster_name"`
-	MostRecent    *bool              `tfsdk:"most_recent"`
-	DataGroups    []DataGroupData    `tfsdk:"data_groups"`
-	WitnessGroups []WitnessGroupData `tfsdk:"witness_groups"`
+	ProjectID     string                  `tfsdk:"project_id"`
+	ClusterID     *string                 `tfsdk:"cluster_id"`
+	ClusterName   string                  `tfsdk:"cluster_name"`
+	MostRecent    *bool                   `tfsdk:"most_recent"`
+	DataGroups    []pgd_read.DataGroup    `tfsdk:"data_groups"`
+	WitnessGroups []pgd_read.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -310,7 +278,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		switch apiGroupResp := v.(type) {
 		case map[string]interface{}:
 			if apiGroupResp["clusterType"] == "data_group" {
-				model := DataGroupData{}
+				model := pgd_read.DataGroup{}
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
