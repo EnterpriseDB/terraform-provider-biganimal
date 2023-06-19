@@ -1,4 +1,4 @@
-package pgd_read
+package pgd
 
 import (
 	"encoding/json"
@@ -6,16 +6,16 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type ClusterConnection string
+type Region string
 
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
-func (recv *ClusterConnection) UnmarshalJSON(d []byte) error {
-	var apiResult models.ClusterConnection
+func (recv *Region) UnmarshalJSON(d []byte) error {
+	var apiResult models.Region
 	if err := json.Unmarshal(d, &apiResult); err != nil {
 		return err
 	}
 
-	clusterConnection := ClusterConnection(apiResult.PgUri)
-	*recv = clusterConnection
+	region := Region(apiResult.Id)
+	*recv = region
 	return nil
 }

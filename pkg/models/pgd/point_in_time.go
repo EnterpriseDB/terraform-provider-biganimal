@@ -1,4 +1,4 @@
-package pgd_read
+package pgd
 
 import (
 	"encoding/json"

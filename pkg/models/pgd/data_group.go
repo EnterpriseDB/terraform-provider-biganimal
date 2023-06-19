@@ -1,4 +1,4 @@
-package pgd_read
+package pgd
 
 import "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 

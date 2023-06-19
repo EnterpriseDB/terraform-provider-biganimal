@@ -1,4 +1,4 @@
-package pgd_read
+package pgd
 
 import (
 	"encoding/json"
@@ -6,16 +6,16 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type PgVersion string
+type ClusterConnection string
 
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
-func (recv *PgVersion) UnmarshalJSON(d []byte) error {
-	var apiResult models.PgVersion
+func (recv *ClusterConnection) UnmarshalJSON(d []byte) error {
+	var apiResult models.ClusterConnection
 	if err := json.Unmarshal(d, &apiResult); err != nil {
 		return err
 	}
 
-	pgVersion := PgVersion(apiResult.PgVersionId)
-	*recv = pgVersion
+	clusterConnection := ClusterConnection(apiResult.PgUri)
+	*recv = clusterConnection
 	return nil
 }

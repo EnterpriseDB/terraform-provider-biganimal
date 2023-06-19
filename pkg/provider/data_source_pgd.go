@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd_read"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -240,12 +240,12 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 }
 
 type PGDDataSourceData struct {
-	ProjectID     string                  `tfsdk:"project_id"`
-	ClusterID     *string                 `tfsdk:"cluster_id"`
-	ClusterName   string                  `tfsdk:"cluster_name"`
-	MostRecent    *bool                   `tfsdk:"most_recent"`
-	DataGroups    []pgd_read.DataGroup    `tfsdk:"data_groups"`
-	WitnessGroups []pgd_read.WitnessGroup `tfsdk:"witness_groups"`
+	ProjectID     string             `tfsdk:"project_id"`
+	ClusterID     *string            `tfsdk:"cluster_id"`
+	ClusterName   string             `tfsdk:"cluster_name"`
+	MostRecent    *bool              `tfsdk:"most_recent"`
+	DataGroups    []pgd.DataGroup    `tfsdk:"data_groups"`
+	WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -278,7 +278,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		switch apiGroupResp := v.(type) {
 		case map[string]interface{}:
 			if apiGroupResp["clusterType"] == "data_group" {
-				model := pgd_read.DataGroup{}
+				model := pgd.DataGroup{}
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
@@ -291,7 +291,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 			}
 
 			if apiGroupResp["clusterType"] == "witness_group" {
-				model := pgd_read.WitnessGroup{}
+				model := pgd.WitnessGroup{}
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {

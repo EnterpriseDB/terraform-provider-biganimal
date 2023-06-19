@@ -1,4 +1,4 @@
-package pgd_read
+package pgd
 
 type ClusterArchitecture struct {
 	ClusterArchitectureId   string   `json:"clusterArchitectureId" tfsdk:"cluster_architecture_id"`

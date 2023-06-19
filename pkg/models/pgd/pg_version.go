@@ -1,4 +1,4 @@
-package pgd_read
+package pgd
 
 import (
 	"encoding/json"
@@ -6,16 +6,16 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type PgType string
+type PgVersion string
 
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
-func (recv *PgType) UnmarshalJSON(d []byte) error {
-	var apiResult models.PgType
+func (recv *PgVersion) UnmarshalJSON(d []byte) error {
+	var apiResult models.PgVersion
 	if err := json.Unmarshal(d, &apiResult); err != nil {
 		return err
 	}
 
-	pgType := PgType(apiResult.PgTypeId)
-	*recv = pgType
+	pgVersion := PgVersion(apiResult.PgVersionId)
+	*recv = pgVersion
 	return nil
 }
