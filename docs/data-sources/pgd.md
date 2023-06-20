@@ -3,12 +3,12 @@
 page_title: "biganimal_pgd Data Source - terraform-provider-biganimal"
 subcategory: ""
 description: |-
-  ```The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.```
+  The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.
 ---
 
 # biganimal_pgd (Data Source)
 
-```The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.```
+The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.
 
 ## Example Usage
 
