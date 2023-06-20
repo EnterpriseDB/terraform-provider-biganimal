@@ -219,6 +219,9 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 					},
 				},
 			},
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
 				Required:    true,
@@ -240,6 +243,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 }
 
 type PGDDataSourceData struct {
+	ID            *string            `tfsdk:"id"`
 	ProjectID     string             `tfsdk:"project_id"`
 	ClusterID     *string            `tfsdk:"cluster_id"`
 	ClusterName   string             `tfsdk:"cluster_name"`
@@ -250,6 +254,7 @@ type PGDDataSourceData struct {
 
 func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data PGDDataSourceData
+
 	diags := req.Config.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -272,6 +277,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		resp.Diagnostics.AddError("Wrong cluster architecture error", fmt.Sprintf("Wrong cluster architecture, expected 'pgd' but got: %v", cluster.ClusterArchitecture.ClusterArchitectureId))
 	}
 
+	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
 	for _, v := range *cluster.Groups {
