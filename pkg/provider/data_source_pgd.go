@@ -19,7 +19,7 @@ var (
 )
 
 type pgdDataSource struct {
-	client *api.API
+	client *api.PGDClient
 }
 
 func (p pgdDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -32,7 +32,7 @@ func (d *pgdDataSource) Configure(_ context.Context, req datasource.ConfigureReq
 		return
 	}
 
-	d.client = req.ProviderData.(*api.API)
+	d.client = req.ProviderData.(*api.API).PGDClient()
 }
 
 func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
