@@ -220,7 +220,8 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 				},
 			},
 			"id": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Datasource ID.",
 			},
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
@@ -267,7 +268,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		data.MostRecent = utils.ToPointer(false)
 	}
 
-	cluster, err := p.client.ClusterClient().ReadByName(ctx, data.ProjectID, data.ClusterName, *data.MostRecent)
+	cluster, err := p.client.PGDClient().ReadByName(ctx, data.ProjectID, data.ClusterName, *data.MostRecent)
 	if err != nil {
 		resp.Diagnostics.AddError("Read error", fmt.Sprintf("Unable to call read cluster, got error: %s", err))
 		return
