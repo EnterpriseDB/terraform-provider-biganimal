@@ -33,6 +33,11 @@ func (api *API) ClusterClient() *ClusterClient {
 	return c
 }
 
+func (api *API) PGDClient() *PGDClient {
+	c := NewPGDClient(*api)
+	return c
+}
+
 func (api *API) RegionClient() *RegionClient {
 	c := NewRegionClient(*api)
 	return c
