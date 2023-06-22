@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -47,4 +48,44 @@ func (c PGDClient) ReadByName(ctx context.Context, projectId, name string, most_
 	}
 
 	return &clusters.Data[0], err
+}
+
+func (c PGDClient) Create(ctx context.Context, projectId string, model any) (string, error) {
+	response := struct {
+		Data struct {
+			ClusterId string `json:"clusterId"`
+		} `json:"data"`
+	}{}
+
+	cluster := model.(models.Cluster)
+
+	b, err := json.Marshal(cluster)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("projects/%s/clusters", projectId)
+	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &response)
+	return response.Data.ClusterId, err
+}
+
+func (c PGDClient) Read(ctx context.Context, projectId, clusterId string) (*models.Cluster, error) {
+	response := struct {
+		Data *models.Cluster `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, clusterId)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return response.Data, err
+	}
+
+	err = json.Unmarshal(body, &response)
+
+	return response.Data, err
 }
