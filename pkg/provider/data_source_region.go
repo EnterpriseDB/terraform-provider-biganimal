@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -118,9 +119,7 @@ func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		regions = respRegions
 	}
 
-	for _, region := range regions {
-		cfg.Regions = append(cfg.Regions, region)
-	}
+	cfg.Regions = append(cfg.Regions, regions...)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &cfg)...)
 }
