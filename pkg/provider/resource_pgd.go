@@ -34,11 +34,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								Attributes: map[string]schema.Attribute{
 									"cidr_block": schema.StringAttribute{
 										Description: "CIDR block",
-										Computed:    true,
+										Optional:    true,
 									},
 									"description": schema.StringAttribute{
 										Description: "Description of CIDR block",
-										Computed:    true,
+										Optional:    true,
 									},
 								},
 							},
@@ -50,11 +50,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
 										Description: "GUC name.",
-										Computed:    true,
+										Optional:    true,
 									},
 									"value": schema.StringAttribute{
 										Description: "GUC value.",
-										Computed:    true,
+										Optional:    true,
 									},
 								},
 							},
@@ -63,7 +63,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
-									Required:    true,
+									Optional:    true,
 								},
 								"cluster_architecture_name": schema.StringAttribute{
 									Description: "Name.",
@@ -84,23 +84,23 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
-									Computed:    true,
+									Optional:    true,
 								},
 							},
 						},
@@ -108,83 +108,83 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
 							Description: "Group ID of the group.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
-							Computed:    true,
+							Optional:    true,
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
-							Computed:    true,
+							Optional:    true,
 						},
 						"created_at": schema.StringAttribute{
 							Description: "Cluster creation time.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"deleted_at": schema.StringAttribute{
 							Description: "Cluster deletion time.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"expired_at": schema.StringAttribute{
 							Description: "Cluster expiry time.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"first_recoverability_point_at": schema.StringAttribute{
 							Description: "Earliest backup recover time.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"instance_type": schema.StringAttribute{
 							Description: "Instance type.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"metrics_url": schema.StringAttribute{
 							Description: "The URL to find the metrics of this cluster.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"connection_uri": schema.StringAttribute{
 							Description: "Cluster connection URI.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"pg_type": schema.StringAttribute{
 							Description: "Postgres type.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"pg_version": schema.StringAttribute{
 							Description: "Postgres version.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the cluster group.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"private_networking": schema.BoolAttribute{
 							Description: "Is private networking enabled.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"cloud_provider": schema.StringAttribute{
 							Description: "Cloud provider.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"region": schema.StringAttribute{
 							Description: "Data group region.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"resizing_pvc": schema.SetAttribute{
 							ElementType: types.StringType,
-							Computed:    true,
+							Optional:    true,
 						},
 					},
 				},
@@ -195,7 +195,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					Attributes: map[string]schema.Attribute{
 						"region": schema.StringAttribute{
 							Description: "Witness group region.",
-							Computed:    true,
+							Optional:    true,
 						},
 					},
 				},
@@ -203,16 +203,16 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed:    true,
+				Optional:    true,
 				Description: "Resource ID.",
 			},
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
-				Required:    true,
+				Optional:    true,
 			},
 			"cluster_id": schema.StringAttribute{
 				Description: "Cluster ID.",
-				Computed:    true,
+				Optional:    true,
 			},
 			"cluster_name": schema.StringAttribute{
 				Description: "cluster name",
