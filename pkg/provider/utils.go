@@ -3,7 +3,6 @@ package provider
 import (
 	"errors"
 
-
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
