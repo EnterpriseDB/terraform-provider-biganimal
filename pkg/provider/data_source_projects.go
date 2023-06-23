@@ -13,6 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
+var (
+	_ datasource.DataSource              = &projectsDataSource{}
+	_ datasource.DataSourceWithConfigure = &projectsDataSource{}
+)
+
 type projectsDataSource struct {
 	client *api.ProjectClient
 }

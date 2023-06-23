@@ -31,7 +31,6 @@ func init() {
 	// Set descriptions to support markdown syntax, this will be used in document generation
 	// and the language server.
 	sdkschema.DescriptionKind = sdkschema.StringMarkdown
-
 }
 
 func NewSDKProvider(version string) func() *sdkschema.Provider {
@@ -177,6 +176,7 @@ func (b bigAnimalProvider) Schema(ctx context.Context, request provider.SchemaRe
 func (b bigAnimalProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewProjectsDataSource,
+		NewPgdDataSource,
 		NewRegionDataSource,
 	}
 }

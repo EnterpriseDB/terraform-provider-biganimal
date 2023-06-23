@@ -24,7 +24,6 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 	)
 
 	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges").(*schema.Set).List())
-
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +42,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 	if *ClusterType == "cluster" || *ClusterType == "" {
 		clusterPassword = utils.GetStringP(d, "password")
 		clusterPgType.PgTypeId = utils.GetString(d, "pg_type")
-		clusterPgVersion.PgVersionId = utils.GetString(d, "pg_version") //d.Get("pg_version").(string),
+		clusterPgVersion.PgVersionId = utils.GetString(d, "pg_version") // d.Get("pg_version").(string),
 		clusterCloudProvider.CloudProviderId = utils.GetString(d, "cloud_provider")
 		clusterRoConn = utils.GetBoolP(d, "read_only_connections")
 		*clusterArchitecture, err = utils.StructFromProps[Architecture](d.Get("cluster_architecture"))
@@ -168,6 +167,7 @@ type Cluster struct {
 	ResizingPvc                []string          `json:"resizingPvc,omitempty"`
 	Storage                    *Storage          `json:"storage,omitempty"`
 	FarawayReplicaIds          *[]string         `json:"farawayReplicaIds,omitempty"`
+	Groups                     *[]any            `json:"groups,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'

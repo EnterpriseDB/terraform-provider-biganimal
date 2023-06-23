@@ -32,3 +32,5 @@ terraform
 ultradisk
 uri
 datasource
+pgd
+PGD
