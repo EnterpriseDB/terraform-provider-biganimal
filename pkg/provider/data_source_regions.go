@@ -11,8 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// NewRegionDataSource is a helper function to simplify the provider implementation.
-func NewRegionDataSource() datasource.DataSource {
+// NewRegionsDataSource is a helper function to simplify the provider implementation.
+func NewRegionsDataSource() datasource.DataSource {
 	return &regionDataSource{}
 }
 

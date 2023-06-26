@@ -55,7 +55,6 @@ output "region_continent" {
 ### Read-Only
 
 - `continent` (String) Continent that region belongs to. For example, "Asia", "Australia", or "Europe".
-- `id` (String) The ID of this resource.
 - `name` (String) Region name of the region. For example, "Germany West Central" or "EU West 1".
 
 <a id="nestedblock--timeouts"></a>
