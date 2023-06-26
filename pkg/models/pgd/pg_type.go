@@ -6,7 +6,9 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type PgType string
+type PgType struct {
+	PgTypeId string `json:"pgTypeId" tfsdk:"pg_type_id"`
+}
 
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
 func (recv *PgType) UnmarshalJSON(d []byte) error {
@@ -15,7 +17,8 @@ func (recv *PgType) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	pgType := PgType(apiResult.PgTypeId)
-	*recv = pgType
+	*recv = PgType{
+		PgTypeId: apiResult.PgTypeId,
+	}
 	return nil
 }

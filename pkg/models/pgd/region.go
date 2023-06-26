@@ -6,7 +6,9 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type Region string
+type Region struct {
+	RegionId string `json:"regionId" tfsdk:"region_id"`
+}
 
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
 func (recv *Region) UnmarshalJSON(d []byte) error {
@@ -15,7 +17,8 @@ func (recv *Region) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	region := Region(apiResult.Id)
-	*recv = region
+	*recv = Region{
+		RegionId: apiResult.Id,
+	}
 	return nil
 }

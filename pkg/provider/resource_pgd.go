@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -44,27 +46,27 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						// 	"pg_config": schema.SetNestedBlock{
-						// 		Description: "Database configuration parameters.",
+						"pg_config": schema.SetNestedBlock{
+							Description: "Database configuration parameters.",
 
-						// 		NestedObject: schema.NestedBlockObject{
-						// 			Attributes: map[string]schema.Attribute{
-						// 				"name": schema.StringAttribute{
-						// 					Description: "GUC name.",
-						// 					Optional:    true,
-						// 				},
-						// 				"value": schema.StringAttribute{
-						// 					Description: "GUC value.",
-						// 					Optional:    true,
-						// 				},
-						// 			},
-						// 		},
-						// 	},
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"name": schema.StringAttribute{
+										Description: "GUC name.",
+										Optional:    true,
+									},
+									"value": schema.StringAttribute{
+										Description: "GUC value.",
+										Optional:    true,
+									},
+								},
+							},
+						},
 						"cluster_architecture": schema.SingleNestedBlock{
 							Attributes: map[string]schema.Attribute{
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
-									Optional:    true,
+									Required:    true,
 								},
 								"cluster_architecture_name": schema.StringAttribute{
 									Description: "Name.",
@@ -72,7 +74,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 								"nodes": schema.Float64Attribute{
 									Description: "Node count.",
-									Optional:    true,
+									Required:    true,
 								},
 								"witness_nodes": schema.Float64Attribute{
 									Description: "Witness nodes count.",
@@ -80,31 +82,63 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						// 	"storage": schema.SingleNestedBlock{
-						// 		Description: "Storage.",
-						// 		Attributes: map[string]schema.Attribute{
-						// 			"iops": schema.StringAttribute{
-						// 				Description: "IOPS for the selected volume.",
-						// 				Optional:    true,
-						// 			},
-						// 			"size": schema.StringAttribute{
-						// 				Description: "Size of the volume.",
-						// 				Optional:    true,
-						// 			},
-						// 			"throughput": schema.StringAttribute{
-						// 				Description: "Throughput.",
-						// 				Optional:    true,
-						// 			},
-						// 			"volume_properties": schema.StringAttribute{
-						// 				Description: "Volume properties.",
-						// 				Optional:    true,
-						// 			},
-						// 			"volume_type": schema.StringAttribute{
-						// 				Description: "Volume type.",
-						// 				Optional:    true,
-						// 			},
-						// 		},
-						// 	},
+						"storage": schema.SingleNestedBlock{
+							Description: "Storage.",
+							Attributes: map[string]schema.Attribute{
+								"iops": schema.StringAttribute{
+									Description: "IOPS for the selected volume.",
+									Optional:    true,
+								},
+								"size": schema.StringAttribute{
+									Description: "Size of the volume.",
+									Optional:    true,
+								},
+								"throughput": schema.StringAttribute{
+									Description: "Throughput.",
+									Optional:    true,
+								},
+								"volume_properties": schema.StringAttribute{
+									Description: "Volume properties.",
+									Required:    true,
+								},
+								"volume_type": schema.StringAttribute{
+									Description: "Volume type.",
+									Required:    true,
+								},
+							},
+						},
+						"pg_type": schema.SingleNestedBlock{
+							Description: "Postgres type.",
+							Attributes: map[string]schema.Attribute{
+								"pg_type_id": schema.StringAttribute{
+									Description: "Data group pg type id.", Optional: true,
+								},
+							},
+						},
+						"pg_version": schema.SingleNestedBlock{
+							Description: "Postgres version.",
+							Attributes: map[string]schema.Attribute{
+								"pg_version_id": schema.StringAttribute{
+									Description: "Data group pg version id.", Optional: true,
+								},
+							},
+						},
+						"cloud_provider": schema.SingleNestedBlock{
+							Description: "Cloud provider.",
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Data group cloud provider id.", Optional: true,
+								},
+							},
+						},
+						"region": schema.SingleNestedBlock{
+							Description: "Region.",
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Data group region.", Optional: true,
+								},
+							},
+						},
 					},
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -118,78 +152,77 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Backup retention period",
 							Optional:    true,
 						},
-						// "cluster_name": schema.StringAttribute{
-						// 	Description: "Name of the group.",
-						// 	Optional:    true,
-						// },
-						// "cluster_type": schema.StringAttribute{
-						// 	Description: "Type of the Specified Cluster",
-						// 	Optional:    true,
-						// },
-						// "created_at": schema.StringAttribute{
-						// 	Description: "Cluster creation time.",
-						// 	Optional:    true,
-						// },
-						// "deleted_at": schema.StringAttribute{
-						// 	Description: "Cluster deletion time.",
-						// 	Optional:    true,
-						// },
-						// "expired_at": schema.StringAttribute{
-						// 	Description: "Cluster expiry time.",
-						// 	Optional:    true,
-						// },
-						// "first_recoverability_point_at": schema.StringAttribute{
-						// 	Description: "Earliest backup recover time.",
-						// 	Optional:    true,
-						// },
-						// "instance_type": schema.StringAttribute{
-						// 	Description: "Instance type.",
-						// 	Optional:    true,
-						// },
-						// "logs_url": schema.StringAttribute{
-						// 	Description: "The URL to find the logs of this cluster.",
-						// 	Optional:    true,
-						// },
-						// "metrics_url": schema.StringAttribute{
-						// 	Description: "The URL to find the metrics of this cluster.",
-						// 	Optional:    true,
-						// },
-						// "connection_uri": schema.StringAttribute{
-						// 	Description: "Cluster connection URI.",
-						// 	Optional:    true,
-						// },
-						// "pg_type": schema.StringAttribute{
-						// 	Description: "Postgres type.",
-						// 	Optional:    true,
-						// },
-						// "pg_version": schema.StringAttribute{
-						// 	Description: "Postgres version.",
-						// 	Optional:    true,
-						// },
-						// "phase": schema.StringAttribute{
-						// 	Description: "Current phase of the cluster group.",
-						// 	Optional:    true,
-						// },
-						// "private_networking": schema.BoolAttribute{
-						// 	Description: "Is private networking enabled.",
-						// 	Optional:    true,
-						// },
-						// "cloud_provider": schema.StringAttribute{
-						// 	Description: "Cloud provider.",
-						// 	Optional:    true,
-						// },
+						"cluster_name": schema.StringAttribute{
+							Description: "Name of the group.",
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"cluster_type": schema.StringAttribute{
+							Description: "Type of the Specified Cluster",
+							Required:    true,
+						},
+						"created_at": schema.StringAttribute{
+							Description: "Cluster creation time.",
+							Optional:    true,
+						},
+						"deleted_at": schema.StringAttribute{
+							Description: "Cluster deletion time.",
+							Optional:    true,
+						},
+						"expired_at": schema.StringAttribute{
+							Description: "Cluster expiry time.",
+							Optional:    true,
+						},
+						"first_recoverability_point_at": schema.StringAttribute{
+							Description: "Earliest backup recover time.",
+							Optional:    true,
+						},
+						"instance_type": schema.StringAttribute{
+							Description: "Instance type.",
+							Required:    true,
+						},
+						"logs_url": schema.StringAttribute{
+							Description: "The URL to find the logs of this cluster.",
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"metrics_url": schema.StringAttribute{
+							Description: "The URL to find the metrics of this cluster.",
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"connection_uri": schema.StringAttribute{
+							Description: "Cluster connection URI.",
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"phase": schema.StringAttribute{
+							Description: "Current phase of the cluster group.",
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"private_networking": schema.BoolAttribute{
+							Description: "Is private networking enabled.",
+							Required:    true,
+						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
 							Optional:    true,
 						},
-						"region": schema.StringAttribute{
-							Description: "Data group region.",
-							Optional:    true,
+						"resizing_pvc": schema.StringAttribute{
+							Description: "Resizing PVC.",
+							Computed:    true,
 						},
-						// "resizing_pvc": schema.SetAttribute{
-						// 	ElementType: types.StringType,
-						// 	Optional:    true,
-						// },
 					},
 				},
 			},
@@ -216,23 +249,26 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Description: "BigAnimal Project ID.",
 				Optional:    true,
 			},
-			// "cluster_id": schema.StringAttribute{
-			// 	Description: "Cluster ID.",
-			// 	Optional:    true,
-			// },
+			"cluster_id": schema.StringAttribute{
+				Description: "Cluster ID.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"cluster_name": schema.StringAttribute{
 				Description: "cluster name",
 				Required:    true,
 			},
-			// "most_recent": schema.BoolAttribute{
-			// 	Description: "Show the most recent cluster when there are multiple clusters with the same name",
-			// 	Optional:    true,
-			// },
-			// "password": schema.StringAttribute{
-			// 	Description: "Password for the user edb_admin. It must be 12 characters or more.",
-			// 	Required:    true,
-			// 	Sensitive:   true,
-			// },
+			"most_recent": schema.BoolAttribute{
+				Description: "Show the most recent cluster when there are multiple clusters with the same name",
+				Optional:    true,
+			},
+			"password": schema.StringAttribute{
+				Description: "Password for the user edb_admin. It must be 12 characters or more.",
+				Required:    true,
+				Sensitive:   true,
+			},
 		},
 	}
 }
@@ -247,12 +283,13 @@ func (p *pgdResource) Configure(_ context.Context, req resource.ConfigureRequest
 }
 
 type PGD struct {
-	ID        *string `tfsdk:"id"`
-	ProjectId string  `tfsdk:"project_id"`
-	// ClusterId   *string `tfsdk:"cluster_id"`
-	ClusterName string `tfsdk:"cluster_name"`
-	// MostRecent    *bool              `tfsdk:"most_recent"`
-	DataGroups []pgd.DataGroup `tfsdk:"data_groups"`
+	ID          *string         `tfsdk:"id"`
+	ProjectId   string          `tfsdk:"project_id"`
+	ClusterId   *string         `tfsdk:"cluster_id"`
+	ClusterName string          `tfsdk:"cluster_name"`
+	MostRecent  *bool           `tfsdk:"most_recent"`
+	Password    string          `tfsdk:"password"`
+	DataGroups  []pgd.DataGroup `tfsdk:"data_groups"`
 	// WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
 }
 
@@ -271,6 +308,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		Password:    utils.ToPointer("asdfasdfasdfafchgf67sdfds"),
 	}
 
+	clusterReqBody.Groups = &[]models.AnyOfclusterCreateGroupsItems{}
+
 	for _, v := range config.DataGroups {
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
@@ -278,11 +317,19 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// 	*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	// }
 
-	// clusterId, err := p.client.Create(ctx, config.ProjectId, clusterReqBody)
-	// if err != nil {
-	// 	resp.Diagnostics.AddError("Error creating PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
-	// 	return
-	// }
+	b, err := json.MarshalIndent(clusterReqBody, "", "  ")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(string(b))
+
+	clusterId, err := p.client.Create(ctx, config.ProjectId, clusterReqBody)
+	if err != nil {
+		resp.Diagnostics.AddError("Error creating PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
+		return
+	}
+
+	_ = clusterId
 
 	// clusterResp, err := p.client.Read(ctx, config.ProjectId, clusterId)
 	// if err != nil {

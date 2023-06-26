@@ -6,7 +6,9 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type CloudProvider string
+type CloudProvider struct {
+	CloudProviderId string `json:"cloudProviderId" tfsdk:"cloud_provider_id"`
+}
 
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
 func (recv *CloudProvider) UnmarshalJSON(d []byte) error {
@@ -15,7 +17,8 @@ func (recv *CloudProvider) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	cloudProvider := CloudProvider(apiResult.CloudProviderId)
-	*recv = cloudProvider
+	*recv = CloudProvider{
+		CloudProviderId: apiResult.CloudProviderId,
+	}
 	return nil
 }

@@ -6,7 +6,9 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type PgVersion string
+type PgVersion struct {
+	PgVersionId string `json:"pgVersionId" tfsdk:"pg_version_id"`
+}
 
 // UnmarshalJSON to implement json.Unmarshaler for custom unmarshalling
 func (recv *PgVersion) UnmarshalJSON(d []byte) error {
@@ -15,7 +17,8 @@ func (recv *PgVersion) UnmarshalJSON(d []byte) error {
 		return err
 	}
 
-	pgVersion := PgVersion(apiResult.PgVersionId)
-	*recv = pgVersion
+	*recv = PgVersion{
+		PgVersionId: apiResult.PgVersionId,
+	}
 	return nil
 }
