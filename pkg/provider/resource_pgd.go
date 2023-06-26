@@ -2,8 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -135,7 +133,15 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Region.",
 							Attributes: map[string]schema.Attribute{
 								"region_id": schema.StringAttribute{
-									Description: "Data group region.", Optional: true,
+									Description: "Data group region id.", Optional: true,
+								},
+							},
+						},
+						"instance_type": schema.SingleNestedBlock{
+							Description: "Instance type.",
+							Attributes: map[string]schema.Attribute{
+								"instance_type_id": schema.StringAttribute{
+									Description: "Data group instance type id.", Optional: true,
 								},
 							},
 						},
@@ -178,10 +184,6 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						"first_recoverability_point_at": schema.StringAttribute{
 							Description: "Earliest backup recover time.",
 							Optional:    true,
-						},
-						"instance_type": schema.StringAttribute{
-							Description: "Instance type.",
-							Required:    true,
 						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
@@ -316,12 +318,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// for _, v := range config.WitnessGroups {
 	// 	*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	// }
-
-	b, err := json.MarshalIndent(clusterReqBody, "", "  ")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Print(string(b))
 
 	clusterId, err := p.client.Create(ctx, config.ProjectId, clusterReqBody)
 	if err != nil {

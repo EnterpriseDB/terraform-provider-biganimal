@@ -5,7 +5,7 @@ import "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 type DataGroup struct {
 	GroupId                    *string                 `json:"groupId,omitempty" tfsdk:"group_id"`
 	AllowedIpRanges            []models.AllowedIpRange `json:"allowedIpRanges,omitempty" tfsdk:"allowed_ip_ranges"`
-	BackupRetentionPeriod      string                  `json:"backupRetentionPeriod,omitempty" tfsdk:"backup_retention_period"`
+	BackupRetentionPeriod      *string                 `json:"backupRetentionPeriod,omitempty" tfsdk:"backup_retention_period"`
 	ClusterArchitecture        *ClusterArchitecture    `json:"clusterArchitecture,omitempty" tfsdk:"cluster_architecture"`
 	ClusterName                *string                 `json:"clusterName,omitempty" tfsdk:"cluster_name"`
 	ClusterType                *string                 `json:"clusterType,omitempty" tfsdk:"cluster_type"`
@@ -22,9 +22,9 @@ type DataGroup struct {
 	PgType                     *PgType                 `json:"pgType,omitempty" tfsdk:"pg_type"`
 	PgVersion                  *PgVersion              `json:"pgVersion,omitempty" tfsdk:"pg_version"`
 	Phase                      *string                 `json:"phase,omitempty" tfsdk:"phase"`
-	PrivateNetworking          bool                    `json:"privateNetworking,omitempty" tfsdk:"private_networking"`
+	PrivateNetworking          *bool                   `json:"privateNetworking,omitempty" tfsdk:"private_networking"`
 	Provider                   *CloudProvider          `json:"provider,omitempty" tfsdk:"cloud_provider"`
-	Region                     Region                  `json:"region,omitempty" tfsdk:"region"`
+	Region                     *Region                 `json:"region,omitempty" tfsdk:"region"`
 	ResizingPvc                *[]string               `json:"resizingPvc,omitempty" tfsdk:"resizing_pvc"`
 	Storage                    *models.Storage         `json:"storage,omitempty" tfsdk:"storage"`
 }
