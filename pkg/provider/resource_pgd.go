@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
@@ -241,17 +240,21 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					},
 				},
 			},
-			// "witness_groups": schema.SetNestedBlock{
-			// 	Description: "Cluster witness groups.",
-			// 	NestedObject: schema.NestedBlockObject{
-			// 		Attributes: map[string]schema.Attribute{
-			// 			"region": schema.StringAttribute{
-			// 				Description: "Witness group region.",
-			// 				Optional:    true,
-			// 			},
-			// 		},
-			// 	},
-			// },
+			"witness_groups": schema.SetNestedBlock{
+				Description: "Cluster witness groups.",
+				NestedObject: schema.NestedBlockObject{
+					Blocks: map[string]schema.Block{
+						"region": schema.SingleNestedBlock{
+							Description: "Region.",
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Data group region id.", Optional: true,
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -298,14 +301,14 @@ func (p *pgdResource) Configure(_ context.Context, req resource.ConfigureRequest
 }
 
 type PGD struct {
-	ID          *string         `tfsdk:"id"`
-	ProjectId   string          `tfsdk:"project_id"`
-	ClusterId   *string         `tfsdk:"cluster_id"`
-	ClusterName string          `tfsdk:"cluster_name"`
-	MostRecent  *bool           `tfsdk:"most_recent"`
-	Password    string          `tfsdk:"password"`
-	DataGroups  []pgd.DataGroup `tfsdk:"data_groups"`
-	// WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
+	ID            *string            `tfsdk:"id"`
+	ProjectId     string             `tfsdk:"project_id"`
+	ClusterId     *string            `tfsdk:"cluster_id"`
+	ClusterName   string             `tfsdk:"cluster_name"`
+	MostRecent    *bool              `tfsdk:"most_recent"`
+	Password      string             `tfsdk:"password"`
+	DataGroups    []pgd.DataGroup    `tfsdk:"data_groups"`
+	WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 // Create creates the resource and sets the initial Terraform state.
@@ -364,26 +367,20 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 				config.DataGroups = append(config.DataGroups, model)
 			}
 
-			// if apiGroupResp["clusterType"] == "witness_group" {
-			// 	model := pgd.WitnessGroup{}
+			if apiGroupResp["clusterType"] == "witness_group" {
+				model := pgd.WitnessGroup{}
 
-			// 	if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-			// 		if err != nil {
-			// 			resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
-			// 			return
-			// 		}
-			// 	}
+				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+					if err != nil {
+						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
+						return
+					}
+				}
 
-			// 	config.WitnessGroups = append(config.WitnessGroups, model)
-			// }
+				config.WitnessGroups = append(config.WitnessGroups, model)
+			}
 		}
 	}
-
-	bb, err := json.MarshalIndent(config.DataGroups, "", "  ")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Print(string(bb))
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)

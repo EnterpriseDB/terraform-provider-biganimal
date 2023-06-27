@@ -64,12 +64,6 @@ func (c PGDClient) Create(ctx context.Context, projectId string, model any) (str
 		return "", err
 	}
 
-	bb, err := json.MarshalIndent(cluster, "", "  ")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Print(string(bb))
-
 	url := fmt.Sprintf("projects/%s/clusters", projectId)
 	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
 	if err != nil {
