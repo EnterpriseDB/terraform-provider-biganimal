@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"strconv"
+	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -39,6 +41,10 @@ func (r *regionsDataSource) Metadata(ctx context.Context, req datasource.Metadat
 func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "Datasource ID.",
+				Computed:    true,
+			},
 			"regions": schema.ListNestedAttribute{
 				Description: "Region information.",
 				Computed:    true,
@@ -88,6 +94,7 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 }
 
 type regionDatasource struct {
+	ID            *string          `tfsdk:"id"`
 	Regions       []*models.Region `tfsdk:"regions"`
 	CloudProvider *string          `tfsdk:"cloud_provider"`
 	ProjectId     *string          `tfsdk:"project_id"`
@@ -121,7 +128,8 @@ func (r *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	cfg.Regions = append(cfg.Regions, regions...)
-
+	resourceID := strconv.FormatInt(time.Now().Unix(), 10)
+	cfg.ID = &resourceID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &cfg)...)
 }
 
