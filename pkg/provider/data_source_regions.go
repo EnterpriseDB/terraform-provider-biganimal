@@ -11,18 +11,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+var _ datasource.DataSourceWithConfigure = &regionsDataSource{}
+
 // NewRegionsDataSource is a helper function to simplify the provider implementation.
 func NewRegionsDataSource() datasource.DataSource {
-	return &regionDataSource{}
+	return &regionsDataSource{}
 }
 
-// regionDataSource is the data source implementation.
-type regionDataSource struct {
+// regionsDataSource is the data source implementation.
+type regionsDataSource struct {
 	client *api.RegionClient
 }
 
 // Configure adds the provider configured client to the data source.
-func (r *regionDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (r *regionsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -30,13 +32,12 @@ func (r *regionDataSource) Configure(_ context.Context, req datasource.Configure
 	r.client = req.ProviderData.(*api.API).RegionClient()
 }
 
-func (r *regionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (r *regionsDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_regions"
 }
 
-func (r *regionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
 		Attributes: map[string]schema.Attribute{
 			"regions": schema.ListNestedAttribute{
 				Description: "Region information.",
@@ -94,7 +95,7 @@ type regionDatasource struct {
 	RegionId      *string          `tfsdk:"region_id"`
 }
 
-func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (r *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var cfg regionDatasource
 	diags := req.Config.Get(ctx, &cfg)
 	resp.Diagnostics.Append(diags...)
@@ -122,4 +123,23 @@ func (r *regionDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	cfg.Regions = append(cfg.Regions, regions...)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &cfg)...)
+}
+
+// NewRegionDataSource is a helper function to simplify the provider implementation.
+func NewRegionDataSource() datasource.DataSource {
+	return &regionDataSource{}
+}
+
+// regionDataSource is the data source implementation.
+type regionDataSource struct {
+	regionsDataSource
+}
+
+func (r *regionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_region"
+}
+
+func (r *regionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	r.regionsDataSource.Schema(ctx, req, resp)
+	resp.Schema.DeprecationMessage = "The datasource' 'region' is deprecated and will be removed in the next major version. Please use 'regions' instead."
 }
