@@ -361,16 +361,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 					}
 				}
 
-				// config.DataGroups[0].GroupId = model.GroupId
-				// config.DataGroups[0].ClusterArchitecture.ClusterArchitectureName = model.ClusterArchitecture.ClusterArchitectureName
-				// config.DataGroups[0].ClusterName = model.ClusterName
-				// config.DataGroups[0].CreatedAt = model.CreatedAt
-				// config.DataGroups[0].Connection = model.Connection
-				// config.DataGroups[0].LogsUrl = model.LogsUrl
-				// config.DataGroups[0].MetricsUrl = model.MetricsUrl
-				// config.DataGroups[0].Phase = model.Phase
-				// config.DataGroups[0].ResizingPvc = model.ResizingPvc
-
 				config.DataGroups = append(config.DataGroups, model)
 			}
 
