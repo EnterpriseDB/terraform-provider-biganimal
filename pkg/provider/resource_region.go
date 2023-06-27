@@ -40,6 +40,9 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Resource ID of the region.",
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"cloud_provider": schema.StringAttribute{
 				MarkdownDescription: "Cloud provider. For example, \"aws\" or \"azure\".",
@@ -117,7 +120,7 @@ func (r regionResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	diags = r.update(ctx, config, resp.State)
+	diags = r.update(ctx, config, &resp.State)
 	resp.Diagnostics.Append(diags...)
 }
 
@@ -153,10 +156,10 @@ func (r *regionResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	resp.Diagnostics.Append(r.update(ctx, plan, resp.State)...)
+	resp.Diagnostics.Append(r.update(ctx, plan, &resp.State)...)
 }
 
-func (r *regionResource) update(ctx context.Context, region Region, state tfsdk.State) frameworkdiag.Diagnostics {
+func (r *regionResource) update(ctx context.Context, region Region, state *tfsdk.State) frameworkdiag.Diagnostics {
 	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID); err != nil {
 		return fromErr(err, "Error updating region %v", region.RegionID)
 	}
@@ -174,7 +177,7 @@ func (r *regionResource) update(ctx context.Context, region Region, state tfsdk.
 		return fromErr(err, "")
 	}
 
-	return r.read(ctx, region, &state)
+	return r.read(ctx, region, state)
 }
 
 func (r *regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
