@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -11,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type pgdResource struct {
@@ -68,7 +71,10 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 								"cluster_architecture_name": schema.StringAttribute{
 									Description: "Name.",
-									Optional:    true,
+									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"nodes": schema.Float64Attribute{
 									Description: "Node count.",
@@ -86,14 +92,17 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
 									Optional:    true,
+									Computed:    true,
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
 									Optional:    true,
+									Computed:    true,
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
 									Optional:    true,
+									Computed:    true,
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
@@ -171,7 +180,10 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"created_at": schema.StringAttribute{
 							Description: "Cluster creation time.",
-							Optional:    true,
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"deleted_at": schema.StringAttribute{
 							Description: "Cluster deletion time.",
@@ -221,9 +233,10 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Is authentication handled by the cloud service provider.",
 							Optional:    true,
 						},
-						"resizing_pvc": schema.StringAttribute{
+						"resizing_pvc": schema.SetAttribute{
 							Description: "Resizing PVC.",
 							Computed:    true,
+							ElementType: types.StringType,
 						},
 					},
 				},
@@ -307,10 +320,10 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	clusterReqBody := models.Cluster{
 		ClusterName: &config.ClusterName,
 		ClusterType: utils.ToPointer("cluster"),
-		Password:    utils.ToPointer("asdfasdfasdfafchgf67sdfds"),
+		Password:    &config.Password,
 	}
 
-	clusterReqBody.Groups = &[]models.AnyOfclusterCreateGroupsItems{}
+	clusterReqBody.Groups = &[]any{}
 
 	for _, v := range config.DataGroups {
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
@@ -325,15 +338,62 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		return
 	}
 
-	_ = clusterId
+	clusterResp, err := p.client.Read(ctx, config.ProjectId, clusterId)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
+		return
+	}
 
-	// clusterResp, err := p.client.Read(ctx, config.ProjectId, clusterId)
-	// if err != nil {
-	// 	resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
-	// 	return
-	// }
+	config.ID = clusterResp.ClusterId
+	config.ClusterId = clusterResp.ClusterId
+	config.DataGroups = []pgd.DataGroup{}
 
-	// config.ClusterId = clusterResp.ClusterId
+	for _, v := range *clusterResp.Groups {
+		switch apiGroupResp := v.(type) {
+		case map[string]interface{}:
+			if apiGroupResp["clusterType"] == "data_group" {
+				model := pgd.DataGroup{}
+
+				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+					if err != nil {
+						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
+						return
+					}
+				}
+
+				// config.DataGroups[0].GroupId = model.GroupId
+				// config.DataGroups[0].ClusterArchitecture.ClusterArchitectureName = model.ClusterArchitecture.ClusterArchitectureName
+				// config.DataGroups[0].ClusterName = model.ClusterName
+				// config.DataGroups[0].CreatedAt = model.CreatedAt
+				// config.DataGroups[0].Connection = model.Connection
+				// config.DataGroups[0].LogsUrl = model.LogsUrl
+				// config.DataGroups[0].MetricsUrl = model.MetricsUrl
+				// config.DataGroups[0].Phase = model.Phase
+				// config.DataGroups[0].ResizingPvc = model.ResizingPvc
+
+				config.DataGroups = append(config.DataGroups, model)
+			}
+
+			// if apiGroupResp["clusterType"] == "witness_group" {
+			// 	model := pgd.WitnessGroup{}
+
+			// 	if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+			// 		if err != nil {
+			// 			resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
+			// 			return
+			// 		}
+			// 	}
+
+			// 	config.WitnessGroups = append(config.WitnessGroups, model)
+			// }
+		}
+	}
+
+	bb, err := json.MarshalIndent(config.DataGroups, "", "  ")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(string(bb))
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -343,6 +403,45 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 }
 
 func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state PGD
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	clusterResp, err := p.client.Read(ctx, state.ProjectId, *state.ID)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
+		return
+	}
+
+	state.ID = clusterResp.ClusterId
+	state.ClusterId = clusterResp.ClusterId
+
+	for _, v := range *clusterResp.Groups {
+		switch apiGroupResp := v.(type) {
+		case map[string]interface{}:
+			if apiGroupResp["clusterType"] == "data_group" {
+				model := pgd.DataGroup{}
+
+				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+					if err != nil {
+						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
+						return
+					}
+				}
+
+				state.DataGroups = append(state.DataGroups, model)
+			}
+		}
+	}
+
+	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

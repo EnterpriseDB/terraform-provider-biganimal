@@ -30,8 +30,11 @@ variable "project_id" {
 resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
+  password     = resource.random_password.password.result
   
   data_groups {
+    cluster_type = "data_group"
+  
     allowed_ip_ranges {
       cidr_block  = "127.0.0.1/32"
       description = "localhost"
@@ -46,13 +49,14 @@ resource "biganimal_pgd" "pgd_cluster" {
     
     cluster_architecture {
       cluster_architecture_id = "pgd"
-      cluster_architecture_name = "pgd"
-      nodes = 1
-      witness_nodes = 1
+      nodes = 2
     }
     
     csp_auth = false
-    instance_type = "azure:Standard_D2s_v3"
+    
+    instance_type {
+      instance_type_id = "azure:Standard_D2s_v3"
+    }
     
     pg_config {
       name  = "application_name"
@@ -70,15 +74,24 @@ resource "biganimal_pgd" "pgd_cluster" {
       size              = "4 Gi"
     }
     
-    pg_type               = "epas"
-    pg_version            = "14"
-    private_networking    = false
-    cloud_provider        = "azure"
-    region                = "eastus2"
+    pg_type {
+      pg_type_id = "epas"
+    }
+    
+    pg_version {
+      pg_version_id = "14"
+    }
+    
+    private_networking = false
+    
+    cloud_provider {
+      cloud_provider_id = "azure"
+    }
+    
+    region {
+      region_id = "northeurope"
+    }
   }
-  
-
-  
 }
 
 
