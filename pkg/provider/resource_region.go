@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"strings"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
@@ -15,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -36,6 +37,10 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 		},
 
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "Resource ID of the region.",
+				Computed:            true,
+			},
 			"cloud_provider": schema.StringAttribute{
 				MarkdownDescription: "Cloud provider. For example, \"aws\" or \"azure\".",
 				Required:            true,
@@ -93,6 +98,7 @@ func (r *regionResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 type Region struct {
+	ID            *string `tfsdk:"id"`
 	ProjectID     *string `tfsdk:"project_id"`
 	CloudProvider *string `tfsdk:"cloud_provider"`
 	RegionID      *string `tfsdk:"region_id"`
@@ -123,15 +129,16 @@ func (r *regionResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	resp.Diagnostics.Append(r.read(ctx, state, resp.State)...)
+	resp.Diagnostics.Append(r.read(ctx, state, &resp.State)...)
 }
 
-func (r *regionResource) read(ctx context.Context, region Region, state tfsdk.State) frameworkdiag.Diagnostics {
+func (r *regionResource) read(ctx context.Context, region Region, state *tfsdk.State) frameworkdiag.Diagnostics {
 	read, err := r.client.Read(ctx, *region.ProjectID, *region.CloudProvider, *region.RegionID)
 	if err != nil {
 		return fromErr(err, "Error reading region %v", region.RegionID)
 	}
-
+	id := fmt.Sprintf("%s/%s/%s", *region.ProjectID, *region.CloudProvider, *region.RegionID)
+	region.ID = &id
 	region.Name = &read.Name
 	region.Status = &read.Status
 	region.Continent = &read.Continent
@@ -150,16 +157,6 @@ func (r *regionResource) Update(ctx context.Context, req resource.UpdateRequest,
 }
 
 func (r *regionResource) update(ctx context.Context, region Region, state tfsdk.State) frameworkdiag.Diagnostics {
-	current, err := r.client.Read(ctx, *region.ProjectID, *region.CloudProvider, *region.RegionID)
-	if err != nil {
-		return fromErr(err, "Error reading region %v", region.RegionID)
-	}
-	if current.Status == *region.Status { // no change, exit early
-		return nil
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("updating region from %s to %s", current.Status, *region.Status))
-
 	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID); err != nil {
 		return fromErr(err, "Error updating region %v", region.RegionID)
 	}
@@ -169,7 +166,7 @@ func (r *regionResource) update(ctx context.Context, region Region, state tfsdk.
 		return diagnostics
 	}
 
-	err = retry.RetryContext(
+	err := retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
 		r.retryFunc(ctx, region))
@@ -177,7 +174,7 @@ func (r *regionResource) update(ctx context.Context, region Region, state tfsdk.
 		return fromErr(err, "")
 	}
 
-	return r.read(ctx, region, state)
+	return r.read(ctx, region, &state)
 }
 
 func (r *regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -224,6 +221,21 @@ func (r *regionResource) retryFunc(ctx context.Context, region Region) retry.Ret
 		}
 		return nil
 	}
+}
+
+func (r regionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.Split(req.ID, "/")
+	if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: project_id/cloud_provider/region_id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cloud_provider"), idParts[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("region_id"), idParts[2])...)
 }
 
 func NewRegionResource() resource.Resource {
