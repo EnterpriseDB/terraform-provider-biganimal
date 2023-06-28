@@ -3,8 +3,8 @@ variable "cloud_provider" {
   description = "Cloud Provider"
 
   validation {
-    condition     = contains(["aws", "azure"], var.cloud_provider)
-    error_message = "Please select one of the supported regions: aws, azure."
+    condition     = contains(["aws", "azure", "bah:aws"], var.cloud_provider)
+    error_message = "Please select one of the supported regions: aws, azure and bah:aws."
   }
 }
 

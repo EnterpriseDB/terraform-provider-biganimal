@@ -93,7 +93,7 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 	}
 }
 
-type regionDatasource struct {
+type regionsDataSourceModel struct {
 	ID            *string          `tfsdk:"id"`
 	Regions       []*models.Region `tfsdk:"regions"`
 	CloudProvider *string          `tfsdk:"cloud_provider"`
@@ -103,7 +103,7 @@ type regionDatasource struct {
 }
 
 func (r *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var cfg regionDatasource
+	var cfg regionsDataSourceModel
 	diags := req.Config.Get(ctx, &cfg)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -131,23 +131,4 @@ func (r *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	resourceID := strconv.FormatInt(time.Now().Unix(), 10)
 	cfg.ID = &resourceID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &cfg)...)
-}
-
-// NewRegionDataSource is a helper function to simplify the provider implementation.
-func NewRegionDataSource() datasource.DataSource {
-	return &regionDataSource{}
-}
-
-// regionDataSource is the data source implementation.
-type regionDataSource struct {
-	regionsDataSource
-}
-
-func (r *regionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_region"
-}
-
-func (r *regionDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	r.regionsDataSource.Schema(ctx, req, resp)
-	resp.Schema.DeprecationMessage = "The datasource' 'region' is deprecated and will be removed in the next major version. Please use 'regions' instead."
 }

@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"strings"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -79,7 +79,7 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 							Summary: Schema Using Attribute Default For Non-Computed Attribute
 							Detail: Attribute "status" must be computed when using default. This is an issue with the provider and should be reported to the provider developers.
 				*/
-				//Default:             DefaultString("The default of region desired status", api.REGION_ACTIVE),
+				Default: DefaultString("The default of region desired status", api.REGION_ACTIVE),
 			},
 			"continent": schema.StringAttribute{
 				MarkdownDescription: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
@@ -214,7 +214,7 @@ func (r *regionResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 func (r *regionResource) retryFunc(ctx context.Context, region Region) retry.RetryFunc {
 	return func() *retry.RetryError {
-		curr, err := r.client.RegionClient().Read(ctx, *region.ProjectID, *region.CloudProvider, *region.RegionID)
+		curr, err := r.client.Read(ctx, *region.ProjectID, *region.CloudProvider, *region.RegionID)
 		if err != nil {
 			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}

@@ -11,16 +11,16 @@ import (
 func TestAccDataSourceRegions_basic(t *testing.T) {
 	var (
 		acc_env_vars_checklist = []string{
-			"BA_TF_ACC_VAR_datasource_regions_project_id",
-			"BA_TF_ACC_VAR_datasource_regions_provider",
-			"BA_TF_ACC_VAR_datasource_regions_region_id",
-			"BA_TF_ACC_VAR_datasource_regions_status",
+			"BA_TF_ACC_VAR_regions_project_id",
+			"BA_TF_ACC_VAR_regions_provider",
+			"BA_TF_ACC_VAR_regions_region_id",
+			"BA_TF_ACC_VAR_regions_status",
 		}
-		projectId  = os.Getenv("BA_TF_ACC_VAR_datasource_regions_project_id")
-		provider   = os.Getenv("BA_TF_ACC_VAR_datasource_regions_provider")
-		regionId   = os.Getenv("BA_TF_ACC_VAR_datasource_regions_region_id")
-		regionName = os.Getenv("BA_TF_ACC_VAR_datasource_regions_region_name")
-		status     = os.Getenv("BA_TF_ACC_VAR_datasource_regions_status")
+		projectId  = os.Getenv("BA_TF_ACC_VAR_regions_project_id")
+		provider   = os.Getenv("BA_TF_ACC_VAR_regions_provider")
+		regionId   = os.Getenv("BA_TF_ACC_VAR_regions_region_id")
+		regionName = os.Getenv("BA_TF_ACC_VAR_regions_region_name")
+		status     = os.Getenv("BA_TF_ACC_VAR_regions_status")
 	)
 
 	resource.ParallelTest(t, resource.TestCase{

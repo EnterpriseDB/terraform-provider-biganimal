@@ -18,6 +18,7 @@
 
 ### Read-Only
 
+- `id` (String) Datasource ID.
 - `regions` (Attributes List) Region information. (see [below for nested schema](#nestedatt--regions))
 
 <a id="nestedatt--regions"></a>
