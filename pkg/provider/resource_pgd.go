@@ -248,7 +248,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Region.",
 							Attributes: map[string]schema.Attribute{
 								"region_id": schema.StringAttribute{
-									Description: "Data group region id.", Optional: true,
+									Description: "Witness group region id.",
+									Optional:    true,
 								},
 							},
 						},
@@ -331,9 +332,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	for _, v := range config.DataGroups {
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
-	// for _, v := range config.WitnessGroups {
-	// 	*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
-	// }
+	for _, v := range config.WitnessGroups {
+		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
+	}
 
 	clusterId, err := p.client.Create(ctx, config.ProjectId, clusterReqBody)
 	if err != nil {

@@ -114,9 +114,15 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Description: "Earliest backup recover time.",
 							Computed:    true,
 						},
-						"instance_type": schema.StringAttribute{
+						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"instance_type_id": schema.StringAttribute{
+									Description: "Data group instance type id.",
+									Computed:    true,
+								},
+							},
 						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
@@ -127,7 +133,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Computed:    true,
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Cluster connection URI.",
+							Description: "Data group connection URI.",
 							Computed:    true,
 						},
 						"pg_config": schema.SetNestedAttribute{
@@ -146,13 +152,25 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"pg_type": schema.StringAttribute{
+						"pg_type": schema.SingleNestedAttribute{
 							Description: "Postgres type.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"pg_type_id": schema.StringAttribute{
+									Description: "Data group postgres type id.",
+									Computed:    true,
+								},
+							},
 						},
-						"pg_version": schema.StringAttribute{
+						"pg_version": schema.SingleNestedAttribute{
 							Description: "Postgres version.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"pg_version_id": schema.StringAttribute{
+									Description: "Data group postgres version id.",
+									Computed:    true,
+								},
+							},
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the cluster group.",
@@ -162,17 +180,29 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Description: "Is private networking enabled.",
 							Computed:    true,
 						},
-						"cloud_provider": schema.StringAttribute{
+						"cloud_provider": schema.SingleNestedAttribute{
 							Description: "Cloud provider.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Data group cloud provider id.",
+									Computed:    true,
+								},
+							},
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
 							Computed:    true,
 						},
-						"region": schema.StringAttribute{
-							Description: "Data group region.",
+						"region": schema.SingleNestedAttribute{
+							Description: "Region.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Data group region id.",
+									Computed:    true,
+								},
+							},
 						},
 						"resizing_pvc": schema.SetAttribute{
 							ElementType: types.StringType,
@@ -212,9 +242,15 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"region": schema.StringAttribute{
-							Description: "Witness group region.",
+						"region": schema.SingleNestedAttribute{
+							Description: "Region.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Witness group region id.",
+									Computed:    true,
+								},
+							},
 						},
 					},
 				},
