@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -72,14 +73,8 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"status": schema.StringAttribute{
 				MarkdownDescription: "Region status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
 				Optional:            true,
-				/*
-					Commented out the following Default field. During compilation, the following error occurs:
-					    error retrieving schema for *proto6server.Server:
-							Attribute:
-							Summary: Schema Using Attribute Default For Non-Computed Attribute
-							Detail: Attribute "status" must be computed when using default. This is an issue with the provider and should be reported to the provider developers.
-				*/
-				Default: DefaultString("The default of region desired status", api.REGION_ACTIVE),
+				Computed:            true,
+				Default:             stringdefault.StaticString(api.REGION_ACTIVE),
 			},
 			"continent": schema.StringAttribute{
 				MarkdownDescription: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
