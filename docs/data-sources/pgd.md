@@ -61,6 +61,7 @@ output "witness_groups" {
 
 - `cluster_id` (String) Cluster ID.
 - `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
+- `id` (String) Datasource ID.
 - `witness_groups` (Attributes Set) Cluster witness groups. (see [below for nested schema](#nestedatt--witness_groups))
 
 <a id="nestedatt--data_groups"></a>
