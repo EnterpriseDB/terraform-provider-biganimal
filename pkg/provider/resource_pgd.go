@@ -351,36 +351,11 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	config.ID = clusterResp.ClusterId
 	config.ClusterId = clusterResp.ClusterId
 	config.DataGroups = []pgd.DataGroup{}
+	config.WitnessGroups = []pgd.WitnessGroup{}
 
-	for _, v := range *clusterResp.Groups {
-		switch apiGroupResp := v.(type) {
-		case map[string]interface{}:
-			if apiGroupResp["clusterType"] == "data_group" {
-				model := pgd.DataGroup{}
-
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-					if err != nil {
-						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
-						return
-					}
-				}
-
-				config.DataGroups = append(config.DataGroups, model)
-			}
-
-			if apiGroupResp["clusterType"] == "witness_group" {
-				model := pgd.WitnessGroup{}
-
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-					if err != nil {
-						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
-						return
-					}
-				}
-
-				config.WitnessGroups = append(config.WitnessGroups, model)
-			}
-		}
+	if err = buildGroups(&resp.Diagnostics, *clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
+		resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+		return
 	}
 
 	diags = resp.State.Set(ctx, &config)
@@ -407,22 +382,9 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ID = clusterResp.ClusterId
 	state.ClusterId = clusterResp.ClusterId
 
-	for _, v := range *clusterResp.Groups {
-		switch apiGroupResp := v.(type) {
-		case map[string]interface{}:
-			if apiGroupResp["clusterType"] == "data_group" {
-				model := pgd.DataGroup{}
-
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-					if err != nil {
-						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
-						return
-					}
-				}
-
-				state.DataGroups = append(state.DataGroups, model)
-			}
-		}
+	if err = buildGroups(&resp.Diagnostics, *clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
+		resp.Diagnostics.AddError("Resource read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+		return
 	}
 
 	diags = resp.State.Set(ctx, &state)
@@ -436,6 +398,48 @@ func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 }
 
 func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+}
+
+type diagnostics interface {
+	AddError(summary string, detail string)
+}
+
+func buildGroups(diag diagnostics, clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *[]pgd.WitnessGroup) error {
+	*dgs = []pgd.DataGroup{}
+	*wgs = []pgd.WitnessGroup{}
+
+	for _, v := range *clusterResp.Groups {
+		switch apiGroupResp := v.(type) {
+		case map[string]interface{}:
+			if apiGroupResp["clusterType"] == "data_group" {
+				model := pgd.DataGroup{}
+
+				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+					if err != nil {
+						diag.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
+						return err
+					}
+				}
+
+				*dgs = append(*dgs, model)
+			}
+
+			if apiGroupResp["clusterType"] == "witness_group" {
+				model := pgd.WitnessGroup{}
+
+				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+					if err != nil {
+						diag.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
+						return err
+					}
+				}
+
+				*wgs = append(*wgs, model)
+			}
+		}
+	}
+
+	return nil
 }
 
 func NewPgdResource() resource.Resource {

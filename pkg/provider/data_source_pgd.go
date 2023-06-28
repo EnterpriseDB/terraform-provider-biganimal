@@ -317,35 +317,9 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	for _, v := range *cluster.Groups {
-		switch apiGroupResp := v.(type) {
-		case map[string]interface{}:
-			if apiGroupResp["clusterType"] == "data_group" {
-				model := pgd.DataGroup{}
-
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-					if err != nil {
-						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
-						return
-					}
-				}
-
-				data.DataGroups = append(data.DataGroups, model)
-			}
-
-			if apiGroupResp["clusterType"] == "witness_group" {
-				model := pgd.WitnessGroup{}
-
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-					if err != nil {
-						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
-						return
-					}
-				}
-
-				data.WitnessGroups = append(data.WitnessGroups, model)
-			}
-		}
+	if err = buildGroups(&resp.Diagnostics, *cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
+		resp.Diagnostics.AddError("Data source read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+		return
 	}
 
 	diags = resp.State.Set(ctx, &data)
