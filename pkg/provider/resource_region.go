@@ -46,7 +46,7 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				},
 			},
 			"cloud_provider": schema.StringAttribute{
-				MarkdownDescription: "Cloud provider. For example, \"aws\" or \"azure\".",
+				MarkdownDescription: "Cloud provider. For example, \"aws\", \"azure\" or \"bah:aws\".",
 				Required:            true,
 			},
 			"project_id": schema.StringAttribute{
