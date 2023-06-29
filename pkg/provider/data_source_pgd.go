@@ -317,7 +317,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	if err = buildGroups(&resp.Diagnostics, *cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
+	if err = buildStateGroups(&resp.Diagnostics, *cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Data source read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
 	}

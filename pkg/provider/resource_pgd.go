@@ -118,7 +118,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Postgres type.",
 							Attributes: map[string]schema.Attribute{
 								"pg_type_id": schema.StringAttribute{
-									Description: "Data group pg type id.", Optional: true,
+									Description: "Data group pg type id.",
+									Optional:    true,
 								},
 							},
 						},
@@ -126,7 +127,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Postgres version.",
 							Attributes: map[string]schema.Attribute{
 								"pg_version_id": schema.StringAttribute{
-									Description: "Data group pg version id.", Optional: true,
+									Description: "Data group pg version id.",
+									Optional:    true,
 								},
 							},
 						},
@@ -134,7 +136,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Cloud provider.",
 							Attributes: map[string]schema.Attribute{
 								"cloud_provider_id": schema.StringAttribute{
-									Description: "Data group cloud provider id.", Optional: true,
+									Description: "Data group cloud provider id.",
+									Optional:    true,
 								},
 							},
 						},
@@ -142,7 +145,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Region.",
 							Attributes: map[string]schema.Attribute{
 								"region_id": schema.StringAttribute{
-									Description: "Data group region id.", Optional: true,
+									Description: "Data group region id.",
+									Optional:    true,
 								},
 							},
 						},
@@ -150,7 +154,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Instance type.",
 							Attributes: map[string]schema.Attribute{
 								"instance_type_id": schema.StringAttribute{
-									Description: "Data group instance type id.", Optional: true,
+									Description: "Data group instance type id.",
+									Optional:    true,
 								},
 							},
 						},
@@ -270,19 +275,19 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"cluster_architecture_name": schema.StringAttribute{
 									Description: "Name.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"nodes": schema.Float64Attribute{
-									Optional: true,
-									Computed: true,
+									Description: "Nodes.",
+									Optional:    true,
 								},
 								"witness_nodes": schema.Float64Attribute{
 									Description: "Witness nodes count.",
-									Computed:    true,
+									Optional:    true,
 								},
 							},
 						},
@@ -301,6 +306,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								"cloud_provider_id": schema.StringAttribute{
 									Description: "Witness group cloud provider id.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
@@ -308,8 +316,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Instance type.",
 							Attributes: map[string]schema.Attribute{
 								"instance_type_id": schema.StringAttribute{
-									Description: "Data group instance type id.",
+									Description: "Witness group instance type id.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
@@ -318,23 +329,23 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
-									Computed:    true,
+									Optional:    true,
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
-									Computed:    true,
+									Optional:    true,
 								},
 							},
 						},
@@ -342,6 +353,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					Attributes: map[string]schema.Attribute{
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
+							Optional:    true,
 							Computed:    true,
 						},
 					},
@@ -432,7 +444,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		}
 		v.ClusterType = utils.ToPointer("witness_group")
 		v.Provider = &pgd.CloudProvider{
-			CloudProviderId: "azure",
+			CloudProviderId: utils.ToPointer("azure"),
 		}
 		v.InstanceType = &pgd.InstanceType{
 			InstanceTypeId: "azure:Standard_D2s_v3",
@@ -457,20 +469,41 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		return
 	}
 
-	bb, err := json.MarshalIndent(clusterResp, "", "  ")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Print(string(bb))
-
 	config.ID = clusterResp.ClusterId
 	config.ClusterId = clusterResp.ClusterId
 	config.DataGroups = []pgd.DataGroup{}
 	config.WitnessGroups = []pgd.WitnessGroup{}
 
-	if err = buildGroups(&resp.Diagnostics, *clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
+	if err = buildStateGroups(&resp.Diagnostics, *clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
+	}
+
+	bb, err := json.MarshalIndent(config.WitnessGroups, "", "  ")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(string(bb))
+
+	//  config.WitnessGroups[0].ClusterArchitecture = &pgd.ClusterArchitecture{
+	// 	ClusterArchitectureId:   "pgd",
+	// 	Nodes:                   2,
+	// 	ClusterArchitectureName: utils.ToPointer("pgd"),
+	// 	WitnessNodes:            utils.ToPointer(float64(2)),
+	// }
+
+	www := config.WitnessGroups[0]
+
+	config.WitnessGroups = []pgd.WitnessGroup{
+		{
+			Region: &pgd.Region{
+				RegionId: "canadacentral",
+			},
+			ClusterType: www.ClusterType,
+			Provider: &pgd.CloudProvider{
+				CloudProviderId: utils.ToPointer("azure"),
+			},
+		},
 	}
 
 	diags = resp.State.Set(ctx, &config)
@@ -497,7 +530,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ID = clusterResp.ClusterId
 	state.ClusterId = clusterResp.ClusterId
 
-	if err = buildGroups(&resp.Diagnostics, *clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
+	if err = buildStateGroups(&resp.Diagnostics, *clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Resource read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
 	}
@@ -519,7 +552,7 @@ type diagnostics interface {
 	AddError(summary string, detail string)
 }
 
-func buildGroups(diag diagnostics, clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *[]pgd.WitnessGroup) error {
+func buildStateGroups(diag diagnostics, clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *[]pgd.WitnessGroup) error {
 	*dgs = []pgd.DataGroup{}
 	*wgs = []pgd.WitnessGroup{}
 
