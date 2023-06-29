@@ -8,7 +8,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	sdkdiag "github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 func fromBigAnimalErr(err error) diag.Diagnostics {
