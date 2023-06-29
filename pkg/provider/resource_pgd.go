@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
@@ -153,6 +154,26 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
+						// "maintenance_window": schema.SingleNestedBlock{
+						// 	Description: "Custom maintenance window.",
+						// 	Attributes: map[string]schema.Attribute{
+						// 		"is_enabled": schema.BoolAttribute{
+						// 			Description: "Is maintenance window enabled.",
+						// 			Optional:    true,
+						// 			Computed:    true,
+						// 		},
+						// 		"start_day": schema.StringAttribute{
+						// 			Description: "Start day.",
+						// 			Optional:    true,
+						// 			Computed:    true,
+						// 		},
+						// 		"start_time": schema.StringAttribute{
+						// 			Description: "Start time.",
+						// 			Optional:    true,
+						// 			Computed:    true,
+						// 		},
+						// 	},
+						// },
 					},
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -245,14 +266,83 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Description: "Cluster witness groups.",
 				NestedObject: schema.NestedBlockObject{
 					Blocks: map[string]schema.Block{
+						"cluster_architecture": schema.SingleNestedBlock{
+							Attributes: map[string]schema.Attribute{
+								"cluster_architecture_id": schema.StringAttribute{
+									Description: "Cluster architecture ID.",
+									Computed:    true,
+								},
+								"cluster_architecture_name": schema.StringAttribute{
+									Description: "Name.",
+									Computed:    true,
+								},
+								"nodes": schema.Float64Attribute{
+									Optional: true,
+									Computed: true,
+								},
+								"witness_nodes": schema.Float64Attribute{
+									Description: "Witness nodes count.",
+									Computed:    true,
+								},
+							},
+						},
 						"region": schema.SingleNestedBlock{
 							Description: "Region.",
 							Attributes: map[string]schema.Attribute{
 								"region_id": schema.StringAttribute{
 									Description: "Witness group region id.",
-									Optional:    true,
+									Required:    true,
 								},
 							},
+						},
+						"cloud_provider": schema.SingleNestedBlock{
+							Description: "Cloud provider.",
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Witness group cloud provider id.",
+									Computed:    true,
+								},
+							},
+						},
+						"instance_type": schema.SingleNestedBlock{
+							Description: "Instance type.",
+							Attributes: map[string]schema.Attribute{
+								"instance_type_id": schema.StringAttribute{
+									Description: "Data group instance type id.",
+									Computed:    true,
+								},
+							},
+						},
+						"storage": schema.SingleNestedBlock{
+							Description: "Storage.",
+							Attributes: map[string]schema.Attribute{
+								"iops": schema.StringAttribute{
+									Description: "IOPS for the selected volume.",
+									Computed:    true,
+								},
+								"size": schema.StringAttribute{
+									Description: "Size of the volume.",
+									Computed:    true,
+								},
+								"throughput": schema.StringAttribute{
+									Description: "Throughput.",
+									Computed:    true,
+								},
+								"volume_properties": schema.StringAttribute{
+									Description: "Volume properties.",
+									Computed:    true,
+								},
+								"volume_type": schema.StringAttribute{
+									Description: "Volume type.",
+									Computed:    true,
+								},
+							},
+						},
+					},
+					Attributes: map[string]schema.Attribute{
+						"cluster_type": schema.StringAttribute{
+							Description: "Type of the Specified Cluster",
+							Computed:    true,
 						},
 					},
 				},
@@ -335,6 +425,23 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 	for _, v := range config.WitnessGroups {
+		v := v
+		v.ClusterArchitecture = &pgd.ClusterArchitecture{
+			ClusterArchitectureId: "pgd",
+			Nodes:                 2,
+		}
+		v.ClusterType = utils.ToPointer("witness_group")
+		v.Provider = &pgd.CloudProvider{
+			CloudProviderId: "azure",
+		}
+		v.InstanceType = &pgd.InstanceType{
+			InstanceTypeId: "azure:Standard_D2s_v3",
+		}
+		v.Storage = &models.Storage{
+			VolumeTypeId:       "azurepremiumstorage",
+			VolumePropertiesId: "P1",
+			Size:               utils.ToPointer("4 Gi"),
+		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 
@@ -349,6 +456,12 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
 		return
 	}
+
+	bb, err := json.MarshalIndent(clusterResp, "", "  ")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(string(bb))
 
 	config.ID = clusterResp.ClusterId
 	config.ClusterId = clusterResp.ClusterId
