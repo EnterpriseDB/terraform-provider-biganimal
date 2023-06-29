@@ -71,7 +71,7 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			},
 
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider to list the regions. For example, \"aws\" or \"azure\".",
+				Description: "Cloud provider to list the regions. For example, \"aws\", \"azure\" or \"bah:aws\".",
 				Required:    true,
 			},
 			"project_id": schema.StringAttribute{
