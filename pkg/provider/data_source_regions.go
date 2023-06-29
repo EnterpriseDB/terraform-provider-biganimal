@@ -95,11 +95,11 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 type regionsDataSourceModel struct {
 	ID            *string          `tfsdk:"id"`
-	Regions       []*models.Region `tfsdk:"regions"`
-	CloudProvider *string          `tfsdk:"cloud_provider"`
 	ProjectId     *string          `tfsdk:"project_id"`
-	Query         types.String     `tfsdk:"query"`
+	CloudProvider *string          `tfsdk:"cloud_provider"`
 	RegionId      *string          `tfsdk:"region_id"`
+	Query         types.String     `tfsdk:"query"`
+	Regions       []*models.Region `tfsdk:"regions"`
 }
 
 func (r *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

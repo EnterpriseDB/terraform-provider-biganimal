@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strings"
 	"time"
 
@@ -13,9 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -41,9 +40,6 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Resource ID of the region.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"cloud_provider": schema.StringAttribute{
 				MarkdownDescription: "Cloud provider. For example, \"aws\", \"azure\" or \"bah:aws\".",
@@ -55,9 +51,6 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Validators: []validator.String{
 					ProjectIdValidator(),
 				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"region_id": schema.StringAttribute{
 				MarkdownDescription: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",
@@ -66,9 +59,6 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Region name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"status": schema.StringAttribute{
 				MarkdownDescription: "Region status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
@@ -79,9 +69,6 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"continent": schema.StringAttribute{
 				MarkdownDescription: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 		},
 	}
@@ -96,13 +83,13 @@ func (r *regionResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 type Region struct {
-	ID            *string `tfsdk:"id"`
-	ProjectID     *string `tfsdk:"project_id"`
-	CloudProvider *string `tfsdk:"cloud_provider"`
-	RegionID      *string `tfsdk:"region_id"`
-	Name          *string `tfsdk:"name"`
-	Status        *string `tfsdk:"status"`
-	Continent     *string `tfsdk:"continent"`
+	ProjectID     *string      `tfsdk:"project_id"`
+	CloudProvider *string      `tfsdk:"cloud_provider"`
+	RegionID      *string      `tfsdk:"region_id"`
+	ID            types.String `tfsdk:"id"`
+	Name          types.String `tfsdk:"name"`
+	Continent     types.String `tfsdk:"continent"`
+	Status        *string      `tfsdk:"status"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -135,11 +122,10 @@ func (r *regionResource) read(ctx context.Context, region Region, state *tfsdk.S
 	if err != nil {
 		return fromErr(err, "Error reading region %v", region.RegionID)
 	}
-	id := fmt.Sprintf("%s/%s/%s", *region.ProjectID, *region.CloudProvider, *region.RegionID)
-	region.ID = &id
-	region.Name = &read.Name
+	region.ID = types.StringValue(fmt.Sprintf("%s/%s/%s", *region.ProjectID, *region.CloudProvider, *region.RegionID))
+	region.Name = types.StringValue(read.Name)
 	region.Status = &read.Status
-	region.Continent = &read.Continent
+	region.Continent = types.StringValue(read.Continent)
 	return state.Set(ctx, &region)
 }
 
