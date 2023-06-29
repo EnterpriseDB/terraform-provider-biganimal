@@ -34,7 +34,7 @@ func TestAccResourceRegion_basic(t *testing.T) {
 			testAccPreCheck(t)
 			testAccResourcePreCheck(t, "region", acc_env_vars_checklist)
 		},
-		ProviderFactories: testAccProviderFactories,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(regionConfig, api.REGION_ACTIVE, projectID, provider, regionID),
