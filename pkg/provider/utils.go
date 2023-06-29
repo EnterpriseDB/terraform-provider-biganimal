@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	diag2 "github.com/hashicorp/terraform-plugin-framework/diag"
+	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
