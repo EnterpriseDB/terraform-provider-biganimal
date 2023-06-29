@@ -40,7 +40,7 @@ output "cloud_provider_id" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud provider to list the regions. For example, "aws" or "azure".
+- `cloud_provider` (String) Cloud provider to list the regions. For example, "aws", "azure" or "bah:aws".
 - `project_id` (String) BigAnimal Project ID.
 
 ### Optional

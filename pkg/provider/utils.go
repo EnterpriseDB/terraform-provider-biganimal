@@ -11,38 +11,38 @@ import (
 	sdkdiag "github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
-func fromBigAnimalErr(err error) diag.Diagnostics {
+func fromBigAnimalErr(err error) sdkdiag.Diagnostics {
 	if err == nil {
 		return nil
 	}
 
 	var baError *api.BigAnimalError
 	if errors.As(err, &baError) {
-		return diag.Diagnostics{
-			diag.Diagnostic{
-				Severity: diag.Error,
+		return sdkdiag.Diagnostics{
+			sdkdiag.Diagnostic{
+				Severity: sdkdiag.Error,
 				Summary:  baError.Error(),
 				Detail:   baError.GetDetails(),
 			},
 		}
 	}
-	return diag.FromErr(err)
+	return sdkdiag.FromErr(err)
 }
 
-func unsupportedWarning(message string) diag.Diagnostics {
-	return diag.Diagnostics{
-		diag.Diagnostic{
-			Severity: diag.Warning,
+func unsupportedWarning(message string) sdkdiag.Diagnostics {
+	return sdkdiag.Diagnostics{
+		sdkdiag.Diagnostic{
+			Severity: sdkdiag.Warning,
 			Summary:  "Unsupported",
 			Detail:   message,
 		},
 	}
 }
 
-func fromErr(err error, summary string, args ...any) diag2.Diagnostics {
+func fromErr(err error, summary string, args ...any) frameworkdiag.Diagnostics {
 	summary = fmt.Sprintf(summary, args...)
-	return diag2.Diagnostics{
-		diag2.NewErrorDiagnostic(
+	return frameworkdiag.Diagnostics{
+		frameworkdiag.NewErrorDiagnostic(
 			summary, err.Error(),
 		),
 	}
