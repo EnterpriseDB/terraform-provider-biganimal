@@ -32,7 +32,6 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   data_groups {
-    cluster_type = "data_group"
     allowed_ip_ranges {
       cidr_block  = "127.0.0.1/32"
       description = "localhost"

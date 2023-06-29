@@ -175,7 +175,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
-							Required:    true,
+							Optional:    true,
+							Computed:    true,
 						},
 						"created_at": schema.StringAttribute{
 							Description: "Cluster creation time.",
@@ -330,6 +331,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	clusterReqBody.Groups = &[]any{}
 
 	for _, v := range config.DataGroups {
+		v.ClusterType = utils.ToPointer("data_group")
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 	for _, v := range config.WitnessGroups {
