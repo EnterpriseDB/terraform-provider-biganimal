@@ -31,96 +31,106 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
-  data_groups {
-    allowed_ip_ranges {
-      cidr_block  = "127.0.0.1/32"
-      description = "localhost"
+  data_groups = [
+    {
+      allowed_ip_ranges = [
+        {
+          cidr_block  = "127.0.0.1/32"
+          description = "localhost"
+        },
+        {
+          cidr_block  = "192.168.0.1/32"
+          description = "description!"
+        },
+      ]
+      backup_retention_period = "6d"
+      cluster_architecture = {
+        cluster_architecture_id = "pgd"
+        nodes                   = 2
+      }
+      csp_auth = false
+      instance_type = {
+        instance_type_id = "azure:Standard_D2s_v3"
+      }
+      pg_config = [
+        {
+          name  = "application_name"
+          value = "created through terraform"
+        },
+        {
+          name  = "array_nulls"
+          value = "off"
+        },
+      ]
+      storage = {
+        volume_type       = "azurepremiumstorage"
+        volume_properties = "P1"
+        size              = "4 Gi"
+      }
+      pg_type = {
+        pg_type_id = "epas"
+      }
+      pg_version = {
+        pg_version_id = "14"
+      }
+      private_networking = false
+      cloud_provider = {
+        cloud_provider_id = "azure"
+      }
+      region = {
+        region_id = "northeurope"
+      }
+    },
+{
+      allowed_ip_ranges = [
+        {
+          cidr_block  = "127.0.0.1/32"
+          description = "localhost"
+        },
+        {
+          cidr_block  = "192.168.0.1/32"
+          description = "description!"
+        },
+      ]
+      backup_retention_period = "6d"
+      cluster_architecture = {
+        cluster_architecture_id = "pgd"
+        nodes                   = 2
+      }
+      csp_auth = false
+      instance_type = {
+        instance_type_id = "azure:Standard_D2s_v3"
+      }
+      pg_config = [
+        {
+          name  = "application_name"
+          value = "created through terraform"
+        },
+        {
+          name  = "array_nulls"
+          value = "off"
+        },
+      ]
+      storage = {
+        volume_type       = "azurepremiumstorage"
+        volume_properties = "P1"
+        size              = "4 Gi"
+      }
+      pg_type = {
+        pg_type_id = "epas"
+      }
+      pg_version = {
+        pg_version_id = "14"
+      }
+      private_networking = false
+      cloud_provider = {
+        cloud_provider_id = "azure"
+      }
+      region = {
+        region_id = "eastus"
+      }
     }
-    allowed_ip_ranges {
-      cidr_block  = "192.168.0.1/32"
-      description = "description!"
-    }
-    backup_retention_period = "6d"
-    cluster_architecture {
-      cluster_architecture_id = "pgd"
-      nodes                   = 2
-    }
-    csp_auth = false
-    instance_type {
-      instance_type_id = "azure:Standard_D2s_v3"
-    }
-    pg_config {
-      name  = "application_name"
-      value = "created through terraform"
-    }
-    pg_config {
-      name  = "array_nulls"
-      value = "off"
-    }
-    storage {
-      volume_type       = "azurepremiumstorage"
-      volume_properties = "P1"
-      size              = "4 Gi"
-    }
-    pg_type {
-      pg_type_id = "epas"
-    }
-    pg_version {
-      pg_version_id = "14"
-    }
-    private_networking = false
-    cloud_provider {
-      cloud_provider_id = "azure"
-    }
-    region {
-      region_id = "northeurope"
-    }
-  }
-  data_groups {
-    allowed_ip_ranges {
-      cidr_block  = "127.0.0.1/32"
-      description = "localhost"
-    }
-    allowed_ip_ranges {
-      cidr_block  = "192.168.0.1/32"
-      description = "description!"
-    }
-    backup_retention_period = "6d"
-    cluster_architecture {
-      cluster_architecture_id = "pgd"
-      nodes                   = 2
-    }
-    csp_auth = false
-    instance_type {
-      instance_type_id = "azure:Standard_D2s_v3"
-    }
-    pg_config {
-      name  = "application_name"
-      value = "created through terraform"
-    }
-    pg_config {
-      name  = "array_nulls"
-      value = "off"
-    }
-    storage {
-      volume_type       = "azurepremiumstorage"
-      volume_properties = "P1"
-      size              = "4 Gi"
-    }
-    pg_type {
-      pg_type_id = "epas"
-    }
-    pg_version {
-      pg_version_id = "14"
-    }
-    private_networking = false
-    cloud_provider {
-      cloud_provider_id = "azure"
-    }
-    region {
-      region_id = "eastus"
-    }
-  }
+  ]
   witness_groups = [
     {
       region = {
@@ -128,4 +138,5 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+  
 }
