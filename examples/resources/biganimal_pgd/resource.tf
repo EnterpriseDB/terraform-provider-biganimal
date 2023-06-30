@@ -121,11 +121,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       region_id = "eastus"
     }
   }
-  witness_groups {
-    region {
-      region_id = "canadacentral"
+  witness_groups = [
+    {
+      region = {
+        region_id = "canadacentral"
+      }
     }
-    cloud_provider {
-    }
-  }
+  ]
 }

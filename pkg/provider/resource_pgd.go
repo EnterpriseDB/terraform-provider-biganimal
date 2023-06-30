@@ -267,97 +267,97 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					},
 				},
 			},
-			"witness_groups": schema.SetNestedBlock{
-				Description: "Cluster witness groups.",
-				NestedObject: schema.NestedBlockObject{
-					Blocks: map[string]schema.Block{
-						"cluster_architecture": schema.SingleNestedBlock{
-							Attributes: map[string]schema.Attribute{
-								"cluster_architecture_id": schema.StringAttribute{
-									Description: "Cluster architecture ID.",
-									Optional:    true,
-								},
-								"cluster_architecture_name": schema.StringAttribute{
-									Description: "Name.",
-									Optional:    true,
-								},
-								"nodes": schema.Float64Attribute{
-									Description: "Nodes.",
-									Optional:    true,
-								},
-								"witness_nodes": schema.Float64Attribute{
-									Description: "Witness nodes count.",
-									Optional:    true,
-								},
-							},
-						},
-						"instance_type": schema.SingleNestedBlock{
-							Description: "Instance type.",
-							Attributes: map[string]schema.Attribute{
-								"instance_type_id": schema.StringAttribute{
-									Description: "Witness group instance type id.",
-									Computed:    true,
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
-									},
-								},
-							},
-						},
-						"storage": schema.SingleNestedBlock{
-							Description: "Storage.",
-							Attributes: map[string]schema.Attribute{
-								"iops": schema.StringAttribute{
-									Description: "IOPS for the selected volume.",
-									Optional:    true,
-								},
-								"size": schema.StringAttribute{
-									Description: "Size of the volume.",
-									Optional:    true,
-								},
-								"throughput": schema.StringAttribute{
-									Description: "Throughput.",
-									Optional:    true,
-								},
-								"volume_properties": schema.StringAttribute{
-									Description: "Volume properties.",
-									Optional:    true,
-								},
-								"volume_type": schema.StringAttribute{
-									Description: "Volume type.",
-									Optional:    true,
-								},
-							},
-						},
-					},
-					Attributes: map[string]schema.Attribute{
-						"cluster_type": schema.StringAttribute{
-							Description: "Type of the Specified Cluster",
-							Optional:    true,
-							Computed:    true,
-						},
-						"cloud_provider": schema.SingleNestedAttribute{
-							Description: "Cloud provider.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"cloud_provider_id": schema.StringAttribute{
-									Description: "Cloud provider id.",
-									Computed:    true,
-								},
-							},
-						},
-						"region": schema.SingleNestedAttribute{
-							Description: "Region.",
-							Required:    true,
-							Attributes: map[string]schema.Attribute{
-								"region_id": schema.StringAttribute{
-									Description: "Region id.",
-									Required:    true,
-								},
-							},
-						},
-					},
-				},
-			},
+			// "witness_groups": schema.SetNestedBlock{
+			// 	Description: "Cluster witness groups.",
+			// 	NestedObject: schema.NestedBlockObject{
+			// 		Blocks: map[string]schema.Block{
+			// 			"cluster_architecture": schema.SingleNestedBlock{
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"cluster_architecture_id": schema.StringAttribute{
+			// 						Description: "Cluster architecture ID.",
+			// 						Optional:    true,
+			// 					},
+			// 					"cluster_architecture_name": schema.StringAttribute{
+			// 						Description: "Name.",
+			// 						Optional:    true,
+			// 					},
+			// 					"nodes": schema.Float64Attribute{
+			// 						Description: "Nodes.",
+			// 						Optional:    true,
+			// 					},
+			// 					"witness_nodes": schema.Float64Attribute{
+			// 						Description: "Witness nodes count.",
+			// 						Optional:    true,
+			// 					},
+			// 				},
+			// 			},
+			// 			"instance_type": schema.SingleNestedBlock{
+			// 				Description: "Instance type.",
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"instance_type_id": schema.StringAttribute{
+			// 						Description: "Witness group instance type id.",
+			// 						Computed:    true,
+			// 						PlanModifiers: []planmodifier.String{
+			// 							stringplanmodifier.UseStateForUnknown(),
+			// 						},
+			// 					},
+			// 				},
+			// 			},
+			// 			"storage": schema.SingleNestedBlock{
+			// 				Description: "Storage.",
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"iops": schema.StringAttribute{
+			// 						Description: "IOPS for the selected volume.",
+			// 						Optional:    true,
+			// 					},
+			// 					"size": schema.StringAttribute{
+			// 						Description: "Size of the volume.",
+			// 						Optional:    true,
+			// 					},
+			// 					"throughput": schema.StringAttribute{
+			// 						Description: "Throughput.",
+			// 						Optional:    true,
+			// 					},
+			// 					"volume_properties": schema.StringAttribute{
+			// 						Description: "Volume properties.",
+			// 						Optional:    true,
+			// 					},
+			// 					"volume_type": schema.StringAttribute{
+			// 						Description: "Volume type.",
+			// 						Optional:    true,
+			// 					},
+			// 				},
+			// 			},
+			// 		},
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"cluster_type": schema.StringAttribute{
+			// 				Description: "Type of the Specified Cluster",
+			// 				Optional:    true,
+			// 				Computed:    true,
+			// 			},
+			// 			"cloud_provider": schema.SingleNestedAttribute{
+			// 				Description: "Cloud provider.",
+			// 				Computed:    true,
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"cloud_provider_id": schema.StringAttribute{
+			// 						Description: "Cloud provider id.",
+			// 						Computed:    true,
+			// 					},
+			// 				},
+			// 			},
+			// 			"region": schema.SingleNestedAttribute{
+			// 				Description: "Region.",
+			// 				Required:    true,
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"region_id": schema.StringAttribute{
+			// 						Description: "Region id.",
+			// 						Required:    true,
+			// 					},
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// },
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -389,6 +389,96 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Description: "Password for the user edb_admin. It must be 12 characters or more.",
 				Required:    true,
 				Sensitive:   true,
+			},
+			"witness_groups": schema.SetNestedAttribute{
+				Optional: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"cluster_architecture": schema.SingleNestedAttribute{
+							Description: "Cluster architecture.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"cluster_architecture_id": schema.StringAttribute{
+									Description: "Cluster architecture ID.",
+									Computed:    true,
+								},
+								"cluster_architecture_name": schema.StringAttribute{
+									Description: "Name.",
+									Computed:    true,
+								},
+								"nodes": schema.Float64Attribute{
+									Description: "Nodes.",
+									Computed:    true,
+								},
+								"witness_nodes": schema.Float64Attribute{
+									Description: "Witness nodes count.",
+									Computed:    true,
+								},
+							},
+						},
+						"region": schema.SingleNestedAttribute{
+							Description: "Region.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Region id.",
+									Required:    true,
+								},
+							},
+						},
+						"cluster_type": schema.StringAttribute{
+							Description: "Type of the Specified Cluster",
+							Optional:    true,
+							Computed:    true,
+						},
+						"cloud_provider": schema.SingleNestedAttribute{
+							Description: "Cloud provider.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Cloud provider id.",
+									Computed:    true,
+								},
+							},
+						},
+						"instance_type": schema.SingleNestedAttribute{
+							Description: "Instance type.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"instance_type_id": schema.StringAttribute{
+									Description: "Witness group instance type id.",
+									Computed:    true,
+								},
+							},
+						},
+						"storage": schema.SingleNestedAttribute{
+							Description: "Storage.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"iops": schema.StringAttribute{
+									Description: "IOPS for the selected volume.",
+									Computed:    true,
+								},
+								"size": schema.StringAttribute{
+									Description: "Size of the volume.",
+									Computed:    true,
+								},
+								"throughput": schema.StringAttribute{
+									Description: "Throughput.",
+									Computed:    true,
+								},
+								"volume_properties": schema.StringAttribute{
+									Description: "Volume properties.",
+									Computed:    true,
+								},
+								"volume_type": schema.StringAttribute{
+									Description: "Volume type.",
+									Computed:    true,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -483,13 +573,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		fmt.Println(err)
 	}
 	fmt.Print(string(bb))
-
-	//  config.WitnessGroups[0].ClusterArchitecture = &pgd.ClusterArchitecture{
-	// 	ClusterArchitectureId:   "pgd",
-	// 	Nodes:                   2,
-	// 	ClusterArchitectureName: utils.ToPointer("pgd"),
-	// 	WitnessNodes:            utils.ToPointer(float64(2)),
-	// }
 
 	www := config.WitnessGroups[0]
 
