@@ -291,27 +291,6 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						"region": schema.SingleNestedBlock{
-							Description: "Region.",
-							Attributes: map[string]schema.Attribute{
-								"region_id": schema.StringAttribute{
-									Description: "Witness group region id.",
-									Required:    true,
-								},
-							},
-						},
-						"cloud_provider": schema.SingleNestedBlock{
-							Description: "Cloud provider.",
-							Attributes: map[string]schema.Attribute{
-								"cloud_provider_id": schema.StringAttribute{
-									Description: "Witness group cloud provider id.",
-									Computed:    true,
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
-									},
-								},
-							},
-						},
 						"instance_type": schema.SingleNestedBlock{
 							Description: "Instance type.",
 							Attributes: map[string]schema.Attribute{
@@ -355,6 +334,26 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Type of the Specified Cluster",
 							Optional:    true,
 							Computed:    true,
+						},
+						"cloud_provider": schema.SingleNestedAttribute{
+							Description: "Cloud provider.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Cloud provider id.",
+									Computed:    true,
+								},
+							},
+						},
+						"region": schema.SingleNestedAttribute{
+							Description: "Region.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Region id.",
+									Required:    true,
+								},
+							},
 						},
 					},
 				},
@@ -500,9 +499,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 				RegionId: "canadacentral",
 			},
 			ClusterType: www.ClusterType,
-			Provider: &pgd.CloudProvider{
-				CloudProviderId: utils.ToPointer("azure"),
-			},
+			Provider:    www.Provider,
 		},
 	}
 
