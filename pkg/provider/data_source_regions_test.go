@@ -14,13 +14,10 @@ func TestAccDataSourceRegions_basic(t *testing.T) {
 			"BA_TF_ACC_VAR_regions_project_id",
 			"BA_TF_ACC_VAR_regions_provider",
 			"BA_TF_ACC_VAR_regions_region_id",
-			"BA_TF_ACC_VAR_regions_status",
 		}
-		projectId  = os.Getenv("BA_TF_ACC_VAR_regions_project_id")
-		provider   = os.Getenv("BA_TF_ACC_VAR_regions_provider")
-		regionId   = os.Getenv("BA_TF_ACC_VAR_regions_region_id")
-		regionName = os.Getenv("BA_TF_ACC_VAR_regions_region_name")
-		status     = os.Getenv("BA_TF_ACC_VAR_regions_status")
+		projectId = os.Getenv("BA_TF_ACC_VAR_regions_project_id")
+		provider  = os.Getenv("BA_TF_ACC_VAR_regions_provider")
+		regionId  = os.Getenv("BA_TF_ACC_VAR_regions_region_id")
 	)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -33,9 +30,8 @@ func TestAccDataSourceRegions_basic(t *testing.T) {
 			{
 				Config: regionsDataSourceConfig(projectId, provider, regionId),
 				Check: resource.ComposeTestCheckFunc(
-
-					resource.TestCheckResourceAttr("data.biganimal_regions.test", "regions.0.name", regionName),
-					resource.TestCheckResourceAttr("data.biganimal_regions.test", "regions.0.status", status),
+					resource.TestCheckResourceAttrPair("data.biganimal_regions.test", "regions.0.name", "biganimal_regions.test", "name"),
+					resource.TestCheckResourceAttrPair("data.biganimal_regions.test", "regions.0.status", "biganimal_regions.test", "status"),
 				),
 			},
 		},
@@ -44,9 +40,20 @@ func TestAccDataSourceRegions_basic(t *testing.T) {
 
 func regionsDataSourceConfig(projectId, provider, regionId string) string {
 	return fmt.Sprintf(`data "biganimal_regions" "test" {
-  project_id     = "%s"
-  cloud_provider = "%s"
-  region_id      = "%s"
+  project_id     = "%[1]s"
+  cloud_provider = "%[2]s"
+  region_id      = "%[3]s"
 }
+
+resource "biganimal_region" "test" {
+  project_id     = "%[1]s"
+  cloud_provider = "%[2]s"
+  region_id      = "%[3]s"
+  # no need to active region actually for saving time'
+  status         = "INACTIVE"
+}
+
+
+
 `, projectId, provider, regionId)
 }

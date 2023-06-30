@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -114,8 +115,10 @@ func (r *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if cfg.RegionId != nil {
 		region, err := r.client.Read(ctx, *cfg.ProjectId, *cfg.CloudProvider, *cfg.RegionId)
 		if err != nil {
-			summary, detail := extractSumAndDetailfromBAErr(err)
-			resp.Diagnostics.AddError(summary, detail)
+			if appendDiagFromBAErr(err, &diags) {
+				return
+			}
+			diags.AddError(fmt.Sprintf("Error reading region by id: %q", *cfg.RegionId), err.Error())
 			return
 		}
 		regions = append(regions, region)
@@ -123,8 +126,10 @@ func (r *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	} else {
 		respRegions, err := r.client.List(ctx, *cfg.ProjectId, *cfg.CloudProvider, cfg.Query.ValueString())
 		if err != nil {
-			summary, detail := extractSumAndDetailfromBAErr(err)
-			resp.Diagnostics.AddError(summary, detail)
+			if appendDiagFromBAErr(err, &diags) {
+				return
+			}
+			diags.AddError(fmt.Sprintf("Error reading region by query: %q", cfg.Query.ValueString()), err.Error())
 			return
 		}
 		regions = respRegions

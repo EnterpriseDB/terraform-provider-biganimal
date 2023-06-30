@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"strings"
 	"time"
 
@@ -16,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -40,6 +41,9 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Resource ID of the region.",
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"cloud_provider": schema.StringAttribute{
 				MarkdownDescription: "Cloud provider. For example, \"aws\", \"azure\" or \"bah:aws\".",
@@ -55,10 +59,16 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"region_id": schema.StringAttribute{
 				MarkdownDescription: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",
 				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Region name of the region. For example, \"Germany West Central\" or \"EU West 1\".",
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"status": schema.StringAttribute{
 				MarkdownDescription: "Region status of the region. For example, \"ACTIVE\", \"INACTIVE\", or \"SUSPENDED\".",
@@ -69,6 +79,9 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"continent": schema.StringAttribute{
 				MarkdownDescription: "Continent that region belongs to. For example, \"Asia\", \"Australia\", or \"Europe\".",
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -83,13 +96,13 @@ func (r *regionResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 type Region struct {
-	ProjectID     *string      `tfsdk:"project_id"`
-	CloudProvider *string      `tfsdk:"cloud_provider"`
-	RegionID      *string      `tfsdk:"region_id"`
-	ID            types.String `tfsdk:"id"`
-	Name          types.String `tfsdk:"name"`
-	Continent     types.String `tfsdk:"continent"`
-	Status        *string      `tfsdk:"status"`
+	ProjectID     *string `tfsdk:"project_id"`
+	CloudProvider *string `tfsdk:"cloud_provider"`
+	RegionID      *string `tfsdk:"region_id"`
+	ID            *string `tfsdk:"id"`
+	Name          *string `tfsdk:"name"`
+	Continent     *string `tfsdk:"continent"`
+	Status        *string `tfsdk:"status"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -102,8 +115,12 @@ func (r regionResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	diags = r.update(ctx, config, &resp.State)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(r.ensureStatueUpdated(ctx, config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(r.writeState(ctx, config, &resp.State)...)
 }
 
 func (r *regionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -114,19 +131,7 @@ func (r *regionResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	resp.Diagnostics.Append(r.read(ctx, state, &resp.State)...)
-}
-
-func (r *regionResource) read(ctx context.Context, region Region, state *tfsdk.State) frameworkdiag.Diagnostics {
-	read, err := r.client.Read(ctx, *region.ProjectID, *region.CloudProvider, *region.RegionID)
-	if err != nil {
-		return fromErr(err, "Error reading region %v", region.RegionID)
-	}
-	region.ID = types.StringValue(fmt.Sprintf("%s/%s/%s", *region.ProjectID, *region.CloudProvider, *region.RegionID))
-	region.Name = types.StringValue(read.Name)
-	region.Status = &read.Status
-	region.Continent = types.StringValue(read.Continent)
-	return state.Set(ctx, &region)
+	resp.Diagnostics.Append(r.writeState(ctx, state, &resp.State)...)
 }
 
 func (r *regionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -137,12 +142,34 @@ func (r *regionResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	resp.Diagnostics.Append(r.update(ctx, plan, &resp.State)...)
+	resp.Diagnostics.Append(r.ensureStatueUpdated(ctx, plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(r.writeState(ctx, plan, &resp.State)...)
 }
 
-func (r *regionResource) update(ctx context.Context, region Region, state *tfsdk.State) frameworkdiag.Diagnostics {
+func (r *regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state Region
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	*state.Status = api.REGION_INACTIVE
+	resp.Diagnostics.Append(r.ensureStatueUpdated(ctx, state)...)
+}
+
+func (r *regionResource) ensureStatueUpdated(ctx context.Context, region Region) frameworkdiag.Diagnostics {
+	diags := frameworkdiag.Diagnostics{}
 	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID); err != nil {
-		return fromErr(err, "Error updating region %v", region.RegionID)
+		if appendDiagFromBAErr(err, &diags) {
+			return diags
+		}
+		diags.AddError(fmt.Sprintf("Error turning region %q into %q status", *region.RegionID, *region.Status), err.Error())
+		return diags
 	}
 
 	timeout, diagnostics := region.Timeouts.Create(ctx, 60*time.Minute)
@@ -155,49 +182,37 @@ func (r *regionResource) update(ctx context.Context, region Region, state *tfsdk
 		timeout-time.Minute,
 		r.retryFunc(ctx, region))
 	if err != nil {
-		return fromErr(err, "")
+		if appendDiagFromBAErr(err, &diags) {
+			return diags
+		}
+		diags.AddError(fmt.Sprintf("Error reading region %s", *region.RegionID), err.Error())
 	}
-
-	return r.read(ctx, region, state)
+	return diags
 }
 
-func (r *regionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state Region
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if *state.Status == api.REGION_INACTIVE {
-		return
-	}
-
-	if err := r.client.Update(ctx, api.REGION_INACTIVE, *state.ProjectID, *state.CloudProvider, *state.RegionID); err != nil {
-		resp.Diagnostics.Append(fromErr(err, "Error deleting region %v", state.RegionID)...)
-		return
-	}
-
-	timeout, diagnostics := state.Timeouts.Create(ctx, 60*time.Minute)
-	resp.Diagnostics.Append(diagnostics...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	err := retry.RetryContext(
-		ctx,
-		timeout-time.Minute,
-		r.retryFunc(ctx, state))
+func (r *regionResource) writeState(ctx context.Context, region Region, state *tfsdk.State) frameworkdiag.Diagnostics {
+	read, err := r.client.Read(ctx, *region.ProjectID, *region.CloudProvider, *region.RegionID)
 	if err != nil {
-		resp.Diagnostics.Append(fromErr(err, "")...)
+		diags := frameworkdiag.Diagnostics{}
+		if appendDiagFromBAErr(err, &diags) {
+			return diags
+		}
+		diags.AddError(fmt.Sprintf("Error reading region %s", *region.RegionID), err.Error())
+		return diags
 	}
+	id := fmt.Sprintf("%s/%s/%s", *region.ProjectID, *region.CloudProvider, *region.RegionID)
+	region.ID = &id
+	region.Name = &read.Name
+	region.Status = &read.Status
+	region.Continent = &read.Continent
+	return state.Set(ctx, &region)
 }
 
 func (r *regionResource) retryFunc(ctx context.Context, region Region) retry.RetryFunc {
 	return func() *retry.RetryError {
 		curr, err := r.client.Read(ctx, *region.ProjectID, *region.CloudProvider, *region.RegionID)
 		if err != nil {
-			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
+			return retry.NonRetryableError(err)
 		}
 
 		if curr.Status != *region.Status {

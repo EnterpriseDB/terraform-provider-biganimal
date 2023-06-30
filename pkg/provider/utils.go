@@ -3,8 +3,6 @@ package provider
 import (
 	"errors"
 
-	"fmt"
-
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 
@@ -40,28 +38,24 @@ func unsupportedWarning(message string) sdkdiag.Diagnostics {
 }
 
 /*
-Please use this function for error check after client API calls, for example:
+Please use this function for error check after client API calls.
+This function returns a boolean representing if passed error is as *api.BigAnimalError, for example:
 
 	r.client.Read(ctx, ...)
 	if err != nil {
-		summary, detail := extractSumAndDetailfromBAErr(err)
+		if appendDiagFromBAErr(err){
+			return
+		}
+
 		resp.Diagnostics.AddError(summary, detail)
 		return
 	}
 */
-func extractSumAndDetailfromBAErr(err error) (summary, detail string) {
+func appendDiagFromBAErr(err error, diags *frameworkdiag.Diagnostics) bool {
 	var baError *api.BigAnimalError
 	if errors.As(err, &baError) {
-		return baError.Error(), baError.GetDetails()
+		diags.AddError(baError.Error(), baError.GetDetails())
+		return true
 	}
-	return
-}
-
-func fromErr(err error, summary string, args ...any) frameworkdiag.Diagnostics {
-	summary = fmt.Sprintf(summary, args...)
-	return frameworkdiag.Diagnostics{
-		frameworkdiag.NewErrorDiagnostic(
-			summary, err.Error(),
-		),
-	}
+	return false
 }
