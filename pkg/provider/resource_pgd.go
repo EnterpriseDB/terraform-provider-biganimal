@@ -442,28 +442,35 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 	clusterReqBody.Groups = &[]any{}
 
+	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
 	for _, v := range config.DataGroups {
 		v.ClusterType = utils.ToPointer("data_group")
+		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
+			InstanceType: v.InstanceType,
+			Provider:     v.Provider,
+			Region:       v.Region,
+			Storage:      v.Storage,
+		})
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
+
+	calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
+	if err != nil {
+		resp.Diagnostics.AddError("Error calculating witness group params", "Could calculate witness group params, unexpected error: "+err.Error())
+		return
+	}
+
 	for _, v := range config.WitnessGroups {
-		v := v
 		v.ClusterArchitecture = &pgd.ClusterArchitecture{
 			ClusterArchitectureId: "pgd",
-			Nodes:                 2,
+			Nodes:                 config.DataGroups[0].ClusterArchitecture.Nodes,
 		}
 		v.ClusterType = utils.ToPointer("witness_group")
 		v.Provider = &pgd.CloudProvider{
-			CloudProviderId: utils.ToPointer("azure"),
+			CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
 		}
-		v.InstanceType = &pgd.InstanceType{
-			InstanceTypeId: "azure:Standard_D2s_v3",
-		}
-		v.Storage = &models.Storage{
-			VolumeTypeId:       "azurepremiumstorage",
-			VolumePropertiesId: "P1",
-			Size:               utils.ToPointer("4 Gi"),
-		}
+		v.InstanceType = calWitnessResp.InstanceType
+		v.Storage = calWitnessResp.Storage
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 
