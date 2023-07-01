@@ -282,26 +282,24 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						// "maintenance_window": schema.SingleNestedBlock{
-						// 	Description: "Custom maintenance window.",
-						// 	Attributes: map[string]schema.Attribute{
-						// 		"is_enabled": schema.BoolAttribute{
-						// 			Description: "Is maintenance window enabled.",
-						// 			Optional:    true,
-						// 			Computed:    true,
-						// 		},
-						// 		"start_day": schema.StringAttribute{
-						// 			Description: "Start day.",
-						// 			Optional:    true,
-						// 			Computed:    true,
-						// 		},
-						// 		"start_time": schema.StringAttribute{
-						// 			Description: "Start time.",
-						// 			Optional:    true,
-						// 			Computed:    true,
-						// 		},
-						// 	},
-						// },
+						"maintenance_window": schema.SingleNestedAttribute{
+							Description: "Custom maintenance window.",
+							Optional:    true,
+							Attributes: map[string]schema.Attribute{
+								"is_enabled": schema.BoolAttribute{
+									Description: "Is maintenance window enabled.",
+									Optional:    true,
+								},
+								"start_day": schema.Float64Attribute{
+									Description: "Start day.",
+									Optional:    true,
+								},
+								"start_time": schema.StringAttribute{
+									Description: "Start time.",
+									Optional:    true,
+								},
+							},
+						},
 					},
 				},
 			},

@@ -80,6 +80,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       region = {
         region_id = "northeurope"
       }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 1
+        start_time = "13:00"
+      }
     },
 {
       allowed_ip_ranges = [
@@ -128,6 +133,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       region = {
         region_id = "eastus"
+      }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 2
+        start_time = "15:00"
       }
     }
   ]
