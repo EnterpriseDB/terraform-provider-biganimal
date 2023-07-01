@@ -307,6 +307,14 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"group_id": schema.StringAttribute{
+							Description: "Group id of witness group.",
+							Computed:    true,
+						},
+						"phase": schema.StringAttribute{
+							Description: "Phase.",
+							Computed:    true,
+						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
 							Computed:    true,
