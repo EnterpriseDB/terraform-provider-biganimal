@@ -300,6 +300,22 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
+						"conditions": schema.SetNestedAttribute{
+							Description: "Conditions.",
+							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"condition_status": schema.StringAttribute{
+										Description: "Condition status",
+										Computed:    true,
+									},
+									"type": schema.StringAttribute{
+										Description: "Type",
+										Computed:    true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},

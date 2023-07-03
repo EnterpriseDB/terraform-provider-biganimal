@@ -9,6 +9,7 @@ type DataGroup struct {
 	ClusterArchitecture        *ClusterArchitecture      `json:"clusterArchitecture,omitempty" tfsdk:"cluster_architecture"`
 	ClusterName                *string                   `json:"clusterName,omitempty" tfsdk:"cluster_name"`
 	ClusterType                *string                   `json:"clusterType,omitempty" tfsdk:"cluster_type"`
+	Conditions                 *[]Condition              `json:"conditions,omitempty" tfsdk:"conditions"`
 	Connection                 *ClusterConnection        `json:"connection,omitempty" tfsdk:"connection_uri"`
 	CreatedAt                  *PointInTime              `json:"createdAt,omitempty" tfsdk:"created_at"`
 	CspAuth                    *bool                     `json:"cspAuth,omitempty" tfsdk:"csp_auth"`
