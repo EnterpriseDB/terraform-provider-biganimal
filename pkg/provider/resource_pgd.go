@@ -3,17 +3,21 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 type pgdResource struct {
@@ -27,6 +31,10 @@ func (p pgdResource) Metadata(ctx context.Context, req resource.MetadataRequest,
 func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx,
+				timeouts.Opts{Create: true, Delete: true, Update: true}),
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -321,6 +329,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			},
 			"witness_groups": schema.SetNestedAttribute{
 				Optional: true,
+				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -437,6 +446,7 @@ type PGD struct {
 	ClusterName   string             `tfsdk:"cluster_name"`
 	MostRecent    *bool              `tfsdk:"most_recent"`
 	Password      string             `tfsdk:"password"`
+	Timeouts      timeouts.Value     `tfsdk:"timeouts"`
 	DataGroups    []pgd.DataGroup    `tfsdk:"data_groups"`
 	WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
 }
@@ -496,21 +506,35 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		return
 	}
 
-	clusterResp, err := p.client.Read(ctx, config.ProjectId, clusterId)
+	config.ID = &clusterId
+	config.ClusterId = &clusterId
+
+	timeout, _ := config.Timeouts.Create(ctx, 60*time.Minute)
+
+	err = retry.RetryContext(
+		ctx,
+		timeout-time.Minute,
+		p.retryFunc(ctx, &config),
+	)
+
 	if err != nil {
-		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
+		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
 		return
 	}
 
-	config.ID = clusterResp.ClusterId
-	config.ClusterId = clusterResp.ClusterId
-	config.DataGroups = []pgd.DataGroup{}
-	config.WitnessGroups = []pgd.WitnessGroup{}
+	// clusterResp, err := p.client.Read(ctx, config.ProjectId, clusterId)
+	// if err != nil {
+	// 	resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
+	// 	return
+	// }
 
-	if err = buildStateGroups(&resp.Diagnostics, *clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
-		resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
-		return
-	}
+	// config.DataGroups = []pgd.DataGroup{}
+	// config.WitnessGroups = []pgd.WitnessGroup{}
+
+	// if err = buildGroupsToTypeAs(*clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
+	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+	// 	return
+	// }
 
 	bb, err := json.MarshalIndent(config.WitnessGroups, "", "  ")
 	if err != nil {
@@ -542,7 +566,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ID = clusterResp.ClusterId
 	state.ClusterId = clusterResp.ClusterId
 
-	if err = buildStateGroups(&resp.Diagnostics, *clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
+	if err = buildGroupsToTypeAs(*clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Resource read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
 	}
@@ -560,11 +584,59 @@ func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
+func (p pgdResource) isHealthy(ctx context.Context, dgs []pgd.DataGroup, wgs []pgd.WitnessGroup) (bool, error) {
+	healthy := true
+
+	for _, v := range dgs {
+		if *v.Phase != models.PHASE_HEALTHY {
+			healthy = false
+		}
+
+		for _, cond := range *v.Conditions {
+			if *cond.Type_ != models.CONDITION_DEPLOYED && *cond.ConditionStatus != "True" {
+				healthy = false
+			}
+		}
+	}
+
+	for _, v := range wgs {
+		if *v.Phase != models.PHASE_HEALTHY {
+			healthy = false
+		}
+	}
+
+	return healthy, nil
+}
+
+func (p *pgdResource) retryFunc(ctx context.Context, state *PGD) retry.RetryFunc {
+	return func() *retry.RetryError {
+		pgdResp, err := p.client.Read(ctx, state.ProjectId, *state.ClusterId)
+		if err != nil {
+			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
+		}
+
+		if err := buildGroupsToTypeAs(*pgdResp, &state.DataGroups, &state.WitnessGroups); err != nil {
+			return retry.NonRetryableError(fmt.Errorf("Unable to copy group, got error: %s", err))
+		}
+
+		isHealthy, err := p.isHealthy(ctx, state.DataGroups, state.WitnessGroups)
+		if err != nil {
+			return retry.NonRetryableError(fmt.Errorf("error getting health: %s", err))
+		}
+
+		if !isHealthy {
+			return retry.RetryableError(errors.New("instance not yet ready"))
+		}
+
+		return nil
+	}
+}
+
 type diagnostics interface {
 	AddError(summary string, detail string)
 }
 
-func buildStateGroups(diag diagnostics, clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *[]pgd.WitnessGroup) error {
+func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *[]pgd.WitnessGroup) error {
 	*dgs = []pgd.DataGroup{}
 	*wgs = []pgd.WitnessGroup{}
 
@@ -576,8 +648,7 @@ func buildStateGroups(diag diagnostics, clusterResp models.Cluster, dgs *[]pgd.D
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
-						diag.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
-						return err
+						return fmt.Errorf("Unable to copy data group, got error: %s", err)
 					}
 				}
 
@@ -589,8 +660,7 @@ func buildStateGroups(diag diagnostics, clusterResp models.Cluster, dgs *[]pgd.D
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
-						diag.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
-						return err
+						return fmt.Errorf("Unable to copy witness group, got error: %s", err)
 					}
 				}
 

@@ -273,6 +273,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 			},
 			"witness_groups": schema.SetNestedAttribute{
 				Optional: true,
+				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -431,7 +432,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	if err = buildStateGroups(&resp.Diagnostics, *cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
+	if err = buildGroupsToTypeAs(*cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Data source read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
 	}
