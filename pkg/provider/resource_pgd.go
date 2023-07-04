@@ -639,10 +639,6 @@ func (p *pgdResource) retryFunc(ctx context.Context, state *PGD) retry.RetryFunc
 	}
 }
 
-type diagnostics interface {
-	AddError(summary string, detail string)
-}
-
 func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *[]pgd.WitnessGroup) error {
 	*dgs = []pgd.DataGroup{}
 	*wgs = []pgd.WitnessGroup{}

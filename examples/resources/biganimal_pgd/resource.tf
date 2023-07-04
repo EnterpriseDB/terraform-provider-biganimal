@@ -86,7 +86,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_time = "13:00"
       }
     },
-{
+    {
       allowed_ip_ranges = [
         {
           cidr_block  = "127.0.0.1/32"
@@ -148,5 +148,4 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
-  
 }
