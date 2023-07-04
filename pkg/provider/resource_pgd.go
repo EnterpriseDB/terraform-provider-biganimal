@@ -20,6 +20,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
+var (
+	_ resource.Resource              = &pgdResource{}
+	_ resource.ResourceWithConfigure = &pgdResource{}
+)
+
 type pgdResource struct {
 	client *api.PGDClient
 }
@@ -480,24 +485,26 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 
-	calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
-	if err != nil {
-		resp.Diagnostics.AddError("Error calculating witness group params", "Could calculate witness group params, unexpected error: "+err.Error())
-		return
-	}
+	if len(config.WitnessGroups) > 0 {
+		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
+		if err != nil {
+			resp.Diagnostics.AddError("Error calculating witness group params", "Could calculate witness group params, unexpected error: "+err.Error())
+			return
+		}
 
-	for _, v := range config.WitnessGroups {
-		v.ClusterArchitecture = &pgd.ClusterArchitecture{
-			ClusterArchitectureId: "pgd",
-			Nodes:                 config.DataGroups[0].ClusterArchitecture.Nodes,
+		for _, v := range config.WitnessGroups {
+			v.ClusterArchitecture = &pgd.ClusterArchitecture{
+				ClusterArchitectureId: "pgd",
+				Nodes:                 config.DataGroups[0].ClusterArchitecture.Nodes,
+			}
+			v.ClusterType = utils.ToPointer("witness_group")
+			v.Provider = &pgd.CloudProvider{
+				CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
+			}
+			v.InstanceType = calWitnessResp.InstanceType
+			v.Storage = calWitnessResp.Storage
+			*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 		}
-		v.ClusterType = utils.ToPointer("witness_group")
-		v.Provider = &pgd.CloudProvider{
-			CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
-		}
-		v.InstanceType = calWitnessResp.InstanceType
-		v.Storage = calWitnessResp.Storage
-		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 
 	clusterId, err := p.client.Create(ctx, config.ProjectId, clusterReqBody)
