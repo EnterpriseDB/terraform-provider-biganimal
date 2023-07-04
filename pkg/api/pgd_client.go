@@ -91,6 +91,28 @@ func (c PGDClient) Read(ctx context.Context, projectId, clusterId string) (*mode
 	return response.Data, err
 }
 
+func (c PGDClient) Update(ctx context.Context, projectId, clusterId string, model models.Cluster) (string, error) {
+	response := struct {
+		Data struct {
+			ClusterId string `json:"clusterId"`
+		} `json:"data"`
+	}{}
+
+	b, err := json.Marshal(model)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, clusterId)
+	body, err := c.doRequest(ctx, http.MethodPatch, url, bytes.NewBuffer(b))
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &response)
+	return response.Data.ClusterId, err
+}
+
 func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId string, WitnessGroupParamsBody pgd.WitnessGroupParamsBody) (*pgd.WitnessGroupParamsData, error) {
 	var response pgd.WitnessGroupParamsResponse
 
