@@ -130,3 +130,9 @@ func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId st
 	err = json.Unmarshal(body, &response)
 	return &response.Data, err
 }
+
+func (c PGDClient) Delete(ctx context.Context, projectId, id string) error {
+	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, id)
+	_, err := c.doRequest(ctx, http.MethodDelete, url, nil)
+	return err
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
@@ -23,8 +24,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &pgdResource{}
-	_ resource.ResourceWithConfigure = &pgdResource{}
+	_ resource.Resource                = &pgdResource{}
+	_ resource.ResourceWithConfigure   = &pgdResource{}
+	_ resource.ResourceWithImportState = &pgdResource{}
 )
 
 type pgdResource struct {
@@ -75,7 +77,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
-				Required:    true,
+				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -170,11 +172,12 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
 							Optional:    true,
+							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"cidr_block": schema.StringAttribute{
 										Description: "CIDR block",
-										Required:    true,
+										Optional:    true,
 									},
 									"description": schema.StringAttribute{
 										Description: "Description of CIDR block",
@@ -186,6 +189,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
 							Optional:    true,
+							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
@@ -562,6 +566,12 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			Region:       v.Region,
 			Storage:      v.Storage,
 		})
+		if v.AllowedIpRanges == nil {
+			v.AllowedIpRanges = &[]models.AllowedIpRange{}
+		}
+		if v.PgConfig == nil {
+			v.PgConfig = &[]models.KeyValue{}
+		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 
@@ -657,9 +667,6 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	if resp.Diagnostics.HasError() {
 		return
 	}
-}
-
-func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
 func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -836,6 +843,26 @@ func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *
 	}
 
 	return nil
+}
+
+// Delete deletes the resource and removes the Terraform state on success.
+func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	// Retrieve values from state
+	var state PGD
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := p.client.Delete(ctx, state.ProjectId, *state.ClusterId); err != nil {
+		resp.Diagnostics.AddError("Error deleting cluster", "Could not delete cluster, unexpected error: "+err.Error())
+		return
+	}
+}
+
+func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func NewPgdResource() resource.Resource {
