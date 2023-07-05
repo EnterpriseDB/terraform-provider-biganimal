@@ -695,6 +695,11 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			AllowedIpRanges:       v.AllowedIpRanges,
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			CspAuth:               v.CspAuth,
+			InstanceType:          v.InstanceType,
+			PgConfig:              v.PgConfig,
+			PrivateNetworking:     v.PrivateNetworking,
+			Storage:               v.Storage,
+			MaintenanceWindow:     v.MaintenanceWindow,
 		}
 
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, reqDg)
