@@ -663,23 +663,23 @@ func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 }
 
 func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var config PGD
-	diags := req.Plan.Get(ctx, &config)
+	var plan PGD
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	clusterReqBody := models.Cluster{
-		ClusterName: &config.ClusterName,
+		ClusterName: &plan.ClusterName,
 		ClusterType: utils.ToPointer("cluster"),
-		Password:    &config.Password,
+		Password:    &plan.Password,
 	}
 
 	clusterReqBody.Groups = &[]any{}
 
 	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
-	for _, v := range config.DataGroups {
+	for _, v := range plan.DataGroups {
 		v.ClusterType = utils.ToPointer("data_group")
 		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
@@ -698,21 +698,21 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, reqDg)
 	}
 
-	if len(config.WitnessGroups) > 0 {
-		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
+	if len(plan.WitnessGroups) > 0 {
+		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, witnessGroupParamsBody)
 		if err != nil {
 			resp.Diagnostics.AddError("Error calculating witness group params", "Could calculate witness group params, unexpected error: "+err.Error())
 			return
 		}
 
-		for _, v := range config.WitnessGroups {
+		for _, v := range plan.WitnessGroups {
 			v.ClusterArchitecture = &pgd.ClusterArchitecture{
 				ClusterArchitectureId: "pgd",
-				Nodes:                 config.DataGroups[0].ClusterArchitecture.Nodes,
+				Nodes:                 plan.DataGroups[0].ClusterArchitecture.Nodes,
 			}
 			v.ClusterType = utils.ToPointer("witness_group")
 			v.Provider = &pgd.CloudProvider{
-				CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
+				CloudProviderId: plan.DataGroups[0].Provider.CloudProviderId,
 			}
 			v.InstanceType = calWitnessResp.InstanceType
 			v.Storage = calWitnessResp.Storage
@@ -720,27 +720,27 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 	}
 
-	_, err := p.client.Update(ctx, config.ProjectId, *config.ClusterId, clusterReqBody)
+	_, err := p.client.Update(ctx, plan.ProjectId, *plan.ClusterId, clusterReqBody)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
 		return
 	}
 
-	clusterResp, err := p.client.Read(ctx, config.ProjectId, *config.ClusterId)
+	clusterResp, err := p.client.Read(ctx, plan.ProjectId, *plan.ClusterId)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
 		return
 	}
 
-	config.DataGroups = []pgd.DataGroup{}
-	config.WitnessGroups = []pgd.WitnessGroup{}
+	plan.DataGroups = []pgd.DataGroup{}
+	plan.WitnessGroups = []pgd.WitnessGroup{}
 
-	if err = buildGroupsToTypeAs(*clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
+	if err = buildGroupsToTypeAs(*clusterResp, &plan.DataGroups, &plan.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
 	}
 
-	diags = resp.State.Set(ctx, &config)
+	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
