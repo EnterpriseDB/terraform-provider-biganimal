@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -542,12 +541,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 	// 	return
 	// }
-
-	bb, err := json.MarshalIndent(config.WitnessGroups, "", "  ")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Print(string(bb))
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)
