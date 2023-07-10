@@ -39,56 +39,37 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"project_id": schema.StringAttribute{
+				Description: "BigAnimal Project ID.",
+				Optional:    true,
+			},
+			"cluster_id": schema.StringAttribute{
+				Description: "Cluster ID.",
+				Computed:    true,
+			},
+			"cluster_name": schema.StringAttribute{
+				Description: "cluster name",
+				Required:    true,
+			},
+			"most_recent": schema.BoolAttribute{
+				Description: "Show the most recent cluster when there are multiple clusters with the same name",
+				Optional:    true,
+			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
-				Computed:    true,
+				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
 							Description: "Group ID of the group.",
 							Computed:    true,
 						},
-						"allowed_ip_ranges": schema.SetNestedAttribute{
-							Description: "Allowed ip ranges",
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"cidr_block": schema.StringAttribute{
-										Description: "CIDR block",
-										Computed:    true,
-									},
-									"description": schema.StringAttribute{
-										Description: "Description of CIDR block",
-										Computed:    true,
-									},
-								},
-							},
-						},
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
-							Computed:    true,
-						},
-						"cluster_architecture": schema.SingleNestedAttribute{
-							Description: "Cluster architecture.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"cluster_architecture_id": schema.StringAttribute{
-									Description: "Cluster architecture id.",
-									Computed:    true,
-								},
-								"cluster_architecture_name": schema.StringAttribute{
-									Description: "Cluster architecture name.",
-									Computed:    true,
-								},
-								"nodes": schema.Float64Attribute{
-									Description: "Nodes.",
-									Computed:    true,
-								},
-								"witness_nodes": schema.Float64Attribute{
-									Description: "Witness nodes.",
-									Computed:    true,
-								},
-							},
+							Optional:    true,
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
@@ -96,6 +77,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
+							Optional:    true,
 							Computed:    true,
 						},
 						"created_at": schema.StringAttribute{
@@ -104,25 +86,15 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"deleted_at": schema.StringAttribute{
 							Description: "Cluster deletion time.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"expired_at": schema.StringAttribute{
 							Description: "Cluster expiry time.",
-							Computed:    true,
+							Optional:    true,
 						},
 						"first_recoverability_point_at": schema.StringAttribute{
 							Description: "Earliest backup recover time.",
-							Computed:    true,
-						},
-						"instance_type": schema.SingleNestedAttribute{
-							Description: "Instance type.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"instance_type_id": schema.StringAttribute{
-									Description: "Data group instance type id.",
-									Computed:    true,
-								},
-							},
+							Optional:    true,
 						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
@@ -133,44 +105,8 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Computed:    true,
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Data group connection URI.",
+							Description: "Cluster connection URI.",
 							Computed:    true,
-						},
-						"pg_config": schema.SetNestedAttribute{
-							Description: "Database configuration parameters.",
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"name": schema.StringAttribute{
-										Description: "GUC name.",
-										Computed:    true,
-									},
-									"value": schema.StringAttribute{
-										Description: "GUC value.",
-										Computed:    true,
-									},
-								},
-							},
-						},
-						"pg_type": schema.SingleNestedAttribute{
-							Description: "Postgres type.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"pg_type_id": schema.StringAttribute{
-									Description: "Data group postgres type id.",
-									Computed:    true,
-								},
-							},
-						},
-						"pg_version": schema.SingleNestedAttribute{
-							Description: "Postgres version.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"pg_version_id": schema.StringAttribute{
-									Description: "Data group postgres version id.",
-									Computed:    true,
-								},
-							},
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the cluster group.",
@@ -178,59 +114,149 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"private_networking": schema.BoolAttribute{
 							Description: "Is private networking enabled.",
-							Computed:    true,
-						},
-						"cloud_provider": schema.SingleNestedAttribute{
-							Description: "Cloud provider.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"cloud_provider_id": schema.StringAttribute{
-									Description: "Data group cloud provider id.",
-									Computed:    true,
-								},
-							},
+							Required:    true,
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
-							Computed:    true,
+							Optional:    true,
 						},
-						"region": schema.SingleNestedAttribute{
-							Description: "Region.",
+						"resizing_pvc": schema.SetAttribute{
+							Description: "Resizing PVC.",
 							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"region_id": schema.StringAttribute{
-									Description: "Data group region id.",
-									Computed:    true,
+							ElementType: types.StringType,
+						},
+						"allowed_ip_ranges": schema.SetNestedAttribute{
+							Description: "Allowed IP ranges.",
+							Optional:    true,
+							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"cidr_block": schema.StringAttribute{
+										Description: "CIDR block",
+										Optional:    true,
+									},
+									"description": schema.StringAttribute{
+										Description: "Description of CIDR block",
+										Optional:    true,
+									},
 								},
 							},
 						},
-						"resizing_pvc": schema.SetAttribute{
-							ElementType: types.StringType,
+						"pg_config": schema.SetNestedAttribute{
+							Description: "Database configuration parameters.",
+							Optional:    true,
 							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"name": schema.StringAttribute{
+										Description: "GUC name.",
+										Required:    true,
+									},
+									"value": schema.StringAttribute{
+										Description: "GUC value.",
+										Required:    true,
+									},
+								},
+							},
+						},
+						"cluster_architecture": schema.SingleNestedAttribute{
+							Description: "Cluster architecture.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"cluster_architecture_id": schema.StringAttribute{
+									Description: "Cluster architecture ID.",
+									Required:    true,
+								},
+								"cluster_architecture_name": schema.StringAttribute{
+									Description: "Name.",
+									Computed:    true,
+								},
+								"nodes": schema.Float64Attribute{
+									Description: "Node count.",
+									Required:    true,
+								},
+								"witness_nodes": schema.Float64Attribute{
+									Description: "Witness nodes count.",
+									Optional:    true,
+								},
+							},
 						},
 						"storage": schema.SingleNestedAttribute{
 							Description: "Storage.",
-							Computed:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
+									Optional:    true,
 									Computed:    true,
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
+									Optional:    true,
 									Computed:    true,
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
+									Optional:    true,
 									Computed:    true,
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
-									Computed:    true,
+									Required:    true,
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
-									Computed:    true,
+									Required:    true,
+								},
+							},
+						},
+						"pg_type": schema.SingleNestedAttribute{
+							Description: "Postgres type.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"pg_type_id": schema.StringAttribute{
+									Description: "Data group pg type id.",
+									Required:    true,
+								},
+							},
+						},
+						"pg_version": schema.SingleNestedAttribute{
+							Description: "Postgres version.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"pg_version_id": schema.StringAttribute{
+									Description: "Data group pg version id.",
+									Required:    true,
+								},
+							},
+						},
+						"cloud_provider": schema.SingleNestedAttribute{
+							Description: "Cloud provider.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Data group cloud provider id.",
+									Required:    true,
+								},
+							},
+						},
+						"region": schema.SingleNestedAttribute{
+							Description: "Region.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Data group region id.",
+									Required:    true,
+								},
+							},
+						},
+						"instance_type": schema.SingleNestedAttribute{
+							Description: "Instance type.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"instance_type_id": schema.StringAttribute{
+									Description: "Data group instance type id.",
+									Required:    true,
 								},
 							},
 						},
@@ -369,26 +395,6 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 					},
 				},
-			},
-			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "Datasource ID.",
-			},
-			"project_id": schema.StringAttribute{
-				Description: "BigAnimal Project ID.",
-				Required:    true,
-			},
-			"cluster_id": schema.StringAttribute{
-				Description: "Cluster ID.",
-				Computed:    true,
-			},
-			"cluster_name": schema.StringAttribute{
-				Description: "cluster name",
-				Required:    true,
-			},
-			"most_recent": schema.BoolAttribute{
-				Description: "Show the most recent cluster when there are multiple clusters with the same name",
-				Optional:    true,
 			},
 		},
 	}
