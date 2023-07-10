@@ -18,11 +18,11 @@ The PGD cluster data source describes a BigAnimal cluster. The data source requi
 ### Required
 
 - `cluster_name` (String) cluster name
-- `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 
 ### Optional
 
+- `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
 - `project_id` (String) BigAnimal Project ID.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -146,12 +146,9 @@ Optional:
 <a id="nestedatt--data_groups--allowed_ip_ranges"></a>
 ### Nested Schema for `data_groups.allowed_ip_ranges`
 
-Required:
-
-- `cidr_block` (String) CIDR block
-
 Optional:
 
+- `cidr_block` (String) CIDR block
 - `description` (String) Description of CIDR block
 
 
