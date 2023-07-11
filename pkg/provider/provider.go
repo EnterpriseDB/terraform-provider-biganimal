@@ -17,13 +17,11 @@ import (
 const DefaultAPIURL = "https://portal.biganimal.com/api/v3"
 
 var (
-	resourceRegion          = NewRegionResource()
 	resourceCluster         = NewClusterResource()
 	resourceAWSConnection   = NewAWSConnectionResource()
 	resourceAzureConnection = NewAzureConnectionResource()
 	resourceFAReplica       = NewFAReplicaResource()
 
-	dataRegion        = NewRegionData()
 	dataCluster       = NewClusterData()
 	dataAWSConnection = NewAWSConnectionData()
 	dataFaReplica     = NewFAReplicaData()
@@ -53,14 +51,12 @@ func NewSDKProvider(version string) func() *sdkschema.Provider {
 			},
 			DataSourcesMap: map[string]*sdkschema.Resource{
 				"biganimal_cluster":         dataCluster.Schema(),
-				"biganimal_region":          dataRegion.Schema(),
 				"biganimal_faraway_replica": dataFaReplica.Schema(),
 				"biganimal_aws_connection":  dataAWSConnection.Schema(),
 			},
 
 			ResourcesMap: map[string]*sdkschema.Resource{
 				"biganimal_cluster":          resourceCluster.Schema(),
-				"biganimal_region":           resourceRegion.Schema(),
 				"biganimal_aws_connection":   resourceAWSConnection.Schema(),
 				"biganimal_azure_connection": resourceAzureConnection.Schema(),
 				"biganimal_faraway_replica":  resourceFAReplica.Schema(),
@@ -181,11 +177,13 @@ func (b bigAnimalProvider) DataSources(ctx context.Context) []func() datasource.
 	return []func() datasource.DataSource{
 		NewProjectsDataSource,
 		NewPgdDataSource,
+		NewRegionsDataSource,
 	}
 }
 
 func (b bigAnimalProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewProjectResource,
+		NewRegionResource,
 	}
 }

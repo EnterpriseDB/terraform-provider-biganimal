@@ -1,5 +1,5 @@
 # biganimal_region (Data Source)
-The region data source shows the available regions within a cloud provider.
+
 
 ## Example Usage
 ```terraform
@@ -8,8 +8,8 @@ variable "cloud_provider" {
   description = "Cloud Provider"
 
   validation {
-    condition     = contains(["aws", "azure"], var.cloud_provider)
-    error_message = "Please select one of the supported regions: aws, azure."
+    condition     = contains(["aws", "azure", "bah:aws"], var.cloud_provider)
+    error_message = "Please select one of the supported regions: aws, azure or bah:aws."
   }
 }
 
@@ -40,7 +40,7 @@ output "cloud_provider_id" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud provider to list the regions. For example, "aws" or "azure".
+- `cloud_provider` (String) Cloud provider to list the regions. For example, "aws", "azure" or "bah:aws".
 - `project_id` (String) BigAnimal Project ID.
 
 ### Optional
@@ -50,15 +50,15 @@ output "cloud_provider_id" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `regions` (List of Object) Region information. (see [below for nested schema](#nestedatt--regions))
+- `id` (String) Datasource ID.
+- `regions` (Attributes List) Region information. (see [below for nested schema](#nestedatt--regions))
 
 <a id="nestedatt--regions"></a>
 ### Nested Schema for `regions`
 
 Read-Only:
 
-- `continent` (String)
-- `name` (String)
-- `region_id` (String)
-- `status` (String)
+- `continent` (String) Continent that region belongs to.
+- `name` (String) Region name of the region.
+- `region_id` (String) Region ID of the region.
+- `status` (String) Region status of the region.
