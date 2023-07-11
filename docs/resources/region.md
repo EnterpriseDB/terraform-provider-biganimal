@@ -43,7 +43,7 @@ output "region_continent" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud provider. For example, "aws" or "azure".
+- `cloud_provider` (String) Cloud provider. For example, "aws", "azure" or "bah:aws".
 - `project_id` (String) BigAnimal Project ID.
 - `region_id` (String) Region ID of the region. For example, "germanywestcentral" in the Azure cloud provider or "eu-west-1" in the AWS cloud provider.
 
@@ -55,7 +55,7 @@ output "region_continent" {
 ### Read-Only
 
 - `continent` (String) Continent that region belongs to. For example, "Asia", "Australia", or "Europe".
-- `id` (String) The ID of this resource.
+- `id` (String) Resource ID of the region.
 - `name` (String) Region name of the region. For example, "Germany West Central" or "EU West 1".
 
 <a id="nestedblock--timeouts"></a>
@@ -66,3 +66,12 @@ Optional:
 - `create` (String)
 - `delete` (String)
 - `update` (String)
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# terraform import biganimal_project.<resource_name> <project_id>/<cloud_provider>/<region_id>
+terraform import biganimal_region.this prj_deadbeef01234567/aws/eu-west-1
+```

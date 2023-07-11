@@ -21,6 +21,11 @@ func TestAccResourceRegion_basic(t *testing.T) {
 		provider  = os.Getenv("BA_TF_ACC_VAR_region_provider")
 		regionID  = os.Getenv("BA_TF_ACC_VAR_region_region_id")
 
+		regionConfigWithDefault = `resource "biganimal_region" "this" {
+  project_id     = "%s"
+  cloud_provider = "%s"
+  region_id      = "%s"
+}`
 		regionConfig = `resource "biganimal_region" "this" {
   status 		 = "%s"
   project_id     = "%s"
@@ -34,10 +39,10 @@ func TestAccResourceRegion_basic(t *testing.T) {
 			testAccPreCheck(t)
 			testAccResourcePreCheck(t, "region", acc_env_vars_checklist)
 		},
-		ProviderFactories: testAccProviderFactories,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(regionConfig, api.REGION_ACTIVE, projectID, provider, regionID),
+				Config: fmt.Sprintf(regionConfigWithDefault, projectID, provider, regionID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("biganimal_region.this", "status", api.REGION_ACTIVE),
 				),
