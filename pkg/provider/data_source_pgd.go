@@ -114,9 +114,15 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Description: "Earliest backup recover time.",
 							Computed:    true,
 						},
-						"instance_type": schema.StringAttribute{
+						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"instance_type_id": schema.StringAttribute{
+									Description: "Data group instance type id.",
+									Computed:    true,
+								},
+							},
 						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
@@ -127,7 +133,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Computed:    true,
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Cluster connection URI.",
+							Description: "Data group connection URI.",
 							Computed:    true,
 						},
 						"pg_config": schema.SetNestedAttribute{
@@ -146,13 +152,25 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"pg_type": schema.StringAttribute{
+						"pg_type": schema.SingleNestedAttribute{
 							Description: "Postgres type.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"pg_type_id": schema.StringAttribute{
+									Description: "Data group postgres type id.",
+									Computed:    true,
+								},
+							},
 						},
-						"pg_version": schema.StringAttribute{
+						"pg_version": schema.SingleNestedAttribute{
 							Description: "Postgres version.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"pg_version_id": schema.StringAttribute{
+									Description: "Data group postgres version id.",
+									Computed:    true,
+								},
+							},
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the cluster group.",
@@ -162,17 +180,29 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Description: "Is private networking enabled.",
 							Computed:    true,
 						},
-						"cloud_provider": schema.StringAttribute{
+						"cloud_provider": schema.SingleNestedAttribute{
 							Description: "Cloud provider.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Data group cloud provider id.",
+									Computed:    true,
+								},
+							},
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
 							Computed:    true,
 						},
-						"region": schema.StringAttribute{
-							Description: "Data group region.",
+						"region": schema.SingleNestedAttribute{
+							Description: "Region.",
 							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Data group region id.",
+									Computed:    true,
+								},
+							},
 						},
 						"resizing_pvc": schema.SetAttribute{
 							ElementType: types.StringType,
@@ -204,17 +234,138 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
+						"maintenance_window": schema.SingleNestedAttribute{
+							Description: "Custom maintenance window.",
+							Optional:    true,
+							Attributes: map[string]schema.Attribute{
+								"is_enabled": schema.BoolAttribute{
+									Description: "Is maintenance window enabled.",
+									Optional:    true,
+								},
+								"start_day": schema.Float64Attribute{
+									Description: "Start day.",
+									Optional:    true,
+								},
+								"start_time": schema.StringAttribute{
+									Description: "Start time.",
+									Optional:    true,
+								},
+							},
+						},
+						"conditions": schema.SetNestedAttribute{
+							Description: "Conditions.",
+							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"condition_status": schema.StringAttribute{
+										Description: "Condition status",
+										Computed:    true,
+									},
+									"type": schema.StringAttribute{
+										Description: "Type",
+										Computed:    true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
 			"witness_groups": schema.SetNestedAttribute{
-				Description: "Cluster witness groups.",
-				Computed:    true,
+				Optional: true,
+				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"region": schema.StringAttribute{
-							Description: "Witness group region.",
+						"group_id": schema.StringAttribute{
+							Description: "Group id of witness group.",
 							Computed:    true,
+						},
+						"phase": schema.StringAttribute{
+							Description: "Phase.",
+							Computed:    true,
+						},
+						"cluster_architecture": schema.SingleNestedAttribute{
+							Description: "Cluster architecture.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"cluster_architecture_id": schema.StringAttribute{
+									Description: "Cluster architecture ID.",
+									Computed:    true,
+								},
+								"cluster_architecture_name": schema.StringAttribute{
+									Description: "Name.",
+									Computed:    true,
+								},
+								"nodes": schema.Float64Attribute{
+									Description: "Nodes.",
+									Computed:    true,
+								},
+								"witness_nodes": schema.Float64Attribute{
+									Description: "Witness nodes count.",
+									Computed:    true,
+								},
+							},
+						},
+						"region": schema.SingleNestedAttribute{
+							Description: "Region.",
+							Required:    true,
+							Attributes: map[string]schema.Attribute{
+								"region_id": schema.StringAttribute{
+									Description: "Region id.",
+									Required:    true,
+								},
+							},
+						},
+						"cluster_type": schema.StringAttribute{
+							Description: "Type of the Specified Cluster",
+							Optional:    true,
+							Computed:    true,
+						},
+						"cloud_provider": schema.SingleNestedAttribute{
+							Description: "Cloud provider.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"cloud_provider_id": schema.StringAttribute{
+									Description: "Cloud provider id.",
+									Computed:    true,
+								},
+							},
+						},
+						"instance_type": schema.SingleNestedAttribute{
+							Description: "Instance type.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"instance_type_id": schema.StringAttribute{
+									Description: "Witness group instance type id.",
+									Computed:    true,
+								},
+							},
+						},
+						"storage": schema.SingleNestedAttribute{
+							Description: "Storage.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"iops": schema.StringAttribute{
+									Description: "IOPS for the selected volume.",
+									Computed:    true,
+								},
+								"size": schema.StringAttribute{
+									Description: "Size of the volume.",
+									Computed:    true,
+								},
+								"throughput": schema.StringAttribute{
+									Description: "Throughput.",
+									Computed:    true,
+								},
+								"volume_properties": schema.StringAttribute{
+									Description: "Volume properties.",
+									Computed:    true,
+								},
+								"volume_type": schema.StringAttribute{
+									Description: "Volume type.",
+									Computed:    true,
+								},
+							},
 						},
 					},
 				},
@@ -281,35 +432,9 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	for _, v := range *cluster.Groups {
-		switch apiGroupResp := v.(type) {
-		case map[string]interface{}:
-			if apiGroupResp["clusterType"] == "data_group" {
-				model := pgd.DataGroup{}
-
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-					if err != nil {
-						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy data group, got error: %s", err))
-						return
-					}
-				}
-
-				data.DataGroups = append(data.DataGroups, model)
-			}
-
-			if apiGroupResp["clusterType"] == "witness_group" {
-				model := pgd.WitnessGroup{}
-
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
-					if err != nil {
-						resp.Diagnostics.AddError("Read Error", fmt.Sprintf("Unable to copy witness group, got error: %s", err))
-						return
-					}
-				}
-
-				data.WitnessGroups = append(data.WitnessGroups, model)
-			}
-		}
+	if err = buildGroupsToTypeAs(*cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
+		resp.Diagnostics.AddError("Data source read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+		return
 	}
 
 	diags = resp.State.Set(ctx, &data)
