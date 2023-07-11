@@ -163,6 +163,11 @@ func (r *regionResource) Delete(ctx context.Context, req resource.DeleteRequest,
 }
 
 func (r *regionResource) ensureStatueUpdated(ctx context.Context, region Region) frameworkdiag.Diagnostics {
+	if region.Status == nil {
+		status := api.REGION_ACTIVE
+		region.Status = &status
+	}
+
 	diags := frameworkdiag.Diagnostics{}
 	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID); err != nil {
 		if appendDiagFromBAErr(err, &diags) {
