@@ -1,10 +1,10 @@
 package models
 
 type Region struct {
-	Id        string `json:"regionId,omitempty" mapstructure:"region_id"`
-	Name      string `json:"regionName,omitempty" mapstructure:"name,omitempty"`
-	Status    string `json:"status,omitempty" mapstructure:"status,omitempty"`
-	Continent string `json:"continent,omitempty" mapstructure:"continent,omitempty"`
+	Id        string `json:"regionId,omitempty" tfsdk:"region_id"`
+	Name      string `json:"regionName,omitempty" tfsdk:"name"`
+	Status    string `json:"status,omitempty" tfsdk:"status"`
+	Continent string `json:"continent,omitempty" tfsdk:"continent"`
 }
 
 func (r Region) String() string {
