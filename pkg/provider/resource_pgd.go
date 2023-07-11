@@ -657,6 +657,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 
 	state.ID = clusterResp.ClusterId
 	state.ClusterId = clusterResp.ClusterId
+	state.ClusterName = clusterResp.ClusterName
 
 	if err = buildGroupsToTypeAs(*clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Resource read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
