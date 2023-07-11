@@ -11,34 +11,34 @@ import (
 func TestAccDataSourceRegion_basic(t *testing.T) {
 	var (
 		acc_env_vars_checklist = []string{
-			"BA_TF_ACC_VAR_region_project_id",
-			"BA_TF_ACC_VAR_region_provider",
-			"BA_TF_ACC_VAR_region_region_id",
+			"BA_TF_ACC_VAR_ds_region_project_id",
+			"BA_TF_ACC_VAR_ds_region_provider",
+			"BA_TF_ACC_VAR_ds_region_region_id",
 		}
-		projectId = os.Getenv("BA_TF_ACC_VAR_region_project_id")
-		provider  = os.Getenv("BA_TF_ACC_VAR_region_provider")
-		regionId  = os.Getenv("BA_TF_ACC_VAR_region_region_id")
+		projectId = os.Getenv("BA_TF_ACC_VAR_ds_region_project_id")
+		provider  = os.Getenv("BA_TF_ACC_VAR_ds_region_provider")
+		regionId  = os.Getenv("BA_TF_ACC_VAR_ds_region_region_id")
 	)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			testAccResourcePreCheck(t, "datasource region", acc_env_vars_checklist)
+			testAccResourcePreCheck(t, "datasource regions", acc_env_vars_checklist)
 		},
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: regionDataSourceConfig(projectId, provider, regionId),
+				Config: regionsDataSourceConfig(projectId, provider, regionId),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrPair("data.biganimal_region.test", "region.0.name", "biganimal_region.test", "name"),
-					resource.TestCheckResourceAttrPair("data.biganimal_region.test", "region.0.status", "biganimal_region.test", "status"),
+					resource.TestCheckResourceAttrPair("data.biganimal_region.test", "regions.0.name", "biganimal_region.test", "name"),
+					resource.TestCheckResourceAttrPair("data.biganimal_region.test", "regions.0.status", "biganimal_region.test", "status"),
 				),
 			},
 		},
 	})
 }
 
-func regionDataSourceConfig(projectId, provider, regionId string) string {
+func regionsDataSourceConfig(projectId, provider, regionId string) string {
 	return fmt.Sprintf(`data "biganimal_region" "test" {
   project_id     = "%[1]s"
   cloud_provider = "%[2]s"
