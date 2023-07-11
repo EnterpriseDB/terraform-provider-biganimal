@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
@@ -532,9 +533,9 @@ type PGD struct {
 	ID            *string            `tfsdk:"id"`
 	ProjectId     string             `tfsdk:"project_id"`
 	ClusterId     *string            `tfsdk:"cluster_id"`
-	ClusterName   string             `tfsdk:"cluster_name"`
+	ClusterName   *string            `tfsdk:"cluster_name"`
 	MostRecent    *bool              `tfsdk:"most_recent"`
-	Password      string             `tfsdk:"password"`
+	Password      *string            `tfsdk:"password"`
 	Timeouts      timeouts.Value     `tfsdk:"timeouts"`
 	DataGroups    []pgd.DataGroup    `tfsdk:"data_groups"`
 	WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
@@ -550,9 +551,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	clusterReqBody := models.Cluster{
-		ClusterName: &config.ClusterName,
+		ClusterName: config.ClusterName,
 		ClusterType: utils.ToPointer("cluster"),
-		Password:    &config.Password,
+		Password:    config.Password,
 	}
 
 	clusterReqBody.Groups = &[]any{}
@@ -648,7 +649,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 		return
 	}
 
-	clusterResp, err := p.client.Read(ctx, state.ProjectId, *state.ID)
+	clusterResp, err := p.client.Read(ctx, state.ProjectId, *state.ClusterId)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
 		return
@@ -678,9 +679,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	}
 
 	clusterReqBody := models.Cluster{
-		ClusterName: &plan.ClusterName,
+		ClusterName: plan.ClusterName,
 		ClusterType: utils.ToPointer("cluster"),
-		Password:    &plan.Password,
+		Password:    plan.Password,
 	}
 
 	clusterReqBody.Groups = &[]any{}
@@ -862,7 +863,17 @@ func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 }
 
 func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	idParts := strings.Split(req.ID, "/")
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: cluster_id/project_id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[0]))...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), utils.ToPointer(idParts[1]))...)
 }
 
 func NewPgdResource() resource.Resource {
