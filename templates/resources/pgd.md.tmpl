@@ -1,0 +1,25 @@
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{ tffile .ExampleFile }}
+{{- end }}
+
+## PGD One Data Group Example
+{{ tffile "examples/resources/biganimal_pgd/data_group/resource.tf" }}
+
+## PGD Two Data Groups with One Witness Group Example
+{{ tffile "examples/resources/biganimal_pgd/data_groups_with_witness_group/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
+{{- if .HasImport }}
+
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" .ImportFile }}
+{{- end }}
