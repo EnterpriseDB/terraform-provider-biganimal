@@ -145,6 +145,14 @@ Required:
 - `cloud_provider_id` (String) Data group cloud provider id.
 
 
+<a id="nestedatt--data_groups--cloud_provider"></a>
+### Nested Schema for `data_groups.cloud_provider`
+
+Read-Only:
+
+- `cloud_provider_id` (String) Data group cloud provider id.
+
+
 <a id="nestedatt--data_groups--cluster_architecture"></a>
 ### Nested Schema for `data_groups.cluster_architecture`
 
@@ -226,6 +234,23 @@ Optional:
 - `is_enabled` (Boolean) Is maintenance window enabled.
 - `start_day` (Number) Start day.
 - `start_time` (String) Start time.
+
+
+<a id="nestedatt--data_groups--conditions"></a>
+### Nested Schema for `data_groups.conditions`
+
+Read-Only:
+
+- `condition_status` (String) Condition status
+- `type` (String) Type
+
+
+<a id="nestedatt--data_groups--instance_type"></a>
+### Nested Schema for `data_groups.instance_type`
+
+Read-Only:
+
+- `instance_type_id` (String) Data group instance type id.
 
 
 <a id="nestedatt--data_groups--pg_config"></a>

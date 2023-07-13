@@ -105,7 +105,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Computed:    true,
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Cluster connection URI.",
+							Description: "Data group connection URI.",
 							Computed:    true,
 						},
 						"phase": schema.StringAttribute{
@@ -390,6 +390,40 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
 									Computed:    true,
+								},
+							},
+						},
+						"maintenance_window": schema.SingleNestedAttribute{
+							Description: "Custom maintenance window.",
+							Optional:    true,
+							Attributes: map[string]schema.Attribute{
+								"is_enabled": schema.BoolAttribute{
+									Description: "Is maintenance window enabled.",
+									Optional:    true,
+								},
+								"start_day": schema.Float64Attribute{
+									Description: "Start day.",
+									Optional:    true,
+								},
+								"start_time": schema.StringAttribute{
+									Description: "Start time.",
+									Optional:    true,
+								},
+							},
+						},
+						"conditions": schema.SetNestedAttribute{
+							Description: "Conditions.",
+							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"condition_status": schema.StringAttribute{
+										Description: "Condition status",
+										Computed:    true,
+									},
+									"type": schema.StringAttribute{
+										Description: "Type",
+										Computed:    true,
+									},
 								},
 							},
 						},
