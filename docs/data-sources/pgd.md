@@ -129,7 +129,7 @@ Read-Only:
 
 - `cluster_name` (String) Name of the group.
 - `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--data_groups--conditions))
-- `connection_uri` (String) Cluster connection URI.
+- `connection_uri` (String) Data group connection URI.
 - `created_at` (String) Cluster creation time.
 - `group_id` (String) Group ID of the group.
 - `logs_url` (String) The URL to find the logs of this cluster.
@@ -141,14 +141,6 @@ Read-Only:
 ### Nested Schema for `data_groups.cloud_provider`
 
 Required:
-
-- `cloud_provider_id` (String) Data group cloud provider id.
-
-
-<a id="nestedatt--data_groups--cloud_provider"></a>
-### Nested Schema for `data_groups.cloud_provider`
-
-Read-Only:
 
 - `cloud_provider_id` (String) Data group cloud provider id.
 
@@ -236,23 +228,6 @@ Optional:
 - `start_time` (String) Start time.
 
 
-<a id="nestedatt--data_groups--conditions"></a>
-### Nested Schema for `data_groups.conditions`
-
-Read-Only:
-
-- `condition_status` (String) Condition status
-- `type` (String) Type
-
-
-<a id="nestedatt--data_groups--instance_type"></a>
-### Nested Schema for `data_groups.instance_type`
-
-Read-Only:
-
-- `instance_type_id` (String) Data group instance type id.
-
-
 <a id="nestedatt--data_groups--pg_config"></a>
 ### Nested Schema for `data_groups.pg_config`
 
@@ -282,11 +257,13 @@ Required:
 Optional:
 
 - `cluster_type` (String) Type of the Specified Cluster
+- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--witness_groups--maintenance_window))
 
 Read-Only:
 
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
+- `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--witness_groups--conditions))
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
 - `phase` (String) Phase.
@@ -298,6 +275,16 @@ Read-Only:
 Required:
 
 - `region_id` (String) Region id.
+
+
+<a id="nestedatt--witness_groups--maintenance_window"></a>
+### Nested Schema for `witness_groups.maintenance_window`
+
+Optional:
+
+- `is_enabled` (Boolean) Is maintenance window enabled.
+- `start_day` (Number) Start day.
+- `start_time` (String) Start time.
 
 
 <a id="nestedatt--witness_groups--cloud_provider"></a>
@@ -317,6 +304,15 @@ Read-Only:
 - `cluster_architecture_name` (String) Name.
 - `nodes` (Number) Nodes.
 - `witness_nodes` (Number) Witness nodes count.
+
+
+<a id="nestedatt--witness_groups--conditions"></a>
+### Nested Schema for `witness_groups.conditions`
+
+Read-Only:
+
+- `condition_status` (String) Condition status
+- `type` (String) Type
 
 
 <a id="nestedatt--witness_groups--instance_type"></a>

@@ -807,7 +807,7 @@ func (p *pgdResource) retryFunc(ctx context.Context, state *PGD) retry.RetryFunc
 		}
 
 		if err := buildGroupsToTypeAs(*pgdResp, &state.DataGroups, &state.WitnessGroups); err != nil {
-			return retry.NonRetryableError(fmt.Errorf("Unable to copy group, got error: %s", err))
+			return retry.NonRetryableError(fmt.Errorf("unable to copy group, got error: %s", err))
 		}
 
 		isHealthy, err := p.isHealthy(ctx, state.DataGroups, state.WitnessGroups)
@@ -835,7 +835,7 @@ func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
-						return fmt.Errorf("Unable to copy data group, got error: %s", err)
+						return fmt.Errorf("unable to copy data group, got error: %s", err)
 					}
 				}
 
@@ -847,7 +847,7 @@ func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
-						return fmt.Errorf("Unable to copy witness group, got error: %s", err)
+						return fmt.Errorf("unable to copy witness group, got error: %s", err)
 					}
 				}
 
@@ -880,13 +880,13 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: cluster_id/project_id. Got: %q", req.ID),
+			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id. Got: %q", req.ID),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[0]))...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), utils.ToPointer(idParts[1]))...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), utils.ToPointer(idParts[0]))...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
 }
 
 func NewPgdResource() resource.Resource {
