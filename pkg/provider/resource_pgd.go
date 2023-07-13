@@ -387,7 +387,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
-							Computed:    true,
+							Optional:    true,
 							PlanModifiers: []planmodifier.Object{
 								objectplanmodifier.UseStateForUnknown(),
 							},
@@ -436,6 +436,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Type of the Specified Cluster",
 							Optional:    true,
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"cloud_provider": schema.SingleNestedAttribute{
 							Description: "Cloud provider.",
