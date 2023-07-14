@@ -50,7 +50,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "azure:Standard_D2s_v3"
+        instance_type_id = "aws:m5.large"
       }
       pg_config = [
         {
@@ -63,8 +63,8 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       storage = {
-        volume_type       = "azurepremiumstorage"
-        volume_properties = "P1"
+        volume_type       = "gp3"
+        volume_properties = "gp3"
         size              = "4 Gi"
       }
       pg_type = {
@@ -75,16 +75,16 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "aws"
       }
       region = {
-        region_id = "northeurope"
+        region_id = "eu-west-1"
       }
       maintenance_window = {
         is_enabled = true
         start_day  = 1
         start_time = "13:00"
       }
-    },
+    }
   ]
 }
