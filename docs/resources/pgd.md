@@ -4,7 +4,7 @@ The PGD cluster data source describes a BigAnimal cluster. The data source requi
 
 
 
--> Using update to upscaling data groups or witness groups is currently not supported
+-> Using update to upscale data groups or witness groups is currently not supported
 
 ## PGD One Data Group Example
 ```terraform
@@ -443,12 +443,12 @@ Required:
 
 Optional:
 
+- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 - `cluster_type` (String) Type of the Specified Cluster
 
 Read-Only:
 
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
-- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
 - `phase` (String) Phase.
@@ -462,14 +462,6 @@ Required:
 - `region_id` (String) Region id.
 
 
-<a id="nestedatt--witness_groups--cloud_provider"></a>
-### Nested Schema for `witness_groups.cloud_provider`
-
-Read-Only:
-
-- `cloud_provider_id` (String) Cloud provider id.
-
-
 <a id="nestedatt--witness_groups--cluster_architecture"></a>
 ### Nested Schema for `witness_groups.cluster_architecture`
 
@@ -479,6 +471,14 @@ Read-Only:
 - `cluster_architecture_name` (String) Name.
 - `nodes` (Number) Nodes.
 - `witness_nodes` (Number) Witness nodes count.
+
+
+<a id="nestedatt--witness_groups--cloud_provider"></a>
+### Nested Schema for `witness_groups.cloud_provider`
+
+Read-Only:
+
+- `cloud_provider_id` (String) Cloud provider id.
 
 
 <a id="nestedatt--witness_groups--instance_type"></a>
