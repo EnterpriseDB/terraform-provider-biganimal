@@ -564,6 +564,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
 	for _, v := range config.DataGroups {
 		v.ClusterType = utils.ToPointer("data_group")
+
+		buildStorageAs(v.Storage)
+
 		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
 			Provider:     v.Provider,
@@ -582,7 +585,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	if len(config.WitnessGroups) > 0 {
 		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
 		if err != nil {
-			resp.Diagnostics.AddError("Error calculating witness group params", "Could calculate witness group params, unexpected error: "+err.Error())
+			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
 			return
 		}
 
@@ -706,6 +709,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
 	for _, v := range plan.DataGroups {
 		v.ClusterType = utils.ToPointer("data_group")
+
+		buildStorageAs(v.Storage)
+
 		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
 			Provider:     v.Provider,
@@ -733,7 +739,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	if len(plan.WitnessGroups) > 0 {
 		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, witnessGroupParamsBody)
 		if err != nil {
-			resp.Diagnostics.AddError("Error calculating witness group params", "Could calculate witness group params, unexpected error: "+err.Error())
+			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
 			return
 		}
 
@@ -891,6 +897,15 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), utils.ToPointer(idParts[0]))...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
+}
+
+func buildStorageAs(storage *models.Storage) {
+	// azurepremiumstorage only needs volume type, properties and size
+	// other values will cause an unhelpful error on the API
+	if *storage.VolumeTypeId == "azurepremiumstorage" {
+		storage.Iops = nil
+		storage.Throughput = nil
+	}
 }
 
 func NewPgdResource() resource.Resource {
