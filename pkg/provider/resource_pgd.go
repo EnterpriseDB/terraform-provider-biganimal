@@ -618,7 +618,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFunc(ctx, &config),
+		p.retryFuncAs(ctx, &config),
 	)
 
 	if err != nil {
@@ -764,19 +764,35 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		return
 	}
 
-	clusterResp, err := p.client.Read(ctx, plan.ProjectId, *plan.ClusterId)
+	config.ID = plan.ClusterId
+	config.ClusterId = plan.ClusterId
+
+	timeout, _ := config.Timeouts.Update(ctx, 60*time.Minute)
+
+	err = retry.RetryContext(
+		ctx,
+		timeout-time.Minute,
+		p.retryFuncAs(ctx, &config),
+	)
+
 	if err != nil {
-		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
+		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster, unexpected error: "+err.Error())
 		return
 	}
 
-	plan.DataGroups = []pgd.DataGroup{}
-	plan.WitnessGroups = []pgd.WitnessGroup{}
+	// clusterResp, err := p.client.Read(ctx, plan.ProjectId, *plan.ClusterId)
+	// if err != nil {
+	// 	resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
+	// 	return
+	// }
 
-	if err = buildGroupsToTypeAs(*clusterResp, &plan.DataGroups, &plan.WitnessGroups); err != nil {
-		resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
-		return
-	}
+	// plan.DataGroups = []pgd.DataGroup{}
+	// plan.WitnessGroups = []pgd.WitnessGroup{}
+
+	// if err = buildGroupsToTypeAs(*clusterResp, &plan.DataGroups, &plan.WitnessGroups); err != nil {
+	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+	// 	return
+	// }
 
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -809,7 +825,7 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []pgd.DataGroup, wgs []p
 	return healthy, nil
 }
 
-func (p *pgdResource) retryFunc(ctx context.Context, state *PGD) retry.RetryFunc {
+func (p *pgdResource) retryFuncAs(ctx context.Context, state *PGD) retry.RetryFunc {
 	return func() *retry.RetryError {
 		pgdResp, err := p.client.Read(ctx, state.ProjectId, *state.ClusterId)
 		if err != nil {
