@@ -78,7 +78,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
-				Optional:    true,
+				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
