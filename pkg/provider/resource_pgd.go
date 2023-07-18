@@ -585,6 +585,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	if len(config.WitnessGroups) > 0 {
 		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
 		if err != nil {
+			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+				return
+			}
 			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
 			return
 		}
@@ -606,6 +609,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 	clusterId, err := p.client.Create(ctx, config.ProjectId, clusterReqBody)
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error creating PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
 		return
 	}
@@ -622,6 +628,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	)
 
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
 		return
 	}
@@ -657,6 +666,9 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 
 	clusterResp, err := p.client.Read(ctx, state.ProjectId, *state.ClusterId)
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
 		return
 	}
@@ -739,6 +751,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	if len(plan.WitnessGroups) > 0 {
 		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, witnessGroupParamsBody)
 		if err != nil {
+			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+				return
+			}
 			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
 			return
 		}
@@ -760,6 +775,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	_, err := p.client.Update(ctx, plan.ProjectId, *plan.ClusterId, clusterReqBody)
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
 		return
 	}
@@ -776,6 +794,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	)
 
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster, unexpected error: "+err.Error())
 		return
 	}
@@ -896,6 +917,9 @@ func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 	}
 
 	if err := p.client.Delete(ctx, state.ProjectId, *state.ClusterId); err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error deleting cluster", "Could not delete cluster, unexpected error: "+err.Error())
 		return
 	}
