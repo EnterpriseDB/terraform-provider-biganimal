@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,11 +18,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -76,7 +80,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Required:    true,
 				Sensitive:   true,
 			},
-			"data_groups": schema.SetNestedAttribute{
+			"data_groups": schema.ListNestedAttribute{
 				Description: "Cluster data groups.",
 				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -182,7 +186,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								setplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"allowed_ip_ranges": schema.SetNestedAttribute{
+						"allowed_ip_ranges": schema.ListNestedAttribute{
 							Description: "Allowed IP ranges.",
 							Optional:    true,
 							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
@@ -199,7 +203,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						"pg_config": schema.SetNestedAttribute{
+						"pg_config": schema.ListNestedAttribute{
 							Description: "Database configuration parameters.",
 							Optional:    true,
 							Computed:    true,
@@ -214,6 +218,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 										Required:    true,
 									},
 								},
+							},
+							PlanModifiers: []planmodifier.List{
+								customPGConfig(),
 							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
@@ -347,11 +354,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						"conditions": schema.SetNestedAttribute{
+						"conditions": schema.ListNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
-							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.UseStateForUnknown(),
+							PlanModifiers: []planmodifier.List{
+								listplanmodifier.UseStateForUnknown(),
 							},
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -375,11 +382,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					},
 				},
 			},
-			"witness_groups": schema.SetNestedAttribute{
+			"witness_groups": schema.ListNestedAttribute{
 				Optional: true,
 				Computed: true,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -987,6 +994,76 @@ func (m customStringUnknownModifier) PlanModifyString(ctx context.Context, req p
 
 	if !req.StateValue.IsNull() {
 		resp.PlanValue = req.StateValue
+		return
+	}
+
+	// Do nothing if there is a known planned value.
+	if !req.PlanValue.IsUnknown() {
+		return
+	}
+
+	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
+	if req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	resp.PlanValue = req.StateValue
+}
+
+func customPGConfig() planmodifier.List {
+	return customPGConfigModifier{}
+}
+
+// customStringUnknownModifier implements the plan modifier.
+type customPGConfigModifier struct{}
+
+// Description returns a human-readable description of the plan modifier.
+func (m customPGConfigModifier) Description(_ context.Context) string {
+	return "Once set, the value of this attribute in state will not change."
+}
+
+// MarkdownDescription returns a markdown description of the plan modifier.
+func (m customPGConfigModifier) MarkdownDescription(_ context.Context) string {
+	return "Once set, the value of this attribute in state will not change."
+}
+
+// PlanModifyList implements the plan modification logic.
+func (m customPGConfigModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
+	if req.StateValue.IsNull() {
+		return
+	}
+
+	if !req.StateValue.IsNull() {
+		stateSort := req.StateValue.Elements()
+		sort.Slice(stateSort, func(i, j int) bool {
+			iValue := stateSort[i].(basetypes.ObjectValue).Attributes()["name"].String()
+			jValue := stateSort[j].(basetypes.ObjectValue).Attributes()["name"].String()
+			if z, err := strconv.Atoi(iValue); err == nil {
+				if y, err := strconv.Atoi(jValue); err == nil {
+					return y < z
+				}
+				return true
+			}
+			return iValue > jValue
+		})
+
+		req.StateValue = basetypes.NewListValueMust(req.StateValue.Elements()[0].Type(ctx), stateSort)
+
+		planSort := resp.PlanValue.Elements()
+		sort.Slice(planSort, func(i, j int) bool {
+			iValue := planSort[i].(basetypes.ObjectValue).Attributes()["name"].String()
+			jValue := planSort[j].(basetypes.ObjectValue).Attributes()["name"].String()
+			if z, err := strconv.Atoi(iValue); err == nil {
+				if y, err := strconv.Atoi(jValue); err == nil {
+					return y < z
+				}
+				return true
+			}
+			return iValue > jValue
+		})
+
+		resp.PlanValue = basetypes.NewListValueMust(resp.PlanValue.Elements()[0].Type(ctx), planSort)
+
 		return
 	}
 
