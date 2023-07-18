@@ -461,12 +461,16 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 
 	cluster, err := p.client.PGDClient().ReadByName(ctx, data.ProjectID, data.ClusterName, *data.MostRecent)
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Read error", fmt.Sprintf("Unable to call read cluster, got error: %s", err))
 		return
 	}
 
 	if cluster.ClusterArchitecture.ClusterArchitectureId != "pgd" {
 		resp.Diagnostics.AddError("Wrong cluster architecture error", fmt.Sprintf("Wrong cluster architecture, expected 'pgd' but got: %v", cluster.ClusterArchitecture.ClusterArchitectureId))
+		return
 	}
 
 	data.ID = cluster.ClusterId
