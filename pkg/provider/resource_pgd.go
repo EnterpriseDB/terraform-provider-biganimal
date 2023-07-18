@@ -119,7 +119,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								customStringModifierForUnknown(),
 							},
 						},
 						"expired_at": schema.StringAttribute{
@@ -127,7 +127,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								customStringModifierForUnknown(),
 							},
 						},
 						"first_recoverability_point_at": schema.StringAttribute{
@@ -135,7 +135,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								customStringModifierForUnknown(),
 							},
 						},
 						"logs_url": schema.StringAttribute{
@@ -958,6 +958,49 @@ func buildStorageAs(storage *models.Storage) {
 		storage.Iops = nil
 		storage.Throughput = nil
 	}
+}
+
+func customStringModifierForUnknown() planmodifier.String {
+	return customStringUnknownModifier{}
+}
+
+// customStringUnknownModifier implements the plan modifier.
+type customStringUnknownModifier struct{}
+
+// Description returns a human-readable description of the plan modifier.
+func (m customStringUnknownModifier) Description(_ context.Context) string {
+	return "Once set, the value of this attribute in state will not change."
+}
+
+// MarkdownDescription returns a markdown description of the plan modifier.
+func (m customStringUnknownModifier) MarkdownDescription(_ context.Context) string {
+	return "Once set, the value of this attribute in state will not change."
+}
+
+// PlanModifyString implements the plan modification logic.
+func (m customStringUnknownModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	// Do nothing if there is no state value.
+	if req.StateValue.IsNull() {
+		resp.PlanValue = types.StringNull()
+		return
+	}
+
+	if !req.StateValue.IsNull() {
+		resp.PlanValue = req.StateValue
+		return
+	}
+
+	// Do nothing if there is a known planned value.
+	if !req.PlanValue.IsUnknown() {
+		return
+	}
+
+	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
+	if req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	resp.PlanValue = req.StateValue
 }
 
 func NewPgdResource() resource.Resource {
