@@ -12,7 +12,7 @@ func CustomAllowedIps() planmodifier.List {
 	return customAllowedIpsModifier{}
 }
 
-// customStringUnknownModifier implements the plan modifier.
+// customAllowedIpsModifier implements the plan modifier.
 type customAllowedIpsModifier struct{}
 
 // Description returns a human-readable description of the plan modifier.
@@ -31,31 +31,35 @@ func (m customAllowedIpsModifier) PlanModifyList(ctx context.Context, req planmo
 		return
 	}
 
-	configValue := req.ConfigValue.Elements()
+	if !req.StateValue.IsNull() {
+		configValue := req.ConfigValue.Elements()
 
-	// sort state the same as config
-	stateValue := req.StateValue.Elements()
+		// sort state the same as config
+		stateValue := req.StateValue.Elements()
 
-	newState := []attr.Value{}
-	for _, v := range configValue {
-		if allowedIpContains(stateValue, v) {
-			newState = append(newState, v)
+		newState := []attr.Value{}
+		for _, v := range configValue {
+			if allowedIpContains(stateValue, v) {
+				newState = append(newState, v)
+			}
 		}
-	}
 
-	req.StateValue = basetypes.NewListValueMust(newState[0].Type(ctx), newState)
+		req.StateValue = basetypes.NewListValueMust(newState[0].Type(ctx), newState)
 
-	// sort plan the same as config
-	planValue := req.PlanValue.Elements()
+		// sort plan the same as config
+		planValue := resp.PlanValue.Elements()
 
-	newPlan := []attr.Value{}
-	for _, v := range configValue {
-		if allowedIpContains(planValue, v) {
-			newPlan = append(newPlan, v)
+		newPlan := []attr.Value{}
+		for _, v := range configValue {
+			if allowedIpContains(planValue, v) {
+				newPlan = append(newPlan, v)
+			}
 		}
-	}
 
-	resp.PlanValue = basetypes.NewListValueMust(newPlan[0].Type(ctx), newPlan)
+		resp.PlanValue = basetypes.NewListValueMust(newPlan[0].Type(ctx), newPlan)
+
+		return
+	}
 
 	// Do nothing if there is a known planned value.
 	if !req.PlanValue.IsUnknown() {
