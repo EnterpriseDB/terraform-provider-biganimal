@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -24,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -123,7 +121,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								customStringModifierForUnknown(),
+								plan_modifier.CustomStringForUnknown(),
 							},
 						},
 						"expired_at": schema.StringAttribute{
@@ -131,7 +129,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								customStringModifierForUnknown(),
+								plan_modifier.CustomStringForUnknown(),
 							},
 						},
 						"first_recoverability_point_at": schema.StringAttribute{
@@ -139,7 +137,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								customStringModifierForUnknown(),
+								plan_modifier.CustomStringForUnknown(),
 							},
 						},
 						"logs_url": schema.StringAttribute{
@@ -202,6 +200,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									},
 								},
 							},
+							PlanModifiers: []planmodifier.List{
+								plan_modifier.CustomAllowedIps(),
+							},
 						},
 						"pg_config": schema.ListNestedAttribute{
 							Description: "Database configuration parameters.",
@@ -220,7 +221,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 							PlanModifiers: []planmodifier.List{
-								customPGConfig(),
+								plan_modifier.CustomPGConfig(),
 							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
@@ -965,119 +966,6 @@ func buildStorageAs(storage *models.Storage) {
 		storage.Iops = nil
 		storage.Throughput = nil
 	}
-}
-
-func customStringModifierForUnknown() planmodifier.String {
-	return customStringUnknownModifier{}
-}
-
-// customStringUnknownModifier implements the plan modifier.
-type customStringUnknownModifier struct{}
-
-// Description returns a human-readable description of the plan modifier.
-func (m customStringUnknownModifier) Description(_ context.Context) string {
-	return "Once set, the value of this attribute in state will not change."
-}
-
-// MarkdownDescription returns a markdown description of the plan modifier.
-func (m customStringUnknownModifier) MarkdownDescription(_ context.Context) string {
-	return "Once set, the value of this attribute in state will not change."
-}
-
-// PlanModifyString implements the plan modification logic.
-func (m customStringUnknownModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	// Do nothing if there is no state value.
-	if req.StateValue.IsNull() {
-		resp.PlanValue = types.StringNull()
-		return
-	}
-
-	if !req.StateValue.IsNull() {
-		resp.PlanValue = req.StateValue
-		return
-	}
-
-	// Do nothing if there is a known planned value.
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
-
-	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
-	if req.ConfigValue.IsUnknown() {
-		return
-	}
-
-	resp.PlanValue = req.StateValue
-}
-
-func customPGConfig() planmodifier.List {
-	return customPGConfigModifier{}
-}
-
-// customStringUnknownModifier implements the plan modifier.
-type customPGConfigModifier struct{}
-
-// Description returns a human-readable description of the plan modifier.
-func (m customPGConfigModifier) Description(_ context.Context) string {
-	return "Once set, the value of this attribute in state will not change."
-}
-
-// MarkdownDescription returns a markdown description of the plan modifier.
-func (m customPGConfigModifier) MarkdownDescription(_ context.Context) string {
-	return "Once set, the value of this attribute in state will not change."
-}
-
-// PlanModifyList implements the plan modification logic.
-func (m customPGConfigModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
-	if req.StateValue.IsNull() {
-		return
-	}
-
-	if !req.StateValue.IsNull() {
-		stateSort := req.StateValue.Elements()
-		sort.Slice(stateSort, func(i, j int) bool {
-			iValue := stateSort[i].(basetypes.ObjectValue).Attributes()["name"].String()
-			jValue := stateSort[j].(basetypes.ObjectValue).Attributes()["name"].String()
-			if z, err := strconv.Atoi(iValue); err == nil {
-				if y, err := strconv.Atoi(jValue); err == nil {
-					return y < z
-				}
-				return true
-			}
-			return iValue > jValue
-		})
-
-		req.StateValue = basetypes.NewListValueMust(req.StateValue.Elements()[0].Type(ctx), stateSort)
-
-		planSort := resp.PlanValue.Elements()
-		sort.Slice(planSort, func(i, j int) bool {
-			iValue := planSort[i].(basetypes.ObjectValue).Attributes()["name"].String()
-			jValue := planSort[j].(basetypes.ObjectValue).Attributes()["name"].String()
-			if z, err := strconv.Atoi(iValue); err == nil {
-				if y, err := strconv.Atoi(jValue); err == nil {
-					return y < z
-				}
-				return true
-			}
-			return iValue > jValue
-		})
-
-		resp.PlanValue = basetypes.NewListValueMust(resp.PlanValue.Elements()[0].Type(ctx), planSort)
-
-		return
-	}
-
-	// Do nothing if there is a known planned value.
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
-
-	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
-	if req.ConfigValue.IsUnknown() {
-		return
-	}
-
-	resp.PlanValue = req.StateValue
 }
 
 func NewPgdResource() resource.Resource {
