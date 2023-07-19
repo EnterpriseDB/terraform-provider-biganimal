@@ -760,6 +760,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			}
 			v.InstanceType = calWitnessResp.InstanceType
 			v.Storage = calWitnessResp.Storage
+			v.Phase = nil
+			v.Region = nil
+			v.Provider = nil
 			*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 		}
 	}
