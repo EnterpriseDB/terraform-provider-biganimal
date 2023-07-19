@@ -167,7 +167,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Current phase of the cluster group.",
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								plan_modifier.CustomPhaseForUnknown(),
 							},
 						},
 						"private_networking": schema.BoolAttribute{
