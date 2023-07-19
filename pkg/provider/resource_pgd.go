@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
@@ -78,7 +77,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Required:    true,
 				Sensitive:   true,
 			},
-			"data_groups": schema.ListNestedAttribute{
+			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
 				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -93,6 +92,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
 							Optional:    true,
+							PlanModifiers: []planmodifier.String{
+								plan_modifier.CustomStringDiff(),
+							},
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
@@ -184,7 +186,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								setplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"allowed_ip_ranges": schema.ListNestedAttribute{
+						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
 							Optional:    true,
 							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
@@ -200,11 +202,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									},
 								},
 							},
-							PlanModifiers: []planmodifier.List{
-								plan_modifier.CustomAllowedIps(),
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"pg_config": schema.ListNestedAttribute{
+						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
 							Optional:    true,
 							Computed:    true,
@@ -220,8 +222,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									},
 								},
 							},
-							PlanModifiers: []planmodifier.List{
-								plan_modifier.CustomPGConfig(),
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
 							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
@@ -355,11 +357,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						"conditions": schema.ListNestedAttribute{
+						"conditions": schema.SetNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
-							PlanModifiers: []planmodifier.List{
-								listplanmodifier.UseStateForUnknown(),
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
 							},
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -383,11 +385,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					},
 				},
 			},
-			"witness_groups": schema.ListNestedAttribute{
+			"witness_groups": schema.SetNestedAttribute{
 				Optional: true,
 				Computed: true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
