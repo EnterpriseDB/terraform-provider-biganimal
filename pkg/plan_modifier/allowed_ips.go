@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func CustomAllowedIps() planmodifier.Set {
@@ -25,10 +26,10 @@ func (m customAllowedIpsModifier) MarkdownDescription(_ context.Context) string 
 
 // PlanModifyList implements the plan modification logic.
 func (m customAllowedIpsModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
-	// if len(resp.PlanValue.Elements()) == 0 {
-	// 	resp.PlanValue = types.SetNull(resp.PlanValue.ElementType(ctx))
-	// 	return
-	// }
+	if len(resp.PlanValue.Elements()) == 0 {
+		resp.PlanValue = types.SetNull(resp.PlanValue.ElementType(ctx))
+		return
+	}
 
 	if req.StateValue.IsNull() {
 		return

@@ -13,8 +13,6 @@ type DataGroup struct {
 	Connection                 *ClusterConnection        `json:"connection,omitempty" tfsdk:"connection_uri"`
 	CreatedAt                  *PointInTime              `json:"createdAt,omitempty" tfsdk:"created_at"`
 	CspAuth                    *bool                     `json:"cspAuth,omitempty" tfsdk:"csp_auth"`
-	DeletedAt                  *PointInTime              `json:"deletedAt,omitempty" tfsdk:"deleted_at"`
-	ExpiredAt                  *PointInTime              `json:"expiredAt,omitempty" tfsdk:"expired_at"`
 	FirstRecoverabilityPointAt *PointInTime              `json:"firstRecoverabilityPointAt,omitempty" tfsdk:"first_recoverability_point_at"`
 	InstanceType               *InstanceType             `json:"instanceType,omitempty" tfsdk:"instance_type"`
 	LogsUrl                    *string                   `json:"logsUrl,omitempty" tfsdk:"logs_url"`

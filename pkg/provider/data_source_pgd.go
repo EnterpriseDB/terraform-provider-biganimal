@@ -84,14 +84,6 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Description: "Cluster creation time.",
 							Computed:    true,
 						},
-						"deleted_at": schema.StringAttribute{
-							Description: "Cluster deletion time.",
-							Optional:    true,
-						},
-						"expired_at": schema.StringAttribute{
-							Description: "Cluster expiry time.",
-							Optional:    true,
-						},
 						"first_recoverability_point_at": schema.StringAttribute{
 							Description: "Earliest backup recover time.",
 							Optional:    true,
@@ -310,7 +302,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
-							Computed:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
@@ -347,7 +339,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"cloud_provider": schema.SingleNestedAttribute{
 							Description: "Cloud provider.",
-							Computed:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"cloud_provider_id": schema.StringAttribute{
 									Description: "Cloud provider id.",
@@ -357,7 +349,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
-							Computed:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"instance_type_id": schema.StringAttribute{
 									Description: "Witness group instance type id.",
@@ -367,33 +359,36 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"storage": schema.SingleNestedAttribute{
 							Description: "Storage.",
-							Computed:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
+									Optional:    true,
 									Computed:    true,
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
+									Optional:    true,
 									Computed:    true,
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
+									Optional:    true,
 									Computed:    true,
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
-									Computed:    true,
+									Required:    true,
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
-									Computed:    true,
+									Required:    true,
 								},
 							},
 						},
 						"maintenance_window": schema.SingleNestedAttribute{
 							Description: "Custom maintenance window.",
-							Optional:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",

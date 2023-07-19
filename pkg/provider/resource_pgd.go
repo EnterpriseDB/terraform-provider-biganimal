@@ -118,22 +118,6 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								stringplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"deleted_at": schema.StringAttribute{
-							Description: "Cluster deletion time.",
-							Optional:    true,
-							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								plan_modifier.CustomStringForUnknown(),
-							},
-						},
-						"expired_at": schema.StringAttribute{
-							Description: "Cluster expiry time.",
-							Optional:    true,
-							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								plan_modifier.CustomStringForUnknown(),
-							},
-						},
 						"first_recoverability_point_at": schema.StringAttribute{
 							Description: "Earliest backup recover time.",
 							Optional:    true,
@@ -343,15 +327,15 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",
-									Optional:    true,
+									Required:    true,
 								},
 								"start_day": schema.Float64Attribute{
 									Description: "Start day.",
-									Optional:    true,
+									Required:    true,
 								},
 								"start_time": schema.StringAttribute{
 									Description: "Start time.",
-									Optional:    true,
+									Required:    true,
 								},
 							},
 						},

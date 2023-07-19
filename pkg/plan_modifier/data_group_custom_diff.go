@@ -27,6 +27,10 @@ func (m customDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 
 // PlanModifyList implements the plan modification logic.
 func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+	if req.StateValue.IsNull() {
+		return
+	}
+
 	planDgs := resp.PlanValue.Elements()
 	stateDgs := req.StateValue.Elements()
 
@@ -36,6 +40,11 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	}
 
 	for k, planDg := range planDgs {
+
+		if stateDgs == nil {
+			return
+		}
+
 		// allowed ips
 		planAllowedIps := planDg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
 		stateAllowedIps := stateDgs[k].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
