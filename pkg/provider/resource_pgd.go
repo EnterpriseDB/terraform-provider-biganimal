@@ -94,7 +94,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
-							Optional:    true,
+							Required:    true,
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
@@ -176,7 +176,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
-							Optional:    true,
+							Required:    true,
 						},
 						"resizing_pvc": schema.SetAttribute{
 							Description: "Resizing PVC.",
@@ -188,28 +188,26 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
-							Optional:    true,
-							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
+							Required:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"cidr_block": schema.StringAttribute{
 										Description: "CIDR block",
-										Optional:    true,
+										Required:    true,
 									},
 									"description": schema.StringAttribute{
 										Description: "Description of CIDR block",
-										Optional:    true,
+										Required:    true,
 									},
 								},
 							},
 							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.UseStateForUnknown(),
+								plan_modifier.CustomAllowedIps(),
 							},
 						},
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
-							Optional:    true,
-							Computed:    true,
+							Required:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
@@ -341,7 +339,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"maintenance_window": schema.SingleNestedAttribute{
 							Description: "Custom maintenance window.",
-							Optional:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",

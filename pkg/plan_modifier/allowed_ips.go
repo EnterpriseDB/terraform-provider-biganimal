@@ -3,12 +3,10 @@ package plan_modifier
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func CustomAllowedIps() planmodifier.List {
+func CustomAllowedIps() planmodifier.Set {
 	return customAllowedIpsModifier{}
 }
 
@@ -26,38 +24,13 @@ func (m customAllowedIpsModifier) MarkdownDescription(_ context.Context) string 
 }
 
 // PlanModifyList implements the plan modification logic.
-func (m customAllowedIpsModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
+func (m customAllowedIpsModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+	// if len(resp.PlanValue.Elements()) == 0 {
+	// 	resp.PlanValue = types.SetNull(resp.PlanValue.ElementType(ctx))
+	// 	return
+	// }
+
 	if req.StateValue.IsNull() {
-		return
-	}
-
-	if !req.StateValue.IsNull() {
-		configValue := req.ConfigValue.Elements()
-
-		// sort state the same as config
-		stateValue := req.StateValue.Elements()
-
-		newState := []attr.Value{}
-		for _, v := range configValue {
-			if allowedIpContains(stateValue, v) {
-				newState = append(newState, v)
-			}
-		}
-
-		req.StateValue = basetypes.NewListValueMust(newState[0].Type(ctx), newState)
-
-		// sort plan the same as config
-		planValue := resp.PlanValue.Elements()
-
-		newPlan := []attr.Value{}
-		for _, v := range configValue {
-			if allowedIpContains(planValue, v) {
-				newPlan = append(newPlan, v)
-			}
-		}
-
-		resp.PlanValue = basetypes.NewListValueMust(newPlan[0].Type(ctx), newPlan)
-
 		return
 	}
 
@@ -72,17 +45,4 @@ func (m customAllowedIpsModifier) PlanModifyList(ctx context.Context, req planmo
 	}
 
 	resp.PlanValue = req.StateValue
-}
-
-func allowedIpContains(s []attr.Value, e attr.Value) bool {
-	for _, a := range s {
-		aCidr := a.(basetypes.ObjectValue).Attributes()["cidr_block"].String()
-		eCidr := e.(basetypes.ObjectValue).Attributes()["cidr_block"].String()
-		aDesc := a.(basetypes.ObjectValue).Attributes()["description"].String()
-		eDesc := e.(basetypes.ObjectValue).Attributes()["description"].String()
-		if aCidr == eCidr && aDesc == eDesc {
-			return true
-		}
-	}
-	return false
 }

@@ -58,7 +58,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 				Description: "Show the most recent cluster when there are multiple clusters with the same name",
 				Optional:    true,
 			},
-			"data_groups": schema.ListNestedAttribute{
+			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
 				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -69,7 +69,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
-							Optional:    true,
+							Required:    true,
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
@@ -118,34 +118,32 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
-							Optional:    true,
+							Required:    true,
 						},
 						"resizing_pvc": schema.SetAttribute{
 							Description: "Resizing PVC.",
 							Computed:    true,
 							ElementType: types.StringType,
 						},
-						"allowed_ip_ranges": schema.ListNestedAttribute{
+						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
-							Optional:    true,
-							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
+							Required:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"cidr_block": schema.StringAttribute{
 										Description: "CIDR block",
-										Optional:    true,
+										Required:    true,
 									},
 									"description": schema.StringAttribute{
 										Description: "Description of CIDR block",
-										Optional:    true,
+										Required:    true,
 									},
 								},
 							},
 						},
-						"pg_config": schema.ListNestedAttribute{
+						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
-							Optional:    true,
-							Computed:    true,
+							Required:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
@@ -262,7 +260,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"maintenance_window": schema.SingleNestedAttribute{
 							Description: "Custom maintenance window.",
-							Optional:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",
@@ -278,7 +276,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"conditions": schema.ListNestedAttribute{
+						"conditions": schema.SetNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
@@ -297,7 +295,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 					},
 				},
 			},
-			"witness_groups": schema.ListNestedAttribute{
+			"witness_groups": schema.SetNestedAttribute{
 				Optional: true,
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
@@ -411,7 +409,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"conditions": schema.ListNestedAttribute{
+						"conditions": schema.SetNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
