@@ -146,7 +146,7 @@ func checkProviderConfig(data *providerData) (ok bool, summary, detail string) {
 		return false, "Unable to find BA_BEARER_TOKEN", "BA_BEARER_TOKEN cannot be an empty string"
 	}
 
-	if data.BaAPIUri == nil {
+	if data.BaAPIUri == nil || *data.BaAPIUri == "" {
 		url := os.Getenv("BA_API_URI")
 		data.BaAPIUri = &url
 	}
