@@ -510,15 +510,15 @@ resource "biganimal_pgd" "pgd_cluster" {
 ### Required
 
 - `cluster_name` (String) cluster name
+- `data_groups` (Attributes List) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 
 ### Optional
 
-- `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
 - `project_id` (String) BigAnimal Project ID.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
+- `witness_groups` (Attributes List) (see [below for nested schema](#nestedatt--witness_groups))
 
 ### Read-Only
 
@@ -541,7 +541,7 @@ Required:
 
 Optional:
 
-- `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
+- `allowed_ip_ranges` (Attributes List) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period
 - `cluster_type` (String) Type of the Specified Cluster
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
@@ -549,12 +549,12 @@ Optional:
 - `expired_at` (String) Cluster expiry time.
 - `first_recoverability_point_at` (String) Earliest backup recover time.
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--data_groups--maintenance_window))
-- `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--data_groups--pg_config))
+- `pg_config` (Attributes List) Database configuration parameters. (see [below for nested schema](#nestedatt--data_groups--pg_config))
 
 Read-Only:
 
 - `cluster_name` (String) Name of the group.
-- `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--data_groups--conditions))
+- `conditions` (Attributes List) Conditions. (see [below for nested schema](#nestedatt--data_groups--conditions))
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
 - `group_id` (String) Group ID of the group.
@@ -754,6 +754,6 @@ Read-Only:
 Import is supported using the following syntax:
 
 ```shell
-# terraform import biganimal_pgd.<resource_name> <cluster_id>/<project_id>
+# terraform import biganimal_pgd.<resource_name> <project_id>/<cluster_id>
 terraform import biganimal_pgd.pgd_cluster prj_deadbeef01234567/p-abcd123456
 ```
