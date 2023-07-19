@@ -58,7 +58,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 				Description: "Show the most recent cluster when there are multiple clusters with the same name",
 				Optional:    true,
 			},
-			"data_groups": schema.SetNestedAttribute{
+			"data_groups": schema.ListNestedAttribute{
 				Description: "Cluster data groups.",
 				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -125,7 +125,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Computed:    true,
 							ElementType: types.StringType,
 						},
-						"allowed_ip_ranges": schema.SetNestedAttribute{
+						"allowed_ip_ranges": schema.ListNestedAttribute{
 							Description: "Allowed IP ranges.",
 							Optional:    true,
 							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
@@ -142,7 +142,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"pg_config": schema.SetNestedAttribute{
+						"pg_config": schema.ListNestedAttribute{
 							Description: "Database configuration parameters.",
 							Optional:    true,
 							Computed:    true,
@@ -278,7 +278,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"conditions": schema.SetNestedAttribute{
+						"conditions": schema.ListNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
@@ -297,7 +297,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 					},
 				},
 			},
-			"witness_groups": schema.SetNestedAttribute{
+			"witness_groups": schema.ListNestedAttribute{
 				Optional: true,
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
@@ -411,7 +411,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"conditions": schema.SetNestedAttribute{
+						"conditions": schema.ListNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
