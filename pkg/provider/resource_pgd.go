@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
@@ -78,9 +77,12 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Required:    true,
 				Sensitive:   true,
 			},
-			"data_groups": schema.ListNestedAttribute{
+			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
 				Required:    true,
+				PlanModifiers: []planmodifier.Set{
+					plan_modifier.CustomDataGroupDiffConfig(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -184,7 +186,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								setplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"allowed_ip_ranges": schema.ListNestedAttribute{
+						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
 							Optional:    true,
 							Computed:    true, // need this as empty allowed ip ranges returns slice with 0.0.0.0/0
@@ -200,11 +202,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									},
 								},
 							},
-							PlanModifiers: []planmodifier.List{
-								plan_modifier.CustomAllowedIps(),
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"pg_config": schema.ListNestedAttribute{
+						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
 							Optional:    true,
 							Computed:    true,
@@ -220,8 +222,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									},
 								},
 							},
-							PlanModifiers: []planmodifier.List{
-								plan_modifier.CustomPGConfig(),
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
 							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
@@ -355,11 +357,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
-						"conditions": schema.ListNestedAttribute{
+						"conditions": schema.SetNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
-							PlanModifiers: []planmodifier.List{
-								listplanmodifier.UseStateForUnknown(),
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
 							},
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -383,11 +385,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					},
 				},
 			},
-			"witness_groups": schema.ListNestedAttribute{
+			"witness_groups": schema.SetNestedAttribute{
 				Optional: true,
 				Computed: true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -710,23 +712,10 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 }
 
 func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var config PGD
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	var plan PGD
-	diags = req.Plan.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if (len(config.DataGroups) > len(plan.DataGroups)) ||
-		(len(config.WitnessGroups) > len(plan.WitnessGroups)) {
-		resp.Diagnostics.AddError("Upscaling not supported", "Upscaling data groups and witness groups currently not supported")
 		return
 	}
 
@@ -802,15 +791,14 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		return
 	}
 
-	config.ID = plan.ClusterId
-	config.ClusterId = plan.ClusterId
+	plan.ID = plan.ClusterId
 
-	timeout, _ := config.Timeouts.Update(ctx, 60*time.Minute)
+	timeout, _ := plan.Timeouts.Update(ctx, 60*time.Minute)
 
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &config),
+		p.retryFuncAs(ctx, &plan),
 	)
 
 	if err != nil {
