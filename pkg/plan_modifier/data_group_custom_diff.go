@@ -53,7 +53,8 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		}
 
 		if stateDgKey == nil {
-			resp.Diagnostics.AddWarning("Data group not found", "Data group not found")
+			resp.Diagnostics.AddWarning("Data group not found", fmt.Sprintf("data group with region %v not found", planDg.(basetypes.ObjectValue).Attributes()["region"].String()))
+			continue
 		}
 
 		// allowed ips
