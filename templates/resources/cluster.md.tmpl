@@ -15,7 +15,8 @@
 {{ tffile "examples/resources/biganimal_cluster/ha/resource.tf" }}
 
 ## Extreme High Availability Cluster Example
-{{ tffile "examples/resources/biganimal_cluster/eha/resource.tf" }}
+
+-> Please use the `biganimal_pgd` resource to manage the Extreme High Availability clusters.
 
 {{ .SchemaMarkdown | trimspace }}
 {{- if .HasImport }}
