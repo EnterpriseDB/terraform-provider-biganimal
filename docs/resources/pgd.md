@@ -547,7 +547,6 @@ Required:
 Optional:
 
 - `cluster_type` (String) Type of the Specified Cluster
-- `first_recoverability_point_at` (String) Earliest backup recover time.
 
 Read-Only:
 
