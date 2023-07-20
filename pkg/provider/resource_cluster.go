@@ -8,17 +8,16 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"strings"
@@ -116,8 +115,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 			"storage": schema.SingleNestedBlock{
 				MarkdownDescription: "Storage.",
-
-				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"volume_properties": schema.StringAttribute{
 						MarkdownDescription: "Volume properties in accordance with the selected volume type.",
@@ -149,6 +147,41 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
+			"allowed_ip_ranges": schema.SetNestedBlock{
+				MarkdownDescription: "Allowed IP ranges.",
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				NestedObject: schema.NestedBlockObject{
+					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
+					Attributes: map[string]schema.Attribute{
+						"cidr_block": schema.StringAttribute{
+							MarkdownDescription: "CIDR block.",
+							Required:            true,
+						},
+						"description": schema.StringAttribute{
+							MarkdownDescription: "CIDR block description.",
+							Optional:            true,
+						},
+					},
+				},
+			},
+
+			"pg_config": schema.SetNestedBlock{
+				MarkdownDescription: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				NestedObject: schema.NestedBlockObject{
+					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "GUC name.",
+							Required:            true,
+						},
+						"value": schema.StringAttribute{
+							MarkdownDescription: "GUC value.",
+							Required:            true,
+						},
+					},
+				},
+			},
 
 			"cluster_architecture": schema.SingleNestedBlock{
 				MarkdownDescription: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
@@ -168,46 +201,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
-
-			"allowed_ip_ranges": schema.SetNestedBlock{
-				MarkdownDescription: "Allowed IP ranges.",
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
-				NestedObject: schema.NestedBlockObject{
-					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							MarkdownDescription: "CIDR block.",
-							Required:            true,
-						},
-						"description": schema.StringAttribute{
-							MarkdownDescription: "CIDR block description.",
-							Optional:            true,
-						},
-					},
-				},
-			},
-
-			"pg_config": schema.SetNestedBlock{
-				MarkdownDescription: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
-				NestedObject: schema.NestedBlockObject{
-					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							MarkdownDescription: "GUC name.",
-							Required:            true,
-						},
-						"value": schema.StringAttribute{
-							MarkdownDescription: "GUC value.",
-							Required:            true,
-						},
-					},
-				},
-			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -218,11 +211,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 
-			"expired_at": schema.StringAttribute{
-				MarkdownDescription: "Cluster expiry time.",
-				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
 			"cluster_id": schema.StringAttribute{
 				MarkdownDescription: "Cluster ID.",
 				Computed:            true,
@@ -273,11 +261,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: "Cloud provider. For example, \"aws\" or \"azure\".",
 				Required:            true,
 			},
-			"deleted_at": schema.StringAttribute{
-				MarkdownDescription: "Cluster deletion time.",
-				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
 				Required:            true,
@@ -309,7 +292,18 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
-
+			"deleted_at": schema.StringAttribute{
+				MarkdownDescription: "Cluster deletion time.",
+				Computed:            true,
+				Optional:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"expired_at": schema.StringAttribute{
+				MarkdownDescription: "Cluster expiry time.",
+				Computed:            true,
+				Optional:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 			"region": schema.StringAttribute{
 				MarkdownDescription: "Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.",
 				Required:            true,
@@ -336,6 +330,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"csp_auth": schema.BoolAttribute{
 				MarkdownDescription: "Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}
@@ -353,10 +349,9 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	clusterId, err := c.client.Create(ctx, config.ProjectId, makeClusterForCreate(config))
 	if err != nil {
-		if appendDiagFromBAErr(err, &resp.Diagnostics) {
-			return
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error creating cluster", err.Error())
 		}
-		diags.AddError("Error creating cluster", err.Error())
 		return
 	}
 
@@ -364,16 +359,29 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	timeout, diagnostics := config.Timeouts.Create(ctx, time.Minute*60)
 	resp.Diagnostics.Append(diagnostics...)
-
-	if err := c.ensureClusterIsHealthy(ctx, config, timeout); err != nil {
-		if appendDiagFromBAErr(err, &resp.Diagnostics) {
-			return
-		}
-		diags.AddError("Error waiting for the cluster is ready ", err.Error())
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(c.writeState(ctx, config, &resp.State)...)
+	if err := c.ensureClusterIsHealthy(ctx, config, timeout); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+		}
+		return
+	}
+
+	ipAllowedRangs := config.AllowedIpRanges
+	pgConfigs := config.PgConfig
+	if err := c.read(ctx, &config); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+	config.AllowedIpRanges = ipAllowedRangs
+	config.PgConfig = pgConfigs
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
 func (c *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -384,7 +392,14 @@ func (c *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	resp.Diagnostics.Append(c.writeState(ctx, state, &resp.State)...)
+	if err := c.read(ctx, &state); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -395,26 +410,35 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	_, err := c.client.Update(ctx, makeClusterFoUpdate(plan), plan.ProjectId, plan.ProjectId)
+	_, err := c.client.Update(ctx, makeClusterFoUpdate(plan), plan.ProjectId, *plan.ClusterId)
 	if err != nil {
-		if appendDiagFromBAErr(err, &resp.Diagnostics) {
-			return
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating cluster", err.Error())
 		}
-		diags.AddError("Error updating cluster", err.Error())
 		return
 	}
 
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
 	resp.Diagnostics.Append(diagnostics...)
 	if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
-		if appendDiagFromBAErr(err, &resp.Diagnostics) {
-			return
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
-		diags.AddError("Error waiting for the cluster is ready ", err.Error())
 		return
 	}
 
-	diags.Append(c.writeState(ctx, plan, &resp.State)...)
+	ipAllowedRangs := plan.AllowedIpRanges
+	pgConfigs := plan.PgConfig
+	if err := c.read(ctx, &plan); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+	plan.AllowedIpRanges = ipAllowedRangs
+	plan.PgConfig = pgConfigs
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (c *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -427,10 +451,9 @@ func (c *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	err := c.client.Delete(ctx, state.ProjectId, *state.ClusterId)
 	if err != nil {
-		if appendDiagFromBAErr(err, &resp.Diagnostics) {
-			return
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error deleting cluster", err.Error())
 		}
-		diags.AddError("Error deleting cluster", err.Error())
 		return
 	}
 }
@@ -450,28 +473,19 @@ func (c *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 
 }
 
-func (c *clusterResource) writeState(ctx context.Context, clusterResource ClusterResourceModel, state *tfsdk.State) diag.Diagnostics {
+func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterResourceModel) error {
 	cluster, err := c.client.Read(ctx, clusterResource.ProjectId, *clusterResource.ClusterId)
 	if err != nil {
-		diags := diag.Diagnostics{}
-		if appendDiagFromBAErr(err, &diags) {
-			return diags
-		}
-		diags.AddError("Error reading cluster", err.Error())
-		return diags
+		return err
 	}
 
 	connection, err := c.client.ConnectionString(ctx, clusterResource.ProjectId, *clusterResource.ClusterId)
 	if err != nil {
-		diags := diag.Diagnostics{}
-		if appendDiagFromBAErr(err, &diags) {
-			return diags
-		}
-		diags.AddError("Error reading cluster connection", err.Error())
-		return diags
+		return err
 	}
 
 	clusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", clusterResource.ProjectId, *clusterResource.ClusterId))
+	clusterResource.ClusterId = cluster.ClusterId
 	clusterResource.ClusterName = types.StringPointerValue(cluster.ClusterName)
 	clusterResource.ClusterType = cluster.ClusterType
 	clusterResource.Phase = cluster.Phase
@@ -491,12 +505,12 @@ func (c *clusterResource) writeState(ctx context.Context, clusterResource Cluste
 		Throughput:       types.StringPointerValue(cluster.Storage.Throughput),
 	}
 	clusterResource.ResizingPvc = StringSliceToList(cluster.ResizingPvc)
-	clusterResource.MetricsUrl = cluster.MetricsUrl
 	clusterResource.ReadOnlyConnections = types.BoolPointerValue(cluster.ReadOnlyConnections)
 	clusterResource.ConnectionUri = &connection.PgUri
 	clusterResource.RoConnectionUri = &connection.ReadOnlyPgUri
 	clusterResource.CspAuth = types.BoolPointerValue(cluster.CSPAuth)
 	clusterResource.LogsUrl = cluster.LogsUrl
+	clusterResource.MetricsUrl = cluster.MetricsUrl
 	clusterResource.BackupRetentionPeriod = types.StringPointerValue(cluster.BackupRetentionPeriod)
 	clusterResource.PgVersion = types.StringValue(cluster.PgVersion.PgVersionId)
 	clusterResource.PgType = types.StringValue(cluster.PgType.PgTypeId)
@@ -531,14 +545,18 @@ func (c *clusterResource) writeState(ctx context.Context, clusterResource Cluste
 	if pt := cluster.CreatedAt; pt != nil {
 		clusterResource.CreatedAt = types.StringValue(pt.String())
 	}
+
+	clusterResource.ExpiredAt = types.StringNull()
 	if pt := cluster.ExpiredAt; pt != nil {
 		clusterResource.ExpiredAt = types.StringValue(pt.String())
 	}
+
+	clusterResource.DeletedAt = types.StringNull()
 	if pt := cluster.DeletedAt; pt != nil {
 		clusterResource.DeletedAt = types.StringValue(pt.String())
 	}
 
-	return state.Set(ctx, clusterResource)
+	return nil
 }
 
 func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster ClusterResourceModel, timeout time.Duration) error {
@@ -559,7 +577,6 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 }
 
 func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
-	//isEnabled := false
 	cluster := models.Cluster{
 		ClusterName: clusterResource.ClusterName.ValueStringPointer(),
 		Password:    clusterResource.Password.ValueStringPointer(),
@@ -583,8 +600,6 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
-		LogsUrl:               clusterResource.LogsUrl,
-		MetricsUrl:            clusterResource.MetricsUrl,
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}
@@ -604,6 +619,7 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 		})
 	}
 	cluster.PgConfig = &configs
+
 	return cluster
 }
 

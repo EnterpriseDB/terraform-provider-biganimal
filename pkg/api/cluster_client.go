@@ -121,7 +121,6 @@ func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, proj
 	if err != nil {
 		return nil, err
 	}
-
 	body, err := c.doRequest(ctx, http.MethodPut, url, bytes.NewBuffer(b))
 	if err != nil {
 		return &models.Cluster{}, err
