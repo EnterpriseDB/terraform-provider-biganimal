@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
@@ -33,6 +34,19 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 	planDgs := resp.PlanValue.Elements()
 	stateDgs := req.StateValue.Elements()
+
+	newPlan := []attr.Value{}
+
+	// hack need to sort plan we are using a slice instead of type.Set. This is so the compare and value setting is correct
+	for _, sDg := range stateDgs {
+		for _, pDg := range planDgs {
+			if sDg.(basetypes.ObjectValue).Attributes()["region"].Equal(pDg.(basetypes.ObjectValue).Attributes()["region"]) {
+				newPlan = append(newPlan, pDg)
+			}
+		}
+	}
+
+	resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
 
 	if len(stateDgs) > len(planDgs) {
 		resp.Diagnostics.AddError("Upscaling not supported", "Upscaling data groups and witness groups currently not supported")
