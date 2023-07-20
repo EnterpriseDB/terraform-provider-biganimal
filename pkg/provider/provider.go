@@ -71,23 +71,19 @@ func NewSDKProvider(version string) func() *sdkschema.Provider {
 
 func configure(version string, p *sdkschema.Provider) func(context.Context, *sdkschema.ResourceData) (any, diag.Diagnostics) {
 	return func(ctx context.Context, schema *sdkschema.ResourceData) (any, diag.Diagnostics) {
-		ba_bearer_token := schema.Get("ba_bearer_token").(string)
-		ba_api_uri := schema.Get("ba_api_uri").(string)
-		// set our meta to be a new api.API
-		// this can be turned into concrete clients
-		// by
-		// api.BuildAPI(meta).ClusterClient()
-		// or
-		// api.BuildAPI(meta).RegionClient()
+		// If the credential data are provided inside a provider block, get them first
+		// If they are not provided, the schema_* credentials will be empty strings
+		schema_ba_bearer_token := schema.Get("ba_bearer_token").(string)
+		schema_ba_api_uri := schema.Get("ba_api_uri").(string)
 
-		data := &providerData{BaAPIUri: &ba_api_uri, BaBearerToken: &ba_bearer_token}
+		data := &providerData{BaAPIUri: &schema_ba_api_uri, BaBearerToken: &schema_ba_bearer_token}
 		ok, summary, detail := checkProviderConfig(data)
 		if !ok {
 			return nil, diag.Diagnostics{diag.Diagnostic{Severity: diag.Error, Summary: summary, Detail: detail}}
 		}
 
 		userAgent := fmt.Sprintf("%s/%s", "terraform-provider-biganimal", version)
-		return api.NewAPI(ba_bearer_token, ba_api_uri, userAgent), nil
+		return api.NewAPI(*data.BaBearerToken, *data.BaAPIUri, userAgent), nil
 	}
 }
 
@@ -136,6 +132,8 @@ func (b bigAnimalProvider) Configure(ctx context.Context, req provider.Configure
 	resp.DataSourceData = client
 }
 
+// Checks if the providerData is set.
+// If not, checks if the environment variables are set or throws an error
 func checkProviderConfig(data *providerData) (ok bool, summary, detail string) {
 	if data.BaBearerToken == nil || *data.BaBearerToken == "" {
 		token := os.Getenv("BA_BEARER_TOKEN")
@@ -146,7 +144,7 @@ func checkProviderConfig(data *providerData) (ok bool, summary, detail string) {
 		return false, "Unable to find BA_BEARER_TOKEN", "BA_BEARER_TOKEN cannot be an empty string"
 	}
 
-	if data.BaAPIUri == nil {
+	if data.BaAPIUri == nil || *data.BaAPIUri == "" {
 		url := os.Getenv("BA_API_URI")
 		data.BaAPIUri = &url
 	}
