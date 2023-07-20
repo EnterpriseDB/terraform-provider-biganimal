@@ -118,14 +118,6 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								stringplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"first_recoverability_point_at": schema.StringAttribute{
-							Description: "Earliest backup recover time.",
-							Optional:    true,
-							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								plan_modifier.CustomStringForUnknown(),
-							},
-						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
 							Computed:    true,

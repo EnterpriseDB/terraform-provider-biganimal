@@ -84,10 +84,6 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Description: "Cluster creation time.",
 							Computed:    true,
 						},
-						"first_recoverability_point_at": schema.StringAttribute{
-							Description: "Earliest backup recover time.",
-							Optional:    true,
-						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
 							Computed:    true,
