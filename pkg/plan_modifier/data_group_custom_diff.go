@@ -46,6 +46,11 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		}
 	}
 
+	if len(newPlan) == 0 {
+		resp.Diagnostics.AddError("Regions in plan not matching state", "no regions in plan matches state")
+		return
+	}
+
 	resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
 
 	if len(stateDgs) > len(planDgs) {
