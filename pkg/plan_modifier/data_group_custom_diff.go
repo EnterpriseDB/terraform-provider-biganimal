@@ -38,6 +38,7 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	newPlan := []attr.Value{}
 
 	// hack need to sort plan we are using a slice instead of type.Set. This is so the compare and value setting is correct
+	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	for _, sDg := range stateDgs {
 		for _, pDg := range planDgs {
 			if sDg.(basetypes.ObjectValue).Attributes()["region"].Equal(pDg.(basetypes.ObjectValue).Attributes()["region"]) {

@@ -28,6 +28,7 @@ func (m customAllowedIpsModifier) MarkdownDescription(_ context.Context) string 
 // PlanModifyList implements the plan modification logic.
 func (m customAllowedIpsModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	if len(resp.PlanValue.Elements()) == 0 {
+		// if plan value is [] the api will return 0.0.0.0/0
 		defaultAttrs := map[string]attr.Value{"cidr_block": basetypes.NewStringValue("0.0.0.0/0"), "description": basetypes.NewStringValue("")}
 		defaultAttrTypes := map[string]attr.Type{"cidr_block": defaultAttrs["cidr_block"].Type(ctx), "description": defaultAttrs["description"].Type(ctx)}
 
