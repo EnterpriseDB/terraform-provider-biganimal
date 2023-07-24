@@ -49,7 +49,8 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		}
 	}
 
-	if len(newPlan) == 0 {
+	// if the config/plan dgs count does not match with the expected count in the state dgs
+	if len(newPlan) != len(stateDgs) {
 		stateRegions := []attr.Value{}
 		planRegions := []attr.Value{}
 		for _, sDg := range stateDgs {
