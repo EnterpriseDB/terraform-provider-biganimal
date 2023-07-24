@@ -2,319 +2,402 @@ package provider
 
 import (
 	"context"
-	"errors"
-
+	"fmt"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kr/pretty"
+	"regexp"
 )
 
-type ClusterData struct{}
+var (
+	_ datasource.DataSource              = &clusterDataSource{}
+	_ datasource.DataSourceWithConfigure = &clusterDataSource{}
+)
 
-func NewClusterData() *ClusterData {
-	return &ClusterData{}
+type PgConfigResourceModel struct {
+	Value types.String `tfsdk:"value"`
+	Name  types.String `tfsdk:"name"`
 }
 
-func (c *ClusterData) Schema() *schema.Resource {
-	return &schema.Resource{
-		Description: "The cluster data source describes a BigAnimal cluster. The data source requires your cluster name.",
-		ReadContext: c.Read,
-		Schema: map[string]*schema.Schema{
-			"allowed_ip_ranges": {
-				Description: "Allowed IP ranges.",
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"cidr_block": {
-							Description: "CIDR block.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"description": {
-							Description: "CIDR block description.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-					},
+type StorageResourceModel struct {
+	Throughput       types.String `tfsdk:"throughput"`
+	VolumeProperties types.String `tfsdk:"volume_properties"`
+	VolumeType       types.String `tfsdk:"volume_type"`
+	Iops             types.String `tfsdk:"iops"`
+	Size             types.String `tfsdk:"size"`
+}
+
+type ClusterArchitectureResourceModel struct {
+	Nodes types.Int64  `tfsdk:"nodes"`
+	Id    types.String `tfsdk:"id"`
+	Name  types.String `tfsdk:"name"`
+}
+
+type clusterDatasourceModel struct {
+	ID                         types.String                      `tfsdk:"id"`
+	AllowedIpRanges            []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
+	BackupRetentionPeriod      types.String                      `tfsdk:"backup_retention_period"`
+	CreatedAt                  types.String                      `tfsdk:"created_at"`
+	InstanceType               types.String                      `tfsdk:"instance_type"`
+	ClusterName                types.String                      `tfsdk:"cluster_name"`
+	FarawayReplicaIds          []string                          `tfsdk:"faraway_replica_ids"`
+	LogsUrl                    types.String                      `tfsdk:"logs_url"`
+	MostRecent                 types.Bool                        `tfsdk:"most_recent"`
+	ClusterId                  types.String                      `tfsdk:"cluster_id"`
+	PgConfig                   []PgConfigResourceModel           `tfsdk:"pg_config"`
+	ExpiredAt                  types.String                      `tfsdk:"expired_at"`
+	ReadOnlyConnections        types.Bool                        `tfsdk:"read_only_connections"`
+	ResizingPvc                []string                          `tfsdk:"resizing_pvc"`
+	CspAuth                    types.Bool                        `tfsdk:"csp_auth"`
+	MetricsUrl                 types.String                      `tfsdk:"metrics_url"`
+	CloudProvider              types.String                      `tfsdk:"cloud_provider"`
+	Storage                    *StorageResourceModel             `tfsdk:"storage"`
+	RoConnectionUri            types.String                      `tfsdk:"ro_connection_uri"`
+	PrivateNetworking          types.Bool                        `tfsdk:"private_networking"`
+	PgType                     types.String                      `tfsdk:"pg_type"`
+	PgVersion                  types.String                      `tfsdk:"pg_version"`
+	ClusterArchitecture        *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
+	ProjectId                  types.String                      `tfsdk:"project_id"`
+	ClusterType                types.String                      `tfsdk:"cluster_type"`
+	Phase                      types.String                      `tfsdk:"phase"`
+	DeletedAt                  types.String                      `tfsdk:"deleted_at"`
+	ConnectionUri              types.String                      `tfsdk:"connection_uri"`
+	Region                     types.String                      `tfsdk:"region"`
+	FirstRecoverabilityPointAt types.String                      `tfsdk:"first_recoverability_point_at"`
+}
+
+type AllowedIpRangesResourceModel struct {
+	CidrBlock   types.String `tfsdk:"cidr_block"`
+	Description types.String `tfsdk:"description"`
+}
+
+type clusterDataSource struct {
+	client *api.ClusterClient
+}
+
+func (c *clusterDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_cluster"
+
+}
+
+// Configure adds the provider configured client to the data source.
+func (c *clusterDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	c.client = req.ProviderData.(*api.API).ClusterClient()
+}
+
+func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "The cluster data source describes a BigAnimal cluster. The data source requires your cluster name.",
+		Attributes: map[string]schema.Attribute{
+			"project_id": schema.StringAttribute{
+				MarkdownDescription: "BigAnimal Project ID.",
+				Required:            true,
+			},
+
+			"cluster_name": schema.StringAttribute{
+				MarkdownDescription: "Name of the cluster.",
+				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile(`^\S+$`), "Cluster name should not be an empty string"),
 				},
 			},
-			"backup_retention_period": {
-				Description: "Backup retention period.",
-				Type:        schema.TypeString,
+			"most_recent": schema.BoolAttribute{
+				MarkdownDescription: "Show the most recent cluster when there are multiple clusters with the same name.",
+				Optional:            true,
+			},
+
+			"id": schema.StringAttribute{
+				Description: "Datasource ID.",
 				Computed:    true,
 			},
-			"cluster_architecture": {
-				Description: "Cluster architecture.",
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Description: "Cluster architecture ID.",
-							Type:        schema.TypeString,
-							Computed:    true,
+
+			"allowed_ip_ranges": schema.SetNestedAttribute{
+				MarkdownDescription: "Allowed IP ranges.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"cidr_block": schema.StringAttribute{
+							MarkdownDescription: "CIDR block.",
+							Computed:            true,
 						},
-						"name": {
-							Description: "Name.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"nodes": {
-							Description: "Node count.",
-							Type:        schema.TypeInt,
-							Computed:    true,
+						"description": schema.StringAttribute{
+							MarkdownDescription: "CIDR block description.",
+							Computed:            true,
 						},
 					},
 				},
 			},
 
-			"cluster_name": {
-				Description:      "Name of the cluster.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validateClusterName,
+			"backup_retention_period": schema.StringAttribute{
+				MarkdownDescription: "Backup retention period.",
+				Computed:            true,
 			},
-
-			"cluster_type": {
-				Description: "Type of the Specified Cluster.",
-				Type:        schema.TypeString,
+			"created_at": schema.StringAttribute{
+				MarkdownDescription: "Cluster creation time.",
+				Computed:            true,
+			},
+			"instance_type": schema.StringAttribute{
+				MarkdownDescription: "Instance type.",
+				Computed:            true,
+			},
+			"faraway_replica_ids": schema.SetAttribute{
 				Computed:    true,
-			},
-
-			"most_recent": {
-				Description: "Show the most recent cluster when there are multiple clusters with the same name.",
-				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
+				ElementType: types.StringType,
 			},
-			"created_at": {
-				Description: "Cluster creation time.",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"logs_url": schema.StringAttribute{
+				MarkdownDescription: "The URL to find the logs of this cluster.",
+				Computed:            true,
 			},
-			"deleted_at": {
-				Description: "Cluster deletion time.",
-				Type:        schema.TypeString,
-				Computed:    true,
+
+			"cluster_id": schema.StringAttribute{
+				MarkdownDescription: "Cluster ID.",
+				Computed:            true,
 			},
-			"expired_at": {
-				Description: "Cluster expiry time.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"first_recoverability_point_at": {
-				Description: "Earliest backup recover time.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"instance_type": {
-				Description: "Instance type.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"logs_url": {
-				Description: "The URL to find the logs of this cluster.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"metrics_url": {
-				Description: "The URL to find the metrics of this cluster.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"cluster_id": {
-				Description: "Cluster ID.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"connection_uri": {
-				Description: "Cluster connection URI.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"ro_connection_uri": {
-				Description: "Cluster read-only connection URI. Only available for high availability clusters.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"pg_config": {
-				Description: "Database configuration parameters.",
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Description: "GUC name.",
-							Type:        schema.TypeString,
-							Computed:    true,
+			"pg_config": schema.SetNestedAttribute{
+				MarkdownDescription: "Database configuration parameters.",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "GUC name.",
+							Computed:            true,
 						},
-						"value": {
-							Description: "GUC value.",
-							Type:        schema.TypeString,
-							Computed:    true,
+						"value": schema.StringAttribute{
+							MarkdownDescription: "GUC value.",
+							Computed:            true,
 						},
 					},
 				},
 			},
-			"pg_type": {
-				Description: "Postgres type.",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"expired_at": schema.StringAttribute{
+				MarkdownDescription: "Cluster expiry time.",
+				Computed:            true,
 			},
-			"pg_version": {
-				Description: "Postgres version.",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"read_only_connections": schema.BoolAttribute{
+				MarkdownDescription: "Is read only connection enabled.",
+				Computed:            true,
 			},
-			"phase": {
-				Description: "Current phase of the cluster.",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"resizing_pvc": schema.ListAttribute{
+				MarkdownDescription: "Resizing PVC.",
+				Computed:            true,
+				ElementType:         types.StringType,
 			},
-			"private_networking": {
-				Description: "Is private networking enabled.",
-				Type:        schema.TypeBool,
-				Computed:    true,
+			"csp_auth": schema.BoolAttribute{
+				MarkdownDescription: "Is authentication handled by the cloud service provider.",
+				Computed:            true,
 			},
-			"project_id": {
-				Description:      "BigAnimal Project ID.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validateProjectId,
+			"metrics_url": schema.StringAttribute{
+				MarkdownDescription: "The URL to find the metrics of this cluster.",
+				Computed:            true,
 			},
-			"cloud_provider": {
-				Description: "Cloud provider.",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"cloud_provider": schema.StringAttribute{
+				MarkdownDescription: "Cloud provider.",
+				Computed:            true,
 			},
-			"read_only_connections": {
-				Description: "Is read only connection enabled.",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
-			"csp_auth": {
-				Description: "Is authentication handled by the cloud service provider.",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
-			"region": {
-				Description: "Region to deploy the cluster.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"resizing_pvc": {
-				Description: "Resizing PVC.",
-				Type:        schema.TypeList,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Computed: true,
-			},
-			"storage": {
-				Description: "Storage.",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"iops": {
-							Description: "IOPS for the selected volume.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"size": {
-							Description: "Size of the volume.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"throughput": {
-							Description: "Throughput.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"volume_properties": {
-							Description: "Volume properties.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"volume_type": {
-							Description: "Volume type.",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
+			"storage": schema.SingleNestedAttribute{
+				MarkdownDescription: "Storage.",
+				Computed:            true,
+				Attributes: map[string]schema.Attribute{
+					"volume_properties": schema.StringAttribute{
+						MarkdownDescription: "Volume properties.",
+						Computed:            true,
+					},
+					"volume_type": schema.StringAttribute{
+						MarkdownDescription: "Volume type.",
+						Computed:            true,
+					},
+					"iops": schema.StringAttribute{
+						MarkdownDescription: "IOPS for the selected volume.",
+						Computed:            true,
+					},
+					"size": schema.StringAttribute{
+						MarkdownDescription: "Size of the volume.",
+						Computed:            true,
+					},
+					"throughput": schema.StringAttribute{
+						MarkdownDescription: "Throughput.",
+						Computed:            true,
 					},
 				},
 			},
-			"faraway_replica_ids": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
+
+			"ro_connection_uri": schema.StringAttribute{
+				MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
+				Computed:            true,
+			},
+			"private_networking": schema.BoolAttribute{
+				MarkdownDescription: "Is private networking enabled.",
+				Computed:            true,
+			},
+			"pg_type": schema.StringAttribute{
+				MarkdownDescription: "Postgres type.",
+				Computed:            true,
+			},
+			"pg_version": schema.StringAttribute{
+				MarkdownDescription: "Postgres version.",
+				Computed:            true,
+			},
+			"cluster_architecture": schema.SingleNestedAttribute{
+				Computed:            true,
+				MarkdownDescription: "Cluster architecture.",
+				Attributes: map[string]schema.Attribute{
+					"nodes": schema.Int64Attribute{
+						MarkdownDescription: "Node count.",
+						Computed:            true,
+					},
+					"id": schema.StringAttribute{
+						MarkdownDescription: "Cluster architecture ID.",
+						Computed:            true,
+					},
+					"name": schema.StringAttribute{
+						MarkdownDescription: "Name.",
+						Computed:            true,
+					},
 				},
+			},
+			"cluster_type": schema.StringAttribute{
+				MarkdownDescription: "Type of the Specified Cluster.",
+				Computed:            true,
+			},
+			"phase": schema.StringAttribute{
+				MarkdownDescription: "Current phase of the cluster.",
+				Computed:            true,
+			},
+			"deleted_at": schema.StringAttribute{
+				MarkdownDescription: "Cluster deletion time.",
+				Computed:            true,
+			},
+			"connection_uri": schema.StringAttribute{
+				MarkdownDescription: "Cluster connection URI.",
+				Computed:            true,
+			},
+			"region": schema.StringAttribute{
+				MarkdownDescription: "Region to deploy the cluster.",
+				Computed:            true,
+			},
+			"first_recoverability_point_at": schema.StringAttribute{
+				MarkdownDescription: "Earliest backup recover time.",
+				Computed:            true,
 			},
 		},
 	}
+
 }
 
-func (c *ClusterData) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	diags := diag.Diagnostics{}
-	client := api.BuildAPI(meta).ClusterClient()
-
-	clusterName, ok := d.Get("cluster_name").(string)
-	if !ok {
-		return diag.FromErr(errors.New("unable to find cluster name"))
+func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	tflog.Error(ctx, "starting")
+	var data clusterDatasourceModel
+	diags := req.Config.Get(ctx, &data)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	projectId := d.Get("project_id").(string)
-	mostRecent := d.Get("most_recent").(bool)
 
-	cluster, err := client.ReadByName(ctx, projectId, clusterName, mostRecent)
+	tflog.Debug(ctx, "read cluster data source")
+
+	cluster, err := c.client.ReadByName(ctx, data.ProjectId.ValueString(), data.ClusterName.ValueString(), data.MostRecent.ValueBool())
 	if err != nil {
-		return fromBigAnimalErr(err)
-	}
-	tflog.Debug(ctx, pretty.Sprint(cluster))
-
-	if *cluster.ClusterType != "cluster" {
-		return diag.FromErr(errors.New("this is a 'faraway replica', and not a cluster, please use the 'biganimal_faraway_replica' data source to fetch details about this cluster"))
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
 	}
 
-	connection, err := client.ConnectionString(ctx, projectId, *cluster.ClusterId)
+	connection, err := c.client.ConnectionString(ctx, data.ProjectId.ValueString(), data.ClusterId.ValueString())
 	if err != nil {
-		return diag.FromErr(err)
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
 	}
 
-	// set the outputs
-	utils.SetOrPanic(d, "cluster_type", cluster.ClusterType)
-	utils.SetOrPanic(d, "allowed_ip_ranges", cluster.AllowedIpRanges)
-	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod)
-	utils.SetOrPanic(d, "cluster_architecture", *cluster.ClusterArchitecture)
-	utils.SetOrPanic(d, "created_at", cluster.CreatedAt)
-	utils.SetOrPanic(d, "csp_auth", cluster.CSPAuth)
-	utils.SetOrPanic(d, "deleted_at", cluster.DeletedAt)
-	utils.SetOrPanic(d, "expired_at", cluster.ExpiredAt)
-	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)
-	utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt)
-	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)
-	utils.SetOrPanic(d, "logs_url", cluster.LogsUrl)
-	utils.SetOrPanic(d, "metrics_url", cluster.MetricsUrl)
-	utils.SetOrPanic(d, "pg_config", cluster.PgConfig)
-	utils.SetOrPanic(d, "pg_type", cluster.PgType)
-	utils.SetOrPanic(d, "pg_version", cluster.PgVersion)
-	utils.SetOrPanic(d, "phase", cluster.Phase)
-	utils.SetOrPanic(d, "private_networking", cluster.PrivateNetworking)
-	utils.SetOrPanic(d, "cloud_provider", cluster.Provider)
-	utils.SetOrPanic(d, "region", cluster.Region)
-	utils.SetOrPanic(d, "storage", *cluster.Storage)
-	utils.SetOrPanic(d, "read_only_connections", cluster.ReadOnlyConnections)
-	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc)
-	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)
-	utils.SetOrPanic(d, "connection_uri", connection.PgUri)
-	utils.SetOrPanic(d, "ro_connection_uri", connection.ReadOnlyPgUri)
-	utils.SetOrPanic(d, "faraway_replica_ids", cluster.FarawayReplicaIds)
+	data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.ProjectId.ValueString(), data.ClusterId.ValueString()))
+	data.ClusterId = types.StringPointerValue(cluster.ClusterId)
+	data.ClusterName = types.StringPointerValue(cluster.ClusterName)
+	data.ClusterType = types.StringPointerValue(cluster.ClusterType)
+	data.Phase = types.StringPointerValue(cluster.Phase)
+	data.CloudProvider = types.StringValue(cluster.Provider.CloudProviderId)
+	data.ClusterArchitecture = &ClusterArchitectureResourceModel{
+		Id:    types.StringValue(cluster.ClusterArchitecture.ClusterArchitectureId),
+		Nodes: types.Int64Value(int64(cluster.ClusterArchitecture.Nodes)),
+		Name:  types.StringValue(cluster.ClusterArchitecture.ClusterArchitectureName),
+	}
+	data.Region = types.StringValue(cluster.Region.Id)
+	data.InstanceType = types.StringValue(cluster.InstanceType.InstanceTypeId)
+	data.Storage = &StorageResourceModel{
+		VolumeType:       types.StringValue(cluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringValue(cluster.Storage.VolumePropertiesId),
+		Size:             types.StringPointerValue(cluster.Storage.Size),
+		Iops:             types.StringPointerValue(cluster.Storage.Iops),
+		Throughput:       types.StringPointerValue(cluster.Storage.Throughput),
+	}
+	data.ResizingPvc = cluster.ResizingPvc
+	data.ReadOnlyConnections = types.BoolPointerValue(cluster.ReadOnlyConnections)
+	data.ConnectionUri = types.StringValue(connection.PgUri)
+	data.RoConnectionUri = types.StringValue(connection.ReadOnlyPgUri)
+	data.CspAuth = types.BoolPointerValue(cluster.CSPAuth)
+	data.LogsUrl = types.StringPointerValue(cluster.LogsUrl)
+	data.MetricsUrl = types.StringPointerValue(cluster.MetricsUrl)
+	data.BackupRetentionPeriod = types.StringPointerValue(cluster.BackupRetentionPeriod)
+	data.PgVersion = types.StringValue(cluster.PgVersion.PgVersionId)
+	data.PgType = types.StringValue(cluster.PgType.PgTypeId)
+	data.PrivateNetworking = types.BoolPointerValue(cluster.PrivateNetworking)
 
-	d.SetId(*cluster.ClusterId)
+	if cluster.FarawayReplicaIds != nil {
+		data.FarawayReplicaIds = *cluster.FarawayReplicaIds
+	}
 
-	return diags
+	if cluster.FirstRecoverabilityPointAt != nil {
+		data.FirstRecoverabilityPointAt = types.StringValue(cluster.FirstRecoverabilityPointAt.String())
+	}
+
+	data.PgConfig = []PgConfigResourceModel{}
+	if configs := cluster.PgConfig; configs != nil {
+		for _, kv := range *configs {
+			data.PgConfig = append(data.PgConfig, PgConfigResourceModel{
+				Name:  types.StringValue(kv.Name),
+				Value: types.StringValue(kv.Value),
+			})
+		}
+	}
+
+	data.AllowedIpRanges = []AllowedIpRangesResourceModel{}
+	if allowedIpRanges := cluster.AllowedIpRanges; allowedIpRanges != nil {
+		for _, ipRange := range *allowedIpRanges {
+			data.AllowedIpRanges = append(data.AllowedIpRanges, AllowedIpRangesResourceModel{
+				CidrBlock:   types.StringValue(ipRange.CidrBlock),
+				Description: types.StringValue(ipRange.Description),
+			})
+		}
+	}
+
+	if pt := cluster.CreatedAt; pt != nil {
+		data.CreatedAt = types.StringValue(pt.String())
+	}
+
+	data.ExpiredAt = types.StringNull()
+	if pt := cluster.ExpiredAt; pt != nil {
+		data.ExpiredAt = types.StringValue(pt.String())
+	}
+
+	data.DeletedAt = types.StringNull()
+	if pt := cluster.DeletedAt; pt != nil {
+		data.DeletedAt = types.StringValue(pt.String())
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+}
+
+func NewClusterDataSource() datasource.DataSource {
+	return &clusterDataSource{}
 }
