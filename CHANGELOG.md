@@ -1,3 +1,14 @@
+## v0.5.0 (July 24. 2023)
+Features:
+* New Data Source: `biganimal_pgd`
+* New Resource to manage BigAnimal Extreme High Availability clusters: `biganimal_pgd`
+* Projects, Regions and PGD resources can now be imported.
+
+Enhancements:
+* Dependency updates.
+* `biganimal_project` and `biganimal_region` resources and `biganimal_projects` and `biganimal_region` data sources are migrated to use the new Terraform Plugin Framework Library.
+* Various CI improvements
+
 ## v0.4.2 (June 6. 2023)
 Bug Fixes:
 * Regression fix for Faraway Replicas

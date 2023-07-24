@@ -12,7 +12,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.4.2"
+      version = "0.5.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -106,7 +106,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.4.2"
+      version = "0.5.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -261,7 +261,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.4.2"
+      version = "0.5.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -337,11 +337,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         cloud_provider_id = "aws"
       }
       region = {
-        region_id = "eu-west-1"
+        region_id = "eu-central-1"
       }
       maintenance_window = {
         is_enabled = true
-        start_day  = 1
+        start_day  = 6
         start_time = "13:00"
       }
     }
@@ -355,7 +355,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.4.2"
+      version = "0.5.0"
     }
     random = {
       source  = "hashicorp/random"
