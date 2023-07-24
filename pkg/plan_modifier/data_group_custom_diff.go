@@ -39,16 +39,10 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 	// hack need to sort plan we are using a slice instead of type.Set. This is so the compare and value setting is correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
-	stateRegions := []attr.Value{}
-	planRegions := []attr.Value{}
 	for _, sDg := range stateDgs {
 		for _, pDg := range planDgs {
 			stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
 			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
-
-			stateRegions = append(stateRegions, stateRegion)
-			planRegions = append(planRegions, planRegion)
-
 			if stateRegion.Equal(planRegion) {
 				newPlan = append(newPlan, pDg)
 			}
@@ -56,7 +50,17 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	}
 
 	if len(newPlan) == 0 {
-		resp.Diagnostics.AddError("Regions in config not matching state", fmt.Sprintf("config regions: %v not matching any expected state regions: %v", planRegions, stateRegions))
+		stateRegions := []attr.Value{}
+		planRegions := []attr.Value{}
+		for _, sDg := range stateDgs {
+			stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
+			stateRegions = append(stateRegions, stateRegion)
+		}
+		for _, pDg := range planDgs {
+			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
+			planRegions = append(planRegions, planRegion)
+		}
+		resp.Diagnostics.AddError("Regions in config not matching state", fmt.Sprintf("config regions: %v expected to match state regions: %v", planRegions, stateRegions))
 		return
 	}
 
