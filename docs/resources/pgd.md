@@ -552,12 +552,12 @@ Read-Only:
 
 - `cluster_name` (String) Name of the group.
 - `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--data_groups--conditions))
-- `connection_uri` (String) Cluster connection URI.
+- `connection_uri` (String) Data group connection URI.
 - `created_at` (String) Cluster creation time.
 - `group_id` (String) Group ID of the group.
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
-- `phase` (String) Current phase of the cluster group.
+- `phase` (String) Current phase of the data group.
 - `resizing_pvc` (Set of String) Resizing PVC.
 
 <a id="nestedatt--data_groups--allowed_ip_ranges"></a>
@@ -591,7 +591,7 @@ Optional:
 
 Read-Only:
 
-- `cluster_architecture_name` (String) Name.
+- `cluster_architecture_name` (String) Cluster architecture name.
 
 
 <a id="nestedatt--data_groups--instance_type"></a>
@@ -697,7 +697,7 @@ Read-Only:
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
-- `phase` (String) Phase.
+- `phase` (String) Current phase of the witness group.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--witness_groups--storage))
 
 <a id="nestedatt--witness_groups--region"></a>

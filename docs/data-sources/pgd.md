@@ -86,58 +86,52 @@ terraform {
 ### Required
 
 - `cluster_name` (String) cluster name
+- `project_id` (String) BigAnimal Project ID.
 
 ### Optional
 
-- `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
-- `project_id` (String) BigAnimal Project ID.
-- `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
 
 ### Read-Only
 
 - `cluster_id` (String) Cluster ID.
+- `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `id` (String) The ID of this resource.
+- `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
 
 <a id="nestedatt--data_groups"></a>
 ### Nested Schema for `data_groups`
 
-Required:
+Read-Only:
 
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--data_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--data_groups--cluster_architecture))
-- `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
-- `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--data_groups--instance_type))
-- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--data_groups--maintenance_window))
-- `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--data_groups--pg_config))
-- `pg_type` (Attributes) Postgres type. (see [below for nested schema](#nestedatt--data_groups--pg_type))
-- `pg_version` (Attributes) Postgres version. (see [below for nested schema](#nestedatt--data_groups--pg_version))
-- `private_networking` (Boolean) Is private networking enabled.
-- `region` (Attributes) Region. (see [below for nested schema](#nestedatt--data_groups--region))
-- `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--data_groups--storage))
-
-Optional:
-
-- `cluster_type` (String) Type of the Specified Cluster
-
-Read-Only:
-
 - `cluster_name` (String) Name of the group.
+- `cluster_type` (String) Type of the Specified Cluster
 - `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--data_groups--conditions))
 - `connection_uri` (String) Data group connection URI.
 - `created_at` (String) Cluster creation time.
+- `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
 - `group_id` (String) Group ID of the group.
+- `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--data_groups--instance_type))
 - `logs_url` (String) The URL to find the logs of this cluster.
+- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--data_groups--maintenance_window))
 - `metrics_url` (String) The URL to find the metrics of this cluster.
+- `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--data_groups--pg_config))
+- `pg_type` (Attributes) Postgres type. (see [below for nested schema](#nestedatt--data_groups--pg_type))
+- `pg_version` (Attributes) Postgres version. (see [below for nested schema](#nestedatt--data_groups--pg_version))
 - `phase` (String) Current phase of the cluster group.
+- `private_networking` (Boolean) Is private networking enabled.
+- `region` (Attributes) Region. (see [below for nested schema](#nestedatt--data_groups--region))
 - `resizing_pvc` (Set of String) Resizing PVC.
+- `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--data_groups--storage))
 
 <a id="nestedatt--data_groups--allowed_ip_ranges"></a>
 ### Nested Schema for `data_groups.allowed_ip_ranges`
 
-Required:
+Read-Only:
 
 - `cidr_block` (String) CIDR block
 - `description` (String) Description of CIDR block
@@ -146,7 +140,7 @@ Required:
 <a id="nestedatt--data_groups--cloud_provider"></a>
 ### Nested Schema for `data_groups.cloud_provider`
 
-Required:
+Read-Only:
 
 - `cloud_provider_id` (String) Data group cloud provider id.
 
@@ -154,84 +148,12 @@ Required:
 <a id="nestedatt--data_groups--cluster_architecture"></a>
 ### Nested Schema for `data_groups.cluster_architecture`
 
-Required:
-
-- `cluster_architecture_id` (String) Cluster architecture ID.
-- `nodes` (Number) Node count.
-
-Optional:
-
-- `witness_nodes` (Number) Witness nodes count.
-
 Read-Only:
 
-- `cluster_architecture_name` (String) Name.
-
-
-<a id="nestedatt--data_groups--instance_type"></a>
-### Nested Schema for `data_groups.instance_type`
-
-Required:
-
-- `instance_type_id` (String) Data group instance type id.
-
-
-<a id="nestedatt--data_groups--maintenance_window"></a>
-### Nested Schema for `data_groups.maintenance_window`
-
-Optional:
-
-- `is_enabled` (Boolean) Is maintenance window enabled.
-- `start_day` (Number) Start day.
-- `start_time` (String) Start time.
-
-
-<a id="nestedatt--data_groups--pg_config"></a>
-### Nested Schema for `data_groups.pg_config`
-
-Required:
-
-- `name` (String) GUC name.
-- `value` (String) GUC value.
-
-
-<a id="nestedatt--data_groups--pg_type"></a>
-### Nested Schema for `data_groups.pg_type`
-
-Required:
-
-- `pg_type_id` (String) Data group pg type id.
-
-
-<a id="nestedatt--data_groups--pg_version"></a>
-### Nested Schema for `data_groups.pg_version`
-
-Required:
-
-- `pg_version_id` (String) Data group pg version id.
-
-
-<a id="nestedatt--data_groups--region"></a>
-### Nested Schema for `data_groups.region`
-
-Required:
-
-- `region_id` (String) Data group region id.
-
-
-<a id="nestedatt--data_groups--storage"></a>
-### Nested Schema for `data_groups.storage`
-
-Required:
-
-- `volume_properties` (String) Volume properties.
-- `volume_type` (String) Volume type.
-
-Optional:
-
-- `iops` (String) IOPS for the selected volume.
-- `size` (String) Size of the volume.
-- `throughput` (String) Throughput.
+- `cluster_architecture_id` (String) Cluster architecture ID.
+- `cluster_architecture_name` (String) Cluster architecture name.
+- `nodes` (Number) Node count.
+- `witness_nodes` (Number) Witness nodes count.
 
 
 <a id="nestedatt--data_groups--conditions"></a>
@@ -243,28 +165,86 @@ Read-Only:
 - `type` (String) Type
 
 
+<a id="nestedatt--data_groups--instance_type"></a>
+### Nested Schema for `data_groups.instance_type`
+
+Read-Only:
+
+- `instance_type_id` (String) Data group instance type id.
+
+
+<a id="nestedatt--data_groups--maintenance_window"></a>
+### Nested Schema for `data_groups.maintenance_window`
+
+Read-Only:
+
+- `is_enabled` (Boolean) Is maintenance window enabled.
+- `start_day` (Number) Start day.
+- `start_time` (String) Start time.
+
+
+<a id="nestedatt--data_groups--pg_config"></a>
+### Nested Schema for `data_groups.pg_config`
+
+Read-Only:
+
+- `name` (String) GUC name.
+- `value` (String) GUC value.
+
+
+<a id="nestedatt--data_groups--pg_type"></a>
+### Nested Schema for `data_groups.pg_type`
+
+Read-Only:
+
+- `pg_type_id` (String) Data group pg type id.
+
+
+<a id="nestedatt--data_groups--pg_version"></a>
+### Nested Schema for `data_groups.pg_version`
+
+Read-Only:
+
+- `pg_version_id` (String) Data group pg version id.
+
+
+<a id="nestedatt--data_groups--region"></a>
+### Nested Schema for `data_groups.region`
+
+Read-Only:
+
+- `region_id` (String) Data group region id.
+
+
+<a id="nestedatt--data_groups--storage"></a>
+### Nested Schema for `data_groups.storage`
+
+Required:
+
+- `volume_type` (String) Volume type.
+
+Read-Only:
+
+- `iops` (String) IOPS for the selected volume.
+- `size` (String) Size of the volume.
+- `throughput` (String) Throughput.
+- `volume_properties` (String) Volume properties.
+
+
 
 <a id="nestedatt--witness_groups"></a>
 ### Nested Schema for `witness_groups`
 
-Required:
+Read-Only:
 
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
+- `cluster_type` (String) Type of the Specified Cluster
+- `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
-- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--witness_groups--maintenance_window))
+- `phase` (String) Current phase of the witness group.
 - `region` (Attributes) Region. (see [below for nested schema](#nestedatt--witness_groups--region))
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--witness_groups--storage))
-
-Optional:
-
-- `cluster_type` (String) Type of the Specified Cluster
-
-Read-Only:
-
-- `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--witness_groups--conditions))
-- `group_id` (String) Group id of witness group.
-- `phase` (String) Phase.
 
 <a id="nestedatt--witness_groups--cloud_provider"></a>
 ### Nested Schema for `witness_groups.cloud_provider`
@@ -293,20 +273,10 @@ Read-Only:
 - `instance_type_id` (String) Witness group instance type id.
 
 
-<a id="nestedatt--witness_groups--maintenance_window"></a>
-### Nested Schema for `witness_groups.maintenance_window`
-
-Optional:
-
-- `is_enabled` (Boolean) Is maintenance window enabled.
-- `start_day` (Number) Start day.
-- `start_time` (String) Start time.
-
-
 <a id="nestedatt--witness_groups--region"></a>
 ### Nested Schema for `witness_groups.region`
 
-Required:
+Read-Only:
 
 - `region_id` (String) Region id.
 
@@ -314,22 +284,10 @@ Required:
 <a id="nestedatt--witness_groups--storage"></a>
 ### Nested Schema for `witness_groups.storage`
 
-Required:
-
-- `volume_properties` (String) Volume properties.
-- `volume_type` (String) Volume type.
-
-Optional:
+Read-Only:
 
 - `iops` (String) IOPS for the selected volume.
 - `size` (String) Size of the volume.
 - `throughput` (String) Throughput.
-
-
-<a id="nestedatt--witness_groups--conditions"></a>
-### Nested Schema for `witness_groups.conditions`
-
-Read-Only:
-
-- `condition_status` (String) Condition status
-- `type` (String) Type
+- `volume_properties` (String) Volume properties.
+- `volume_type` (String) Volume type.

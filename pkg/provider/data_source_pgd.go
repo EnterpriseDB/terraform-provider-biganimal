@@ -44,7 +44,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 			},
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
-				Optional:    true,
+				Required:    true,
 			},
 			"cluster_id": schema.StringAttribute{
 				Description: "Cluster ID.",
@@ -60,7 +60,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
-				Optional:    true,
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -69,7 +69,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
-							Required:    true,
+							Computed:    true,
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
@@ -77,7 +77,6 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
-							Optional:    true,
 							Computed:    true,
 						},
 						"created_at": schema.StringAttribute{
@@ -102,11 +101,11 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"private_networking": schema.BoolAttribute{
 							Description: "Is private networking enabled.",
-							Required:    true,
+							Computed:    true,
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
-							Required:    true,
+							Computed:    true,
 						},
 						"resizing_pvc": schema.SetAttribute{
 							Description: "Resizing PVC.",
@@ -115,80 +114,77 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
-							Required:    true,
+							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"cidr_block": schema.StringAttribute{
 										Description: "CIDR block",
-										Required:    true,
+										Computed:    true,
 									},
 									"description": schema.StringAttribute{
 										Description: "Description of CIDR block",
-										Required:    true,
+										Computed:    true,
 									},
 								},
 							},
 						},
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
-							Required:    true,
+							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
 										Description: "GUC name.",
-										Required:    true,
+										Computed:    true,
 									},
 									"value": schema.StringAttribute{
 										Description: "GUC value.",
-										Required:    true,
+										Computed:    true,
 									},
 								},
 							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
-									Required:    true,
+									Computed:    true,
 								},
 								"cluster_architecture_name": schema.StringAttribute{
-									Description: "Name.",
+									Description: "Cluster architecture name.",
 									Computed:    true,
 								},
 								"nodes": schema.Float64Attribute{
 									Description: "Node count.",
-									Required:    true,
+									Computed:    true,
 								},
 								"witness_nodes": schema.Float64Attribute{
 									Description: "Witness nodes count.",
-									Optional:    true,
+									Computed:    true,
 								},
 							},
 						},
 						"storage": schema.SingleNestedAttribute{
 							Description: "Storage.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
-									Optional:    true,
 									Computed:    true,
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
-									Optional:    true,
 									Computed:    true,
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
-									Optional:    true,
 									Computed:    true,
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
-									Required:    true,
+									Computed:    true,
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
@@ -198,69 +194,69 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"pg_type": schema.SingleNestedAttribute{
 							Description: "Postgres type.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"pg_type_id": schema.StringAttribute{
 									Description: "Data group pg type id.",
-									Required:    true,
+									Computed:    true,
 								},
 							},
 						},
 						"pg_version": schema.SingleNestedAttribute{
 							Description: "Postgres version.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"pg_version_id": schema.StringAttribute{
 									Description: "Data group pg version id.",
-									Required:    true,
+									Computed:    true,
 								},
 							},
 						},
 						"cloud_provider": schema.SingleNestedAttribute{
 							Description: "Cloud provider.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"cloud_provider_id": schema.StringAttribute{
 									Description: "Data group cloud provider id.",
-									Required:    true,
+									Computed:    true,
 								},
 							},
 						},
 						"region": schema.SingleNestedAttribute{
 							Description: "Region.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"region_id": schema.StringAttribute{
 									Description: "Data group region id.",
-									Required:    true,
+									Computed:    true,
 								},
 							},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"instance_type_id": schema.StringAttribute{
 									Description: "Data group instance type id.",
-									Required:    true,
+									Computed:    true,
 								},
 							},
 						},
 						"maintenance_window": schema.SingleNestedAttribute{
 							Description: "Custom maintenance window.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",
-									Optional:    true,
+									Computed:    true,
 								},
 								"start_day": schema.Float64Attribute{
 									Description: "Start day.",
-									Optional:    true,
+									Computed:    true,
 								},
 								"start_time": schema.StringAttribute{
 									Description: "Start time.",
-									Optional:    true,
+									Computed:    true,
 								},
 							},
 						},
@@ -284,7 +280,6 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 				},
 			},
 			"witness_groups": schema.SetNestedAttribute{
-				Optional: true,
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -293,12 +288,12 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Computed:    true,
 						},
 						"phase": schema.StringAttribute{
-							Description: "Phase.",
+							Description: "Current phase of the witness group.",
 							Computed:    true,
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
@@ -320,22 +315,21 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"region": schema.SingleNestedAttribute{
 							Description: "Region.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"region_id": schema.StringAttribute{
 									Description: "Region id.",
-									Required:    true,
+									Computed:    true,
 								},
 							},
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
-							Optional:    true,
 							Computed:    true,
 						},
 						"cloud_provider": schema.SingleNestedAttribute{
 							Description: "Cloud provider.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"cloud_provider_id": schema.StringAttribute{
 									Description: "Cloud provider id.",
@@ -345,7 +339,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"instance_type_id": schema.StringAttribute{
 									Description: "Witness group instance type id.",
@@ -355,64 +349,27 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 						},
 						"storage": schema.SingleNestedAttribute{
 							Description: "Storage.",
-							Required:    true,
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
-									Optional:    true,
 									Computed:    true,
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
-									Optional:    true,
 									Computed:    true,
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
-									Optional:    true,
 									Computed:    true,
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
-									Required:    true,
+									Computed:    true,
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
-									Required:    true,
-								},
-							},
-						},
-						"maintenance_window": schema.SingleNestedAttribute{
-							Description: "Custom maintenance window.",
-							Required:    true,
-							Attributes: map[string]schema.Attribute{
-								"is_enabled": schema.BoolAttribute{
-									Description: "Is maintenance window enabled.",
-									Optional:    true,
-								},
-								"start_day": schema.Float64Attribute{
-									Description: "Start day.",
-									Optional:    true,
-								},
-								"start_time": schema.StringAttribute{
-									Description: "Start time.",
-									Optional:    true,
-								},
-							},
-						},
-						"conditions": schema.SetNestedAttribute{
-							Description: "Conditions.",
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"condition_status": schema.StringAttribute{
-										Description: "Condition status",
-										Computed:    true,
-									},
-									"type": schema.StringAttribute{
-										Description: "Type",
-										Computed:    true,
-									},
+									Computed:    true,
 								},
 							},
 						},

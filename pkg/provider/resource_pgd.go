@@ -133,14 +133,14 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							},
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Cluster connection URI.",
+							Description: "Data group connection URI.",
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},
 						},
 						"phase": schema.StringAttribute{
-							Description: "Current phase of the cluster group.",
+							Description: "Current phase of the data group.",
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
 								plan_modifier.CustomPhaseForUnknown(),
@@ -209,7 +209,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									Required:    true,
 								},
 								"cluster_architecture_name": schema.StringAttribute{
-									Description: "Name.",
+									Description: "Cluster architecture name.",
 									Computed:    true,
 									PlanModifiers: []planmodifier.String{
 										stringplanmodifier.UseStateForUnknown(),
@@ -375,7 +375,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							},
 						},
 						"phase": schema.StringAttribute{
-							Description: "Phase.",
+							Description: "Current phase of the witness group.",
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
