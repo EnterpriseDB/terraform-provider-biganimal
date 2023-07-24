@@ -690,11 +690,11 @@ Required:
 Optional:
 
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
-- `cluster_type` (String) Type of the Specified Cluster
 
 Read-Only:
 
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
+- `cluster_type` (String) Type of the Specified Cluster
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
 - `phase` (String) Current phase of the witness group.

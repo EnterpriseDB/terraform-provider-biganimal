@@ -430,7 +430,6 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
-							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
