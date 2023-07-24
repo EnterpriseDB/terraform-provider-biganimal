@@ -4,7 +4,7 @@ The PGD cluster data source describes a BigAnimal cluster. The data source requi
 
 
 
--> Using update to upscale data groups or witness groups is currently not supported
+~> Using update to upscale data groups or witness groups is currently not supported
 
 ## PGD Azure One Data Group Example
 ```terraform
