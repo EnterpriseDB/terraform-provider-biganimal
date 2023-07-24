@@ -4,24 +4,31 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var (
-	_ resource.Resource              = &pgdResource{}
-	_ resource.ResourceWithConfigure = &pgdResource{}
+	_ resource.Resource                = &pgdResource{}
+	_ resource.ResourceWithConfigure   = &pgdResource{}
+	_ resource.ResourceWithImportState = &pgdResource{}
 )
 
 type pgdResource struct {
@@ -73,6 +80,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
 				Required:    true,
+				PlanModifiers: []planmodifier.Set{
+					plan_modifier.CustomDataGroupDiffConfig(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
@@ -84,7 +94,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
-							Optional:    true,
+							Required:    true,
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
@@ -97,6 +107,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Description: "Type of the Specified Cluster",
 							Optional:    true,
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"created_at": schema.StringAttribute{
 							Description: "Cluster creation time.",
@@ -104,18 +117,6 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},
-						},
-						"deleted_at": schema.StringAttribute{
-							Description: "Cluster deletion time.",
-							Optional:    true,
-						},
-						"expired_at": schema.StringAttribute{
-							Description: "Cluster expiry time.",
-							Optional:    true,
-						},
-						"first_recoverability_point_at": schema.StringAttribute{
-							Description: "Earliest backup recover time.",
-							Optional:    true,
 						},
 						"logs_url": schema.StringAttribute{
 							Description: "The URL to find the logs of this cluster.",
@@ -132,17 +133,17 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							},
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Cluster connection URI.",
+							Description: "Data group connection URI.",
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},
 						},
 						"phase": schema.StringAttribute{
-							Description: "Current phase of the cluster group.",
+							Description: "Current phase of the data group.",
 							Computed:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								plan_modifier.CustomPhaseForUnknown(),
 							},
 						},
 						"private_networking": schema.BoolAttribute{
@@ -151,16 +152,19 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"csp_auth": schema.BoolAttribute{
 							Description: "Is authentication handled by the cloud service provider.",
-							Optional:    true,
+							Required:    true,
 						},
 						"resizing_pvc": schema.SetAttribute{
 							Description: "Resizing PVC.",
 							Computed:    true,
 							ElementType: types.StringType,
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
-							Optional:    true,
+							Required:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"cidr_block": schema.StringAttribute{
@@ -169,14 +173,17 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									},
 									"description": schema.StringAttribute{
 										Description: "Description of CIDR block",
-										Optional:    true,
+										Required:    true,
 									},
 								},
+							},
+							PlanModifiers: []planmodifier.Set{
+								plan_modifier.CustomAllowedIps(),
 							},
 						},
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
-							Optional:    true,
+							Required:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"name": schema.StringAttribute{
@@ -189,6 +196,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									},
 								},
 							},
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
@@ -199,7 +209,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									Required:    true,
 								},
 								"cluster_architecture_name": schema.StringAttribute{
-									Description: "Name.",
+									Description: "Cluster architecture name.",
 									Computed:    true,
 									PlanModifiers: []planmodifier.String{
 										stringplanmodifier.UseStateForUnknown(),
@@ -223,16 +233,25 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									Description: "IOPS for the selected volume.",
 									Optional:    true,
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
 									Optional:    true,
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
 									Optional:    true,
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
@@ -296,34 +315,43 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"maintenance_window": schema.SingleNestedAttribute{
 							Description: "Custom maintenance window.",
-							Optional:    true,
+							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",
-									Optional:    true,
+									Required:    true,
 								},
 								"start_day": schema.Float64Attribute{
 									Description: "Start day.",
-									Optional:    true,
+									Required:    true,
 								},
 								"start_time": schema.StringAttribute{
 									Description: "Start time.",
-									Optional:    true,
+									Required:    true,
 								},
 							},
 						},
 						"conditions": schema.SetNestedAttribute{
 							Description: "Conditions.",
 							Computed:    true,
+							PlanModifiers: []planmodifier.Set{
+								setplanmodifier.UseStateForUnknown(),
+							},
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"condition_status": schema.StringAttribute{
 										Description: "Condition status",
 										Computed:    true,
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.UseStateForUnknown(),
+										},
 									},
 									"type": schema.StringAttribute{
 										Description: "Type",
 										Computed:    true,
+										PlanModifiers: []planmodifier.String{
+											stringplanmodifier.UseStateForUnknown(),
+										},
 									},
 								},
 							},
@@ -334,35 +362,59 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			"witness_groups": schema.SetNestedAttribute{
 				Optional: true,
 				Computed: true,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"group_id": schema.StringAttribute{
 							Description: "Group id of witness group.",
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"phase": schema.StringAttribute{
-							Description: "Phase.",
+							Description: "Current phase of the witness group.",
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
-							Computed:    true,
+							Optional:    true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"cluster_architecture_name": schema.StringAttribute{
 									Description: "Name.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"nodes": schema.Float64Attribute{
 									Description: "Nodes.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.Float64{
+										float64planmodifier.UseStateForUnknown(),
+									},
 								},
 								"witness_nodes": schema.Float64Attribute{
 									Description: "Witness nodes count.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.Float64{
+										float64planmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
@@ -378,52 +430,84 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"cluster_type": schema.StringAttribute{
 							Description: "Type of the Specified Cluster",
-							Optional:    true,
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"cloud_provider": schema.SingleNestedAttribute{
 							Description: "Cloud provider.",
 							Computed:    true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
 								"cloud_provider_id": schema.StringAttribute{
 									Description: "Cloud provider id.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
 							Computed:    true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
 								"instance_type_id": schema.StringAttribute{
 									Description: "Witness group instance type id.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
 						"storage": schema.SingleNestedAttribute{
 							Description: "Storage.",
 							Computed:    true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
 								"iops": schema.StringAttribute{
 									Description: "IOPS for the selected volume.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"size": schema.StringAttribute{
 									Description: "Size of the volume.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"throughput": schema.StringAttribute{
 									Description: "Throughput.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"volume_properties": schema.StringAttribute{
 									Description: "Volume properties.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
@@ -447,9 +531,9 @@ type PGD struct {
 	ID            *string            `tfsdk:"id"`
 	ProjectId     string             `tfsdk:"project_id"`
 	ClusterId     *string            `tfsdk:"cluster_id"`
-	ClusterName   string             `tfsdk:"cluster_name"`
+	ClusterName   *string            `tfsdk:"cluster_name"`
 	MostRecent    *bool              `tfsdk:"most_recent"`
-	Password      string             `tfsdk:"password"`
+	Password      *string            `tfsdk:"password"`
 	Timeouts      timeouts.Value     `tfsdk:"timeouts"`
 	DataGroups    []pgd.DataGroup    `tfsdk:"data_groups"`
 	WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
@@ -465,9 +549,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	clusterReqBody := models.Cluster{
-		ClusterName: &config.ClusterName,
+		ClusterName: config.ClusterName,
 		ClusterType: utils.ToPointer("cluster"),
-		Password:    &config.Password,
+		Password:    config.Password,
 	}
 
 	clusterReqBody.Groups = &[]any{}
@@ -475,19 +559,31 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
 	for _, v := range config.DataGroups {
 		v.ClusterType = utils.ToPointer("data_group")
+
+		buildStorageAs(v.Storage)
+
 		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
 			Provider:     v.Provider,
 			Region:       v.Region,
 			Storage:      v.Storage,
 		})
+		if v.AllowedIpRanges == nil {
+			v.AllowedIpRanges = &[]models.AllowedIpRange{}
+		}
+		if v.PgConfig == nil {
+			v.PgConfig = &[]models.KeyValue{}
+		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
 	}
 
 	if len(config.WitnessGroups) > 0 {
 		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
 		if err != nil {
-			resp.Diagnostics.AddError("Error calculating witness group params", "Could calculate witness group params, unexpected error: "+err.Error())
+			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+				return
+			}
+			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
 			return
 		}
 
@@ -508,6 +604,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 	clusterId, err := p.client.Create(ctx, config.ProjectId, clusterReqBody)
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error creating PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
 		return
 	}
@@ -520,10 +619,13 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFunc(ctx, &config),
+		p.retryFuncAs(ctx, &config),
 	)
 
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
 		return
 	}
@@ -557,14 +659,18 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 		return
 	}
 
-	clusterResp, err := p.client.Read(ctx, state.ProjectId, *state.ID)
+	clusterResp, err := p.client.Read(ctx, state.ProjectId, *state.ClusterId)
 	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
 		resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
 		return
 	}
 
 	state.ID = clusterResp.ClusterId
 	state.ClusterId = clusterResp.ClusterId
+	state.ClusterName = clusterResp.ClusterName
 
 	if err = buildGroupsToTypeAs(*clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Resource read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
@@ -578,10 +684,126 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	}
 }
 
-func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-}
-
 func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan PGD
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	clusterReqBody := models.Cluster{
+		ClusterName: plan.ClusterName,
+		ClusterType: utils.ToPointer("cluster"),
+		Password:    plan.Password,
+	}
+
+	clusterReqBody.Groups = &[]any{}
+
+	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
+	for _, v := range plan.DataGroups {
+		v.ClusterType = utils.ToPointer("data_group")
+
+		buildStorageAs(v.Storage)
+
+		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
+			InstanceType: v.InstanceType,
+			Provider:     v.Provider,
+			Region:       v.Region,
+			Storage:      v.Storage,
+		})
+
+		// only allow fields which are able to be modifed in the request
+		reqDg := pgd.DataGroup{
+			GroupId:               v.GroupId,
+			ClusterType:           v.ClusterType,
+			AllowedIpRanges:       v.AllowedIpRanges,
+			BackupRetentionPeriod: v.BackupRetentionPeriod,
+			CspAuth:               v.CspAuth,
+			InstanceType:          v.InstanceType,
+			PgConfig:              v.PgConfig,
+			PrivateNetworking:     v.PrivateNetworking,
+			Storage:               v.Storage,
+			MaintenanceWindow:     v.MaintenanceWindow,
+		}
+
+		*clusterReqBody.Groups = append(*clusterReqBody.Groups, reqDg)
+	}
+
+	if len(plan.WitnessGroups) > 0 {
+		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, witnessGroupParamsBody)
+		if err != nil {
+			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+				return
+			}
+			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
+			return
+		}
+
+		for _, v := range plan.WitnessGroups {
+			v.ClusterArchitecture = &pgd.ClusterArchitecture{
+				ClusterArchitectureId: "pgd",
+				Nodes:                 plan.DataGroups[0].ClusterArchitecture.Nodes,
+			}
+			v.ClusterType = utils.ToPointer("witness_group")
+			v.Provider = &pgd.CloudProvider{
+				CloudProviderId: plan.DataGroups[0].Provider.CloudProviderId,
+			}
+			v.InstanceType = calWitnessResp.InstanceType
+			v.Storage = calWitnessResp.Storage
+			v.Phase = nil
+			v.Region = nil
+			v.Provider = nil
+			*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
+		}
+	}
+
+	_, err := p.client.Update(ctx, plan.ProjectId, *plan.ClusterId, clusterReqBody)
+	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
+		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
+		return
+	}
+
+	plan.ID = plan.ClusterId
+
+	timeout, _ := plan.Timeouts.Update(ctx, 60*time.Minute)
+
+	err = retry.RetryContext(
+		ctx,
+		timeout-time.Minute,
+		p.retryFuncAs(ctx, &plan),
+	)
+
+	if err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
+		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster, unexpected error: "+err.Error())
+		return
+	}
+
+	// clusterResp, err := p.client.Read(ctx, plan.ProjectId, *plan.ClusterId)
+	// if err != nil {
+	// 	resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
+	// 	return
+	// }
+
+	// plan.DataGroups = []pgd.DataGroup{}
+	// plan.WitnessGroups = []pgd.WitnessGroup{}
+
+	// if err = buildGroupsToTypeAs(*clusterResp, &plan.DataGroups, &plan.WitnessGroups); err != nil {
+	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+	// 	return
+	// }
+
+	diags = resp.State.Set(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (p pgdResource) isHealthy(ctx context.Context, dgs []pgd.DataGroup, wgs []pgd.WitnessGroup) (bool, error) {
@@ -608,7 +830,7 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []pgd.DataGroup, wgs []p
 	return healthy, nil
 }
 
-func (p *pgdResource) retryFunc(ctx context.Context, state *PGD) retry.RetryFunc {
+func (p *pgdResource) retryFuncAs(ctx context.Context, state *PGD) retry.RetryFunc {
 	return func() *retry.RetryError {
 		pgdResp, err := p.client.Read(ctx, state.ProjectId, *state.ClusterId)
 		if err != nil {
@@ -616,7 +838,7 @@ func (p *pgdResource) retryFunc(ctx context.Context, state *PGD) retry.RetryFunc
 		}
 
 		if err := buildGroupsToTypeAs(*pgdResp, &state.DataGroups, &state.WitnessGroups); err != nil {
-			return retry.NonRetryableError(fmt.Errorf("Unable to copy group, got error: %s", err))
+			return retry.NonRetryableError(fmt.Errorf("unable to copy group, got error: %s", err))
 		}
 
 		isHealthy, err := p.isHealthy(ctx, state.DataGroups, state.WitnessGroups)
@@ -644,7 +866,7 @@ func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
-						return fmt.Errorf("Unable to copy data group, got error: %s", err)
+						return fmt.Errorf("unable to copy data group, got error: %s", err)
 					}
 				}
 
@@ -656,7 +878,7 @@ func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
-						return fmt.Errorf("Unable to copy witness group, got error: %s", err)
+						return fmt.Errorf("unable to copy witness group, got error: %s", err)
 					}
 				}
 
@@ -666,6 +888,48 @@ func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *
 	}
 
 	return nil
+}
+
+// Delete deletes the resource and removes the Terraform state on success.
+func (p pgdResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	// Retrieve values from state
+	var state PGD
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := p.client.Delete(ctx, state.ProjectId, *state.ClusterId); err != nil {
+		if appendDiagFromBAErr(err, &resp.Diagnostics) {
+			return
+		}
+		resp.Diagnostics.AddError("Error deleting cluster", "Could not delete cluster, unexpected error: "+err.Error())
+		return
+	}
+}
+
+func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.Split(req.ID, "/")
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), utils.ToPointer(idParts[0]))...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
+}
+
+func buildStorageAs(storage *models.Storage) {
+	// azurepremiumstorage only needs volume type, properties and size
+	// other values will cause an unhelpful error on the API
+	if *storage.VolumeTypeId == "azurepremiumstorage" {
+		storage.Iops = nil
+		storage.Throughput = nil
+	}
 }
 
 func NewPgdResource() resource.Resource {

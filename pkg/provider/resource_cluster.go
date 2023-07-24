@@ -70,7 +70,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "Cluster architecture ID. For example, \"single\", \"ha\", or \"eha\".",
+							Description: "Cluster architecture ID. For example, \"single\" or \"ha\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},

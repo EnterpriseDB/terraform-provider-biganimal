@@ -1,0 +1,14 @@
+# {{.Name}} ({{.Type}})
+{{ .Description | trimspace }}
+
+{{ if .HasExample -}}
+## Example Usage
+{{ tffile .ExampleFile }}
+{{- end }}
+
+## PGD Data Source Example
+{{ tffile "examples/data-sources/biganimal_pgd/data-source.tf" }}
+
+{{ tffile "examples/data-sources/biganimal_pgd/provider.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
