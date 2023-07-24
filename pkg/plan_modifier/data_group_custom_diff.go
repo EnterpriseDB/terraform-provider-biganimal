@@ -26,7 +26,7 @@ func (m customDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifyList implements the plan modification logic.
+// PlanModifySet implements the plan modification logic.
 func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	if req.StateValue.IsNull() {
 		return

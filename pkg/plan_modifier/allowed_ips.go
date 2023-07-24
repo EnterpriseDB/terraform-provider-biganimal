@@ -25,7 +25,7 @@ func (m customAllowedIpsModifier) MarkdownDescription(_ context.Context) string 
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifyList implements the plan modification logic.
+// PlanModifySet implements the plan modification logic.
 func (m customAllowedIpsModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	if len(resp.PlanValue.Elements()) == 0 {
 		// if plan value is [] the api will return 0.0.0.0/0
