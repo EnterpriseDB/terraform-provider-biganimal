@@ -1,3 +1,14 @@
+## v0.5.1 (July 27. 2023)
+Features:
+* BigAnimal Terraform Provider now supports GCP. Examples and documentation are updated.
+
+Bug Fixes:
+* `biganimal_pgd` resource: For immutable fields(cloud provider, pg version or pg type), when user tries to change those fields, provider throws an error.
+
+Enhancements:
+* Dependency updates
+* Examples now use EPAS-15 as the pre-configured postgresql version
+
 ## v0.5.0 (July 24. 2023)
 Features:
 * New Data Source: `biganimal_pgd`
