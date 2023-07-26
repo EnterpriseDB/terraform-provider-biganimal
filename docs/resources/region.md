@@ -43,9 +43,9 @@ output "region_continent" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud provider. For example, "aws", "azure" or "bah:aws".
+- `cloud_provider` (String) Cloud provider. For example, "aws", "azure", "gcp" or "bah:aws".
 - `project_id` (String) BigAnimal Project ID.
-- `region_id` (String) Region ID of the region. For example, "germanywestcentral" in the Azure cloud provider or "eu-west-1" in the AWS cloud provider.
+- `region_id` (String) Region ID of the region. For example, "germanywestcentral" in the Azure cloud provider, "eu-west-1" in the AWS cloud provider or "us-east1" in the Google Cloud Platform.
 
 ### Optional
 
