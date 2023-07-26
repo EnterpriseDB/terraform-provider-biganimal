@@ -7,6 +7,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -191,8 +192,11 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Required:            true,
 					},
 					"id": schema.StringAttribute{
-						MarkdownDescription: "Cluster architecture ID. For example, \"single\", \"ha\", or \"eha\".",
+						MarkdownDescription: "Cluster architecture ID. For example, \"single\" or \"ha\"",
 						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("single", "ha"),
+						},
 					},
 					"name": schema.StringAttribute{
 						MarkdownDescription: "Name.",
