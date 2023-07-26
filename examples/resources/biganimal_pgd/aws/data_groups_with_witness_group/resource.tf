@@ -71,7 +71,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         pg_type_id = "epas"
       }
       pg_version = {
-        pg_version_id = "14"
+        pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
@@ -125,7 +125,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         pg_type_id = "epas"
       }
       pg_version = {
-        pg_version_id = "14"
+        pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {

@@ -66,7 +66,7 @@ resource "biganimal_cluster" "ha_cluster" {
   }
 
   pg_type               = "epas"
-  pg_version            = "14"
+  pg_version            = "15"
   private_networking    = false
   cloud_provider        = "aws"
   read_only_connections = true
