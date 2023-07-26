@@ -46,7 +46,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   }
 
   pg_type        = "epas"
-  pg_version     = "14"
+  pg_version     = "15"
   cloud_provider = "azure"
   region         = "eastus"
 }
