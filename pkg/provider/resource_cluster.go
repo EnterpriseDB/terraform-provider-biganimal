@@ -72,8 +72,8 @@ type ClusterArchitectureResourceModel struct {
 }
 
 type StorageResourceModel struct {
-	VolumeType       string       `tfsdk:"volume_type"`
-	VolumeProperties string       `tfsdk:"volume_properties"`
+	VolumeType       types.String `tfsdk:"volume_type"`
+	VolumeProperties types.String `tfsdk:"volume_properties"`
 	Size             types.String `tfsdk:"size"`
 	Iops             types.String `tfsdk:"iops"`
 	Throughput       types.String `tfsdk:"throughput"`
@@ -502,8 +502,8 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	clusterResource.Region = types.StringValue(cluster.Region.Id)
 	clusterResource.InstanceType = types.StringValue(cluster.InstanceType.InstanceTypeId)
 	clusterResource.Storage = &StorageResourceModel{
-		VolumeType:       cluster.Storage.VolumeTypeId,
-		VolumeProperties: cluster.Storage.VolumePropertiesId,
+		VolumeType:       types.StringPointerValue(cluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(cluster.Storage.VolumePropertiesId),
 		Size:             types.StringPointerValue(cluster.Storage.Size),
 		Iops:             types.StringPointerValue(cluster.Storage.Iops),
 		Throughput:       types.StringPointerValue(cluster.Storage.Throughput),
@@ -591,8 +591,8 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 		Provider: &models.Provider{CloudProviderId: clusterResource.CloudProvider.ValueString()},
 		Region:   &models.Region{Id: clusterResource.Region.ValueString()},
 		Storage: &models.Storage{
-			VolumePropertiesId: clusterResource.Storage.VolumeProperties,
-			VolumeTypeId:       clusterResource.Storage.VolumeType,
+			VolumePropertiesId: clusterResource.Storage.VolumeProperties.ValueStringPointer(),
+			VolumeTypeId:       clusterResource.Storage.VolumeType.ValueStringPointer(),
 			Iops:               clusterResource.Storage.Iops.ValueStringPointer(),
 			Size:               clusterResource.Storage.Size.ValueStringPointer(),
 			Throughput:         clusterResource.Storage.Throughput.ValueStringPointer(),
