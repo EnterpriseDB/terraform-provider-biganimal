@@ -5,6 +5,9 @@ The cluster resource is used to manage BigAnimal clusters. See [Creating a clust
 
 
 ## Single Node Cluster Example
+
+Please visit the [examples page](https://github.com/EnterpriseDB/terraform-provider-biganimal/tree/main/examples#biganimal_cluster-resource-examples) for more single node cluster examples on various cloud service providers.
+
 ```terraform
 terraform {
   required_providers {
@@ -192,10 +195,10 @@ output "faraway_replica_ids" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud provider. For example, "aws" or "azure".
+- `cloud_provider` (String) Cloud provider. For example, "aws", "azure" or "gcp".
 - `cluster_architecture` (Block List, Min: 1) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3" or "aws:c5.large".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
@@ -235,7 +238,7 @@ output "faraway_replica_ids" {
 
 Required:
 
-- `id` (String) Cluster architecture ID. For example, "single" or "ha".
+- `id` (String) Cluster architecture ID. For example, "single" or "ha". For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
 
 Read-Only:
@@ -250,7 +253,7 @@ Required:
 
 - `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
 - `volume_properties` (String) Volume properties in accordance with the selected volume type.
-- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express".
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
 
 Optional:
 

@@ -46,7 +46,7 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				},
 			},
 			"cloud_provider": schema.StringAttribute{
-				MarkdownDescription: "Cloud provider. For example, \"aws\", \"azure\" or \"bah:aws\".",
+				MarkdownDescription: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\".",
 				Required:            true,
 			},
 			"project_id": schema.StringAttribute{
@@ -57,7 +57,7 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				},
 			},
 			"region_id": schema.StringAttribute{
-				MarkdownDescription: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider or \"eu-west-1\" in the AWS cloud provider.",
+				MarkdownDescription: "Region ID of the region. For example, \"germanywestcentral\" in the Azure cloud provider, \"eu-west-1\" in the AWS cloud provider or \"us-east1\" in the Google Cloud Platform.",
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
