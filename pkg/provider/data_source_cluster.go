@@ -334,8 +334,8 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.Region = types.StringValue(cluster.Region.Id)
 	data.InstanceType = types.StringValue(cluster.InstanceType.InstanceTypeId)
 	data.Storage = &StorageResourceModel{
-		VolumeType:       types.StringValue(cluster.Storage.VolumeTypeId),
-		VolumeProperties: types.StringValue(cluster.Storage.VolumePropertiesId),
+		VolumeType:       types.StringPointerValue(cluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(cluster.Storage.VolumePropertiesId),
 		Size:             types.StringPointerValue(cluster.Storage.Size),
 		Iops:             types.StringPointerValue(cluster.Storage.Iops),
 		Throughput:       types.StringPointerValue(cluster.Storage.Throughput),
