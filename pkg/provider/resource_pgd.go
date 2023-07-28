@@ -9,10 +9,12 @@ import (
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
+	pgdApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -528,15 +530,15 @@ func (p *pgdResource) Configure(_ context.Context, req resource.ConfigureRequest
 }
 
 type PGD struct {
-	ID            *string            `tfsdk:"id"`
-	ProjectId     string             `tfsdk:"project_id"`
-	ClusterId     *string            `tfsdk:"cluster_id"`
-	ClusterName   *string            `tfsdk:"cluster_name"`
-	MostRecent    *bool              `tfsdk:"most_recent"`
-	Password      *string            `tfsdk:"password"`
-	Timeouts      timeouts.Value     `tfsdk:"timeouts"`
-	DataGroups    []pgd.DataGroup    `tfsdk:"data_groups"`
-	WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
+	ID            *string               `tfsdk:"id"`
+	ProjectId     string                `tfsdk:"project_id"`
+	ClusterId     *string               `tfsdk:"cluster_id"`
+	ClusterName   *string               `tfsdk:"cluster_name"`
+	MostRecent    *bool                 `tfsdk:"most_recent"`
+	Password      *string               `tfsdk:"password"`
+	Timeouts      timeouts.Value        `tfsdk:"timeouts"`
+	DataGroups    []terraform.DataGroup `tfsdk:"data_groups"`
+	WitnessGroups []pgdApi.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 // Create creates the resource and sets the initial Terraform state.
@@ -556,17 +558,17 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 	clusterReqBody.Groups = &[]any{}
 
-	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
+	witnessGroupParamsBody := pgdApi.WitnessGroupParamsBody{}
 	for _, v := range config.DataGroups {
-		v.ClusterType = utils.ToPointer("data_group")
+		v := v
 
-		buildStorageAs(v.Storage)
+		storage := buildApiStorage(v.Storage)
 
-		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
+		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgdApi.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
 			Provider:     v.Provider,
 			Region:       v.Region,
-			Storage:      v.Storage,
+			Storage:      storage,
 		})
 		if v.AllowedIpRanges == nil {
 			v.AllowedIpRanges = &[]models.AllowedIpRange{}
@@ -574,7 +576,36 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		if v.PgConfig == nil {
 			v.PgConfig = &[]models.KeyValue{}
 		}
-		*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
+
+		clusterArchName := v.ClusterArchitecture.ClusterArchitectureName.ValueStringPointer()
+		if v.ClusterArchitecture.ClusterArchitectureName.IsUnknown() {
+			clusterArchName = nil
+		}
+
+		clusterArch := &pgdApi.ClusterArchitecture{
+			ClusterArchitectureId:   v.ClusterArchitecture.ClusterArchitectureId,
+			ClusterArchitectureName: clusterArchName,
+			Nodes:                   v.ClusterArchitecture.Nodes,
+			WitnessNodes:            v.ClusterArchitecture.WitnessNodes,
+		}
+
+		apiDGModel := pgdApi.DataGroup{
+			AllowedIpRanges:       v.AllowedIpRanges,
+			BackupRetentionPeriod: v.BackupRetentionPeriod,
+			Provider:              v.Provider,
+			ClusterArchitecture:   clusterArch,
+			CspAuth:               v.CspAuth,
+			ClusterType:           utils.ToPointer("data_group"),
+			InstanceType:          v.InstanceType,
+			MaintenanceWindow:     v.MaintenanceWindow,
+			PgConfig:              v.PgConfig,
+			PgType:                v.PgType,
+			PgVersion:             v.PgVersion,
+			PrivateNetworking:     v.PrivateNetworking,
+			Region:                v.Region,
+			Storage:               storage,
+		}
+		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
 
 	if len(config.WitnessGroups) > 0 {
@@ -588,12 +619,12 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		}
 
 		for _, v := range config.WitnessGroups {
-			v.ClusterArchitecture = &pgd.ClusterArchitecture{
+			v.ClusterArchitecture = &pgdApi.ClusterArchitecture{
 				ClusterArchitectureId: "pgd",
 				Nodes:                 config.DataGroups[0].ClusterArchitecture.Nodes,
 			}
 			v.ClusterType = utils.ToPointer("witness_group")
-			v.Provider = &pgd.CloudProvider{
+			v.Provider = &pgdApi.CloudProvider{
 				CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
 			}
 			v.InstanceType = calWitnessResp.InstanceType
@@ -636,10 +667,10 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// 	return
 	// }
 
-	// config.DataGroups = []pgd.DataGroup{}
-	// config.WitnessGroups = []pgd.WitnessGroup{}
+	// config.DataGroups = []terraform.DataGroup{}
+	// config.WitnessGroups = []pgdApi.WitnessGroup{}
 
-	// if err = buildGroupsToTypeAs(*clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
+	// if err = buildTFGroupsAs(*clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
 	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 	// 	return
 	// }
@@ -672,7 +703,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ClusterId = clusterResp.ClusterId
 	state.ClusterName = clusterResp.ClusterName
 
-	if err = buildGroupsToTypeAs(*clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
+	if err = buildTFGroupsAs(*clusterResp, &state.DataGroups, &state.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Resource read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
 	}
@@ -700,30 +731,32 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	clusterReqBody.Groups = &[]any{}
 
-	witnessGroupParamsBody := pgd.WitnessGroupParamsBody{}
+	witnessGroupParamsBody := pgdApi.WitnessGroupParamsBody{}
 	for _, v := range plan.DataGroups {
-		v.ClusterType = utils.ToPointer("data_group")
+		storage := buildApiStorage(v.Storage)
 
-		buildStorageAs(v.Storage)
-
-		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgd.WitnessGroupParamsBodyData{
+		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgdApi.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
 			Provider:     v.Provider,
 			Region:       v.Region,
-			Storage:      v.Storage,
+			Storage:      storage,
 		})
 
+		groupId := v.GroupId.ValueStringPointer()
+		if v.GroupId.IsUnknown() {
+			groupId = nil
+		}
 		// only allow fields which are able to be modifed in the request
-		reqDg := pgd.DataGroup{
-			GroupId:               v.GroupId,
-			ClusterType:           v.ClusterType,
+		reqDg := pgdApi.DataGroup{
+			GroupId:               groupId,
+			ClusterType:           utils.ToPointer("data_group"),
 			AllowedIpRanges:       v.AllowedIpRanges,
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			CspAuth:               v.CspAuth,
 			InstanceType:          v.InstanceType,
 			PgConfig:              v.PgConfig,
 			PrivateNetworking:     v.PrivateNetworking,
-			Storage:               v.Storage,
+			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
 		}
 
@@ -741,12 +774,12 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 
 		for _, v := range plan.WitnessGroups {
-			v.ClusterArchitecture = &pgd.ClusterArchitecture{
+			v.ClusterArchitecture = &pgdApi.ClusterArchitecture{
 				ClusterArchitectureId: "pgd",
 				Nodes:                 plan.DataGroups[0].ClusterArchitecture.Nodes,
 			}
 			v.ClusterType = utils.ToPointer("witness_group")
-			v.Provider = &pgd.CloudProvider{
+			v.Provider = &pgdApi.CloudProvider{
 				CloudProviderId: plan.DataGroups[0].Provider.CloudProviderId,
 			}
 			v.InstanceType = calWitnessResp.InstanceType
@@ -806,16 +839,16 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	}
 }
 
-func (p pgdResource) isHealthy(ctx context.Context, dgs []pgd.DataGroup, wgs []pgd.WitnessGroup) (bool, error) {
+func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, wgs []pgdApi.WitnessGroup) (bool, error) {
 	healthy := true
 
 	for _, v := range dgs {
-		if *v.Phase != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
 			healthy = false
 		}
 
 		for _, cond := range *v.Conditions {
-			if *cond.Type_ != models.CONDITION_DEPLOYED && *cond.ConditionStatus != "True" {
+			if *cond.Type_.ValueStringPointer() != models.CONDITION_DEPLOYED && *cond.ConditionStatus.ValueStringPointer() != "True" {
 				healthy = false
 			}
 		}
@@ -837,7 +870,7 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, state *PGD) retry.RetryFu
 			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
-		if err := buildGroupsToTypeAs(*pgdResp, &state.DataGroups, &state.WitnessGroups); err != nil {
+		if err := buildTFGroupsAs(*pgdResp, &state.DataGroups, &state.WitnessGroups); err != nil {
 			return retry.NonRetryableError(fmt.Errorf("unable to copy group, got error: %s", err))
 		}
 
@@ -854,27 +887,86 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, state *PGD) retry.RetryFu
 	}
 }
 
-func buildGroupsToTypeAs(clusterResp models.Cluster, dgs *[]pgd.DataGroup, wgs *[]pgd.WitnessGroup) error {
-	*dgs = []pgd.DataGroup{}
-	*wgs = []pgd.WitnessGroup{}
+func buildTFGroupsAs(clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs *[]pgdApi.WitnessGroup) error {
+	*dgs = []terraform.DataGroup{}
+	*wgs = []pgdApi.WitnessGroup{}
 
 	for _, v := range *clusterResp.Groups {
 		switch apiGroupResp := v.(type) {
 		case map[string]interface{}:
 			if apiGroupResp["clusterType"] == "data_group" {
-				model := pgd.DataGroup{}
+				apiDGModel := pgdApi.DataGroup{}
 
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+				if err := utils.CopyObjectJson(apiGroupResp, &apiDGModel); err != nil {
 					if err != nil {
 						return fmt.Errorf("unable to copy data group, got error: %s", err)
 					}
 				}
 
-				*dgs = append(*dgs, model)
+				clusterArch := terraform.ClusterArchitecture{
+					ClusterArchitectureId:   apiDGModel.ClusterArchitecture.ClusterArchitectureId,
+					ClusterArchitectureName: types.StringPointerValue(apiDGModel.ClusterArchitecture.ClusterArchitectureName),
+					Nodes:                   apiDGModel.ClusterArchitecture.Nodes,
+					WitnessNodes:            apiDGModel.ClusterArchitecture.WitnessNodes,
+				}
+
+				conditions := &[]terraform.Condition{}
+				if apiDGModel.Conditions != nil && len(*apiDGModel.Conditions) != 0 {
+					for _, v := range *apiDGModel.Conditions {
+						*conditions = append(*conditions, terraform.Condition{
+							ConditionStatus: types.StringPointerValue(v.ConditionStatus),
+							Type_:           types.StringPointerValue(v.Type_),
+						})
+					}
+				}
+
+				resizingPvc := []attr.Value{}
+				if apiDGModel.ResizingPvc != nil && len(*apiDGModel.ResizingPvc) != 0 {
+					for _, v := range *apiDGModel.ResizingPvc {
+						v := v
+						resizingPvc = append(resizingPvc, types.StringPointerValue(&v))
+					}
+				}
+
+				storage := terraform.Storage{
+					Size:               apiDGModel.Storage.Size,
+					VolumePropertiesId: apiDGModel.Storage.VolumePropertiesId,
+					VolumeTypeId:       apiDGModel.Storage.VolumeTypeId,
+					Iops:               types.StringPointerValue(apiDGModel.Storage.Iops),
+					Throughput:         types.StringPointerValue(apiDGModel.Storage.Throughput),
+				}
+
+				tfDGModel := terraform.DataGroup{
+					GroupId:               types.StringPointerValue(apiDGModel.GroupId),
+					AllowedIpRanges:       apiDGModel.AllowedIpRanges,
+					BackupRetentionPeriod: apiDGModel.BackupRetentionPeriod,
+					ClusterArchitecture:   clusterArch,
+					ClusterName:           types.StringPointerValue(apiDGModel.ClusterName),
+					ClusterType:           types.StringPointerValue(apiDGModel.ClusterType),
+					Conditions:            conditions,
+					Connection:            types.StringPointerValue((*string)(apiDGModel.Connection)),
+					CreatedAt:             types.StringPointerValue((*string)(apiDGModel.CreatedAt)),
+					CspAuth:               apiDGModel.CspAuth,
+					InstanceType:          apiDGModel.InstanceType,
+					LogsUrl:               types.StringPointerValue(apiDGModel.LogsUrl),
+					MetricsUrl:            types.StringPointerValue(apiDGModel.MetricsUrl),
+					PgConfig:              apiDGModel.PgConfig,
+					PgType:                apiDGModel.PgType,
+					PgVersion:             apiDGModel.PgVersion,
+					Phase:                 types.StringPointerValue(apiDGModel.Phase),
+					PrivateNetworking:     apiDGModel.PrivateNetworking,
+					Provider:              apiDGModel.Provider,
+					Region:                apiDGModel.Region,
+					ResizingPvc:           types.SetValueMust(types.StringType, resizingPvc),
+					Storage:               storage,
+					MaintenanceWindow:     apiDGModel.MaintenanceWindow,
+				}
+
+				*dgs = append(*dgs, tfDGModel)
 			}
 
 			if apiGroupResp["clusterType"] == "witness_group" {
-				model := pgd.WitnessGroup{}
+				model := pgdApi.WitnessGroup{}
 
 				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
 					if err != nil {
@@ -923,13 +1015,36 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
 }
 
-func buildStorageAs(storage *models.Storage) {
+func buildApiStorage(tfStorage terraform.Storage) *models.Storage {
+	var iops *string
+	var throughput *string
+
 	// azurepremiumstorage only needs volume type, properties and size
 	// other values will cause an unhelpful error on the API
-	if *storage.VolumeTypeId == "azurepremiumstorage" {
-		storage.Iops = nil
-		storage.Throughput = nil
+	if *tfStorage.VolumeTypeId == "azurepremiumstorage" {
+		iops = nil
+		throughput = nil
+	} else {
+		iops = tfStorage.Iops.ValueStringPointer()
+		if tfStorage.Iops.IsUnknown() {
+			iops = nil
+		}
+
+		throughput = tfStorage.Throughput.ValueStringPointer()
+		if tfStorage.Throughput.IsUnknown() {
+			throughput = nil
+		}
 	}
+
+	resultStorage := &models.Storage{
+		Size:               tfStorage.Size,
+		VolumePropertiesId: tfStorage.VolumePropertiesId,
+		VolumeTypeId:       tfStorage.VolumeTypeId,
+		Iops:               iops,
+		Throughput:         throughput,
+	}
+
+	return resultStorage
 }
 
 func NewPgdResource() resource.Resource {

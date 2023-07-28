@@ -1,4 +1,4 @@
-package pgd
+package api
 
 type Condition struct {
 	ConditionStatus *string `json:"conditionStatus,omitempty" tfsdk:"condition_status"`

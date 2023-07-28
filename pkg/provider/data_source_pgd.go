@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
+	pgdApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -381,13 +382,13 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 }
 
 type PGDDataSourceData struct {
-	ID            *string            `tfsdk:"id"`
-	ProjectID     string             `tfsdk:"project_id"`
-	ClusterID     *string            `tfsdk:"cluster_id"`
-	ClusterName   string             `tfsdk:"cluster_name"`
-	MostRecent    *bool              `tfsdk:"most_recent"`
-	DataGroups    []pgd.DataGroup    `tfsdk:"data_groups"`
-	WitnessGroups []pgd.WitnessGroup `tfsdk:"witness_groups"`
+	ID            *string               `tfsdk:"id"`
+	ProjectID     string                `tfsdk:"project_id"`
+	ClusterID     *string               `tfsdk:"cluster_id"`
+	ClusterName   string                `tfsdk:"cluster_name"`
+	MostRecent    *bool                 `tfsdk:"most_recent"`
+	DataGroups    []terraform.DataGroup `tfsdk:"data_groups"`
+	WitnessGroups []pgdApi.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -422,7 +423,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	if err = buildGroupsToTypeAs(*cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
+	if err = buildTFGroupsAs(*cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
 		resp.Diagnostics.AddError("Data source read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
 		return
 	}
