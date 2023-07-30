@@ -530,15 +530,15 @@ func (p *pgdResource) Configure(_ context.Context, req resource.ConfigureRequest
 }
 
 type PGD struct {
-	ID            *string               `tfsdk:"id"`
-	ProjectId     string                `tfsdk:"project_id"`
-	ClusterId     *string               `tfsdk:"cluster_id"`
-	ClusterName   *string               `tfsdk:"cluster_name"`
-	MostRecent    *bool                 `tfsdk:"most_recent"`
-	Password      *string               `tfsdk:"password"`
-	Timeouts      timeouts.Value        `tfsdk:"timeouts"`
-	DataGroups    []terraform.DataGroup `tfsdk:"data_groups"`
-	WitnessGroups []pgdApi.WitnessGroup `tfsdk:"witness_groups"`
+	ID            *string                  `tfsdk:"id"`
+	ProjectId     string                   `tfsdk:"project_id"`
+	ClusterId     *string                  `tfsdk:"cluster_id"`
+	ClusterName   *string                  `tfsdk:"cluster_name"`
+	MostRecent    *bool                    `tfsdk:"most_recent"`
+	Password      *string                  `tfsdk:"password"`
+	Timeouts      timeouts.Value           `tfsdk:"timeouts"`
+	DataGroups    []terraform.DataGroup    `tfsdk:"data_groups"`
+	WitnessGroups []terraform.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 // Create creates the resource and sets the initial Terraform state.
@@ -562,7 +562,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	for _, v := range config.DataGroups {
 		v := v
 
-		storage := buildApiStorage(v.Storage)
+		storage := buildApiStorage(*v.Storage)
 
 		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgdApi.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
@@ -619,17 +619,23 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		}
 
 		for _, v := range config.WitnessGroups {
-			v.ClusterArchitecture = &pgdApi.ClusterArchitecture{
-				ClusterArchitectureId: "pgd",
-				Nodes:                 config.DataGroups[0].ClusterArchitecture.Nodes,
+			wgReq := pgdApi.WitnessGroup{
+				ClusterArchitecture: &pgdApi.ClusterArchitecture{
+					ClusterArchitectureId: "pgd",
+					Nodes:                 config.DataGroups[0].ClusterArchitecture.Nodes,
+				},
+				ClusterType: utils.ToPointer("witness_group"),
+				Provider: &pgdApi.CloudProvider{
+					CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
+				},
+				InstanceType: calWitnessResp.InstanceType,
+				Storage:      calWitnessResp.Storage,
+				Region: &pgdApi.Region{
+					RegionId: v.Region.RegionId.ValueString(),
+				},
 			}
-			v.ClusterType = utils.ToPointer("witness_group")
-			v.Provider = &pgdApi.CloudProvider{
-				CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
-			}
-			v.InstanceType = calWitnessResp.InstanceType
-			v.Storage = calWitnessResp.Storage
-			*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
+
+			*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 		}
 	}
 
@@ -668,7 +674,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// }
 
 	// config.DataGroups = []terraform.DataGroup{}
-	// config.WitnessGroups = []pgdApi.WitnessGroup{}
+	// config.WitnessGroups = []terraform.WitnessGroup{}
 
 	// if err = buildTFGroupsAs(*clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
 	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
@@ -733,7 +739,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	witnessGroupParamsBody := pgdApi.WitnessGroupParamsBody{}
 	for _, v := range plan.DataGroups {
-		storage := buildApiStorage(v.Storage)
+		storage := buildApiStorage(*v.Storage)
 
 		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgdApi.WitnessGroupParamsBodyData{
 			InstanceType: v.InstanceType,
@@ -774,20 +780,21 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 
 		for _, v := range plan.WitnessGroups {
-			v.ClusterArchitecture = &pgdApi.ClusterArchitecture{
-				ClusterArchitectureId: "pgd",
-				Nodes:                 plan.DataGroups[0].ClusterArchitecture.Nodes,
+			_ = v
+			wgReq := pgdApi.WitnessGroup{
+				ClusterArchitecture: &pgdApi.ClusterArchitecture{
+					ClusterArchitectureId: "pgd",
+					Nodes:                 plan.DataGroups[0].ClusterArchitecture.Nodes,
+				},
+				ClusterType: utils.ToPointer("witness_group"),
+				Provider: &pgdApi.CloudProvider{
+					CloudProviderId: plan.DataGroups[0].Provider.CloudProviderId,
+				},
+				InstanceType: calWitnessResp.InstanceType,
+				Storage:      calWitnessResp.Storage,
 			}
-			v.ClusterType = utils.ToPointer("witness_group")
-			v.Provider = &pgdApi.CloudProvider{
-				CloudProviderId: plan.DataGroups[0].Provider.CloudProviderId,
-			}
-			v.InstanceType = calWitnessResp.InstanceType
-			v.Storage = calWitnessResp.Storage
-			v.Phase = nil
-			v.Region = nil
-			v.Provider = nil
-			*clusterReqBody.Groups = append(*clusterReqBody.Groups, v)
+
+			*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 		}
 	}
 
@@ -839,7 +846,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	}
 }
 
-func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, wgs []pgdApi.WitnessGroup) (bool, error) {
+func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, wgs []terraform.WitnessGroup) (bool, error) {
 	healthy := true
 
 	for _, v := range dgs {
@@ -855,7 +862,7 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 	}
 
 	for _, v := range wgs {
-		if *v.Phase != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
 			healthy = false
 		}
 	}
@@ -887,9 +894,9 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, state *PGD) retry.RetryFu
 	}
 }
 
-func buildTFGroupsAs(clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs *[]pgdApi.WitnessGroup) error {
+func buildTFGroupsAs(clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs *[]terraform.WitnessGroup) error {
 	*dgs = []terraform.DataGroup{}
-	*wgs = []pgdApi.WitnessGroup{}
+	*wgs = []terraform.WitnessGroup{}
 
 	for _, v := range *clusterResp.Groups {
 		switch apiGroupResp := v.(type) {
@@ -903,7 +910,7 @@ func buildTFGroupsAs(clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs
 					}
 				}
 
-				clusterArch := terraform.ClusterArchitecture{
+				clusterArch := &terraform.ClusterArchitecture{
 					ClusterArchitectureId:   apiDGModel.ClusterArchitecture.ClusterArchitectureId,
 					ClusterArchitectureName: types.StringPointerValue(apiDGModel.ClusterArchitecture.ClusterArchitectureName),
 					Nodes:                   apiDGModel.ClusterArchitecture.Nodes,
@@ -928,7 +935,7 @@ func buildTFGroupsAs(clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs
 					}
 				}
 
-				storage := terraform.Storage{
+				storage := &terraform.Storage{
 					Size:               apiDGModel.Storage.Size,
 					VolumePropertiesId: apiDGModel.Storage.VolumePropertiesId,
 					VolumeTypeId:       apiDGModel.Storage.VolumeTypeId,
@@ -966,15 +973,57 @@ func buildTFGroupsAs(clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs
 			}
 
 			if apiGroupResp["clusterType"] == "witness_group" {
-				model := pgdApi.WitnessGroup{}
+				apiWGModel := pgdApi.WitnessGroup{}
 
-				if err := utils.CopyObjectJson(apiGroupResp, &model); err != nil {
+				if err := utils.CopyObjectJson(apiGroupResp, &apiWGModel); err != nil {
 					if err != nil {
 						return fmt.Errorf("unable to copy witness group, got error: %s", err)
 					}
 				}
 
-				*wgs = append(*wgs, model)
+				var clusterArch *terraform.ClusterArchitecture
+
+				if apiWGModel.ClusterArchitecture != nil {
+					clusterArch = &terraform.ClusterArchitecture{
+						ClusterArchitectureId:   apiWGModel.ClusterArchitecture.ClusterArchitectureId,
+						ClusterArchitectureName: types.StringPointerValue(apiWGModel.ClusterArchitecture.ClusterArchitectureName),
+						Nodes:                   apiWGModel.ClusterArchitecture.Nodes,
+						WitnessNodes:            apiWGModel.ClusterArchitecture.WitnessNodes,
+					}
+				}
+
+				instanceType := &terraform.InstanceType{
+					InstanceTypeId: types.StringValue(apiWGModel.InstanceType.InstanceTypeId),
+				}
+
+				provider := &terraform.CloudProvider{
+					CloudProviderId: types.StringValue(*apiWGModel.Provider.CloudProviderId),
+				}
+
+				region := &terraform.Region{
+					RegionId: types.StringValue(apiWGModel.Region.RegionId),
+				}
+
+				storage := &terraform.Storage{
+					Size:               apiWGModel.Storage.Size,
+					VolumePropertiesId: apiWGModel.Storage.VolumePropertiesId,
+					VolumeTypeId:       apiWGModel.Storage.VolumeTypeId,
+					Iops:               types.StringPointerValue(apiWGModel.Storage.Iops),
+					Throughput:         types.StringPointerValue(apiWGModel.Storage.Throughput),
+				}
+
+				tfWGModel := terraform.WitnessGroup{
+					GroupId:             types.StringPointerValue(apiWGModel.GroupId),
+					ClusterArchitecture: clusterArch,
+					ClusterType:         types.StringPointerValue(apiWGModel.ClusterType),
+					InstanceType:        instanceType,
+					Provider:            provider,
+					Region:              region,
+					Storage:             storage,
+					Phase:               types.StringPointerValue(apiWGModel.Phase),
+				}
+
+				*wgs = append(*wgs, tfWGModel)
 			}
 		}
 	}

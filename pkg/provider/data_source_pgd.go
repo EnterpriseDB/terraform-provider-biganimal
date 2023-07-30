@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	pgdApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -382,13 +381,13 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 }
 
 type PGDDataSourceData struct {
-	ID            *string               `tfsdk:"id"`
-	ProjectID     string                `tfsdk:"project_id"`
-	ClusterID     *string               `tfsdk:"cluster_id"`
-	ClusterName   string                `tfsdk:"cluster_name"`
-	MostRecent    *bool                 `tfsdk:"most_recent"`
-	DataGroups    []terraform.DataGroup `tfsdk:"data_groups"`
-	WitnessGroups []pgdApi.WitnessGroup `tfsdk:"witness_groups"`
+	ID            *string                  `tfsdk:"id"`
+	ProjectID     string                   `tfsdk:"project_id"`
+	ClusterID     *string                  `tfsdk:"cluster_id"`
+	ClusterName   string                   `tfsdk:"cluster_name"`
+	MostRecent    *bool                    `tfsdk:"most_recent"`
+	DataGroups    []terraform.DataGroup    `tfsdk:"data_groups"`
+	WitnessGroups []terraform.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

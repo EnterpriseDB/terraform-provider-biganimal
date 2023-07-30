@@ -1,5 +1,7 @@
 package terraform
 
+import "github.com/hashicorp/terraform-plugin-framework/types"
+
 type InstanceType struct {
-	InstanceTypeId string `tfsdk:"instance_type_id"`
+	InstanceTypeId types.String `tfsdk:"instance_type_id"`
 }

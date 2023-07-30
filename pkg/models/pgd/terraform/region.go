@@ -1,5 +1,7 @@
 package terraform
 
+import "github.com/hashicorp/terraform-plugin-framework/types"
+
 type Region struct {
-	RegionId string `tfsdk:"region_id"`
+	RegionId types.String `tfsdk:"region_id"`
 }

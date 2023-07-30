@@ -10,7 +10,7 @@ type DataGroup struct {
 	GroupId               types.String              `tfsdk:"group_id"`
 	AllowedIpRanges       *[]models.AllowedIpRange  `tfsdk:"allowed_ip_ranges"`
 	BackupRetentionPeriod *string                   `tfsdk:"backup_retention_period"`
-	ClusterArchitecture   ClusterArchitecture       `tfsdk:"cluster_architecture"`
+	ClusterArchitecture   *ClusterArchitecture      `tfsdk:"cluster_architecture"`
 	ClusterName           types.String              `tfsdk:"cluster_name"`
 	ClusterType           types.String              `tfsdk:"cluster_type"`
 	Conditions            *[]Condition              `tfsdk:"conditions"`
@@ -28,6 +28,6 @@ type DataGroup struct {
 	Provider              *api.CloudProvider        `tfsdk:"cloud_provider"`
 	Region                *api.Region               `tfsdk:"region"`
 	ResizingPvc           types.Set                 `tfsdk:"resizing_pvc"`
-	Storage               Storage                   `tfsdk:"storage"`
+	Storage               *Storage                  `tfsdk:"storage"`
 	MaintenanceWindow     *models.MaintenanceWindow `tfsdk:"maintenance_window"`
 }
