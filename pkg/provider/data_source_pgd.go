@@ -422,8 +422,8 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	if err = buildTFGroupsAs(*cluster, &data.DataGroups, &data.WitnessGroups); err != nil {
-		resp.Diagnostics.AddError("Data source read error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+	buildTFGroupsAs(ctx, &resp.Diagnostics, *cluster, &data.DataGroups, &data.WitnessGroups)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

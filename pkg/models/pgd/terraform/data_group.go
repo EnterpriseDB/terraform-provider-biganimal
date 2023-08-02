@@ -13,7 +13,7 @@ type DataGroup struct {
 	ClusterArchitecture   *ClusterArchitecture      `tfsdk:"cluster_architecture"`
 	ClusterName           types.String              `tfsdk:"cluster_name"`
 	ClusterType           types.String              `tfsdk:"cluster_type"`
-	Conditions            *[]Condition              `tfsdk:"conditions"`
+	Conditions            types.Set                 `tfsdk:"conditions"`
 	Connection            types.String              `tfsdk:"connection_uri"`
 	CreatedAt             types.String              `tfsdk:"created_at"`
 	CspAuth               *bool                     `tfsdk:"csp_auth"`
