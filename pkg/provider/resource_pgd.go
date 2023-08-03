@@ -24,7 +24,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -657,7 +659,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, &config),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config),
 	)
 
 	if err != nil {
@@ -710,7 +712,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ClusterId = clusterResp.ClusterId
 	state.ClusterName = clusterResp.ClusterName
 
-	buildTFGroupsAs(ctx, &resp.Diagnostics, *clusterResp, &state.DataGroups, &state.WitnessGroups)
+	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &state.DataGroups, &state.WitnessGroups)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -833,7 +835,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, &plan),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan),
 	)
 
 	if err != nil {
@@ -894,19 +896,19 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 	return true, nil
 }
 
-func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, state *PGD) retry.RetryFunc {
+func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, pgd *PGD) retry.RetryFunc {
 	return func() *retry.RetryError {
-		pgdResp, err := p.client.Read(ctx, state.ProjectId, *state.ClusterId)
+		pgdResp, err := p.client.Read(ctx, pgd.ProjectId, *pgd.ClusterId)
 		if err != nil {
 			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
-		buildTFGroupsAs(ctx, diags, *pgdResp, &state.DataGroups, &state.WitnessGroups)
+		buildTFGroupsAs(ctx, diags, state, *pgdResp, &pgd.DataGroups, &pgd.WitnessGroups)
 		if diags.HasError() {
 			return retry.NonRetryableError(fmt.Errorf("unable to copy group, got error: %s", err))
 		}
 
-		isHealthy, err := p.isHealthy(ctx, state.DataGroups, state.WitnessGroups)
+		isHealthy, err := p.isHealthy(ctx, pgd.DataGroups, pgd.WitnessGroups)
 		if err != nil {
 			return retry.NonRetryableError(fmt.Errorf("error getting health: %s", err))
 		}
@@ -919,10 +921,7 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 	}
 }
 
-func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs *[]terraform.WitnessGroup) {
-	// sourceDgs := dgs
-	// t := (*sourceDgs)[0].Conditions.ElementType()
-
+func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs *[]terraform.WitnessGroup) {
 	*dgs = []terraform.DataGroup{}
 	*wgs = []terraform.WitnessGroup{}
 
@@ -939,6 +938,10 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					}
 				}
 
+				dgTFType := new(types.Set)
+				state.GetAttribute(ctx, path.Root("data_groups"), dgTFType)
+
+				// cluster arch
 				clusterArch := &terraform.ClusterArchitecture{
 					ClusterArchitectureId:   apiDGModel.ClusterArchitecture.ClusterArchitectureId,
 					ClusterArchitectureName: types.StringPointerValue(apiDGModel.ClusterArchitecture.ClusterArchitectureName),
@@ -946,15 +949,28 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					WitnessNodes:            apiDGModel.ClusterArchitecture.WitnessNodes,
 				}
 
-				conditions := []attr.Value{}
-				conditionsAttrTypes := map[string]attr.Type{
-					"condition_status": types.StringType,
-					"type":             types.StringType,
+				// conditions
+				conditionsPathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
+					tftypes.AttributeName("conditions"),
+				})
+
+				conditionsAttr, _ := dgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(conditionsPathSteps.NextStep())
+				conditionsTFType, ok := conditionsAttr.(types.SetType)
+				if !ok {
+					diags.AddError("provider casting error", "cannot cast condition response to set type")
+					return
 				}
 
+				conditionsElemTFType, ok := conditionsTFType.ElemType.(types.ObjectType)
+				if !ok {
+					diags.AddError("provider casting error", "cannot cast condition element response to object type")
+					return
+				}
+
+				conditions := []attr.Value{}
 				if apiDGModel.Conditions != nil && len(*apiDGModel.Conditions) != 0 {
 					for _, v := range *apiDGModel.Conditions {
-						ob, diag := types.ObjectValue(conditionsAttrTypes, map[string]attr.Value{
+						ob, diag := types.ObjectValue(conditionsElemTFType.AttrTypes, map[string]attr.Value{
 							"condition_status": types.StringValue(*v.ConditionStatus),
 							"type":             types.StringValue(*v.Type_),
 						})
@@ -966,12 +982,13 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					}
 				}
 
-				conditionsElemType := types.ObjectType{AttrTypes: conditionsAttrTypes}
+				conditionsElemType := types.ObjectType{AttrTypes: conditionsElemTFType.AttrTypes}
 				conditionsSet := types.SetNull(conditionsElemType)
 				if len(conditions) > 0 {
 					conditionsSet = types.SetValueMust(conditionsElemType, conditions)
 				}
 
+				// resizing pvc
 				resizingPvc := []attr.Value{}
 				if apiDGModel.ResizingPvc != nil && len(*apiDGModel.ResizingPvc) != 0 {
 					for _, v := range *apiDGModel.ResizingPvc {
@@ -980,6 +997,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					}
 				}
 
+				// storage
 				storage := &terraform.Storage{
 					Size:               types.StringPointerValue(apiDGModel.Storage.Size),
 					VolumePropertiesId: types.StringPointerValue(apiDGModel.Storage.VolumePropertiesId),
@@ -1027,16 +1045,25 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					}
 				}
 
-				clusterTFType := map[string]attr.Type{
-					"cluster_architecture_id":   types.StringType,
-					"cluster_architecture_name": types.StringType,
-					"nodes":                     types.Float64Type,
-					"witness_nodes":             types.Float64Type,
+				wgTFType := new(types.Set)
+				state.GetAttribute(ctx, path.Root("witness_groups"), wgTFType)
+
+				// cluster arch
+				clusterArchPathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
+					tftypes.AttributeName("cluster_architecture"),
+				})
+
+				clusterArchAttr, _ := wgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(clusterArchPathSteps.NextStep())
+				clusterArchTFType, ok := clusterArchAttr.(types.ObjectType)
+				if !ok {
+					diags.AddError("cluster arch casting error", "cannot cast cluster architecture response to object type")
+					return
 				}
-				clusterArch := types.ObjectNull(clusterTFType)
+
+				clusterArch := types.ObjectNull(clusterArchTFType.AttrTypes)
 				if apiWGModel.ClusterArchitecture != nil {
 
-					ob, diag := types.ObjectValue(clusterTFType, map[string]attr.Value{
+					ob, diag := types.ObjectValue(clusterArchTFType.AttrTypes, map[string]attr.Value{
 						"cluster_architecture_id":   types.StringValue(apiWGModel.ClusterArchitecture.ClusterArchitectureId),
 						"cluster_architecture_name": types.StringValue(*apiWGModel.ClusterArchitecture.ClusterArchitectureName),
 						"nodes":                     types.Float64Value(apiWGModel.ClusterArchitecture.Nodes),
@@ -1049,13 +1076,22 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					clusterArch = ob
 				}
 
-				instanceType := types.Object{}
-				if apiWGModel.InstanceType != nil {
-					obType := map[string]attr.Type{
-						"instance_type_id": types.StringType,
-					}
+				// instance type
+				instanceTypePathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
+					tftypes.AttributeName("instance_type"),
+				})
 
-					ob, diag := types.ObjectValue(obType, map[string]attr.Value{
+				instanceTypeAttr, _ := wgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(instanceTypePathSteps.NextStep())
+				instanceTypeTFType, ok := instanceTypeAttr.(types.ObjectType)
+
+				if !ok {
+					diags.AddError("provider error", "cannot cast instance type response to object type")
+					return
+				}
+				instanceType := types.ObjectNull(instanceTypeTFType.AttrTypes)
+				if apiWGModel.InstanceType != nil {
+
+					ob, diag := types.ObjectValue(instanceTypeTFType.AttrTypes, map[string]attr.Value{
 						"instance_type_id": types.StringValue(apiWGModel.InstanceType.InstanceTypeId),
 					})
 					if diag.HasError() {
@@ -1066,13 +1102,22 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					instanceType = ob
 				}
 
-				provider := types.Object{}
-				if apiWGModel.Provider != nil {
-					obType := map[string]attr.Type{
-						"cloud_provider_id": types.StringType,
-					}
+				// provider
+				providerPathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
+					tftypes.AttributeName("cloud_provider"),
+				})
 
-					ob, diag := types.ObjectValue(obType, map[string]attr.Value{
+				providerAttr, _ := wgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(providerPathSteps.NextStep())
+				providerTFType, ok := providerAttr.(types.ObjectType)
+
+				if !ok {
+					diags.AddError("provider error", "cannot cast cloud provider response object type")
+					return
+				}
+				provider := types.ObjectNull(providerTFType.AttrTypes)
+				if apiWGModel.Provider != nil {
+
+					ob, diag := types.ObjectValue(providerTFType.AttrTypes, map[string]attr.Value{
 						"cloud_provider_id": types.StringValue(*apiWGModel.Provider.CloudProviderId),
 					})
 					if diag.HasError() {
@@ -1082,21 +1127,27 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					provider = ob
 				}
 
+				// region
 				region := &terraform.Region{
 					RegionId: types.StringValue(apiWGModel.Region.RegionId),
 				}
 
-				storage := types.Object{}
-				if apiWGModel.Storage != nil {
-					obType := map[string]attr.Type{
-						"iops":              types.StringType,
-						"size":              types.StringType,
-						"throughput":        types.StringType,
-						"volume_properties": types.StringType,
-						"volume_type":       types.StringType,
-					}
+				// storage
+				storagePathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
+					tftypes.AttributeName("storage"),
+				})
 
-					ob, diag := types.ObjectValue(obType, map[string]attr.Value{
+				storageAttr, _ := wgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(storagePathSteps.NextStep())
+				storageTFType, ok := storageAttr.(types.ObjectType)
+
+				if !ok {
+					diags.AddError("provider error", "cannot cast storage response object type")
+					return
+				}
+				storage := types.ObjectNull(storageTFType.AttrTypes)
+				if apiWGModel.Storage != nil {
+
+					ob, diag := types.ObjectValue(storageTFType.AttrTypes, map[string]attr.Value{
 						"iops":              types.StringValue(*apiWGModel.Storage.Iops),
 						"size":              types.StringValue(*apiWGModel.Storage.Size),
 						"throughput":        types.StringValue(*apiWGModel.Storage.Throughput),

@@ -422,7 +422,7 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	buildTFGroupsAs(ctx, &resp.Diagnostics, *cluster, &data.DataGroups, &data.WitnessGroups)
+	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *cluster, &data.DataGroups, &data.WitnessGroups)
 	if resp.Diagnostics.HasError() {
 		return
 	}
