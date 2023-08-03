@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -678,8 +677,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// config.DataGroups = []terraform.DataGroup{}
 	// config.WitnessGroups = []terraform.WitnessGroup{}
 
-	// if err = buildTFGroupsAs(*clusterResp, &config.DataGroups, &config.WitnessGroups); err != nil {
-	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+	// buildTFGroupsAs(ctx, &resp.Diagnostics, *clusterResp, &config.DataGroups, &config.WitnessGroups)
+	// if resp.Diagnostics.HasError() {
 	// 	return
 	// }
 
@@ -818,8 +817,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 	}
 
-	res, _ := json.MarshalIndent(clusterReqBody, "", "  ")
-	fmt.Println(string(res))
 	_, err := p.client.Update(ctx, plan.ProjectId, *plan.ClusterId, clusterReqBody)
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -853,11 +850,11 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	// 	return
 	// }
 
-	// plan.DataGroups = []pgd.DataGroup{}
-	// plan.WitnessGroups = []pgd.WitnessGroup{}
+	// plan.DataGroups = []terraform.DataGroup{}
+	// plan.WitnessGroups = []terraform.WitnessGroup{}
 
-	// if err = buildGroupsToTypeAs(*clusterResp, &plan.DataGroups, &plan.WitnessGroups); err != nil {
-	// 	resp.Diagnostics.AddError("Resource create error", fmt.Sprintf("Unable to copy group, got error: %s", err))
+	// buildTFGroupsAs(ctx, &resp.Diagnostics, *clusterResp, &plan.DataGroups, &plan.WitnessGroups)
+	// if resp.Diagnostics.HasError() {
 	// 	return
 	// }
 
@@ -950,14 +947,14 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 				}
 
 				conditions := []attr.Value{}
-				obType := map[string]attr.Type{
+				conditionsAttrTypes := map[string]attr.Type{
 					"condition_status": types.StringType,
 					"type":             types.StringType,
 				}
 
 				if apiDGModel.Conditions != nil && len(*apiDGModel.Conditions) != 0 {
 					for _, v := range *apiDGModel.Conditions {
-						ob, diag := types.ObjectValue(obType, map[string]attr.Value{
+						ob, diag := types.ObjectValue(conditionsAttrTypes, map[string]attr.Value{
 							"condition_status": types.StringValue(*v.ConditionStatus),
 							"type":             types.StringValue(*v.Type_),
 						})
@@ -969,9 +966,10 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					}
 				}
 
-				conditionsSet := types.Set{}
+				conditionsElemType := types.ObjectType{AttrTypes: conditionsAttrTypes}
+				conditionsSet := types.SetNull(conditionsElemType)
 				if len(conditions) > 0 {
-					conditionsSet = types.SetValueMust(conditions[0].Type(ctx), conditions)
+					conditionsSet = types.SetValueMust(conditionsElemType, conditions)
 				}
 
 				resizingPvc := []attr.Value{}
@@ -1029,16 +1027,16 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 					}
 				}
 
-				clusterArch := types.Object{}
+				clusterTFType := map[string]attr.Type{
+					"cluster_architecture_id":   types.StringType,
+					"cluster_architecture_name": types.StringType,
+					"nodes":                     types.Float64Type,
+					"witness_nodes":             types.Float64Type,
+				}
+				clusterArch := types.ObjectNull(clusterTFType)
 				if apiWGModel.ClusterArchitecture != nil {
-					obType := map[string]attr.Type{
-						"cluster_architecture_id":   types.StringType,
-						"cluster_architecture_name": types.StringType,
-						"nodes":                     types.StringType,
-						"witness_nodes":             types.StringType,
-					}
 
-					ob, diag := types.ObjectValue(obType, map[string]attr.Value{
+					ob, diag := types.ObjectValue(clusterTFType, map[string]attr.Value{
 						"cluster_architecture_id":   types.StringValue(apiWGModel.ClusterArchitecture.ClusterArchitectureId),
 						"cluster_architecture_name": types.StringValue(*apiWGModel.ClusterArchitecture.ClusterArchitectureName),
 						"nodes":                     types.Float64Value(apiWGModel.ClusterArchitecture.Nodes),
@@ -1052,7 +1050,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 				}
 
 				instanceType := types.Object{}
-				if apiWGModel.ClusterArchitecture != nil {
+				if apiWGModel.InstanceType != nil {
 					obType := map[string]attr.Type{
 						"instance_type_id": types.StringType,
 					}
@@ -1064,11 +1062,12 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 						diags.Append(diag...)
 						return
 					}
+
 					instanceType = ob
 				}
 
 				provider := types.Object{}
-				if apiWGModel.ClusterArchitecture != nil {
+				if apiWGModel.Provider != nil {
 					obType := map[string]attr.Type{
 						"cloud_provider_id": types.StringType,
 					}
@@ -1088,7 +1087,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, clusterResp m
 				}
 
 				storage := types.Object{}
-				if apiWGModel.ClusterArchitecture != nil {
+				if apiWGModel.Storage != nil {
 					obType := map[string]attr.Type{
 						"iops":              types.StringType,
 						"size":              types.StringType,
