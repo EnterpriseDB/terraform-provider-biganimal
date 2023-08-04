@@ -58,8 +58,7 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	// add new groups
 	for _, pDg := range planDgs {
 		planGroupExistsInStateGroups := false
-		var planRegion attr.Value
-		planRegion = pDg.(basetypes.ObjectValue).Attributes()["region"]
+		planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, sDg := range stateDgs {
 			stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {
@@ -77,8 +76,7 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	// remove groups
 	for _, sDg := range stateDgs {
 		stateGroupExistsInPlanGroups := false
-		var stateRegion attr.Value
-		stateRegion = sDg.(basetypes.ObjectValue).Attributes()["region"]
+		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, pDg := range planDgs {
 			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {

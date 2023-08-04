@@ -876,7 +876,7 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 		conditions := &[]terraform.Condition{}
 		v.Conditions.ElementsAs(ctx, conditions, true)
 
-		if conditions == nil {
+		if len(*conditions) == 0 {
 			return false, nil
 		}
 

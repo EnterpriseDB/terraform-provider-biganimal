@@ -53,8 +53,7 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 	// add new groups
 	for _, pWg := range planWgs {
 		planGroupExistsInStateGroups := false
-		var planRegion attr.Value
-		planRegion = pWg.(basetypes.ObjectValue).Attributes()["region"]
+		planRegion := pWg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, sWg := range stateWgs {
 			stateRegion := sWg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {
@@ -72,8 +71,7 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 	// remove groups
 	for _, sWg := range stateWgs {
 		stateGroupExistsInPlanGroups := false
-		var stateRegion attr.Value
-		stateRegion = sWg.(basetypes.ObjectValue).Attributes()["region"]
+		stateRegion := sWg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, pWg := range planWgs {
 			planRegion := pWg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {
