@@ -35,14 +35,19 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	planDgs := resp.PlanValue.Elements()
 	stateDgs := req.StateValue.Elements()
 
+	if len(planDgs) == 0 {
+		resp.Diagnostics.AddWarning("No data groups in config", "No data groups in config please add at least 1 data group")
+		return
+	}
+
 	newPlan := []attr.Value{}
 
 	// hack need to sort plan we are using a slice instead of type.Set. This is so the compare and value setting is correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	// sort the order of the plan the same as the state, state is from the read and plan is from the config
 	for _, sDg := range stateDgs {
+		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, pDg := range planDgs {
-			stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
 			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {
 				newPlan = append(newPlan, pDg)
@@ -52,46 +57,48 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 	// add new groups
 	for _, pDg := range planDgs {
-		groupExists := false
+		planGroupExistsInStateGroups := false
+		var planRegion attr.Value
+		planRegion = pDg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, sDg := range stateDgs {
 			stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
-			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {
-				groupExists = true
+				planGroupExistsInStateGroups = true
 				break
 			}
 		}
 
-		if !groupExists {
+		if !planGroupExistsInStateGroups {
 			newPlan = append(newPlan, pDg)
+			resp.Diagnostics.AddWarning("Adding new data group", fmt.Sprintf("Adding new data group with region %v", planRegion))
 		}
-
 	}
 
-	// if the config/plan dgs count does not match with the expected count in the state dgs
-	// if len(newPlan) != len(stateDgs) {
-	// 	stateRegions := []attr.Value{}
-	// 	planRegions := []attr.Value{}
-	// 	for _, sDg := range stateDgs {
-	// 		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
-	// 		stateRegions = append(stateRegions, stateRegion)
-	// 	}
-	// 	for _, pDg := range planDgs {
-	// 		planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
-	// 		planRegions = append(planRegions, planRegion)
-	// 	}
-	// 	resp.Diagnostics.AddError("Regions in config not matching state", fmt.Sprintf("config regions: %v expected to match state regions: %v", planRegions, stateRegions))
-	// 	return
-	// }
+	// remove groups
+	for _, sDg := range stateDgs {
+		stateGroupExistsInPlanGroups := false
+		var stateRegion attr.Value
+		stateRegion = sDg.(basetypes.ObjectValue).Attributes()["region"]
+		for _, pDg := range planDgs {
+			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
+			if stateRegion.Equal(planRegion) {
+				stateGroupExistsInPlanGroups = true
+				break
+			}
+		}
 
+		if !stateGroupExistsInPlanGroups {
+			resp.Diagnostics.AddWarning("Removing data group", fmt.Sprintf("Removing data group with region %v", stateRegion))
+		}
+	}
+
+	if len(newPlan) == 0 {
+		resp.Diagnostics.AddWarning("Plan data group generation error", "Plan data group error: regions may not be matching, regions missing in config or no data groups in config")
+		return
+	}
 	resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
 
-	// if len(stateDgs) > len(planDgs) {
-	// 	resp.Diagnostics.AddError("Upscaling not supported", "Upscaling data groups and witness groups currently not supported")
-	// 	return
-	// }
-
-	for _, planDg := range planDgs {
+	for _, planDg := range resp.PlanValue.Elements() {
 		if stateDgs == nil {
 			return
 		}
@@ -104,10 +111,10 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			}
 		}
 
-		// if stateDgKey == nil {
-		// 	resp.Diagnostics.AddWarning("Data group not found", fmt.Sprintf("data group with region %v not found", planDg.(basetypes.ObjectValue).Attributes()["region"].String()))
-		// 	continue
-		// }
+		// data group may not exist because user is adding a new group with a new region
+		if stateDgKey == nil {
+			continue
+		}
 
 		if stateDgKey != nil {
 

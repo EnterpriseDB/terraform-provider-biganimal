@@ -368,7 +368,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
+					plan_modifier.CustomWitnessGroupDiffConfig(),
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -679,7 +679,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// config.DataGroups = []terraform.DataGroup{}
 	// config.WitnessGroups = []terraform.WitnessGroup{}
 
-	// buildTFGroupsAs(ctx, &resp.Diagnostics, *clusterResp, &config.DataGroups, &config.WitnessGroups)
+	// buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &config.DataGroups, &config.WitnessGroups)
 	// if resp.Diagnostics.HasError() {
 	// 	return
 	// }
@@ -855,7 +855,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	// plan.DataGroups = []terraform.DataGroup{}
 	// plan.WitnessGroups = []terraform.WitnessGroup{}
 
-	// buildTFGroupsAs(ctx, &resp.Diagnostics, *clusterResp, &plan.DataGroups, &plan.WitnessGroups)
+	// buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &plan.DataGroups, &plan.WitnessGroups)
 	// if resp.Diagnostics.HasError() {
 	// 	return
 	// }
