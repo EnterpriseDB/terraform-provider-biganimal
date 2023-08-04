@@ -27,7 +27,7 @@ variable "project_id" {
   description = "BigAnimal Project ID"
 }
 
-resource "biganimal_cluster" "ha_cluster" {
+resource "biganimal_cluster" "single_node_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
 
@@ -43,11 +43,12 @@ resource "biganimal_cluster" "ha_cluster" {
 
   backup_retention_period = "6d"
   cluster_architecture {
-    id    = "ha"
-    nodes = 3
+    id    = "single"
+    nodes = 1
   }
+  csp_auth = false
 
-  instance_type = "aws:c5.large"
+  instance_type = "gcp:e2-highcpu-4"
   password      = resource.random_password.password.result
   pg_config {
     name  = "application_name"
@@ -60,28 +61,24 @@ resource "biganimal_cluster" "ha_cluster" {
   }
 
   storage {
-    volume_type       = "gp3"
-    volume_properties = "gp3"
-    size              = "4 Gi"
+    volume_type       = "pd-ssd"
+    volume_properties = "pd-ssd"
+    size              = "10 Gi"
   }
 
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
-  cloud_provider        = "aws"
-  read_only_connections = true
-  region                = "us-east-1"
+  cloud_provider        = "gcp"
+  read_only_connections = false
+  region                = "us-east1"
 }
 
 output "password" {
   sensitive = true
-  value     = resource.biganimal_cluster.ha_cluster.password
-}
-
-output "ro_connection_uri" {
-  value = resource.biganimal_cluster.ha_cluster.ro_connection_uri
+  value     = resource.biganimal_cluster.single_node_cluster.password
 }
 
 output "faraway_replica_ids" {
-  value = resource.biganimal_cluster.ha_cluster.faraway_replica_ids
+  value = biganimal_cluster.single_node_cluster.faraway_replica_ids
 }

@@ -9,7 +9,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.5.0"
+      version = "0.5.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -102,7 +102,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.5.0"
+      version = "0.5.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -146,7 +146,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   }
 
   pg_type        = "epas"
-  pg_version     = "14"
+  pg_version     = "15"
   cloud_provider = "azure"
   region         = "eastus"
 }
@@ -219,7 +219,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 ### Required
 
 - `cluster_name` (String) Name of the faraway replica cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3" or "aws:c5.large".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
 - `project_id` (String) BigAnimal Project ID.
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `source_cluster_id` (String) Source cluster ID.
@@ -254,7 +254,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 Required:
 
 - `volume_properties` (String) Volume properties in accordance with the selected volume type.
-- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express".
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
 
 Optional:
 

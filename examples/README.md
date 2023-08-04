@@ -12,5 +12,13 @@ The document generation tool looks for files in the following locations by defau
 * [Single node cluster example](./resources/biganimal_cluster/single_node/resource.tf)
   * [Single node cluster example on AWS](./resources/biganimal_cluster/single_node/aws/resource.tf)
   * [Single node cluster example on Azure](./resources/biganimal_cluster/single_node/azure/resource.tf)
+  * [Single node cluster example on Google Cloud](./resources/biganimal_cluster/single_node/gcp/resource.tf)
 * [High availability cluster example](./resources/biganimal_cluster/ha/resource.tf)
-* [Extreme high availability cluster example](./resources/biganimal_cluster/eha/resource.tf)
+* For Extreme high availability cluster examples, please check [the biganimal_pgd resource examples below](#biganimal_pgd-resource-examples-for-managing-extreme-high-availability-clusters)
+
+## biganimal_pgd resource examples (for managing Extreme High Availability clusters)
+
+* [PGD Azure One Data Group Example](./resources/biganimal_pgd/azure/data_group/resource.tf)
+* [PGD Azure Two Data Groups with One Witness Group Example](./resources/biganimal_pgd/azure/data_groups_with_witness_group/resource.tf)
+* [PGD AWS One Data Group Example](./resources/biganimal_pgd/aws/data_group/resource.tf)
+* [PGD AWS Two Data Groups with One Witness Group Example](./resources/biganimal_pgd/aws/data_groups_with_witness_group/resource.tf)

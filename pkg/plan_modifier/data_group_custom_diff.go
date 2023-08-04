@@ -111,7 +111,7 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			}
 		}
 
-		// data group may not exist because user is adding a new group with a new region
+		// data group may not exist in state because user is adding a new group with a new region
 		if stateDgKey == nil {
 			continue
 		}
@@ -209,9 +209,11 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			statePGType := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_type"]
 
 			if !planPGType.Equal(statePGType) {
-				resp.Diagnostics.AddWarning("PG type changed", fmt.Sprintf("PG type changed from %v to %v",
-					statePGType,
-					planPGType))
+				resp.Diagnostics.AddError("PG type cannot be changed",
+					fmt.Sprintf("PG type cannot be changed. PG type changed from expected value %v to %v in config",
+						statePGType,
+						planPGType))
+				return
 			}
 
 			// pg version
@@ -219,9 +221,11 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			statePGVersion := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_version"]
 
 			if !planPGVersion.Equal(statePGVersion) {
-				resp.Diagnostics.AddWarning("PG version changed", fmt.Sprintf("PG version changed from %v to %v",
-					statePGVersion,
-					planPGVersion))
+				resp.Diagnostics.AddError("PG version cannot be changed",
+					fmt.Sprintf("PG version cannot be changed. PG version changed from expected value %v to %v in config",
+						statePGVersion,
+						planPGVersion))
+				return
 			}
 
 			// networking
@@ -239,9 +243,11 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateCloudProvider := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["cloud_provider"]
 
 			if !planCloudProvider.Equal(stateCloudProvider) {
-				resp.Diagnostics.AddWarning("Cloud provider changed", fmt.Sprintf("Cloud provider changed from %v to %v",
-					stateCloudProvider,
-					planCloudProvider))
+				resp.Diagnostics.AddError("Cloud provider cannot be changed",
+					fmt.Sprintf("Cloud provider cannot be changed. Cloud provider changed from expected value: %v to %v in config",
+						stateCloudProvider,
+						planCloudProvider))
+				return
 			}
 
 			// region

@@ -102,7 +102,7 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 			//	Computed:    true,
 			//},
 			"instance_type": {
-				Description: "Instance type. For example, \"azure:Standard_D2s_v3\" or \"aws:c5.large\".",
+				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -208,7 +208,7 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 							Required:    true,
 						},
 						"volume_type": {
-							Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
+							Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},

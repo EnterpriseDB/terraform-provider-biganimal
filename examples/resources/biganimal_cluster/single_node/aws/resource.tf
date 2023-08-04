@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.5.0"
+      version = "0.5.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -67,7 +67,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   }
 
   pg_type               = "epas"
-  pg_version            = "14"
+  pg_version            = "15"
   private_networking    = false
   cloud_provider        = "aws"
   read_only_connections = false

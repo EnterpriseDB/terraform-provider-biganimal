@@ -70,7 +70,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "Cluster architecture ID. For example, \"single\" or \"ha\".",
+							Description: "Cluster architecture ID. For example, \"single\" or \"ha\". For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
@@ -120,7 +120,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Computed:    true,
 			},
 			"instance_type": {
-				Description: "Instance type. For example, \"azure:Standard_D2s_v3\" or \"aws:c5.large\".",
+				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -201,7 +201,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				ValidateDiagFunc: validateProjectId,
 			},
 			"cloud_provider": {
-				Description: "Cloud provider. For example, \"aws\" or \"azure\".",
+				Description: "Cloud provider. For example, \"aws\", \"azure\" or \"gcp\".",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -264,7 +264,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 							Required:    true,
 						},
 						"volume_type": {
-							Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
+							Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
