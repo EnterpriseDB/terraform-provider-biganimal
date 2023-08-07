@@ -22,3 +22,5 @@ The document generation tool looks for files in the following locations by defau
 * [PGD Azure Two Data Groups with One Witness Group Example](./resources/biganimal_pgd/azure/data_groups_with_witness_group/resource.tf)
 * [PGD AWS One Data Group Example](./resources/biganimal_pgd/aws/data_group/resource.tf)
 * [PGD AWS Two Data Groups with One Witness Group Example](./resources/biganimal_pgd/aws/data_groups_with_witness_group/resource.tf)
+* [PGD Google Cloud One Data Group Example](./resources/biganimal_pgd/gcp/data_group/resource.tf)
+* [PGD Google Cloud Two Data Groups with One Witness Group Example](./resources/biganimal_pgd/gcp/data_groups_with_witness_group/resource.tf)
