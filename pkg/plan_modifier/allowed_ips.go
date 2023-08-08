@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func CustomAllowedIps() planmodifier.Set {
+func CustomAllowedIps() planmodifier.List {
 	return customAllowedIpsModifier{}
 }
 
@@ -25,18 +25,18 @@ func (m customAllowedIpsModifier) MarkdownDescription(_ context.Context) string 
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifySet implements the plan modification logic.
-func (m customAllowedIpsModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+// PlanModifyList implements the plan modification logic.
+func (m customAllowedIpsModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if len(resp.PlanValue.Elements()) == 0 {
 		// if plan value is [] the api will return 0.0.0.0/0
 		defaultAttrs := map[string]attr.Value{"cidr_block": basetypes.NewStringValue("0.0.0.0/0"), "description": basetypes.NewStringValue("")}
 		defaultAttrTypes := map[string]attr.Type{"cidr_block": defaultAttrs["cidr_block"].Type(ctx), "description": defaultAttrs["description"].Type(ctx)}
 
 		defaultObjectValue := basetypes.NewObjectValueMust(defaultAttrTypes, defaultAttrs)
-		setOfObjects := []attr.Value{}
-		setOfObjects = append(setOfObjects, defaultObjectValue)
-		setValue := basetypes.NewSetValueMust(defaultObjectValue.Type(ctx), setOfObjects)
-		resp.PlanValue = setValue
+		listOfObjects := []attr.Value{}
+		listOfObjects = append(listOfObjects, defaultObjectValue)
+		listValue := basetypes.NewListValueMust(defaultObjectValue.Type(ctx), listOfObjects)
+		resp.PlanValue = listValue
 		return
 	}
 

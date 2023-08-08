@@ -3,13 +3,14 @@ package plan_modifier
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func CustomDataGroupDiffConfig() planmodifier.Set {
+func CustomDataGroupDiffConfig() planmodifier.List {
 	return customDataGroupDiffModifier{}
 }
 
@@ -26,13 +27,21 @@ func (m customDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifySet implements the plan modification logic.
-func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+// PlanModifyList implements the plan modification logic.
+func (m customDataGroupDiffModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if req.StateValue.IsNull() {
 		return
 	}
 
+	// for list data groups, allowed ip ranges and pg config we have to for new plan:
+	// add existing elements
+	// sort it
+	// add new elements
+	// note: after plan is set it compares with config
+
+	// plan is from config
 	planDgs := resp.PlanValue.Elements()
+	// state is from read
 	stateDgs := req.StateValue.Elements()
 
 	if len(planDgs) == 0 {
@@ -55,6 +64,13 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		}
 	}
 
+	// sort data groups
+	sort.Slice(newPlan, func(i, j int) bool {
+		iString := newPlan[i].(basetypes.ObjectValue).Attributes()["region"].String()
+		jString := newPlan[j].(basetypes.ObjectValue).Attributes()["region"].String()
+		return iString < jString
+	})
+
 	// add new groups
 	for _, pDg := range planDgs {
 		planGroupExistsInStateGroups := false
@@ -69,24 +85,129 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 		if !planGroupExistsInStateGroups {
 			newPlan = append(newPlan, pDg)
-			resp.Diagnostics.AddWarning("Adding new data group", fmt.Sprintf("Adding new data group with region %v", planRegion))
 		}
 	}
 
-	// remove groups
-	for _, sDg := range stateDgs {
-		stateGroupExistsInPlanGroups := false
-		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
-		for _, pDg := range planDgs {
-			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
-			if stateRegion.Equal(planRegion) {
-				stateGroupExistsInPlanGroups = true
-				break
+	// for allowed ip ranges and pg config
+	// add the existing values from state to new allowed ip ranges var state.allowed.cidr and plan.allowed.cidr matches
+	// sort the new allowed ip ranges var
+	// add new allowed ip range from source plan to new allowed ip ranges var
+
+	// newPlan is sorted according to statedDgs
+	// add existing to new plan
+	for k, sDg := range stateDgs {
+		if k > (len(newPlan) - 1) {
+			// no more state dgs matching plan dgs
+			return
+		}
+
+		newAllowedIps := []attr.Value{}
+		newPgConfig := []attr.Value{}
+
+		pA := newPlan[k].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"].(basetypes.ListValue).Elements()
+		sA := sDg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"].(basetypes.ListValue).Elements()
+
+		for _, pa := range pA {
+			for _, sa := range sA {
+				if pa.Equal(sa) {
+					newAllowedIps = append(newAllowedIps, pa)
+				}
 			}
 		}
 
-		if !stateGroupExistsInPlanGroups {
-			resp.Diagnostics.AddWarning("Removing data group", fmt.Sprintf("Removing data group with region %v", stateRegion))
+		newPlan[k].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"] = basetypes.NewSetValueMust(newAllowedIps[0].Type(ctx), newAllowedIps)
+
+		pPg := newPlan[k].(basetypes.ObjectValue).Attributes()["pg_config"].(basetypes.ListValue).Elements()
+		sPg := sDg.(basetypes.ObjectValue).Attributes()["pg_config"].(basetypes.ListValue).Elements()
+
+		for _, ppg := range pPg {
+			for _, spg := range sPg {
+				if ppg.Equal(spg) {
+					newPgConfig = append(newPgConfig, ppg)
+				}
+			}
+		}
+
+		newPlan[k].(basetypes.ObjectValue).Attributes()["pg_config"] = basetypes.NewSetValueMust(newPgConfig[0].Type(ctx), newPgConfig)
+
+	}
+
+	// sort new plan
+	for _, dg := range newPlan {
+		allowedIps := dg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"].(basetypes.ListValue).Elements()
+		sort.Slice(allowedIps, func(i, j int) bool {
+			iString := allowedIps[i].(basetypes.ObjectValue).Attributes()["cidr_block"].String()
+			jString := allowedIps[j].(basetypes.ObjectValue).Attributes()["cidr_block"].String()
+			return iString < jString
+		})
+
+		if len(allowedIps) != 0 {
+			dg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"] = basetypes.NewListValueMust(allowedIps[0].Type(ctx), allowedIps)
+		}
+
+		pgConfig := dg.(basetypes.ObjectValue).Attributes()["pg_config"].(basetypes.ListValue).Elements()
+		sort.Slice(pgConfig, func(i, j int) bool {
+			iString := pgConfig[i].(basetypes.ObjectValue).Attributes()["name"].String()
+			jString := pgConfig[j].(basetypes.ObjectValue).Attributes()["name"].String()
+			return iString < jString
+		})
+
+		if len(pgConfig) != 0 {
+			dg.(basetypes.ObjectValue).Attributes()["pg_config"] = basetypes.NewListValueMust(pgConfig[0].Type(ctx), pgConfig)
+		}
+	}
+
+	// adding new allowed ips and pg config to new plan
+	for k, stateDg := range stateDgs {
+		if k > (len(newPlan) - 1) {
+			// no more state dgs matching plan dgs
+			return
+		}
+
+		newPlanAllowedIps := newPlan[k].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"].(basetypes.ListValue).Elements()
+		stateAllowedIps := stateDg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"].(basetypes.ListValue).Elements()
+
+		for _, pa := range newPlanAllowedIps {
+			allowedIpExists := false
+			for _, sa := range stateAllowedIps {
+				paCidr := pa.(basetypes.ObjectValue).Attributes()["cidr_block"].(basetypes.StringValue).String()
+				saCidr := sa.(basetypes.ObjectValue).Attributes()["cidr_block"].(basetypes.StringValue).String()
+				if paCidr == saCidr {
+					allowedIpExists = true
+					break
+				}
+			}
+
+			if !allowedIpExists {
+				newPlanAllowedIps = append(newPlanAllowedIps, pa)
+			}
+		}
+
+		if len(newPlanAllowedIps) != 0 {
+			newPlan[k].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"] = basetypes.NewSetValueMust(newPlanAllowedIps[0].Type(ctx), newPlanAllowedIps)
+		}
+
+		newPlanPgConfig := newPlan[k].(basetypes.ObjectValue).Attributes()["pg_config"].(basetypes.ListValue).Elements()
+		statePgConfig := stateDg.(basetypes.ObjectValue).Attributes()["pg_config"].(basetypes.ListValue).Elements()
+
+		for _, pa := range newPlanPgConfig {
+			pgConfigExists := false
+			for _, sa := range statePgConfig {
+				pName := pa.(basetypes.ObjectValue).Attributes()["name"].(basetypes.StringValue).String()
+				sName := sa.(basetypes.ObjectValue).Attributes()["name"].(basetypes.StringValue).String()
+				if pName == sName {
+					pgConfigExists = true
+					break
+				}
+			}
+
+			if !pgConfigExists {
+				newPlanPgConfig = append(newPlanPgConfig, pa)
+			}
+		}
+
+		if len(newPlanPgConfig) != 0 {
+			newPlan[k].(basetypes.ObjectValue).Attributes()["pg_config"] = basetypes.NewSetValueMust(newPlanPgConfig[0].Type(ctx), newPlanPgConfig)
 		}
 	}
 
@@ -94,7 +215,7 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		resp.Diagnostics.AddWarning("Plan data group generation error", "Plan data group error: regions may not be matching, regions missing in config or no data groups in config")
 		return
 	}
-	resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
+	resp.PlanValue = basetypes.NewListValueMust(newPlan[0].Type(ctx), newPlan)
 
 	for _, planDg := range resp.PlanValue.Elements() {
 		if stateDgs == nil {
@@ -117,90 +238,90 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		if stateDgKey != nil {
 
 			// allowed ips
-			planAllowedIps := planDg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
-			stateAllowedIps := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
+			// planAllowedIps := planDg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
+			// stateAllowedIps := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
 
-			if !planAllowedIps.Equal(stateAllowedIps) {
-				resp.Diagnostics.AddWarning("Allowed IP ranges changed", fmt.Sprintf("Allowed IP ranges have changed from %v to %v",
-					stateAllowedIps,
-					planAllowedIps))
-			}
+			// if !planAllowedIps.Equal(stateAllowedIps) {
+			// 	resp.Diagnostics.AddWarning("Allowed IP ranges changed", fmt.Sprintf("Allowed IP ranges have changed from %v to %v",
+			// 		stateAllowedIps,
+			// 		planAllowedIps))
+			// }
 
 			// backup retention period
-			planBackupRetention := planDg.(basetypes.ObjectValue).Attributes()["backup_retention_period"]
-			stateBackupRetention := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["backup_retention_period"]
+			// planBackupRetention := planDg.(basetypes.ObjectValue).Attributes()["backup_retention_period"]
+			// stateBackupRetention := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["backup_retention_period"]
 
-			if !planBackupRetention.Equal(stateBackupRetention) {
-				resp.Diagnostics.AddWarning("Backup retention changed", fmt.Sprintf("backup retention period has changed from %v to %v",
-					stateBackupRetention,
-					planBackupRetention))
-			}
+			// if !planBackupRetention.Equal(stateBackupRetention) {
+			// 	resp.Diagnostics.AddWarning("Backup retention changed", fmt.Sprintf("backup retention period has changed from %v to %v",
+			// 		stateBackupRetention,
+			// 		planBackupRetention))
+			// }
 
 			// cluster architecture
-			planArch := planDg.(basetypes.ObjectValue).Attributes()["cluster_architecture"]
-			stateArch := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["cluster_architecture"]
+			// planArch := planDg.(basetypes.ObjectValue).Attributes()["cluster_architecture"]
+			// stateArch := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["cluster_architecture"]
 
-			pArchId := planArch.(basetypes.ObjectValue).Attributes()["cluster_architecture_id"]
-			pArchWitnessNodes := planArch.(basetypes.ObjectValue).Attributes()["witness_nodes"]
-			pArchNodes := planArch.(basetypes.ObjectValue).Attributes()["nodes"]
+			// pArchId := planArch.(basetypes.ObjectValue).Attributes()["cluster_architecture_id"]
+			// pArchWitnessNodes := planArch.(basetypes.ObjectValue).Attributes()["witness_nodes"]
+			// pArchNodes := planArch.(basetypes.ObjectValue).Attributes()["nodes"]
 
-			sArchId := stateArch.(basetypes.ObjectValue).Attributes()["cluster_architecture_id"]
-			sArchWitnessNodes := stateArch.(basetypes.ObjectValue).Attributes()["witness_nodes"]
-			sArchNodes := stateArch.(basetypes.ObjectValue).Attributes()["nodes"]
+			// sArchId := stateArch.(basetypes.ObjectValue).Attributes()["cluster_architecture_id"]
+			// sArchWitnessNodes := stateArch.(basetypes.ObjectValue).Attributes()["witness_nodes"]
+			// sArchNodes := stateArch.(basetypes.ObjectValue).Attributes()["nodes"]
 
-			if !pArchId.Equal(sArchId) || !pArchWitnessNodes.Equal(sArchWitnessNodes) || !pArchNodes.Equal(sArchNodes) {
-				resp.Diagnostics.AddWarning("Cluster architecture changed", fmt.Sprintf("Cluster architecture changed from %v to %v",
-					stateArch,
-					planArch))
-			}
+			// if !pArchId.Equal(sArchId) || !pArchWitnessNodes.Equal(sArchWitnessNodes) || !pArchNodes.Equal(sArchNodes) {
+			// 	resp.Diagnostics.AddWarning("Cluster architecture changed", fmt.Sprintf("Cluster architecture changed from %v to %v",
+			// 		stateArch,
+			// 		planArch))
+			// }
 
 			// csp auth
-			planCspAuth := planDg.(basetypes.ObjectValue).Attributes()["csp_auth"]
-			stateCspAuth := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["csp_auth"]
+			// planCspAuth := planDg.(basetypes.ObjectValue).Attributes()["csp_auth"]
+			// stateCspAuth := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["csp_auth"]
 
-			if !planCspAuth.Equal(stateCspAuth) {
-				resp.Diagnostics.AddWarning("CSP auth changed", fmt.Sprintf("CSP auth changed from %v to %v",
-					stateCspAuth,
-					planCspAuth))
-			}
+			// if !planCspAuth.Equal(stateCspAuth) {
+			// 	resp.Diagnostics.AddWarning("CSP auth changed", fmt.Sprintf("CSP auth changed from %v to %v",
+			// 		stateCspAuth,
+			// 		planCspAuth))
+			// }
 
 			// instance type
-			planInstanceType := planDg.(basetypes.ObjectValue).Attributes()["instance_type"]
-			stateInstanceType := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["instance_type"]
+			// planInstanceType := planDg.(basetypes.ObjectValue).Attributes()["instance_type"]
+			// stateInstanceType := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["instance_type"]
 
-			if !planInstanceType.Equal(stateInstanceType) {
-				resp.Diagnostics.AddWarning("Instance type changed", fmt.Sprintf("Instance type changed from %v to %v",
-					stateInstanceType,
-					planInstanceType))
-			}
+			// if !planInstanceType.Equal(stateInstanceType) {
+			// 	resp.Diagnostics.AddWarning("Instance type changed", fmt.Sprintf("Instance type changed from %v to %v",
+			// 		stateInstanceType,
+			// 		planInstanceType))
+			// }
 
 			// pg config
-			planPgConfig := planDg.(basetypes.ObjectValue).Attributes()["pg_config"]
-			statePgConfig := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_config"]
+			// planPgConfig := planDg.(basetypes.ObjectValue).Attributes()["pg_config"]
+			// statePgConfig := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_config"]
 
-			if !planPgConfig.Equal(statePgConfig) {
-				resp.Diagnostics.AddWarning("PG config changed", fmt.Sprintf("PG config changed from %v to %v",
-					statePgConfig,
-					planPgConfig))
-			}
+			// if !planPgConfig.Equal(statePgConfig) {
+			// 	resp.Diagnostics.AddWarning("PG config changed", fmt.Sprintf("PG config changed from %v to %v",
+			// 		statePgConfig,
+			// 		planPgConfig))
+			// }
 
 			// storage
-			planStorage := planDg.(basetypes.ObjectValue).Attributes()["storage"]
-			stateStorage := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["storage"]
+			// planStorage := planDg.(basetypes.ObjectValue).Attributes()["storage"]
+			// stateStorage := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["storage"]
 
-			pStorageType := planStorage.(basetypes.ObjectValue).Attributes()["volume_type"]
-			pStorageProperties := planStorage.(basetypes.ObjectValue).Attributes()["volume_properties"]
-			pStorageSize := planStorage.(basetypes.ObjectValue).Attributes()["size"]
+			// pStorageType := planStorage.(basetypes.ObjectValue).Attributes()["volume_type"]
+			// pStorageProperties := planStorage.(basetypes.ObjectValue).Attributes()["volume_properties"]
+			// pStorageSize := planStorage.(basetypes.ObjectValue).Attributes()["size"]
 
-			sStorageType := stateStorage.(basetypes.ObjectValue).Attributes()["volume_type"]
-			sStorageProperties := stateStorage.(basetypes.ObjectValue).Attributes()["volume_properties"]
-			sStorageSize := stateStorage.(basetypes.ObjectValue).Attributes()["size"]
+			// sStorageType := stateStorage.(basetypes.ObjectValue).Attributes()["volume_type"]
+			// sStorageProperties := stateStorage.(basetypes.ObjectValue).Attributes()["volume_properties"]
+			// sStorageSize := stateStorage.(basetypes.ObjectValue).Attributes()["size"]
 
-			if !pStorageType.Equal(sStorageType) || !pStorageProperties.Equal(sStorageProperties) || !pStorageSize.Equal(sStorageSize) {
-				resp.Diagnostics.AddWarning("Storage changed", fmt.Sprintf("Storage changed from %v to %v",
-					stateStorage,
-					planStorage))
-			}
+			// if !pStorageType.Equal(sStorageType) || !pStorageProperties.Equal(sStorageProperties) || !pStorageSize.Equal(sStorageSize) {
+			// 	resp.Diagnostics.AddWarning("Storage changed", fmt.Sprintf("Storage changed from %v to %v",
+			// 		stateStorage,
+			// 		planStorage))
+			// }
 
 			// pg type
 			planPGType := planDg.(basetypes.ObjectValue).Attributes()["pg_type"]
@@ -227,14 +348,14 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			}
 
 			// networking
-			planNetworking := planDg.(basetypes.ObjectValue).Attributes()["private_networking"]
-			stateNetworking := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["private_networking"]
+			// planNetworking := planDg.(basetypes.ObjectValue).Attributes()["private_networking"]
+			// stateNetworking := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["private_networking"]
 
-			if !planNetworking.Equal(stateNetworking) {
-				resp.Diagnostics.AddWarning("Private networking changed", fmt.Sprintf("Private networking changed from %v to %v",
-					stateNetworking,
-					planNetworking))
-			}
+			// if !planNetworking.Equal(stateNetworking) {
+			// 	resp.Diagnostics.AddWarning("Private networking changed", fmt.Sprintf("Private networking changed from %v to %v",
+			// 		stateNetworking,
+			// 		planNetworking))
+			// }
 
 			// cloud provider
 			planCloudProvider := planDg.(basetypes.ObjectValue).Attributes()["cloud_provider"]
@@ -259,14 +380,14 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			}
 
 			// maintenance window
-			planMW := planDg.(basetypes.ObjectValue).Attributes()["maintenance_window"]
-			stateMw := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["maintenance_window"]
+			// planMW := planDg.(basetypes.ObjectValue).Attributes()["maintenance_window"]
+			// stateMw := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["maintenance_window"]
 
-			if !planMW.Equal(stateMw) {
-				resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v",
-					stateMw,
-					planMW))
-			}
+			// if !planMW.Equal(stateMw) {
+			// 	resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v",
+			// 		stateMw,
+			// 		planMW))
+			// }
 		}
 
 	}

@@ -2,14 +2,13 @@ package plan_modifier
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func CustomWitnessGroupDiffConfig() planmodifier.Set {
+func CustomWitnessGroupDiffConfig() planmodifier.List {
 	return customWitnessGroupDiffModifier{}
 }
 
@@ -27,7 +26,7 @@ func (m customWitnessGroupDiffModifier) MarkdownDescription(_ context.Context) s
 }
 
 // PlanModifySet implements the plan modification logic.
-func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+func (m customWitnessGroupDiffModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if req.StateValue.IsNull() {
 		return
 	}
@@ -64,27 +63,23 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 
 		if !planGroupExistsInStateGroups {
 			newPlan = append(newPlan, pWg)
-			resp.Diagnostics.AddWarning("Adding new witness group", fmt.Sprintf("Adding new witness group with region %v", planRegion))
 		}
 	}
 
-	// remove groups
-	for _, sWg := range stateWgs {
-		stateGroupExistsInPlanGroups := false
-		stateRegion := sWg.(basetypes.ObjectValue).Attributes()["region"]
-		for _, pWg := range planWgs {
-			planRegion := pWg.(basetypes.ObjectValue).Attributes()["region"]
-			if stateRegion.Equal(planRegion) {
-				stateGroupExistsInPlanGroups = true
-				break
-			}
-		}
-
-		if !stateGroupExistsInPlanGroups {
-			resp.Diagnostics.AddWarning("Removing witness group", fmt.Sprintf("Removing witness group with region %v", stateRegion))
-		}
-	}
 	if len(newPlan) != 0 {
-		resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
+		resp.PlanValue = basetypes.NewListValueMust(newPlan[0].Type(ctx), newPlan)
+		return
 	}
+
+	// Do nothing if there is a known planned value.
+	if !req.PlanValue.IsUnknown() {
+		return
+	}
+
+	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
+	if req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	resp.PlanValue = req.StateValue
 }

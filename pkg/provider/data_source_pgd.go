@@ -58,7 +58,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 				Description: "Show the most recent cluster when there are multiple clusters with the same name",
 				Optional:    true,
 			},
-			"data_groups": schema.SetNestedAttribute{
+			"data_groups": schema.ListNestedAttribute{
 				Description: "Cluster data groups.",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
@@ -112,7 +112,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 							Computed:    true,
 							ElementType: types.StringType,
 						},
-						"allowed_ip_ranges": schema.SetNestedAttribute{
+						"allowed_ip_ranges": schema.ListNestedAttribute{
 							Description: "Allowed IP ranges.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
@@ -128,7 +128,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"pg_config": schema.SetNestedAttribute{
+						"pg_config": schema.ListNestedAttribute{
 							Description: "Database configuration parameters.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
@@ -279,7 +279,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 					},
 				},
 			},
-			"witness_groups": schema.SetNestedAttribute{
+			"witness_groups": schema.ListNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
