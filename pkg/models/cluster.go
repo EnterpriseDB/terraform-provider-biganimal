@@ -168,6 +168,9 @@ type Cluster struct {
 	Storage                    *Storage          `json:"storage,omitempty"`
 	FarawayReplicaIds          *[]string         `json:"farawayReplicaIds,omitempty"`
 	Groups                     *[]any            `json:"groups,omitempty"`
+	//MaintenanceWindow          *MaintenanceWindow `json:"maintenanceWindow,omitempty"`
+	//ServiceAccountIds          []string           `json:"serviceAccountIds"`
+	//PeAllowedPrincipalIds      []string           `json:"peAllowedPrincipalIds"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
