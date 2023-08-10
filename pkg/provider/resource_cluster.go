@@ -123,7 +123,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Required:            true,
 					},
 					"volume_type": schema.StringAttribute{
-						MarkdownDescription: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\".",
+						MarkdownDescription: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", org s \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
 						Required:            true,
 					},
 					"size": schema.StringAttribute{
@@ -192,7 +192,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Required:            true,
 					},
 					"id": schema.StringAttribute{
-						MarkdownDescription: "Cluster architecture ID. For example, \"single\" or \"ha\"",
+						MarkdownDescription: "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 						Required:            true,
 						Validators: []validator.String{
 							stringvalidator.OneOf("single", "ha"),
@@ -262,8 +262,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				MarkdownDescription: "Cloud provider. For example, \"aws\" or \"azure\".",
-				Required:            true,
+				Description: "Cloud provider. For example, \"aws\", \"azure\" or \"gcp\".",
+				Required:    true,
 			},
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
@@ -313,7 +313,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Required:            true,
 			},
 			"instance_type": schema.StringAttribute{
-				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\" or \"aws:c5.large\".",
+				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
 				Required:            true,
 			},
 			"read_only_connections": schema.BoolAttribute{

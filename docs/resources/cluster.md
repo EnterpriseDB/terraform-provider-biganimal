@@ -5,12 +5,15 @@ The cluster resource is used to manage BigAnimal clusters. See [Creating a clust
 
 
 ## Single Node Cluster Example
+
+Please visit the [examples page](https://github.com/EnterpriseDB/terraform-provider-biganimal/tree/main/examples#biganimal_cluster-resource-examples) for more single node cluster examples on various cloud service providers.
+
 ```terraform
 terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.5.0"
+      version = "0.5.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -75,7 +78,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   }
 
   pg_type               = "epas"
-  pg_version            = "14"
+  pg_version            = "15"
   private_networking    = false
   cloud_provider        = "azure"
   read_only_connections = false
@@ -98,7 +101,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.5.0"
+      version = "0.5.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -162,7 +165,7 @@ resource "biganimal_cluster" "ha_cluster" {
   }
 
   pg_type               = "epas"
-  pg_version            = "14"
+  pg_version            = "15"
   private_networking    = false
   cloud_provider        = "aws"
   read_only_connections = true
@@ -192,9 +195,9 @@ output "faraway_replica_ids" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud provider. For example, "aws" or "azure".
+- `cloud_provider` (String) Cloud provider. For example, "aws", "azure" or "gcp".
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3" or "aws:c5.large".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
 - `password` (String) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
@@ -247,7 +250,7 @@ Optional:
 
 Required:
 
-- `id` (String) Cluster architecture ID. For example, "single" or "ha"
+- `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
 
 Read-Only:
@@ -271,7 +274,7 @@ Required:
 
 - `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
 - `volume_properties` (String) Volume properties in accordance with the selected volume type.
-- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express".
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", org s "io2-block-express". For Google Cloud: only "pd-ssd".
 
 Optional:
 
