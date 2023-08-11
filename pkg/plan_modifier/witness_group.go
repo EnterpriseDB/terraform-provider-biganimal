@@ -68,22 +68,37 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 		}
 	}
 
-	// remove groups
-	for _, sWg := range stateWgs {
-		stateGroupExistsInPlanGroups := false
-		stateRegion := sWg.(basetypes.ObjectValue).Attributes()["region"]
-		for _, pWg := range planWgs {
+	// validations
+	for _, pWg := range planWgs {
+		for _, sWg := range stateWgs {
 			planRegion := pWg.(basetypes.ObjectValue).Attributes()["region"]
-			if stateRegion.Equal(planRegion) {
-				stateGroupExistsInPlanGroups = true
-				break
+			stateRegion := sWg.(basetypes.ObjectValue).Attributes()["region"]
+			if !stateRegion.Equal(planRegion) {
+				resp.Diagnostics.AddError("Witness group region cannot be changed",
+					fmt.Sprintf("Witness group region cannot be changed. Witness group region changed from expected value %v to %v in config",
+						stateRegion,
+						planRegion))
+				return
 			}
 		}
-
-		if !stateGroupExistsInPlanGroups {
-			resp.Diagnostics.AddWarning("Removing witness group", fmt.Sprintf("Removing witness group with region %v", stateRegion))
-		}
 	}
+
+	// remove groups
+	// for _, sWg := range stateWgs {
+	// 	stateGroupExistsInPlanGroups := false
+	// 	stateRegion := sWg.(basetypes.ObjectValue).Attributes()["region"]
+	// 	for _, pWg := range planWgs {
+	// 		planRegion := pWg.(basetypes.ObjectValue).Attributes()["region"]
+	// 		if stateRegion.Equal(planRegion) {
+	// 			stateGroupExistsInPlanGroups = true
+	// 			break
+	// 		}
+	// 	}
+
+	// 	if !stateGroupExistsInPlanGroups {
+	// 		resp.Diagnostics.AddWarning("Removing witness group", fmt.Sprintf("Removing witness group with region %v", stateRegion))
+	// 	}
+	// }
 	if len(newPlan) != 0 {
 		resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
 	}

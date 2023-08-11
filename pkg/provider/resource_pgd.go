@@ -815,6 +815,12 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 				}
 
 				*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
+			} else {
+				wgReq := pgdApi.WitnessGroup{
+					ClusterType: utils.ToPointer("witness_group"),
+					GroupId:     v.GroupId.ValueStringPointer(),
+				}
+				*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 			}
 		}
 	}
