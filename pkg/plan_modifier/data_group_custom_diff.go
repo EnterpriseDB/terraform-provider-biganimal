@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
@@ -45,12 +46,45 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	// hack need to sort plan we are using a slice instead of type.Set. This is so the compare and value setting is correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	// sort the order of the plan the same as the state, state is from the read and plan is from the config
+
 	for _, sDg := range stateDgs {
 		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, pDg := range planDgs {
 			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {
-				newPlan = append(newPlan, pDg)
+				// set the unknowns manually mainly for delete group.
+				// if we don't set manually they will be set automatically if you put the state in plan value
+				// and they will be set by plan dg index against state dg index which will be in wrong order
+				// if deleting a group.
+				pDgAttrTypes := types.ObjectNull(planDgs[0].(basetypes.ObjectValue).AttributeTypes(ctx))
+				pDgAttrValues := pDg.(basetypes.ObjectValue).Attributes()
+				pDgAttrValues["cluster_name"] = sDg.(basetypes.ObjectValue).Attributes()["cluster_name"]
+				pDgAttrValues["cluster_type"] = sDg.(basetypes.ObjectValue).Attributes()["cluster_type"]
+				pDgAttrValues["conditions"] = sDg.(basetypes.ObjectValue).Attributes()["conditions"]
+				pDgAttrValues["connection_uri"] = sDg.(basetypes.ObjectValue).Attributes()["connection_uri"]
+				pDgAttrValues["created_at"] = sDg.(basetypes.ObjectValue).Attributes()["created_at"]
+				pDgAttrValues["group_id"] = sDg.(basetypes.ObjectValue).Attributes()["group_id"]
+				pDgAttrValues["logs_url"] = sDg.(basetypes.ObjectValue).Attributes()["logs_url"]
+				pDgAttrValues["metrics_url"] = sDg.(basetypes.ObjectValue).Attributes()["metrics_url"]
+				pDgAttrValues["phase"] = sDg.(basetypes.ObjectValue).Attributes()["phase"]
+				pDgAttrValues["resizing_pvc"] = sDg.(basetypes.ObjectValue).Attributes()["resizing_pvc"]
+
+				pDgStorage := pDg.(basetypes.ObjectValue).Attributes()["storage"].(basetypes.ObjectValue).Attributes()
+				sDgStorage := sDg.(basetypes.ObjectValue).Attributes()["storage"].(basetypes.ObjectValue).Attributes()
+				storageAttrTypes := types.ObjectNull(pDgAttrValues["storage"].(basetypes.ObjectValue).AttributeTypes(ctx))
+				storageAttrValues := pDgStorage
+				storageAttrValues["iops"] = sDgStorage["iops"]
+				storageAttrValues["throughput"] = sDgStorage["throughput"]
+
+				pDgAttrValues["storage"] = types.ObjectValueMust(storageAttrTypes.AttributeTypes(ctx), storageAttrValues)
+
+				dgOb, diag := types.ObjectValue(pDgAttrTypes.AttributeTypes(ctx), pDgAttrValues)
+				if diag.HasError() {
+					resp.Diagnostics.Append(diag...)
+					return
+				}
+
+				newPlan = append(newPlan, dgOb)
 			}
 		}
 	}
