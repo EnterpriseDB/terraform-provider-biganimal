@@ -146,6 +146,9 @@ resource "biganimal_pgd" "pgd_cluster" {
       region = {
         region_id = "asia-south1"
       }
+      cloud_provider = {
+        cloud_provider_id = "gcp"
+      }
     }
   ]
 }

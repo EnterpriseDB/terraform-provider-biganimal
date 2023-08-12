@@ -146,6 +146,9 @@ resource "biganimal_pgd" "pgd_cluster" {
       region = {
         region_id = "canadacentral"
       }
+      cloud_provider = {
+        cloud_provider_id = "azure"
+      }
     }
   ]
 }
