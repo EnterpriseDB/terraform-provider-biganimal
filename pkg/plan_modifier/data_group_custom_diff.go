@@ -43,10 +43,10 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 	newPlan := []attr.Value{}
 
-	// hack need to sort plan we are using a slice instead of type.Set. This is so the compare and value setting is correct
+	// Need to sort the plan according to the state this is so the compare and setting unknowns are correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	// sort the order of the plan the same as the state, state is from the read and plan is from the config
-
+	// plan will compare against state from read() and plan will also verify it is the same as the config via schema types
 	for _, sDg := range stateDgs {
 		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
 		for _, pDg := range planDgs {

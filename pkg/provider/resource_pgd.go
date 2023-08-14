@@ -654,6 +654,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	config.ID = &clusterId
 	config.ClusterId = &clusterId
 
+	// retry func
 	timeout, _ := config.Timeouts.Create(ctx, 60*time.Minute)
 
 	err = retry.RetryContext(
@@ -669,7 +670,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
 		return
 	}
+	// end of retry func
 
+	// uncomment below and comment retry func above to skip retry for testing purposes
 	// clusterResp, err := p.client.Read(ctx, config.ProjectId, clusterId)
 	// if err != nil {
 	// 	resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())
@@ -836,6 +839,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	plan.ID = plan.ClusterId
 
+	// retry func
 	timeout, _ := plan.Timeouts.Update(ctx, 60*time.Minute)
 
 	err = retry.RetryContext(
@@ -851,7 +855,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster, unexpected error: "+err.Error())
 		return
 	}
+	// end of retry func
 
+	// uncomment below and comment retry func above to skip retry for testing purposes
 	// clusterResp, err := p.client.Read(ctx, plan.ProjectId, *plan.ClusterId)
 	// if err != nil {
 	// 	resp.Diagnostics.AddError("Error reading PGD cluster", "Could not read PGD cluster, unexpected error: "+err.Error())

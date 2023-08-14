@@ -37,7 +37,7 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 
 	newPlan := []attr.Value{}
 
-	// hack need to sort plan we are using a slice instead of type.Set. This is so the compare and value setting is correct
+	// Need to sort the plan according to the state this is so the compare and setting unknowns are correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	// sort the order of the plan the same as the state, state is from the read and plan is from the config
 	for _, sWg := range stateWgs {
