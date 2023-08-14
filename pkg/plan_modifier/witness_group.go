@@ -101,5 +101,17 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 	// }
 	if len(newPlan) != 0 {
 		resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
+	} else {
+		// Do nothing if there is a known planned value.
+		if !req.PlanValue.IsUnknown() {
+			return
+		}
+
+		// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
+		if req.ConfigValue.IsUnknown() {
+			return
+		}
+
+		resp.PlanValue = req.StateValue
 	}
 }
