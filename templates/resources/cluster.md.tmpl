@@ -14,12 +14,12 @@ Please visit the [examples page](https://github.com/EnterpriseDB/terraform-provi
 
 {{ tffile "examples/resources/biganimal_cluster/single_node/resource.tf" }}
 
-## High Availability Cluster Example
+## Primary/Standby High Availability Cluster Example
 {{ tffile "examples/resources/biganimal_cluster/ha/resource.tf" }}
 
-## Extreme High Availability Cluster Example
+## Distributed High Availability Cluster Example
 
--> Please use the `biganimal_pgd` resource to manage the Extreme High Availability clusters.
+-> Please use the `biganimal_pgd` resource to manage the Distributed High Availability clusters.
 
 {{ .SchemaMarkdown | trimspace }}
 {{- if .HasImport }}

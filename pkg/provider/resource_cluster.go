@@ -70,7 +70,7 @@ func (c *ClusterResource) Schema() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Description: "Cluster architecture ID. For example, \"single\" or \"ha\". For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
+							Description: "Cluster architecture ID. For example, \"single\" or \"ha\". For Distributed High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 							Type:        schema.TypeString,
 							Required:    true,
 						},
