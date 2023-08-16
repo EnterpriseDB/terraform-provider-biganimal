@@ -441,7 +441,8 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							},
 						},
 						"cloud_provider": schema.SingleNestedAttribute{
-							Description: "Cloud provider.",
+							Description: "Witness Group cloud provider id. It can be set during creation only and can be different than the cloud provider of the data groups. Once set, cannot be changed.",
+							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.Object{
 								objectplanmodifier.UseStateForUnknown(),
@@ -449,6 +450,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							Attributes: map[string]schema.Attribute{
 								"cloud_provider_id": schema.StringAttribute{
 									Description: "Cloud provider id.",
+									Optional:    true,
 									Computed:    true,
 									PlanModifiers: []planmodifier.String{
 										stringplanmodifier.UseStateForUnknown(),
@@ -561,18 +563,11 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 	clusterReqBody.Groups = &[]any{}
 
-	witnessGroupParamsBody := pgdApi.WitnessGroupParamsBody{}
 	for _, v := range config.DataGroups {
 		v := v
 
 		storage := buildApiStorage(*v.Storage)
 
-		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgdApi.WitnessGroupParamsBodyData{
-			InstanceType: v.InstanceType,
-			Provider:     v.Provider,
-			Region:       v.Region,
-			Storage:      storage,
-		})
 		if v.AllowedIpRanges == nil {
 			v.AllowedIpRanges = &[]models.AllowedIpRange{}
 		}
@@ -612,16 +607,29 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	if len(config.WitnessGroups) > 0 {
-		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, witnessGroupParamsBody)
-		if err != nil {
-			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+		for _, wg := range config.WitnessGroups {
+			providerId := *config.DataGroups[0].Provider.CloudProviderId
+
+			if !wg.Provider.IsNull() && !wg.Provider.IsUnknown() {
+				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
+			}
+
+			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, pgdApi.WitnessGroupParamsBody{
+				Provider: &pgdApi.CloudProvider{
+					CloudProviderId: utils.ToPointer(providerId),
+				},
+				Region: &pgdApi.Region{
+					RegionId: wg.Region.RegionId.String(),
+				},
+			})
+			if err != nil {
+				if appendDiagFromBAErr(err, &resp.Diagnostics) {
+					return
+				}
+				resp.Diagnostics.AddError("Error calculating witness group params v2", "Could not calculate witness group params v2, unexpected error: "+err.Error())
 				return
 			}
-			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
-			return
-		}
 
-		for _, v := range config.WitnessGroups {
 			wgReq := pgdApi.WitnessGroup{
 				ClusterArchitecture: &pgdApi.ClusterArchitecture{
 					ClusterArchitectureId: "pgd",
@@ -629,12 +637,12 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 				},
 				ClusterType: utils.ToPointer("witness_group"),
 				Provider: &pgdApi.CloudProvider{
-					CloudProviderId: config.DataGroups[0].Provider.CloudProviderId,
+					CloudProviderId: utils.ToPointer(providerId),
 				},
 				InstanceType: calWitnessResp.InstanceType,
 				Storage:      calWitnessResp.Storage,
 				Region: &pgdApi.Region{
-					RegionId: v.Region.RegionId.ValueString(),
+					RegionId: wg.Region.RegionId.ValueString(),
 				},
 			}
 
@@ -743,16 +751,8 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	clusterReqBody.Groups = &[]any{}
 
-	witnessGroupParamsBody := pgdApi.WitnessGroupParamsBody{}
 	for _, v := range plan.DataGroups {
 		storage := buildApiStorage(*v.Storage)
-
-		witnessGroupParamsBody.Groups = append(witnessGroupParamsBody.Groups, pgdApi.WitnessGroupParamsBodyData{
-			InstanceType: v.InstanceType,
-			Provider:     v.Provider,
-			Region:       v.Region,
-			Storage:      storage,
-		})
 
 		groupId := v.GroupId.ValueStringPointer()
 		if v.GroupId.IsUnknown() {
@@ -789,18 +789,31 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	}
 
 	if len(plan.WitnessGroups) > 0 {
-		calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, witnessGroupParamsBody)
-		if err != nil {
-			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+		for _, wg := range plan.WitnessGroups {
+			providerId := *plan.DataGroups[0].Provider.CloudProviderId
+
+			if !wg.Provider.IsNull() && !wg.Provider.IsUnknown() {
+				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
+			}
+
+			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, pgdApi.WitnessGroupParamsBody{
+				Provider: &pgdApi.CloudProvider{
+					CloudProviderId: utils.ToPointer(providerId),
+				},
+				Region: &pgdApi.Region{
+					RegionId: wg.Region.RegionId.String(),
+				},
+			})
+			if err != nil {
+				if appendDiagFromBAErr(err, &resp.Diagnostics) {
+					return
+				}
+				resp.Diagnostics.AddError("Error calculating witness group params v2", "Could not calculate witness group params v2, unexpected error: "+err.Error())
 				return
 			}
-			resp.Diagnostics.AddError("Error calculating witness group params", "Could not calculate witness group params, unexpected error: "+err.Error())
-			return
-		}
 
-		for _, v := range plan.WitnessGroups {
 			// cannot change anything on witness group, this only allows adding a new witness group
-			if v.GroupId.IsNull() || v.GroupId.IsUnknown() {
+			if wg.GroupId.IsNull() || wg.GroupId.IsUnknown() {
 				wgReq := pgdApi.WitnessGroup{
 					ClusterArchitecture: &pgdApi.ClusterArchitecture{
 						ClusterArchitectureId: "pgd",
@@ -808,20 +821,21 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 					},
 					ClusterType: utils.ToPointer("witness_group"),
 					Provider: &pgdApi.CloudProvider{
-						CloudProviderId: plan.DataGroups[0].Provider.CloudProviderId,
+						CloudProviderId: utils.ToPointer(providerId),
 					},
 					InstanceType: calWitnessResp.InstanceType,
 					Storage:      calWitnessResp.Storage,
 					Region: &pgdApi.Region{
-						RegionId: v.Region.RegionId.ValueString(),
+						RegionId: wg.Region.RegionId.ValueString(),
 					},
 				}
 
 				*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 			} else {
+				// keep existing witness group when updating a data group
 				wgReq := pgdApi.WitnessGroup{
 					ClusterType: utils.ToPointer("witness_group"),
-					GroupId:     v.GroupId.ValueStringPointer(),
+					GroupId:     wg.GroupId.ValueStringPointer(),
 				}
 				*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 			}

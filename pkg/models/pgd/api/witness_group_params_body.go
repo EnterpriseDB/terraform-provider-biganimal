@@ -1,5 +1,6 @@
 package api
 
 type WitnessGroupParamsBody struct {
-	Groups []WitnessGroupParamsBodyData `json:"groups"`
+	Provider *CloudProvider `json:"provider,omitempty"`
+	Region   *Region        `json:"region,omitempty"`
 }

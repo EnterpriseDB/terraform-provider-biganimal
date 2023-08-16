@@ -80,6 +80,17 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 						planRegion))
 				return
 			}
+
+			planCloudProvider := pWg.(basetypes.ObjectValue).Attributes()["cloud_provider"]
+			stateCloudProvider := sWg.(basetypes.ObjectValue).Attributes()["cloud_provider"]
+
+			if !planCloudProvider.Equal(stateCloudProvider) {
+				resp.Diagnostics.AddError("Witness group cloud provider cannot be changed",
+					fmt.Sprintf("witness group cloud provider cannot be changed. witness group cloud provider changed from expected value: %v to %v in config",
+						stateCloudProvider,
+						planCloudProvider))
+				return
+			}
 		}
 	}
 
