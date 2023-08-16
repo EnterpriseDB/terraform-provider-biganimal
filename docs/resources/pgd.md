@@ -947,7 +947,7 @@ Required:
 
 Optional:
 
-- `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
+- `cloud_provider` (Attributes) Witness Group cloud provider id. It can be set during creation only and can be different than the cloud provider of the data groups. Once set, cannot be changed. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 
 Read-Only:

@@ -441,7 +441,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 							},
 						},
 						"cloud_provider": schema.SingleNestedAttribute{
-							Description: "Cloud provider.",
+							Description: "Witness Group cloud provider id. It can be set during creation only and can be different than the cloud provider of the data groups. Once set, cannot be changed.",
 							Optional:    true,
 							Computed:    true,
 							PlanModifiers: []planmodifier.Object{
