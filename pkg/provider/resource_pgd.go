@@ -614,7 +614,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
 			}
 
-			calWitnessResp, err := p.client.CalculateWitnessGroupParamsV2(ctx, config.ProjectId, pgdApi.WitnessGroupParamsBodyV2{
+			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, pgdApi.WitnessGroupParamsBody{
 				Provider: &pgdApi.CloudProvider{
 					CloudProviderId: utils.ToPointer(providerId),
 				},
@@ -796,7 +796,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
 			}
 
-			calWitnessResp, err := p.client.CalculateWitnessGroupParamsV2(ctx, plan.ProjectId, pgdApi.WitnessGroupParamsBodyV2{
+			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, pgdApi.WitnessGroupParamsBody{
 				Provider: &pgdApi.CloudProvider{
 					CloudProviderId: utils.ToPointer(providerId),
 				},

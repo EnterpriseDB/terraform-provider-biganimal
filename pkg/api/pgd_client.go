@@ -131,24 +131,6 @@ func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId st
 	return &response.Data, err
 }
 
-func (c PGDClient) CalculateWitnessGroupParamsV2(ctx context.Context, projectId string, WitnessGroupParamsBodyV2 pgdApi.WitnessGroupParamsBodyV2) (*pgdApi.WitnessGroupParamsData, error) {
-	var response pgdApi.WitnessGroupParamsResponse
-
-	b, err := json.Marshal(WitnessGroupParamsBodyV2)
-	if err != nil {
-		return nil, err
-	}
-
-	url := fmt.Sprintf("projects/%s/utils/calculate-witness-group-params", projectId)
-	body, err := c.doRequest(ctx, http.MethodPut, url, bytes.NewBuffer(b))
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(body, &response)
-	return &response.Data, err
-}
-
 func (c PGDClient) Delete(ctx context.Context, projectId, id string) error {
 	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, id)
 	_, err := c.doRequest(ctx, http.MethodDelete, url, nil)
