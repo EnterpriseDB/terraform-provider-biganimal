@@ -250,6 +250,9 @@ resource "biganimal_pgd" "pgd_cluster" {
       region = {
         region_id = "canadacentral"
       }
+      cloud_provider = {
+        cloud_provider_id = "azure"
+      }
     }
   ]
 }
@@ -498,6 +501,9 @@ resource "biganimal_pgd" "pgd_cluster" {
     {
       region = {
         region_id = "us-east-1"
+      }
+      cloud_provider = {
+        cloud_provider_id = "aws"
       }
     }
   ]
@@ -748,6 +754,9 @@ resource "biganimal_pgd" "pgd_cluster" {
       region = {
         region_id = "asia-south1"
       }
+      cloud_provider = {
+        cloud_provider_id = "gcp"
+      }
     }
   ]
 }
@@ -938,11 +947,11 @@ Required:
 
 Optional:
 
+- `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 
 Read-Only:
 
-- `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `cluster_type` (String) Type of the Specified Cluster
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
@@ -957,6 +966,14 @@ Required:
 - `region_id` (String) Region id.
 
 
+<a id="nestedatt--witness_groups--cloud_provider"></a>
+### Nested Schema for `witness_groups.cloud_provider`
+
+Optional:
+
+- `cloud_provider_id` (String) Cloud provider id.
+
+
 <a id="nestedatt--witness_groups--cluster_architecture"></a>
 ### Nested Schema for `witness_groups.cluster_architecture`
 
@@ -966,14 +983,6 @@ Read-Only:
 - `cluster_architecture_name` (String) Name.
 - `nodes` (Number) Nodes.
 - `witness_nodes` (Number) Witness nodes count.
-
-
-<a id="nestedatt--witness_groups--cloud_provider"></a>
-### Nested Schema for `witness_groups.cloud_provider`
-
-Read-Only:
-
-- `cloud_provider_id` (String) Cloud provider id.
 
 
 <a id="nestedatt--witness_groups--instance_type"></a>
