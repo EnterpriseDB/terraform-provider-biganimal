@@ -202,7 +202,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.UseStateForUnknown(),
+								plan_modifier.CustomPGConfig(),
 							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
