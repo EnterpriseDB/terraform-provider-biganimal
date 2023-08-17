@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd"
+	pgdApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/api"
 )
 
 type PGDClient struct{ API }
@@ -113,8 +113,8 @@ func (c PGDClient) Update(ctx context.Context, projectId, clusterId string, mode
 	return response.Data.ClusterId, err
 }
 
-func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId string, WitnessGroupParamsBody pgd.WitnessGroupParamsBody) (*pgd.WitnessGroupParamsData, error) {
-	var response pgd.WitnessGroupParamsResponse
+func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId string, WitnessGroupParamsBody pgdApi.WitnessGroupParamsBody) (*pgdApi.WitnessGroupParamsData, error) {
+	var response pgdApi.WitnessGroupParamsResponse
 
 	b, err := json.Marshal(WitnessGroupParamsBody)
 	if err != nil {

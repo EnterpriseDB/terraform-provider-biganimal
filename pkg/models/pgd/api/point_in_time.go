@@ -1,4 +1,4 @@
-package pgd
+package api
 
 import (
 	"encoding/json"
