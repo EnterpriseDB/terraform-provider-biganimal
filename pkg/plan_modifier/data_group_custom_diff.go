@@ -209,6 +209,8 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			}
 
 			// pg config
+			// TODO: We should add the default pg_config values to the plan, so that we show the correct drift.
+			// For details, please check pkg/plan_modifier/pg_config.go
 			planPgConfig := planDg.(basetypes.ObjectValue).Attributes()["pg_config"]
 			statePgConfig := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_config"]
 
