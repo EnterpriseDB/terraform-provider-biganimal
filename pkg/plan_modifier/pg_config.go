@@ -26,7 +26,7 @@ func (m customPGConfigModifier) MarkdownDescription(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifyList implements the plan modification logic.
+// PlanModifySet implements the plan modification logic.
 func (m customPGConfigModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	defaults := map[string]string{
 		"autovacuum_max_workers":       "5",
@@ -45,55 +45,32 @@ func (m customPGConfigModifier) PlanModifySet(ctx context.Context, req planmodif
 	}
 
 	elementTypeAttrTypes := req.StateValue.ElementType(ctx).(basetypes.ObjectType).AttrTypes
-	if req.StateValue.IsNull() {
-		setOfObjects := resp.PlanValue.Elements()
+	setOfObjects := resp.PlanValue.Elements()
 
-		for k, v := range defaults {
-			if !pgConfigNameExists(resp.PlanValue.Elements(), k) {
-				defaultAttrs := map[string]attr.Value{"name": basetypes.NewStringValue(k), "value": basetypes.NewStringValue(v)}
-				defaultObjectValue := basetypes.NewObjectValueMust(elementTypeAttrTypes, defaultAttrs)
-				setOfObjects = append(setOfObjects, defaultObjectValue)
-			}
+	// Add the defaults if they do not exist in the plan.
+	// This is independent from what is in the terraform state.
+	// The only source of truth that matters is the plan.
+	// If the default values that are added to the plan already exists in the terraform state, terraform will not show any drift
+	for k, v := range defaults {
+		if !pgConfigNameExists(resp.PlanValue.Elements(), k) {
+			defaultAttrs := map[string]attr.Value{"name": basetypes.NewStringValue(k), "value": basetypes.NewStringValue(v)}
+			defaultObjectValue := basetypes.NewObjectValueMust(elementTypeAttrTypes, defaultAttrs)
+			setOfObjects = append(setOfObjects, defaultObjectValue)
 		}
-
-		setValue := basetypes.NewSetValueMust(req.StateValue.ElementType(ctx), setOfObjects)
-		resp.PlanValue = setValue
-		return
 	}
 
-	if !req.StateValue.IsNull() {
-		setOfObjects := resp.PlanValue.Elements()
-
-		for _, v := range req.StateValue.Elements() {
-			statePgConfigName := strings.Replace(v.(basetypes.ObjectValue).Attributes()["name"].String(), "\"", "", -1)
-			if !pgConfigNameExists(resp.PlanValue.Elements(), statePgConfigName) {
-				defaultObjectValue := basetypes.NewObjectValueMust(elementTypeAttrTypes, v.(basetypes.ObjectValue).Attributes())
-				setOfObjects = append(setOfObjects, defaultObjectValue)
-			}
-		}
-
-		setValue := basetypes.NewSetValueMust(req.StateValue.ElementType(ctx), setOfObjects)
-		resp.PlanValue = setValue
-		return
-	}
-
-	// Do nothing if there is a known planned value.
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
-
-	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
-	if req.ConfigValue.IsUnknown() {
-		return
-	}
-
-	resp.PlanValue = req.StateValue
+	setValue := basetypes.NewSetValueMust(req.StateValue.ElementType(ctx), setOfObjects)
+	resp.PlanValue = setValue
 }
 
 func pgConfigNameExists(s []attr.Value, e string) bool {
 	for _, a := range s {
-		_, ok := a.(basetypes.ObjectValue).Attributes()[e]
-		return ok
+		//a_attribute := a.(basetypes.ObjectValue).Attributes()["name"].String()
+		attributeName := strings.Replace(a.(basetypes.ObjectValue).Attributes()["name"].String(), "\"", "", -1)
+
+		if attributeName == e {
+			return true
+		}
 	}
 	return false
 }
