@@ -117,14 +117,15 @@ output "faraway_replica_ids" {
 
 ### Optional
 
+- `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--allowed_ip_ranges))
+- `faraway_replica_ids` (Set of String)
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
 
 ### Read-Only
 
-- `allowed_ip_ranges` (Block Set) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period.
 - `cloud_provider` (String) Cloud provider.
-- `cluster_architecture` (Block List) Cluster architecture. (see [below for nested schema](#nestedblock--cluster_architecture))
+- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--cluster_architecture))
 - `cluster_id` (String) Cluster ID.
 - `cluster_type` (String) Type of the Specified Cluster.
 - `connection_uri` (String) Cluster connection URI.
@@ -132,13 +133,12 @@ output "faraway_replica_ids" {
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
 - `deleted_at` (String) Cluster deletion time.
 - `expired_at` (String) Cluster expiry time.
-- `faraway_replica_ids` (Set of String)
 - `first_recoverability_point_at` (String) Earliest backup recover time.
-- `id` (String) The ID of this resource.
+- `id` (String) Datasource ID.
 - `instance_type` (String) Instance type.
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
-- `pg_config` (Set of Object) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
+- `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
 - `pg_version` (String) Postgres version.
 - `phase` (String) Current phase of the cluster.
@@ -147,9 +147,9 @@ output "faraway_replica_ids" {
 - `region` (String) Region to deploy the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
-- `storage` (List of Object) Storage. (see [below for nested schema](#nestedatt--storage))
+- `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--storage))
 
-<a id="nestedblock--allowed_ip_ranges"></a>
+<a id="nestedatt--allowed_ip_ranges"></a>
 ### Nested Schema for `allowed_ip_ranges`
 
 Read-Only:
@@ -158,7 +158,7 @@ Read-Only:
 - `description` (String) CIDR block description.
 
 
-<a id="nestedblock--cluster_architecture"></a>
+<a id="nestedatt--cluster_architecture"></a>
 ### Nested Schema for `cluster_architecture`
 
 Read-Only:
@@ -173,8 +173,8 @@ Read-Only:
 
 Read-Only:
 
-- `name` (String)
-- `value` (String)
+- `name` (String) GUC name.
+- `value` (String) GUC value.
 
 
 <a id="nestedatt--storage"></a>
@@ -182,8 +182,8 @@ Read-Only:
 
 Read-Only:
 
-- `iops` (String)
-- `size` (String)
-- `throughput` (String)
-- `volume_properties` (String)
-- `volume_type` (String)
+- `iops` (String) IOPS for the selected volume.
+- `size` (String) Size of the volume.
+- `throughput` (String) Throughput.
+- `volume_properties` (String) Volume properties.
+- `volume_type` (String) Volume type.
