@@ -18,12 +18,12 @@ var (
 	_ datasource.DataSourceWithConfigure = &clusterDataSource{}
 )
 
-type PgConfigResourceModel struct {
+type PgConfigDatasourceModel struct {
 	Value types.String `tfsdk:"value"`
 	Name  types.String `tfsdk:"name"`
 }
 
-type StorageResourceModel struct {
+type StorageDatasourceModel struct {
 	Throughput       types.String `tfsdk:"throughput"`
 	VolumeProperties types.String `tfsdk:"volume_properties"`
 	VolumeType       types.String `tfsdk:"volume_type"`
@@ -31,46 +31,46 @@ type StorageResourceModel struct {
 	Size             types.String `tfsdk:"size"`
 }
 
-type ClusterArchitectureResourceModel struct {
+type ClusterArchitectureDatasourceModel struct {
 	Nodes types.Int64  `tfsdk:"nodes"`
 	Id    types.String `tfsdk:"id"`
 	Name  types.String `tfsdk:"name"`
 }
 
 type clusterDatasourceModel struct {
-	ID                         types.String                      `tfsdk:"id"`
-	AllowedIpRanges            []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
-	BackupRetentionPeriod      types.String                      `tfsdk:"backup_retention_period"`
-	CreatedAt                  types.String                      `tfsdk:"created_at"`
-	InstanceType               types.String                      `tfsdk:"instance_type"`
-	ClusterName                types.String                      `tfsdk:"cluster_name"`
-	FarawayReplicaIds          []string                          `tfsdk:"faraway_replica_ids"`
-	LogsUrl                    types.String                      `tfsdk:"logs_url"`
-	MostRecent                 types.Bool                        `tfsdk:"most_recent"`
-	ClusterId                  types.String                      `tfsdk:"cluster_id"`
-	PgConfig                   []PgConfigResourceModel           `tfsdk:"pg_config"`
-	ExpiredAt                  types.String                      `tfsdk:"expired_at"`
-	ReadOnlyConnections        types.Bool                        `tfsdk:"read_only_connections"`
-	ResizingPvc                []string                          `tfsdk:"resizing_pvc"`
-	CspAuth                    types.Bool                        `tfsdk:"csp_auth"`
-	MetricsUrl                 types.String                      `tfsdk:"metrics_url"`
-	CloudProvider              types.String                      `tfsdk:"cloud_provider"`
-	Storage                    *StorageResourceModel             `tfsdk:"storage"`
-	RoConnectionUri            types.String                      `tfsdk:"ro_connection_uri"`
-	PrivateNetworking          types.Bool                        `tfsdk:"private_networking"`
-	PgType                     types.String                      `tfsdk:"pg_type"`
-	PgVersion                  types.String                      `tfsdk:"pg_version"`
-	ClusterArchitecture        *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
-	ProjectId                  types.String                      `tfsdk:"project_id"`
-	ClusterType                types.String                      `tfsdk:"cluster_type"`
-	Phase                      types.String                      `tfsdk:"phase"`
-	DeletedAt                  types.String                      `tfsdk:"deleted_at"`
-	ConnectionUri              types.String                      `tfsdk:"connection_uri"`
-	Region                     types.String                      `tfsdk:"region"`
-	FirstRecoverabilityPointAt types.String                      `tfsdk:"first_recoverability_point_at"`
+	ID                         types.String                        `tfsdk:"id"`
+	AllowedIpRanges            []AllowedIpRangesDatasourceModel    `tfsdk:"allowed_ip_ranges"`
+	BackupRetentionPeriod      types.String                        `tfsdk:"backup_retention_period"`
+	CreatedAt                  types.String                        `tfsdk:"created_at"`
+	InstanceType               types.String                        `tfsdk:"instance_type"`
+	ClusterName                types.String                        `tfsdk:"cluster_name"`
+	FarawayReplicaIds          []string                            `tfsdk:"faraway_replica_ids"`
+	LogsUrl                    types.String                        `tfsdk:"logs_url"`
+	MostRecent                 types.Bool                          `tfsdk:"most_recent"`
+	ClusterId                  types.String                        `tfsdk:"cluster_id"`
+	PgConfig                   []PgConfigDatasourceModel           `tfsdk:"pg_config"`
+	ExpiredAt                  types.String                        `tfsdk:"expired_at"`
+	ReadOnlyConnections        types.Bool                          `tfsdk:"read_only_connections"`
+	ResizingPvc                []string                            `tfsdk:"resizing_pvc"`
+	CspAuth                    types.Bool                          `tfsdk:"csp_auth"`
+	MetricsUrl                 types.String                        `tfsdk:"metrics_url"`
+	CloudProvider              types.String                        `tfsdk:"cloud_provider"`
+	Storage                    *StorageDatasourceModel             `tfsdk:"storage"`
+	RoConnectionUri            types.String                        `tfsdk:"ro_connection_uri"`
+	PrivateNetworking          types.Bool                          `tfsdk:"private_networking"`
+	PgType                     types.String                        `tfsdk:"pg_type"`
+	PgVersion                  types.String                        `tfsdk:"pg_version"`
+	ClusterArchitecture        *ClusterArchitectureDatasourceModel `tfsdk:"cluster_architecture"`
+	ProjectId                  types.String                        `tfsdk:"project_id"`
+	ClusterType                types.String                        `tfsdk:"cluster_type"`
+	Phase                      types.String                        `tfsdk:"phase"`
+	DeletedAt                  types.String                        `tfsdk:"deleted_at"`
+	ConnectionUri              types.String                        `tfsdk:"connection_uri"`
+	Region                     types.String                        `tfsdk:"region"`
+	FirstRecoverabilityPointAt types.String                        `tfsdk:"first_recoverability_point_at"`
 }
 
-type AllowedIpRangesResourceModel struct {
+type AllowedIpRangesDatasourceModel struct {
 	CidrBlock   types.String `tfsdk:"cidr_block"`
 	Description types.String `tfsdk:"description"`
 }
@@ -326,14 +326,14 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.ClusterType = types.StringPointerValue(cluster.ClusterType)
 	data.Phase = types.StringPointerValue(cluster.Phase)
 	data.CloudProvider = types.StringValue(cluster.Provider.CloudProviderId)
-	data.ClusterArchitecture = &ClusterArchitectureResourceModel{
+	data.ClusterArchitecture = &ClusterArchitectureDatasourceModel{
 		Id:    types.StringValue(cluster.ClusterArchitecture.ClusterArchitectureId),
 		Nodes: types.Int64Value(int64(cluster.ClusterArchitecture.Nodes)),
 		Name:  types.StringValue(cluster.ClusterArchitecture.ClusterArchitectureName),
 	}
 	data.Region = types.StringValue(cluster.Region.Id)
 	data.InstanceType = types.StringValue(cluster.InstanceType.InstanceTypeId)
-	data.Storage = &StorageResourceModel{
+	data.Storage = &StorageDatasourceModel{
 		VolumeType:       types.StringPointerValue(cluster.Storage.VolumeTypeId),
 		VolumeProperties: types.StringPointerValue(cluster.Storage.VolumePropertiesId),
 		Size:             types.StringPointerValue(cluster.Storage.Size),
@@ -360,20 +360,20 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		data.FirstRecoverabilityPointAt = types.StringValue(cluster.FirstRecoverabilityPointAt.String())
 	}
 
-	data.PgConfig = []PgConfigResourceModel{}
+	data.PgConfig = []PgConfigDatasourceModel{}
 	if configs := cluster.PgConfig; configs != nil {
 		for _, kv := range *configs {
-			data.PgConfig = append(data.PgConfig, PgConfigResourceModel{
+			data.PgConfig = append(data.PgConfig, PgConfigDatasourceModel{
 				Name:  types.StringValue(kv.Name),
 				Value: types.StringValue(kv.Value),
 			})
 		}
 	}
 
-	data.AllowedIpRanges = []AllowedIpRangesResourceModel{}
+	data.AllowedIpRanges = []AllowedIpRangesDatasourceModel{}
 	if allowedIpRanges := cluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
-			data.AllowedIpRanges = append(data.AllowedIpRanges, AllowedIpRangesResourceModel{
+			data.AllowedIpRanges = append(data.AllowedIpRanges, AllowedIpRangesDatasourceModel{
 				CidrBlock:   types.StringValue(ipRange.CidrBlock),
 				Description: types.StringValue(ipRange.Description),
 			})
