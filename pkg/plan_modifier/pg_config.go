@@ -2,6 +2,7 @@ package plan_modifier
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -61,14 +62,35 @@ func (m customPGConfigModifier) PlanModifySet(ctx context.Context, req planmodif
 
 	setValue := basetypes.NewSetValueMust(req.StateValue.ElementType(ctx), setOfObjects)
 	resp.PlanValue = setValue
+
+	statePgConfig := req.StateValue.Elements()
+	planPgConfig := resp.PlanValue.Elements()
+	for _, pConf := range planPgConfig {
+		// check if plan pg config exists in state
+		if !pgConfigExists(statePgConfig, pConf) {
+			resp.Diagnostics.AddWarning("PG config changed", fmt.Sprintf("PG config changed from %v to %v",
+				statePgConfig,
+				planPgConfig))
+			break
+		}
+	}
 }
 
 func pgConfigNameExists(s []attr.Value, e string) bool {
 	for _, a := range s {
-		//a_attribute := a.(basetypes.ObjectValue).Attributes()["name"].String()
+		// a_attribute := a.(basetypes.ObjectValue).Attributes()["name"].String()
 		attributeName := strings.Replace(a.(basetypes.ObjectValue).Attributes()["name"].String(), "\"", "", -1)
 
 		if attributeName == e {
+			return true
+		}
+	}
+	return false
+}
+
+func pgConfigExists(s []attr.Value, e attr.Value) bool {
+	for _, a := range s {
+		if a.Equal(e) {
 			return true
 		}
 	}

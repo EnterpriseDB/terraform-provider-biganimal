@@ -208,18 +208,6 @@ func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 					planInstanceType))
 			}
 
-			// pg config
-			// TODO: We should add the default pg_config values to the plan, so that we show the correct drift.
-			// For details, please check pkg/plan_modifier/pg_config.go
-			planPgConfig := planDg.(basetypes.ObjectValue).Attributes()["pg_config"]
-			statePgConfig := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_config"]
-
-			if !planPgConfig.Equal(statePgConfig) {
-				resp.Diagnostics.AddWarning("PG config changed", fmt.Sprintf("PG config changed from %v to %v",
-					statePgConfig,
-					planPgConfig))
-			}
-
 			// storage
 			planStorage := planDg.(basetypes.ObjectValue).Attributes()["storage"]
 			stateStorage := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["storage"]
