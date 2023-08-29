@@ -44,7 +44,7 @@ test:
 	echo $(TEST) | xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
 testacc:
-	TF_ACC=1 godotenv go test $(TEST) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 godotenv go test $(TEST) -v $(TESTARGS) -run ".*?$(TYPE)$(NAME).*?" -timeout 4h
 
 .PHONY: docs
 unexport BA_BEARER_TOKEN

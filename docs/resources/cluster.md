@@ -196,24 +196,24 @@ output "faraway_replica_ids" {
 ### Required
 
 - `cloud_provider` (String) Cloud provider. For example, "aws", "azure" or "gcp".
-- `cluster_architecture` (Block List, Min: 1) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
 - `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
-- `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
+- `password` (String) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
 - `project_id` (String) BigAnimal Project ID.
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
-- `storage` (Block List, Min: 1) Storage. (see [below for nested schema](#nestedblock--storage))
 
 ### Optional
 
 - `allowed_ip_ranges` (Block Set) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
+- `cluster_architecture` (Block, Optional) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
 - `pg_config` (Block Set) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
+- `storage` (Block, Optional) Storage. (see [below for nested schema](#nestedblock--storage))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
@@ -222,44 +222,14 @@ output "faraway_replica_ids" {
 - `cluster_type` (String) Type of the cluster. For example, "cluster" for biganimal_cluster resources, or "faraway_replica" for biganimal_faraway_replica resources.
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
-- `deleted_at` (String) Cluster deletion time.
-- `expired_at` (String) Cluster expiry time.
 - `faraway_replica_ids` (Set of String)
 - `first_recoverability_point_at` (String) Earliest backup recover time.
-- `id` (String) The ID of this resource.
+- `id` (String) Resource ID of the cluster.
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
-
-<a id="nestedblock--cluster_architecture"></a>
-### Nested Schema for `cluster_architecture`
-
-Required:
-
-- `id` (String) Cluster architecture ID. For example, "single" or "ha". For Distributed High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
-- `nodes` (Number) Node count.
-
-Read-Only:
-
-- `name` (String) Name.
-
-
-<a id="nestedblock--storage"></a>
-### Nested Schema for `storage`
-
-Required:
-
-- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
-- `volume_properties` (String) Volume properties in accordance with the selected volume type.
-- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
-
-Optional:
-
-- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
-- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input.
-
 
 <a id="nestedblock--allowed_ip_ranges"></a>
 ### Nested Schema for `allowed_ip_ranges`
@@ -273,6 +243,19 @@ Optional:
 - `description` (String) CIDR block description.
 
 
+<a id="nestedblock--cluster_architecture"></a>
+### Nested Schema for `cluster_architecture`
+
+Required:
+
+- `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
+- `nodes` (Number) Node count.
+
+Read-Only:
+
+- `name` (String) Name.
+
+
 <a id="nestedblock--pg_config"></a>
 ### Nested Schema for `pg_config`
 
@@ -282,9 +265,26 @@ Required:
 - `value` (String) GUC value.
 
 
+<a id="nestedblock--storage"></a>
+### Nested Schema for `storage`
+
+Required:
+
+- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", org s "io2-block-express". For Google Cloud: only "pd-ssd".
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input.
+
+
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- `create` (String)
+- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
+- `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
