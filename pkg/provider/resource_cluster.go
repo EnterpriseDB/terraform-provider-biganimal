@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -21,8 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"strings"
-	"time"
 )
 
 var (
@@ -148,9 +150,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 			"allowed_ip_ranges": schema.SetNestedBlock{
 				MarkdownDescription: "Allowed IP ranges.",
-				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.Set{plan_modifier.CustomAllowedIps()},
 				NestedObject: schema.NestedBlockObject{
-					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 					Attributes: map[string]schema.Attribute{
 						"cidr_block": schema.StringAttribute{
 							MarkdownDescription: "CIDR block.",
@@ -166,9 +167,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 			"pg_config": schema.SetNestedBlock{
 				MarkdownDescription: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
-				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.Set{plan_modifier.CustomPGConfig()},
 				NestedObject: schema.NestedBlockObject{
-					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							MarkdownDescription: "GUC name.",
@@ -360,16 +360,12 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	ipAllowedRangs := config.AllowedIpRanges
-	pgConfigs := config.PgConfig
 	if err := c.read(ctx, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
 		return
 	}
-	config.AllowedIpRanges = ipAllowedRangs
-	config.PgConfig = pgConfigs
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
@@ -417,16 +413,12 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	ipAllowedRangs := plan.AllowedIpRanges
-	pgConfigs := plan.PgConfig
 	if err := c.read(ctx, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
 		return
 	}
-	plan.AllowedIpRanges = ipAllowedRangs
-	plan.PgConfig = pgConfigs
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
