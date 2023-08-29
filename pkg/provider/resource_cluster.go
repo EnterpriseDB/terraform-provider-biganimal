@@ -59,8 +59,6 @@ type ClusterResourceModel struct {
 	PrivateNetworking          types.Bool                        `tfsdk:"private_networking"`
 	AllowedIpRanges            []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                      `tfsdk:"created_at"`
-	ExpiredAt                  types.String                      `tfsdk:"expired_at"`
-	DeletedAt                  types.String                      `tfsdk:"deleted_at"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -294,18 +292,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"created_at": schema.StringAttribute{
 				MarkdownDescription: "Cluster creation time.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
-			"deleted_at": schema.StringAttribute{
-				MarkdownDescription: "Cluster deletion time.",
-				Computed:            true,
-				Optional:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
-			"expired_at": schema.StringAttribute{
-				MarkdownDescription: "Cluster expiry time.",
-				Computed:            true,
-				Optional:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"region": schema.StringAttribute{
@@ -548,16 +534,6 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 
 	if pt := cluster.CreatedAt; pt != nil {
 		clusterResource.CreatedAt = types.StringValue(pt.String())
-	}
-
-	clusterResource.ExpiredAt = types.StringNull()
-	if pt := cluster.ExpiredAt; pt != nil {
-		clusterResource.ExpiredAt = types.StringValue(pt.String())
-	}
-
-	clusterResource.DeletedAt = types.StringNull()
-	if pt := cluster.DeletedAt; pt != nil {
-		clusterResource.DeletedAt = types.StringValue(pt.String())
 	}
 
 	return nil
