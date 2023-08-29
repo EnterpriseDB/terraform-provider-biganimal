@@ -1,3 +1,15 @@
+## v0.6.0 (August 28. 2023)
+Features:
+* Added examples for PGD resources on Google Cloud.
+* Cross-CSP support for the Witness groups in the PGD resources
+* Default PG Config values for `biganimal_pgd` and `biganimal_cluster` resources
+* Cluster resources can now be imported.
+
+Enhancements:
+* Dependency updates
+* Cluster architecture names are updated
+* Terraform and Golang models for PGD implementation has been updated.
+
 ## v0.5.1 (July 27. 2023)
 Features:
 * BigAnimal Terraform Provider now supports GCP. Examples and documentation are updated.
