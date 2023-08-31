@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -61,6 +62,7 @@ type ClusterResourceModel struct {
 	PrivateNetworking          types.Bool                        `tfsdk:"private_networking"`
 	AllowedIpRanges            []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                      `tfsdk:"created_at"`
+	MaintenanceWindow          *models.MaintenanceWindow         `tfsdk:"maintenance_window"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -203,6 +205,35 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
+			"maintenance_window": schema.SingleNestedBlock{
+				MarkdownDescription: "Custom maintenance window.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is maintenance window enabled.",
+						Optional:            true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"start_day": schema.Float64Attribute{
+						MarkdownDescription: "Start day.",
+						Optional:            true,
+						PlanModifiers: []planmodifier.Float64{
+							float64planmodifier.UseStateForUnknown(),
+						},
+					},
+					"start_time": schema.StringAttribute{
+						MarkdownDescription: "Start time.",
+						Optional:            true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+				},
+			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -325,7 +356,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 		},
 	}
-
 }
 
 func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -452,7 +482,6 @@ func (c *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
-
 }
 
 func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterResourceModel) error {
@@ -528,6 +557,14 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 		clusterResource.CreatedAt = types.StringValue(pt.String())
 	}
 
+	if cluster.MaintenanceWindow != nil {
+		clusterResource.MaintenanceWindow = &models.MaintenanceWindow{
+			IsEnabled: cluster.MaintenanceWindow.IsEnabled,
+			StartDay:  cluster.MaintenanceWindow.StartDay,
+			StartTime: cluster.MaintenanceWindow.StartTime,
+		}
+	}
+
 	return nil
 }
 
@@ -591,6 +628,14 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 		})
 	}
 	cluster.PgConfig = &configs
+
+	if clusterResource.MaintenanceWindow != nil {
+		cluster.MaintenanceWindow = &models.MaintenanceWindow{
+			IsEnabled: clusterResource.MaintenanceWindow.IsEnabled,
+			StartDay:  clusterResource.MaintenanceWindow.StartDay,
+			StartTime: clusterResource.MaintenanceWindow.StartTime,
+		}
+	}
 
 	return cluster
 }

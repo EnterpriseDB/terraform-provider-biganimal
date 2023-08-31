@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -10,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"regexp"
 )
 
 var (
@@ -81,7 +82,6 @@ type clusterDataSource struct {
 
 func (c *clusterDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_cluster"
-
 }
 
 // Configure adds the provider configured client to the data source.
@@ -288,9 +288,26 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: "Earliest backup recover time.",
 				Computed:            true,
 			},
+			"maintenance_window": schema.SingleNestedAttribute{
+				Computed:            true,
+				MarkdownDescription: "Custom maintenance window.",
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is maintenance window enabled.",
+						Computed:            true,
+					},
+					"start_day": schema.Float64Attribute{
+						MarkdownDescription: "Start day.",
+						Computed:            true,
+					},
+					"start_time": schema.StringAttribute{
+						MarkdownDescription: "Start time.",
+						Computed:            true,
+					},
+				},
+			},
 		},
 	}
-
 }
 
 func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -395,7 +412,6 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
 }
 
 func NewClusterDataSource() datasource.DataSource {
