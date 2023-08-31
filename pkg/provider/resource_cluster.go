@@ -253,6 +253,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"backup_retention_period": schema.StringAttribute{
 				MarkdownDescription: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cluster_type": schema.StringAttribute{
 				MarkdownDescription: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
