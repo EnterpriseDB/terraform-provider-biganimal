@@ -104,6 +104,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
 							Required:    true,
+							Validators: []validator.String{
+								BackupRetentionPeriodValidator(),
+							},
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",

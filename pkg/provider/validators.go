@@ -67,6 +67,17 @@ func ProjectIdValidator() validator.String {
 	)
 }
 
+// Backup Retention Period should be a value between one of the
+// * 1d and 180d
+// * 1w and 25w
+// * 1m and 6m
+func BackupRetentionPeriodValidator() validator.String {
+	return stringvalidator.RegexMatches(
+		regexp.MustCompile("^[1-9][0-9]?|1[0-7][0-9]|180d|[1-9]|1[0-9]|2[0-5]w|[1-6]m$"),
+		"Please provide a valid value for the backup retention period, for example: 7d, 2w, or 3m.",
+	)
+}
+
 func startTimeValidator() validator.String {
 	return stringvalidator.RegexMatches(
 		regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`),
