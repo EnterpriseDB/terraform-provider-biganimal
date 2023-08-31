@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
+// Please use the ProjectIdValidator validator.String when you migrate any SDKv2 resource/data-source to the Framework Library.
 func validateProjectId(v interface{}, path cty.Path) diag.Diagnostics {
 	value := v.(string)
 	var diags diag.Diagnostics
@@ -27,13 +28,6 @@ func validateProjectId(v interface{}, path cty.Path) diag.Diagnostics {
 		diags = append(diags, diag)
 	}
 	return diags
-}
-
-func ProjectIdValidator() validator.String {
-	return stringvalidator.RegexMatches(
-		regexp.MustCompile("^prj_[0-9A-Za-z_]{16}$"),
-		"Please provide a valid name for the project_id, for example: prj_abcdABCD01234567",
-	)
 }
 
 func validateARN(v interface{}, _ cty.Path) diag.Diagnostics {
@@ -59,6 +53,18 @@ func validateUUID(v interface{}, _ cty.Path) diag.Diagnostics {
 		}}
 	}
 	return nil
+}
+
+//////////////////////////////////
+// Framework type of Validators //
+//////////////////////////////////
+
+// Project_id should start with prj_ and then 16 alphanumeric characters.
+func ProjectIdValidator() validator.String {
+	return stringvalidator.RegexMatches(
+		regexp.MustCompile("^prj_[0-9A-Za-z_]{16}$"),
+		"Please provide a valid name for the project_id, for example: prj_abcdABCD01234567",
+	)
 }
 
 func startTimeValidator() validator.String {
