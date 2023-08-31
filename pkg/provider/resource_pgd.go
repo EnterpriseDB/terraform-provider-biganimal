@@ -282,6 +282,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								"pg_type_id": schema.StringAttribute{
 									Description: "Data group pg type id.",
 									Required:    true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("epas", "pgextended", "postgres"),
+									},
 								},
 							},
 						},

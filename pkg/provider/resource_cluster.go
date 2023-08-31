@@ -276,6 +276,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
 				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("epas", "pgextended", "postgres"),
+				},
 			},
 			"first_recoverability_point_at": schema.StringAttribute{
 				MarkdownDescription: "Earliest backup recover time.",
