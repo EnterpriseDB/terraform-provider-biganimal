@@ -224,12 +224,18 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						PlanModifiers: []planmodifier.Float64{
 							float64planmodifier.UseStateForUnknown(),
 						},
+						Validators: []validator.Float64{
+							startDayValidator(),
+						},
 					},
 					"start_time": schema.StringAttribute{
 						MarkdownDescription: "Start time.",
 						Optional:            true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.String{
+							startTimeValidator(),
 						},
 					},
 				},

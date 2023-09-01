@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -69,6 +70,7 @@ type clusterDatasourceModel struct {
 	ConnectionUri              types.String                        `tfsdk:"connection_uri"`
 	Region                     types.String                        `tfsdk:"region"`
 	FirstRecoverabilityPointAt types.String                        `tfsdk:"first_recoverability_point_at"`
+	MaintenanceWindow          *models.MaintenanceWindow           `tfsdk:"maintenance_window"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -299,10 +301,16 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					"start_day": schema.Float64Attribute{
 						MarkdownDescription: "Start day.",
 						Computed:            true,
+						Validators: []validator.Float64{
+							startDayValidator(),
+						},
 					},
 					"start_time": schema.StringAttribute{
 						MarkdownDescription: "Start time.",
 						Computed:            true,
+						Validators: []validator.String{
+							startTimeValidator(),
+						},
 					},
 				},
 			},
