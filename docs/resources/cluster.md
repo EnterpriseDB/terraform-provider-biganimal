@@ -272,7 +272,7 @@ Read-Only:
 <a id="nestedatt--maintenance_window"></a>
 ### Nested Schema for `maintenance_window`
 
-Optional:
+Required:
 
 - `is_enabled` (Boolean) Is maintenance window enabled.
 - `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
