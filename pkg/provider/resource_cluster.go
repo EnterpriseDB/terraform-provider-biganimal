@@ -209,44 +209,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
-			"maintenance_window": schema.SingleNestedBlock{
-				MarkdownDescription: "Custom maintenance window.",
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
-				},
-				Attributes: map[string]schema.Attribute{
-					"is_enabled": schema.BoolAttribute{
-						MarkdownDescription: "Is maintenance window enabled.",
-						Optional:            true,
-						Computed:            true,
-						PlanModifiers: []planmodifier.Bool{
-							boolplanmodifier.UseStateForUnknown(),
-						},
-					},
-					"start_day": schema.Int64Attribute{
-						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
-						Optional:            true,
-						Computed:            true,
-						PlanModifiers: []planmodifier.Int64{
-							int64planmodifier.UseStateForUnknown(),
-						},
-						Validators: []validator.Int64{
-							int64validator.Between(0, 6),
-						},
-					},
-					"start_time": schema.StringAttribute{
-						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
-						Optional:            true,
-						Computed:            true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-						Validators: []validator.String{
-							startTimeValidator(),
-						},
-					},
-				},
-			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -368,6 +330,46 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
+			"maintenance_window": schema.SingleNestedAttribute{
+				MarkdownDescription: "Custom maintenance window.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is maintenance window enabled.",
+						Optional:            true,
+						Computed:            true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"start_day": schema.Int64Attribute{
+						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
+						Optional:            true,
+						Computed:            true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.Int64{
+							int64validator.Between(0, 6),
+						},
+					},
+					"start_time": schema.StringAttribute{
+						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
+						Optional:            true,
+						Computed:            true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.String{
+							startTimeValidator(),
+						},
+					},
+				},
 			},
 		},
 	}
