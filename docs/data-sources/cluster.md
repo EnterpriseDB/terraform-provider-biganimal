@@ -175,8 +175,8 @@ Read-Only:
 Read-Only:
 
 - `is_enabled` (Boolean) Is maintenance window enabled.
-- `start_day` (Number) Start day.
-- `start_time` (String) Start time.
+- `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
+- `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
 <a id="nestedatt--pg_config"></a>

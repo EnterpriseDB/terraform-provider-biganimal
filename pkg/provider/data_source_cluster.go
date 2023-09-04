@@ -6,7 +6,8 @@ import (
 	"regexp"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	terraformCommon "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -70,7 +71,7 @@ type clusterDatasourceModel struct {
 	ConnectionUri              types.String                        `tfsdk:"connection_uri"`
 	Region                     types.String                        `tfsdk:"region"`
 	FirstRecoverabilityPointAt types.String                        `tfsdk:"first_recoverability_point_at"`
-	MaintenanceWindow          *models.MaintenanceWindow           `tfsdk:"maintenance_window"`
+	MaintenanceWindow          *terraformCommon.MaintenanceWindow  `tfsdk:"maintenance_window"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -298,15 +299,15 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						MarkdownDescription: "Is maintenance window enabled.",
 						Computed:            true,
 					},
-					"start_day": schema.Float64Attribute{
-						MarkdownDescription: "Start day.",
+					"start_day": schema.Int64Attribute{
+						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
 						Computed:            true,
-						Validators: []validator.Float64{
-							startDayValidator(),
+						Validators: []validator.Int64{
+							int64validator.Between(0, 6),
 						},
 					},
 					"start_time": schema.StringAttribute{
-						MarkdownDescription: "Start time.",
+						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
 						Computed:            true,
 						Validators: []validator.String{
 							startTimeValidator(),

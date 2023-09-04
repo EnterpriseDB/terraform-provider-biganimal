@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -62,13 +61,9 @@ func validateUUID(v interface{}, _ cty.Path) diag.Diagnostics {
 	return nil
 }
 
-func startDayValidator() validator.Float64 {
-	return float64validator.Between(0, 6)
-}
-
 func startTimeValidator() validator.String {
 	return stringvalidator.RegexMatches(
-		regexp.MustCompile(`^(?:[01]\d|2[0-3]):[0-5]\d$`),
+		regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`),
 		"Please provide a valid time for start time from 00:00 to 23:59, for example: 07:00",
 	)
 }

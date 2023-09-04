@@ -164,6 +164,12 @@ resource "biganimal_cluster" "ha_cluster" {
     size              = "4 Gi"
   }
 
+  maintenance_window {
+    is_enabled = true
+    start_day  = 6
+    start_time = "03:00"
+  }
+
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
@@ -263,8 +269,8 @@ Read-Only:
 Optional:
 
 - `is_enabled` (Boolean) Is maintenance window enabled.
-- `start_day` (Number) Start day.
-- `start_time` (String) Start time.
+- `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
+- `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
 <a id="nestedblock--pg_config"></a>
