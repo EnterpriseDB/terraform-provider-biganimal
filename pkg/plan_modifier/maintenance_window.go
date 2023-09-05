@@ -29,38 +29,39 @@ func (m MaintenanceWindowForUnknownModifier) MarkdownDescription(_ context.Conte
 func (m MaintenanceWindowForUnknownModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
 	if !req.PlanValue.IsUnknown() && !req.StateValue.IsNull() {
 		planAttr := req.PlanValue.Attributes()
-		stateAttr := req.StateValue.Attributes()
 
-		if strings.Replace(planAttr["is_enabled"].String(), "\"", "", -1) == "false" &&
-			planAttr["start_day"] != stateAttr["start_day"] {
-			resp.Diagnostics.AddWarning("Maintenance window is_enabled is false but you have changed start day", fmt.Sprintf("maintenance window start day has changed from %v to %v",
-				stateAttr["start_day"],
-				planAttr["start_day"]))
+		if strings.Replace(planAttr["is_enabled"].String(), "\"", "", -1) == "false" {
+			startDayAttr := planAttr["start_day"]
+			startTimeAttr := planAttr["start_time"]
+
+			if strings.Replace(startDayAttr.String(), "\"", "", -1) != "0" && !startDayAttr.IsNull() && !startDayAttr.IsUnknown() {
+				resp.Diagnostics.AddError("Maintenance window start_day cannot be set if is_enabled is false", fmt.Sprintf("maintenance window start_day has changed to %v, please set to 0 or remove",
+					startDayAttr))
+			}
+
+			if strings.Replace(startTimeAttr.String(), "\"", "", -1) != "00:00" && !startTimeAttr.IsNull() && !startTimeAttr.IsUnknown() {
+				resp.Diagnostics.AddError("Maintenance window start_time cannot be set if is_enabled is false", fmt.Sprintf("maintenance window start_time has changed to %v, please set to 00:00 or remove",
+					startTimeAttr))
+			}
+
+			return
 		}
-
-		if strings.Replace(planAttr["is_enabled"].String(), "\"", "", -1) == "false" &&
-			planAttr["start_time"] != stateAttr["start_time"] {
-			resp.Diagnostics.AddWarning("Maintenance window is_enabled is false but you have changed start time", fmt.Sprintf("maintenance window start time has changed from %v to %v",
-				stateAttr["start_time"],
-				planAttr["start_time"]))
-		}
-
 	}
 
-	// Do nothing if there is no state value.
-	if req.StateValue.IsNull() {
-		return
-	}
+	// // Do nothing if there is no state value.
+	// if req.StateValue.IsNull() {
+	// 	return
+	// }
 
-	// Do nothing if there is a known planned value.
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
+	// // Do nothing if there is a known planned value.
+	// if !req.PlanValue.IsUnknown() {
+	// 	return
+	// }
 
-	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
-	if req.ConfigValue.IsUnknown() {
-		return
-	}
+	// // Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
+	// if req.ConfigValue.IsUnknown() {
+	// 	return
+	// }
 
-	resp.PlanValue = req.StateValue
+	// resp.PlanValue = req.StateValue
 }

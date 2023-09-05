@@ -344,14 +344,16 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 					"start_day": schema.Int64Attribute{
 						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Validators: []validator.Int64{
 							int64validator.Between(0, 6),
 						},
 					},
 					"start_time": schema.StringAttribute{
 						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
-						Required:            true,
+						Optional:            true,
+						Computed:            true,
 						Validators: []validator.String{
 							startTimeValidator(),
 						},
@@ -564,8 +566,8 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	if cluster.MaintenanceWindow != nil {
 		clusterResource.MaintenanceWindow = &commonTerraform.MaintenanceWindow{
 			IsEnabled: cluster.MaintenanceWindow.IsEnabled,
-			StartDay:  utils.ToPointer(int64(*cluster.MaintenanceWindow.StartDay)),
-			StartTime: cluster.MaintenanceWindow.StartTime,
+			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*cluster.MaintenanceWindow.StartDay))),
+			StartTime: types.StringPointerValue(cluster.MaintenanceWindow.StartTime),
 		}
 	}
 
@@ -636,11 +638,11 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 	if clusterResource.MaintenanceWindow != nil {
 		cluster.MaintenanceWindow = &commonApi.MaintenanceWindow{
 			IsEnabled: clusterResource.MaintenanceWindow.IsEnabled,
-			StartTime: clusterResource.MaintenanceWindow.StartTime,
+			StartTime: clusterResource.MaintenanceWindow.StartTime.ValueStringPointer(),
 		}
 
-		if clusterResource.MaintenanceWindow.StartDay != nil {
-			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay))
+		if !clusterResource.MaintenanceWindow.StartDay.IsNull() && !clusterResource.MaintenanceWindow.StartDay.IsUnknown() {
+			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay.ValueInt64Pointer()))
 		}
 	}
 

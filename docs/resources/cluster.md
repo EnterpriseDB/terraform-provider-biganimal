@@ -275,6 +275,9 @@ Read-Only:
 Required:
 
 - `is_enabled` (Boolean) Is maintenance window enabled.
+
+Optional:
+
 - `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
 - `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
