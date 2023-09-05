@@ -137,6 +137,7 @@ output "faraway_replica_ids" {
 - `id` (String) Datasource ID.
 - `instance_type` (String) Instance type.
 - `logs_url` (String) The URL to find the logs of this cluster.
+- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
@@ -166,6 +167,16 @@ Read-Only:
 - `id` (String) Cluster architecture ID.
 - `name` (String) Name.
 - `nodes` (Number) Node count.
+
+
+<a id="nestedatt--maintenance_window"></a>
+### Nested Schema for `maintenance_window`
+
+Read-Only:
+
+- `is_enabled` (Boolean) Is maintenance window enabled.
+- `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
+- `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
 <a id="nestedatt--pg_config"></a>

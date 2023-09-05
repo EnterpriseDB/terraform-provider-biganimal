@@ -9,8 +9,12 @@ import (
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -33,34 +37,35 @@ var (
 )
 
 type ClusterResourceModel struct {
-	ID                         types.String                      `tfsdk:"id"`
-	CspAuth                    types.Bool                        `tfsdk:"csp_auth"`
-	Region                     types.String                      `tfsdk:"region"`
-	InstanceType               types.String                      `tfsdk:"instance_type"`
-	ReadOnlyConnections        types.Bool                        `tfsdk:"read_only_connections"`
-	ResizingPvc                types.List                        `tfsdk:"resizing_pvc"`
-	MetricsUrl                 *string                           `tfsdk:"metrics_url"`
-	ClusterId                  *string                           `tfsdk:"cluster_id"`
-	Phase                      *string                           `tfsdk:"phase"`
-	ClusterArchitecture        *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
-	ConnectionUri              *string                           `tfsdk:"connection_uri"`
-	ClusterName                types.String                      `tfsdk:"cluster_name"`
-	RoConnectionUri            *string                           `tfsdk:"ro_connection_uri"`
-	Storage                    *StorageResourceModel             `tfsdk:"storage"`
-	PgConfig                   []PgConfigResourceModel           `tfsdk:"pg_config"`
-	FirstRecoverabilityPointAt *string                           `tfsdk:"first_recoverability_point_at"`
-	ProjectId                  string                            `tfsdk:"project_id"`
-	LogsUrl                    *string                           `tfsdk:"logs_url"`
-	BackupRetentionPeriod      types.String                      `tfsdk:"backup_retention_period"`
-	ClusterType                *string                           `tfsdk:"cluster_type"`
-	CloudProvider              types.String                      `tfsdk:"cloud_provider"`
-	PgType                     types.String                      `tfsdk:"pg_type"`
-	Password                   types.String                      `tfsdk:"password"`
-	FarawayReplicaIds          types.Set                         `tfsdk:"faraway_replica_ids"`
-	PgVersion                  types.String                      `tfsdk:"pg_version"`
-	PrivateNetworking          types.Bool                        `tfsdk:"private_networking"`
-	AllowedIpRanges            []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
-	CreatedAt                  types.String                      `tfsdk:"created_at"`
+	ID                         types.String                       `tfsdk:"id"`
+	CspAuth                    types.Bool                         `tfsdk:"csp_auth"`
+	Region                     types.String                       `tfsdk:"region"`
+	InstanceType               types.String                       `tfsdk:"instance_type"`
+	ReadOnlyConnections        types.Bool                         `tfsdk:"read_only_connections"`
+	ResizingPvc                types.List                         `tfsdk:"resizing_pvc"`
+	MetricsUrl                 *string                            `tfsdk:"metrics_url"`
+	ClusterId                  *string                            `tfsdk:"cluster_id"`
+	Phase                      *string                            `tfsdk:"phase"`
+	ClusterArchitecture        *ClusterArchitectureResourceModel  `tfsdk:"cluster_architecture"`
+	ConnectionUri              *string                            `tfsdk:"connection_uri"`
+	ClusterName                types.String                       `tfsdk:"cluster_name"`
+	RoConnectionUri            *string                            `tfsdk:"ro_connection_uri"`
+	Storage                    *StorageResourceModel              `tfsdk:"storage"`
+	PgConfig                   []PgConfigResourceModel            `tfsdk:"pg_config"`
+	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
+	ProjectId                  string                             `tfsdk:"project_id"`
+	LogsUrl                    *string                            `tfsdk:"logs_url"`
+	BackupRetentionPeriod      types.String                       `tfsdk:"backup_retention_period"`
+	ClusterType                *string                            `tfsdk:"cluster_type"`
+	CloudProvider              types.String                       `tfsdk:"cloud_provider"`
+	PgType                     types.String                       `tfsdk:"pg_type"`
+	Password                   types.String                       `tfsdk:"password"`
+	FarawayReplicaIds          types.Set                          `tfsdk:"faraway_replica_ids"`
+	PgVersion                  types.String                       `tfsdk:"pg_version"`
+	PrivateNetworking          types.Bool                         `tfsdk:"private_networking"`
+	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
+	CreatedAt                  types.String                       `tfsdk:"created_at"`
+	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -325,9 +330,38 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"maintenance_window": schema.SingleNestedAttribute{
+				MarkdownDescription: "Custom maintenance window.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					plan_modifier.MaintenanceWindowForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is maintenance window enabled.",
+						Required:            true,
+					},
+					"start_day": schema.Int64Attribute{
+						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
+						Optional:            true,
+						Computed:            true,
+						Validators: []validator.Int64{
+							int64validator.Between(0, 6),
+						},
+					},
+					"start_time": schema.StringAttribute{
+						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
+						Optional:            true,
+						Computed:            true,
+						Validators: []validator.String{
+							startTimeValidator(),
+						},
+					},
+				},
+			},
 		},
 	}
-
 }
 
 func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -454,7 +488,6 @@ func (c *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
-
 }
 
 func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterResourceModel) error {
@@ -530,6 +563,14 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 		clusterResource.CreatedAt = types.StringValue(pt.String())
 	}
 
+	if cluster.MaintenanceWindow != nil {
+		clusterResource.MaintenanceWindow = &commonTerraform.MaintenanceWindow{
+			IsEnabled: cluster.MaintenanceWindow.IsEnabled,
+			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*cluster.MaintenanceWindow.StartDay))),
+			StartTime: types.StringPointerValue(cluster.MaintenanceWindow.StartTime),
+		}
+	}
+
 	return nil
 }
 
@@ -593,6 +634,17 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 		})
 	}
 	cluster.PgConfig = &configs
+
+	if clusterResource.MaintenanceWindow != nil {
+		cluster.MaintenanceWindow = &commonApi.MaintenanceWindow{
+			IsEnabled: clusterResource.MaintenanceWindow.IsEnabled,
+			StartTime: clusterResource.MaintenanceWindow.StartTime.ValueStringPointer(),
+		}
+
+		if !clusterResource.MaintenanceWindow.StartDay.IsNull() && !clusterResource.MaintenanceWindow.StartDay.IsUnknown() {
+			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay.ValueInt64Pointer()))
+		}
+	}
 
 	return cluster
 }

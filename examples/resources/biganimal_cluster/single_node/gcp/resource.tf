@@ -66,6 +66,12 @@ resource "biganimal_cluster" "single_node_cluster" {
     size              = "10 Gi"
   }
 
+  maintenance_window = {
+    is_enabled = true
+    start_day  = 6
+    start_time = "03:00"
+  }
+
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false

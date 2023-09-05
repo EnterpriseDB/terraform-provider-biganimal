@@ -3,14 +3,17 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	terraformCommon "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"regexp"
 )
 
 var (
@@ -68,6 +71,7 @@ type clusterDatasourceModel struct {
 	ConnectionUri              types.String                        `tfsdk:"connection_uri"`
 	Region                     types.String                        `tfsdk:"region"`
 	FirstRecoverabilityPointAt types.String                        `tfsdk:"first_recoverability_point_at"`
+	MaintenanceWindow          *terraformCommon.MaintenanceWindow  `tfsdk:"maintenance_window"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -81,7 +85,6 @@ type clusterDataSource struct {
 
 func (c *clusterDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_cluster"
-
 }
 
 // Configure adds the provider configured client to the data source.
@@ -288,9 +291,32 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: "Earliest backup recover time.",
 				Computed:            true,
 			},
+			"maintenance_window": schema.SingleNestedAttribute{
+				Computed:            true,
+				MarkdownDescription: "Custom maintenance window.",
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is maintenance window enabled.",
+						Computed:            true,
+					},
+					"start_day": schema.Int64Attribute{
+						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
+						Computed:            true,
+						Validators: []validator.Int64{
+							int64validator.Between(0, 6),
+						},
+					},
+					"start_time": schema.StringAttribute{
+						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
+						Computed:            true,
+						Validators: []validator.String{
+							startTimeValidator(),
+						},
+					},
+				},
+			},
 		},
 	}
-
 }
 
 func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -395,7 +421,6 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
 }
 
 func NewClusterDataSource() datasource.DataSource {

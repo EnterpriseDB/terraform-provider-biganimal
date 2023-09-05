@@ -65,6 +65,12 @@ resource "biganimal_cluster" "ha_cluster" {
     size              = "4 Gi"
   }
 
+  maintenance_window = {
+    is_enabled = true
+    start_day  = 6
+    start_time = "03:00"
+  }
+
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false

@@ -16,7 +16,7 @@ import (
 func validateProjectId(v interface{}, path cty.Path) diag.Diagnostics {
 	value := v.(string)
 	var diags diag.Diagnostics
-	//if value != can(regex("^prj_[[:alnum:]]{16}$", value)) {
+	// if value != can(regex("^prj_[[:alnum:]]{16}$", value)) {
 	matched, _ := regexp.MatchString("^prj_[0-9A-Za-z_]{16}$", value)
 	if !matched {
 		diag := diag.Diagnostic{
@@ -59,4 +59,11 @@ func validateUUID(v interface{}, _ cty.Path) diag.Diagnostics {
 		}}
 	}
 	return nil
+}
+
+func startTimeValidator() validator.String {
+	return stringvalidator.RegexMatches(
+		regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`),
+		"Please provide a valid time for start time from 00:00 to 23:59, for example: 07:00",
+	)
 }
