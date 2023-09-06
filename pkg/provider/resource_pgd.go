@@ -14,6 +14,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -219,6 +220,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
 									Required:    true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("pgd"),
+									},
 								},
 								"cluster_architecture_name": schema.StringAttribute{
 									Description: "Cluster architecture name.",
@@ -282,9 +286,6 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								"pg_type_id": schema.StringAttribute{
 									Description: "Data group pg type id.",
 									Required:    true,
-									Validators: []validator.String{
-										stringvalidator.OneOf("epas", "pgextended", "postgres"),
-									},
 								},
 							},
 						},
