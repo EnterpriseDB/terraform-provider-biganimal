@@ -242,6 +242,7 @@ Read-Only:
 - `cluster_type` (String) Type of the Specified Cluster
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
+- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--witness_groups--maintenance_window))
 - `phase` (String) Current phase of the witness group.
 - `region` (Attributes) Region. (see [below for nested schema](#nestedatt--witness_groups--region))
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--witness_groups--storage))
@@ -271,6 +272,16 @@ Read-Only:
 Read-Only:
 
 - `instance_type_id` (String) Witness group instance type id.
+
+
+<a id="nestedatt--witness_groups--maintenance_window"></a>
+### Nested Schema for `witness_groups.maintenance_window`
+
+Read-Only:
+
+- `is_enabled` (Boolean) Is maintenance window enabled.
+- `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
+- `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
 <a id="nestedatt--witness_groups--region"></a>
