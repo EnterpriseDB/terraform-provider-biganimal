@@ -170,8 +170,8 @@ type Cluster struct {
 	FarawayReplicaIds          *[]string                    `json:"farawayReplicaIds,omitempty"`
 	Groups                     *[]any                       `json:"groups,omitempty"`
 	MaintenanceWindow          *commonApi.MaintenanceWindow `json:"maintenanceWindow,omitempty"`
-	// ServiceAccountIds          []string           `json:"serviceAccountIds"`
-	// PeAllowedPrincipalIds      []string           `json:"peAllowedPrincipalIds"`
+	ServiceAccountIds          *[]string                    `json:"serviceAccountIds,omitempty"`
+	PeAllowedPrincipalIds      *[]string                    `json:"peAllowedPrincipalIds,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'

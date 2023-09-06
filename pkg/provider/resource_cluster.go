@@ -66,6 +66,8 @@ type ClusterResourceModel struct {
 	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                       `tfsdk:"created_at"`
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
+	ServiceAccountIds          []string                           `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds      []string                           `tfsdk:"pe_allowed_principal_ids"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -366,6 +368,17 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
+			"service_account_ids": schema.ListAttribute{
+				MarkdownDescription: "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
+				Optional:            true,
+				Computed:            true,
+			},
+
+			"pe_allowed_principal_ids": schema.ListAttribute{
+				MarkdownDescription: "Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.",
+				Optional:            true,
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -577,6 +590,22 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 		}
 	}
 
+	if cluster.PeAllowedPrincipalIds != nil {
+		var pids []string
+		for _, v := range *cluster.PeAllowedPrincipalIds {
+			pids = append(pids, v)
+		}
+		clusterResource.PeAllowedPrincipalIds = pids
+	}
+
+	if cluster.ServiceAccountIds != nil {
+		var saIds []string
+		for _, v := range *cluster.ServiceAccountIds {
+			saIds = append(saIds, v)
+		}
+		clusterResource.PeAllowedPrincipalIds = saIds
+	}
+
 	return nil
 }
 
@@ -650,6 +679,14 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 		if !clusterResource.MaintenanceWindow.StartDay.IsNull() && !clusterResource.MaintenanceWindow.StartDay.IsUnknown() {
 			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay.ValueInt64Pointer()))
 		}
+	}
+
+	if clusterResource.ServiceAccountIds != nil {
+		cluster.ServiceAccountIds = utils.ToPointer(clusterResource.ServiceAccountIds)
+	}
+
+	if clusterResource.PeAllowedPrincipalIds != nil {
+		cluster.PeAllowedPrincipalIds = utils.ToPointer(clusterResource.PeAllowedPrincipalIds)
 	}
 
 	return cluster

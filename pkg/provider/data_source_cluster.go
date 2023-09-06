@@ -72,6 +72,8 @@ type clusterDatasourceModel struct {
 	Region                     types.String                        `tfsdk:"region"`
 	FirstRecoverabilityPointAt types.String                        `tfsdk:"first_recoverability_point_at"`
 	MaintenanceWindow          *terraformCommon.MaintenanceWindow  `tfsdk:"maintenance_window"`
+	ServiceAccountIds          []string                            `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds      []string                            `tfsdk:"pe_allowed_principal_ids"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -318,6 +320,16 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					},
 				},
 			},
+			"service_account_ids": schema.SetAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+			},
+			"pe_allowed_principal_ids": schema.SetAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+			},
 		},
 	}
 }
@@ -421,6 +433,14 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.DeletedAt = types.StringNull()
 	if pt := cluster.DeletedAt; pt != nil {
 		data.DeletedAt = types.StringValue(pt.String())
+	}
+
+	if cluster.ServiceAccountIds != nil {
+		data.ServiceAccountIds = *cluster.ServiceAccountIds
+	}
+
+	if cluster.PeAllowedPrincipalIds != nil {
+		data.PeAllowedPrincipalIds = *cluster.PeAllowedPrincipalIds
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

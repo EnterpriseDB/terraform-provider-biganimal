@@ -66,3 +66,33 @@ func (c CloudProviderClient) CreateAzureConnection(ctx context.Context, projectI
 
 	return err
 }
+
+func (c CloudProviderClient) GetServiceAccountIds(ctx context.Context, projectID string, cspID string, regionID string, saIdsData models.ServiceAccountIds) error {
+	b, err := json.Marshal(saIdsData)
+	if err != nil {
+		return err
+	}
+
+	req := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/service-account-ids", projectID, cspID, regionID)
+	_, err = c.doRequest(ctx, http.MethodGet, req, bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (c CloudProviderClient) GetPeAllowedPrincipalIds(ctx context.Context, projectID string, cspID string, regionID string, cspAcIdsData models.PeAllowedPrincipalIds) error {
+	b, err := json.Marshal(cspAcIdsData)
+	if err != nil {
+		return err
+	}
+
+	req := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/pe-allowed-principal-ids", projectID, cspID, regionID)
+	_, err = c.doRequest(ctx, http.MethodGet, req, bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	return err
+}
