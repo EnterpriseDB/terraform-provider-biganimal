@@ -103,6 +103,9 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
 				Required:            true,
+				Validators: []validator.String{
+					ProjectIdValidator(),
+				},
 			},
 
 			"cluster_name": schema.StringAttribute{
