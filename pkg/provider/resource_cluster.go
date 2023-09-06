@@ -66,6 +66,8 @@ type ClusterResourceModel struct {
 	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                       `tfsdk:"created_at"`
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
+	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
+	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -335,6 +337,20 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
+			"pe_allowed_principal_ids": schema.SetAttribute{
+				MarkdownDescription: "peAllowedPrincipalIds.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				ElementType:         types.StringType,
+			},
+			"service_account_ids": schema.SetAttribute{
+				MarkdownDescription: "serviceAccountIds. Used for GCP",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				ElementType:         types.StringType,
 			},
 			"maintenance_window": schema.SingleNestedAttribute{
 				MarkdownDescription: "Custom maintenance window.",
