@@ -393,6 +393,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
 							Optional:    true,
+							Computed:    true,
 							PlanModifiers: []planmodifier.Object{
 								objectplanmodifier.UseStateForUnknown(),
 							},
