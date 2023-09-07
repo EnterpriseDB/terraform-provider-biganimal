@@ -141,3 +141,37 @@ type ClusterResponse struct {
 		ClusterId string `json:"clusterId"`
 	} `json:"data"`
 }
+
+func (c ClusterClient) GetServiceAccountIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.ServiceAccountIds, error) {
+	response := struct {
+		Data models.ServiceAccountIds `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/service-account-ids", projectID, cspID, regionID)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return &models.ServiceAccountIds{}, err
+	}
+
+	if json.Unmarshal(body, &response) != nil {
+		return &models.ServiceAccountIds{}, err
+	}
+	return &response.Data, nil
+}
+
+func (c ClusterClient) GetPeAllowedPrincipalIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.PeAllowedPrincipalIds, error) {
+	response := struct {
+		Data models.PeAllowedPrincipalIds `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/pe-allowed-principal-ids", projectID, cspID, regionID)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return &models.PeAllowedPrincipalIds{}, err
+	}
+
+	if json.Unmarshal(body, &response) != nil {
+		return &models.PeAllowedPrincipalIds{}, err
+	}
+	return &response.Data, nil
+}

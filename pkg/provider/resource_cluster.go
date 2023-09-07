@@ -392,7 +392,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	clusterId, err := c.client.Create(ctx, config.ProjectId, makeClusterForCreate(config))
+	clusterId, err := c.client.Create(ctx, config.ProjectId, c.makeClusterForCreate(ctx, config))
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
@@ -451,7 +451,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	_, err := c.client.Update(ctx, makeClusterFoUpdate(plan), plan.ProjectId, *plan.ClusterId)
+	_, err := c.client.Update(ctx, c.makeClusterFoUpdate(ctx, plan), plan.ProjectId, *plan.ClusterId)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
@@ -626,7 +626,7 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 		})
 }
 
-func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
+func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) models.Cluster {
 	cluster := models.Cluster{
 		ClusterName: clusterResource.ClusterName.ValueStringPointer(),
 		Password:    clusterResource.Password.ValueStringPointer(),
@@ -681,8 +681,23 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 		}
 	}
 
-	if clusterResource.ServiceAccountIds != nil {
-		cluster.ServiceAccountIds = utils.ToPointer(clusterResource.ServiceAccountIds)
+	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
+		pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
+
+		if clusterResource.PeAllowedPrincipalIds != nil {
+			cluster.PeAllowedPrincipalIds = utils.ToPointer(clusterResource.PeAllowedPrincipalIds)
+		} else if len(pids.Data) != 0 {
+			cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
+		}
+
+		if clusterResource.CloudProvider.ValueString() == "bah:gcp" {
+			sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
+			if clusterResource.ServiceAccountIds != nil {
+				cluster.ServiceAccountIds = utils.ToPointer(clusterResource.ServiceAccountIds)
+			} else if len(sids.Data) != 0 {
+				cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
+			}
+		}
 	}
 
 	if clusterResource.PeAllowedPrincipalIds != nil {
@@ -692,8 +707,8 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 	return cluster
 }
 
-func makeClusterFoUpdate(clusterResource ClusterResourceModel) *models.Cluster {
-	cluster := makeClusterForCreate(clusterResource)
+func (c *clusterResource) makeClusterFoUpdate(ctx context.Context, clusterResource ClusterResourceModel) *models.Cluster {
+	cluster := c.makeClusterForCreate(ctx, clusterResource)
 	cluster.ClusterId = nil
 	cluster.PgType = nil
 	cluster.PgVersion = nil
