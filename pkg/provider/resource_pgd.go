@@ -17,6 +17,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -65,6 +66,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
 				Optional:    true,
+				Validators: []validator.String{
+					ProjectIdValidator(),
+				},
 			},
 			"cluster_id": schema.StringAttribute{
 				Description: "Cluster ID.",
@@ -104,6 +108,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						"backup_retention_period": schema.StringAttribute{
 							Description: "Backup retention period",
 							Required:    true,
+							Validators: []validator.String{
+								BackupRetentionPeriodValidator(),
+							},
 						},
 						"cluster_name": schema.StringAttribute{
 							Description: "Name of the group.",
@@ -216,6 +223,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								"cluster_architecture_id": schema.StringAttribute{
 									Description: "Cluster architecture ID.",
 									Required:    true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("pgd"),
+									},
 								},
 								"cluster_architecture_name": schema.StringAttribute{
 									Description: "Cluster architecture name.",

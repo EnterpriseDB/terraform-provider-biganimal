@@ -9,6 +9,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -45,6 +46,9 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
 				Required:    true,
+				Validators: []validator.String{
+					ProjectIdValidator(),
+				},
 			},
 			"cluster_id": schema.StringAttribute{
 				Description: "Cluster ID.",
