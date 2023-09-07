@@ -1,4 +1,4 @@
-package models
+package api
 
 type MaintenanceWindow struct {
 	IsEnabled *bool `json:"isEnabled,omitempty" mapstructure:"isEnabled"`
