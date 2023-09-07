@@ -66,8 +66,8 @@ type ClusterResourceModel struct {
 	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                       `tfsdk:"created_at"`
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
-	ServiceAccountIds          []string                           `tfsdk:"service_account_ids"`
-	PeAllowedPrincipalIds      []string                           `tfsdk:"pe_allowed_principal_ids"`
+	ServiceAccountIds          types.List                         `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds      types.List                         `tfsdk:"pe_allowed_principal_ids"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -372,12 +372,14 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
 				Optional:            true,
 				Computed:            true,
+				ElementType:         types.StringType,
 			},
 
 			"pe_allowed_principal_ids": schema.ListAttribute{
 				MarkdownDescription: "Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.",
 				Optional:            true,
 				Computed:            true,
+				ElementType:         types.StringType,
 			},
 		},
 	}
@@ -591,19 +593,11 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	}
 
 	if cluster.PeAllowedPrincipalIds != nil {
-		var pids []string
-		for _, v := range *cluster.PeAllowedPrincipalIds {
-			pids = append(pids, v)
-		}
-		clusterResource.PeAllowedPrincipalIds = pids
+		clusterResource.PeAllowedPrincipalIds = StringSliceToList(utils.ToValue(cluster.PeAllowedPrincipalIds))
 	}
 
 	if cluster.ServiceAccountIds != nil {
-		var saIds []string
-		for _, v := range *cluster.ServiceAccountIds {
-			saIds = append(saIds, v)
-		}
-		clusterResource.PeAllowedPrincipalIds = saIds
+		clusterResource.ServiceAccountIds = StringSliceToList(utils.ToValue(cluster.ServiceAccountIds))
 	}
 
 	return nil
@@ -684,24 +678,32 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
 		pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
 
-		if clusterResource.PeAllowedPrincipalIds != nil {
-			cluster.PeAllowedPrincipalIds = utils.ToPointer(clusterResource.PeAllowedPrincipalIds)
+		if clusterResource.PeAllowedPrincipalIds.IsNull() {
+			x, _ := clusterResource.PeAllowedPrincipalIds.ToListValue(ctx)
+			var plist []string
+			for _, v := range x.Elements() {
+				plist = append(plist, v.String())
+			}
+			cluster.PeAllowedPrincipalIds = &plist
+
 		} else if len(pids.Data) != 0 {
 			cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 		}
 
 		if clusterResource.CloudProvider.ValueString() == "bah:gcp" {
-			sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
-			if clusterResource.ServiceAccountIds != nil {
-				cluster.ServiceAccountIds = utils.ToPointer(clusterResource.ServiceAccountIds)
-			} else if len(sids.Data) != 0 {
+			if clusterResource.ServiceAccountIds.IsNull() {
+				x, _ := clusterResource.ServiceAccountIds.ToListValue(ctx)
+				var slist []string
+				for _, v := range x.Elements() {
+					slist = append(slist, v.String())
+				}
+				cluster.ServiceAccountIds = &slist
+
+			} else {
+				sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
 				cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
 			}
 		}
-	}
-
-	if clusterResource.PeAllowedPrincipalIds != nil {
-		cluster.PeAllowedPrincipalIds = utils.ToPointer(clusterResource.PeAllowedPrincipalIds)
 	}
 
 	return cluster
