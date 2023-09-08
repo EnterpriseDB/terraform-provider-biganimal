@@ -676,9 +676,7 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 	}
 
 	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
-		pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
-
-		if clusterResource.PeAllowedPrincipalIds.IsNull() {
+		if !clusterResource.PeAllowedPrincipalIds.IsNull() {
 			x, _ := clusterResource.PeAllowedPrincipalIds.ToListValue(ctx)
 			var plist []string
 			for _, v := range x.Elements() {
@@ -686,12 +684,13 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 			}
 			cluster.PeAllowedPrincipalIds = &plist
 
-		} else if len(pids.Data) != 0 {
+		} else {
+			pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
 			cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 		}
 
 		if clusterResource.CloudProvider.ValueString() == "bah:gcp" {
-			if clusterResource.ServiceAccountIds.IsNull() {
+			if !clusterResource.ServiceAccountIds.IsNull() {
 				x, _ := clusterResource.ServiceAccountIds.ToListValue(ctx)
 				var slist []string
 				for _, v := range x.Elements() {

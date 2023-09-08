@@ -153,7 +153,7 @@ func (c ClusterClient) GetServiceAccountIds(ctx context.Context, projectID strin
 		return &models.ServiceAccountIds{}, err
 	}
 
-	if json.Unmarshal(body, &response) != nil {
+	if json.Unmarshal(body, &response.Data) != nil {
 		return &models.ServiceAccountIds{}, err
 	}
 	return &response.Data, nil
@@ -170,7 +170,7 @@ func (c ClusterClient) GetPeAllowedPrincipalIds(ctx context.Context, projectID s
 		return &models.PeAllowedPrincipalIds{}, err
 	}
 
-	if json.Unmarshal(body, &response) != nil {
+	if json.Unmarshal(body, &response.Data) != nil {
 		return &models.PeAllowedPrincipalIds{}, err
 	}
 	return &response.Data, nil
