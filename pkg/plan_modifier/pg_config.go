@@ -65,13 +65,24 @@ func (m customPGConfigModifier) PlanModifySet(ctx context.Context, req planmodif
 
 	statePgConfig := req.StateValue.Elements()
 	planPgConfig := resp.PlanValue.Elements()
+	configPgConfig := req.ConfigValue.Elements()
 	for _, pConf := range planPgConfig {
-		// check if plan pg config exists in state
-		if !pgConfigExists(statePgConfig, pConf) {
-			resp.Diagnostics.AddWarning("PG config changed", fmt.Sprintf("PG config changed from %v to %v",
-				statePgConfig,
-				planPgConfig))
-			break
+		// check if plan pg config is the same as state
+		if len(statePgConfig) != 0 {
+			if !pgConfigExists(statePgConfig, pConf) {
+				resp.Diagnostics.AddWarning("PG config changed", fmt.Sprintf("PG config changed from %v to %v",
+					statePgConfig,
+					planPgConfig))
+				break
+			}
+		} else {
+			// check if plan pg config is the same as config
+			if !pgConfigExists(configPgConfig, pConf) {
+				resp.Diagnostics.AddWarning("PG config changed", fmt.Sprintf("PG config changed from %v to %v",
+					configPgConfig,
+					planPgConfig))
+				break
+			}
 		}
 	}
 }
