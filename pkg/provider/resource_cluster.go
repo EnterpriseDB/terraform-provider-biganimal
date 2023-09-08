@@ -625,7 +625,11 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) models.Cluster {
 	cluster := generateGenericClusterModel(clusterResource)
 	// add BAH Code
-	return c.addBAHSpecificFields(ctx, cluster, clusterResource)
+	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
+		return c.addBAHSpecificFields(ctx, cluster, clusterResource)
+	} else {
+		return cluster
+	}
 }
 
 func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) models.Cluster {
@@ -633,35 +637,33 @@ func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster mode
 	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
 	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
 
-	if strings.Contains(clusterRscCSP.ValueString(), "bah") {
+	// If there is an existing Principal Account Id for that Region, use that one.
+	pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
+	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 
-		if !(clusterRscPrincipalIds.IsUnknown() || clusterRscPrincipalIds.IsNull()) {
-
-			var plist []string
-			for _, peId := range clusterRscPrincipalIds.Elements() {
-				plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
-			}
-
-			cluster.PeAllowedPrincipalIds = &plist
-
-		} else {
-			pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
-			cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
+	// If there is no existing value, user should provide one
+	if cluster.PeAllowedPrincipalIds == nil {
+		var plist []string
+		for _, peId := range clusterRscPrincipalIds.Elements() {
+			plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
 		}
+
+		cluster.PeAllowedPrincipalIds = &plist
 	}
 
 	if clusterRscCSP.ValueString() == "bah:gcp" {
-		if !(clusterRscSvcAcntIds.IsUnknown() || clusterRscSvcAcntIds.IsNull()) {
+		// If there is an existing Service Account Id for that Region, use that one.
+		sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
+		cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
+
+		// If there is no existing value, user should provide one
+		if cluster.ServiceAccountIds == nil {
 			var slist []string
 			for _, saId := range clusterRscSvcAcntIds.Elements() {
 				slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
 			}
 
 			cluster.ServiceAccountIds = &slist
-
-		} else {
-			sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
-			cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
 		}
 	}
 	return cluster
