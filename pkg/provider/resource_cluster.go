@@ -66,8 +66,8 @@ type ClusterResourceModel struct {
 	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                       `tfsdk:"created_at"`
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
-	ServiceAccountIds          types.List                         `tfsdk:"service_account_ids"`
-	PeAllowedPrincipalIds      types.List                         `tfsdk:"pe_allowed_principal_ids"`
+	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -368,18 +368,20 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
-			"service_account_ids": schema.ListAttribute{
+			"service_account_ids": schema.SetAttribute{
 				MarkdownDescription: "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
 				Optional:            true,
 				Computed:            true,
 				ElementType:         types.StringType,
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 
-			"pe_allowed_principal_ids": schema.ListAttribute{
+			"pe_allowed_principal_ids": schema.SetAttribute{
 				MarkdownDescription: "Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.",
 				Optional:            true,
 				Computed:            true,
 				ElementType:         types.StringType,
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}
@@ -593,11 +595,11 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	}
 
 	if cluster.PeAllowedPrincipalIds != nil {
-		clusterResource.PeAllowedPrincipalIds = StringSliceToList(utils.ToValue(cluster.PeAllowedPrincipalIds))
+		clusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&cluster.PeAllowedPrincipalIds))
 	}
 
 	if cluster.ServiceAccountIds != nil {
-		clusterResource.ServiceAccountIds = StringSliceToList(utils.ToValue(cluster.ServiceAccountIds))
+		clusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&cluster.ServiceAccountIds))
 	}
 
 	return nil
@@ -675,9 +677,14 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 		}
 	}
 
-	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
-		if !clusterResource.PeAllowedPrincipalIds.IsNull() {
-			x, _ := clusterResource.PeAllowedPrincipalIds.ToListValue(ctx)
+	clusterRscCSP := clusterResource.CloudProvider
+	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
+	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
+
+	if strings.Contains(clusterRscCSP.ValueString(), "bah") {
+
+		if !(clusterRscPrincipalIds.IsUnknown() || clusterRscPrincipalIds.IsNull()) {
+			x, _ := clusterRscPrincipalIds.ToSetValue(ctx)
 			var plist []string
 			for _, v := range x.Elements() {
 				plist = append(plist, v.String())
@@ -685,13 +692,13 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 			cluster.PeAllowedPrincipalIds = &plist
 
 		} else {
-			pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
+			pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
 			cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 		}
 
-		if clusterResource.CloudProvider.ValueString() == "bah:gcp" {
-			if !clusterResource.ServiceAccountIds.IsNull() {
-				x, _ := clusterResource.ServiceAccountIds.ToListValue(ctx)
+		if clusterRscCSP.ValueString() == "bah:gcp" {
+			if !(clusterRscSvcAcntIds.IsUnknown() || clusterRscSvcAcntIds.IsNull()) {
+				x, _ := clusterRscSvcAcntIds.ToSetValue(ctx)
 				var slist []string
 				for _, v := range x.Elements() {
 					slist = append(slist, v.String())
