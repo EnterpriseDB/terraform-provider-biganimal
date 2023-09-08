@@ -623,6 +623,51 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 }
 
 func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) models.Cluster {
+	cluster := generateGenericClusterModel(clusterResource)
+	// add BAH Code
+	return c.addBAHSpecificFields(ctx, cluster, clusterResource)
+}
+
+func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) models.Cluster {
+	clusterRscCSP := clusterResource.CloudProvider
+	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
+	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
+
+	if strings.Contains(clusterRscCSP.ValueString(), "bah") {
+
+		if !(clusterRscPrincipalIds.IsUnknown() || clusterRscPrincipalIds.IsNull()) {
+
+			var plist []string
+			for _, peId := range clusterRscPrincipalIds.Elements() {
+				plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
+			}
+
+			cluster.PeAllowedPrincipalIds = &plist
+
+		} else {
+			pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
+			cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
+		}
+	}
+
+	if clusterRscCSP.ValueString() == "bah:gcp" {
+		if !(clusterRscSvcAcntIds.IsUnknown() || clusterRscSvcAcntIds.IsNull()) {
+			var slist []string
+			for _, saId := range clusterRscSvcAcntIds.Elements() {
+				slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
+			}
+
+			cluster.ServiceAccountIds = &slist
+
+		} else {
+			sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
+			cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
+		}
+	}
+	return cluster
+}
+
+func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cluster {
 	cluster := models.Cluster{
 		ClusterName: clusterResource.ClusterName.ValueStringPointer(),
 		Password:    clusterResource.Password.ValueStringPointer(),
@@ -674,42 +719,6 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 
 		if !clusterResource.MaintenanceWindow.StartDay.IsNull() && !clusterResource.MaintenanceWindow.StartDay.IsUnknown() {
 			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay.ValueInt64Pointer()))
-		}
-	}
-
-	clusterRscCSP := clusterResource.CloudProvider
-	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
-	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
-
-	if strings.Contains(clusterRscCSP.ValueString(), "bah") {
-
-		if !(clusterRscPrincipalIds.IsUnknown() || clusterRscPrincipalIds.IsNull()) {
-
-			var plist []string
-			for _, peId := range clusterRscPrincipalIds.Elements() {
-				plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
-			}
-
-			cluster.PeAllowedPrincipalIds = &plist
-
-		} else {
-			pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
-			cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
-		}
-	}
-
-	if clusterRscCSP.ValueString() == "bah:gcp" {
-		if !(clusterRscSvcAcntIds.IsUnknown() || clusterRscSvcAcntIds.IsNull()) {
-			var slist []string
-			for _, saId := range clusterRscSvcAcntIds.Elements() {
-				slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
-			}
-
-			cluster.ServiceAccountIds = &slist
-
-		} else {
-			sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
-			cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
 		}
 	}
 
