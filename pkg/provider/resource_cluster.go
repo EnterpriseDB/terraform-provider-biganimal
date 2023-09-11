@@ -642,13 +642,16 @@ func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster mode
 	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 
 	// If there is no existing value, user should provide one
-	if cluster.PeAllowedPrincipalIds == nil {
-		var plist []string
+	if len(*cluster.PeAllowedPrincipalIds) == 0 {
+		// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+		// while encoding JSON objects
+		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+		plist := []string{}
 		for _, peId := range clusterRscPrincipalIds.Elements() {
 			plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
 		}
 
-		cluster.PeAllowedPrincipalIds = &plist
+		cluster.PeAllowedPrincipalIds = utils.ToPointer(plist)
 	}
 
 	if clusterRscCSP.ValueString() == "bah:gcp" {
@@ -657,13 +660,16 @@ func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster mode
 		cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
 
 		// If there is no existing value, user should provide one
-		if cluster.ServiceAccountIds == nil {
-			var slist []string
+		if len(*cluster.ServiceAccountIds) == 0 {
+			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+			// while encoding JSON objects.
+			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+			slist := []string{}
 			for _, saId := range clusterRscSvcAcntIds.Elements() {
 				slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
 			}
 
-			cluster.ServiceAccountIds = &slist
+			cluster.ServiceAccountIds = utils.ToPointer(slist)
 		}
 	}
 	return cluster
