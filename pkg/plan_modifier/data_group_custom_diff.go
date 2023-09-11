@@ -11,24 +11,24 @@ import (
 )
 
 func CustomDataGroupDiffConfig() planmodifier.Set {
-	return customDataGroupDiffModifier{}
+	return CustomDataGroupDiffModifier{}
 }
 
-// customDataGroupModifier implements the plan modifier.
-type customDataGroupDiffModifier struct{}
+// CustomDataGroupModifier implements the plan modifier.
+type CustomDataGroupDiffModifier struct{}
 
 // Description returns a human-readable description of the plan modifier.
-func (m customDataGroupDiffModifier) Description(_ context.Context) string {
+func (m CustomDataGroupDiffModifier) Description(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // MarkdownDescription returns a markdown description of the plan modifier.
-func (m customDataGroupDiffModifier) MarkdownDescription(_ context.Context) string {
+func (m CustomDataGroupDiffModifier) MarkdownDescription(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // PlanModifySet implements the plan modification logic.
-func (m customDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	if req.StateValue.IsNull() {
 		return
 	}

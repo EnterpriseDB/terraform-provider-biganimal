@@ -1,10 +1,11 @@
-package plan_modifier
+package plan_modifier_test
 
 import (
 	"context"
 	"reflect"
 	"testing"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -71,14 +72,14 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 
 	tests := []struct {
 		name                   string
-		m                      customWitnessGroupDiffModifier
+		m                      plan_modifier.CustomWitnessGroupDiffModifier
 		args                   args
 		expectedWarningsCount  int
 		expectedWarningSummary []string
 		expectedPlanElements   []attr.Value
 	}{
 		{
-			name: "Add wg success",
+			name: "Add wg expected success",
 			args: args{
 				req: planmodifier.SetRequest{
 					StateValue: defaultWgSet,
@@ -98,13 +99,26 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 			)),
 		},
 		{
-			name: "create new wg success",
+			name: "Create new wg expected success",
 			args: args{
 				req: planmodifier.SetRequest{
 					StateValue: basetypes.NewSetNull(defaultWgObject.Type(ctx)),
 				},
 				resp: &planmodifier.SetResponse{
 					PlanValue: basetypes.NewSetValueMust(defaultWgObject.Type(ctx), defaultWgObjects),
+				},
+			},
+			expectedPlanElements: defaultWgObjects,
+		},
+		{
+			name: "Use state for unknown expected success",
+			args: args{
+				req: planmodifier.SetRequest{
+					StateValue: basetypes.NewSetValueMust(defaultWgObject.Type(ctx), defaultWgObjects),
+					PlanValue:  basetypes.NewSetUnknown(defaultWgObject.Type(ctx)),
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: basetypes.NewSetUnknown(defaultWgObject.Type(ctx)),
 				},
 			},
 			expectedPlanElements: defaultWgObjects,

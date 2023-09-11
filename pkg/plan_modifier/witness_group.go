@@ -10,24 +10,24 @@ import (
 )
 
 func CustomWitnessGroupDiffConfig() planmodifier.Set {
-	return customWitnessGroupDiffModifier{}
+	return CustomWitnessGroupDiffModifier{}
 }
 
-// customWitnessGroupModifier implements the plan modifier.
-type customWitnessGroupDiffModifier struct{}
+// CustomWitnessGroupModifier implements the plan modifier.
+type CustomWitnessGroupDiffModifier struct{}
 
 // Description returns a human-readable description of the plan modifier.
-func (m customWitnessGroupDiffModifier) Description(_ context.Context) string {
+func (m CustomWitnessGroupDiffModifier) Description(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // MarkdownDescription returns a markdown description of the plan modifier.
-func (m customWitnessGroupDiffModifier) MarkdownDescription(_ context.Context) string {
+func (m CustomWitnessGroupDiffModifier) MarkdownDescription(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // PlanModifySet implements the plan modification logic.
-func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+func (m CustomWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	if req.StateValue.IsNull() {
 		return
 	}

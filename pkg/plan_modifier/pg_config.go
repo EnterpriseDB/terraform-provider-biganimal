@@ -11,40 +11,44 @@ import (
 )
 
 func CustomPGConfig() planmodifier.Set {
-	return customPGConfigModifier{}
+	return CustomPGConfigModifier{}
 }
 
-// customPGConfigModifier implements the plan modifier.
-type customPGConfigModifier struct{}
+// CustomPGConfigModifier implements the plan modifier.
+type CustomPGConfigModifier struct{}
 
 // Description returns a human-readable description of the plan modifier.
-func (m customPGConfigModifier) Description(_ context.Context) string {
+func (m CustomPGConfigModifier) Description(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // MarkdownDescription returns a markdown description of the plan modifier.
-func (m customPGConfigModifier) MarkdownDescription(_ context.Context) string {
+func (m CustomPGConfigModifier) MarkdownDescription(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifySet implements the plan modification logic.
-func (m customPGConfigModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
-	defaults := map[string]string{
-		"autovacuum_max_workers":       "5",
-		"autovacuum_vacuum_cost_limit": "3000",
-		"checkpoint_completion_target": "0.9",
-		"checkpoint_timeout":           "15min",
-		"cpu_tuple_cost":               "0.03",
-		"effective_cache_size":         "0.75 * ram",
-		"maintenance_work_mem":         "(0.15 * (ram - shared_buffers) / autovacuum_max_workers) > 1GB ? 1GB : (0.15 * (ram - shared_buffers) / autovacuum_max_workers)",
-		"random_page_cost":             "1.1",
-		"shared_buffers":               "((0.25 * ram) > 80GB) ? 80GB : (0.25 * ram)",
-		"tcp_keepalives_idle":          "120",
-		"tcp_keepalives_interval":      "30",
-		"wal_buffers":                  "64MB",
-		"wal_compression":              "on",
-	}
+var pgConfigDefaults map[string]string = map[string]string{
+	"autovacuum_max_workers":       "5",
+	"autovacuum_vacuum_cost_limit": "3000",
+	"checkpoint_completion_target": "0.9",
+	"checkpoint_timeout":           "15min",
+	"cpu_tuple_cost":               "0.03",
+	"effective_cache_size":         "0.75 * ram",
+	"maintenance_work_mem":         "(0.15 * (ram - shared_buffers) / autovacuum_max_workers) > 1GB ? 1GB : (0.15 * (ram - shared_buffers) / autovacuum_max_workers)",
+	"random_page_cost":             "1.1",
+	"shared_buffers":               "((0.25 * ram) > 80GB) ? 80GB : (0.25 * ram)",
+	"tcp_keepalives_idle":          "120",
+	"tcp_keepalives_interval":      "30",
+	"wal_buffers":                  "64MB",
+	"wal_compression":              "on",
+}
 
+func PgConfigDefaults() map[string]string {
+	return pgConfigDefaults
+}
+
+// PlanModifySet implements the plan modification logic.
+func (m CustomPGConfigModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	elementTypeAttrTypes := req.StateValue.ElementType(ctx).(basetypes.ObjectType).AttrTypes
 	setOfObjects := resp.PlanValue.Elements()
 
@@ -52,7 +56,7 @@ func (m customPGConfigModifier) PlanModifySet(ctx context.Context, req planmodif
 	// This is independent from what is in the terraform state.
 	// The only source of truth that matters is the plan.
 	// If the default values that are added to the plan already exists in the terraform state, terraform will not show any drift
-	for k, v := range defaults {
+	for k, v := range PgConfigDefaults() {
 		if !pgConfigNameExists(resp.PlanValue.Elements(), k) {
 			defaultAttrs := map[string]attr.Value{"name": basetypes.NewStringValue(k), "value": basetypes.NewStringValue(v)}
 			defaultObjectValue := basetypes.NewObjectValueMust(elementTypeAttrTypes, defaultAttrs)
