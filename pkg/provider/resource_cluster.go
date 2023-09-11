@@ -396,10 +396,18 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	clusterId, err := c.client.Create(ctx, config.ProjectId, c.makeClusterForCreate(ctx, config))
+	cluster, err := c.makeClusterForCreate(ctx, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
+		}
+		return
+	}
+
+	clusterId, err := c.client.Create(ctx, config.ProjectId, cluster)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
 		}
 		return
 	}
@@ -455,10 +463,18 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	_, err := c.client.Update(ctx, c.makeClusterFoUpdate(ctx, plan), plan.ProjectId, *plan.ClusterId)
+	cluster, err := c.makeClusterForUpdate(ctx, plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
+		}
+		return
+	}
+
+	_, err = c.client.Update(ctx, cluster, plan.ProjectId, *plan.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating cluster API request", err.Error())
 		}
 		return
 	}
@@ -622,23 +638,26 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 		})
 }
 
-func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) models.Cluster {
+func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) (*models.Cluster, error) {
 	cluster := generateGenericClusterModel(clusterResource)
 	// add BAH Code
 	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
-		return c.addBAHSpecificFields(ctx, cluster, clusterResource)
+		return c.addBAHFields(ctx, cluster, clusterResource)
 	} else {
-		return cluster
+		return &cluster, nil
 	}
 }
 
-func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) models.Cluster {
+func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) (*models.Cluster, error) {
 	clusterRscCSP := clusterResource.CloudProvider
 	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
 	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
 
 	// If there is an existing Principal Account Id for that Region, use that one.
-	pids, _ := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
+	pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
+	if err != nil {
+		return nil, err
+	}
 	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 
 	// If there is no existing value, user should provide one
@@ -672,7 +691,7 @@ func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster mode
 			cluster.ServiceAccountIds = utils.ToPointer(slist)
 		}
 	}
-	return cluster
+	return &cluster, nil
 }
 
 func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cluster {
@@ -733,14 +752,17 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 	return cluster
 }
 
-func (c *clusterResource) makeClusterFoUpdate(ctx context.Context, clusterResource ClusterResourceModel) *models.Cluster {
-	cluster := c.makeClusterForCreate(ctx, clusterResource)
+func (c *clusterResource) makeClusterForUpdate(ctx context.Context, clusterResource ClusterResourceModel) (*models.Cluster, error) {
+	cluster, err := c.makeClusterForCreate(ctx, clusterResource)
+	if err != nil {
+		return nil, err
+	}
 	cluster.ClusterId = nil
 	cluster.PgType = nil
 	cluster.PgVersion = nil
 	cluster.Provider = nil
 	cluster.Region = nil
-	return &cluster
+	return cluster, nil
 }
 
 func NewClusterResource() resource.Resource {
