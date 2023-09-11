@@ -642,7 +642,7 @@ func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster mode
 	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 
 	// If there is no existing value, user should provide one
-	if len(*cluster.PeAllowedPrincipalIds) == 0 {
+	if cluster.PeAllowedPrincipalIds != nil && len(*cluster.PeAllowedPrincipalIds) == 0 {
 		// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
 		// while encoding JSON objects
 		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
@@ -660,7 +660,7 @@ func (c *clusterResource) addBAHSpecificFields(ctx context.Context, cluster mode
 		cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
 
 		// If there is no existing value, user should provide one
-		if len(*cluster.ServiceAccountIds) == 0 {
+		if cluster.ServiceAccountIds != nil && len(*cluster.ServiceAccountIds) == 0 {
 			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
 			// while encoding JSON objects.
 			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
