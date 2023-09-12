@@ -638,17 +638,17 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 		})
 }
 
-func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) (*models.Cluster, error) {
+func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) (models.Cluster, error) {
 	cluster := generateGenericClusterModel(clusterResource)
 	// add BAH Code
 	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
 		return c.addBAHFields(ctx, cluster, clusterResource)
 	} else {
-		return &cluster, nil
+		return cluster, nil
 	}
 }
 
-func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) (*models.Cluster, error) {
+func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) (models.Cluster, error) {
 	clusterRscCSP := clusterResource.CloudProvider
 	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
 	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
@@ -656,7 +656,7 @@ func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Clust
 	// If there is an existing Principal Account Id for that Region, use that one.
 	pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
 	if err != nil {
-		return nil, err
+		return cluster, err
 	}
 	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 
@@ -691,7 +691,7 @@ func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Clust
 			cluster.ServiceAccountIds = utils.ToPointer(slist)
 		}
 	}
-	return &cluster, nil
+	return cluster, nil
 }
 
 func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cluster {
@@ -762,7 +762,7 @@ func (c *clusterResource) makeClusterForUpdate(ctx context.Context, clusterResou
 	cluster.PgVersion = nil
 	cluster.Provider = nil
 	cluster.Region = nil
-	return cluster, nil
+	return &cluster, nil
 }
 
 func NewClusterResource() resource.Resource {
