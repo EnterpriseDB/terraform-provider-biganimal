@@ -396,7 +396,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	cluster, err := c.makeClusterForCreate(ctx, config)
+	clusterModel, err := c.makeClusterForCreate(ctx, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
@@ -404,7 +404,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	clusterId, err := c.client.Create(ctx, config.ProjectId, cluster)
+	clusterId, err := c.client.Create(ctx, config.ProjectId, clusterModel)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
@@ -463,7 +463,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	cluster, err := c.makeClusterForUpdate(ctx, plan)
+	clusterModel, err := c.makeClusterForUpdate(ctx, plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
@@ -471,7 +471,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	_, err = c.client.Update(ctx, cluster, plan.ProjectId, *plan.ClusterId)
+	_, err = c.client.Update(ctx, clusterModel, plan.ProjectId, *plan.ClusterId)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster API request", err.Error())
