@@ -100,3 +100,11 @@ output "storage" {
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
+
+output "pe_allowed_principal_ids" {
+  value = data.biganimal_cluster.this.pe_allowed_principal_ids
+}
+
+output "service_account_ids" {
+  value = data.biganimal_cluster.this.service_account_ids
+}
