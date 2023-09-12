@@ -656,7 +656,7 @@ func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Clust
 	// If there is an existing Principal Account Id for that Region, use that one.
 	pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
 	if err != nil {
-		return cluster, err
+		return models.Cluster{}, err
 	}
 	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
 
