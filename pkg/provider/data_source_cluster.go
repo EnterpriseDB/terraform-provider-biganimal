@@ -9,6 +9,7 @@ import (
 	terraformCommon "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -72,6 +73,8 @@ type clusterDatasourceModel struct {
 	Region                     types.String                        `tfsdk:"region"`
 	FirstRecoverabilityPointAt types.String                        `tfsdk:"first_recoverability_point_at"`
 	MaintenanceWindow          *terraformCommon.MaintenanceWindow  `tfsdk:"maintenance_window"`
+	ServiceAccountIds          types.Set                           `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds      types.Set                           `tfsdk:"pe_allowed_principal_ids"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -318,6 +321,16 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					},
 				},
 			},
+			"service_account_ids": schema.SetAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+			},
+			"pe_allowed_principal_ids": schema.SetAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+			},
 		},
 	}
 }
@@ -421,6 +434,25 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.DeletedAt = types.StringNull()
 	if pt := cluster.DeletedAt; pt != nil {
 		data.DeletedAt = types.StringValue(pt.String())
+	}
+
+	if cluster.ServiceAccountIds != nil {
+		serviceAccountIds := []attr.Value{}
+
+		for _, v := range *cluster.ServiceAccountIds {
+			serviceAccountIds = append(serviceAccountIds, types.StringValue(v))
+		}
+
+		data.ServiceAccountIds = types.SetValueMust(types.StringType, serviceAccountIds)
+	}
+
+	if cluster.PeAllowedPrincipalIds != nil {
+		peAllowedPrincipalIds := []attr.Value{}
+		for _, v := range *cluster.PeAllowedPrincipalIds {
+			peAllowedPrincipalIds = append(peAllowedPrincipalIds, types.StringValue(v))
+		}
+
+		data.PeAllowedPrincipalIds = types.SetValueMust(types.StringType, peAllowedPrincipalIds)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
