@@ -237,7 +237,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 								"witness_nodes": schema.Float64Attribute{
 									Description: "Witness nodes count.",
-									Optional:    true,
+									Computed:    true,
 								},
 							},
 						},
@@ -399,7 +399,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
-							Optional:    true,
+							Computed:    true,
 							PlanModifiers: []planmodifier.Object{
 								objectplanmodifier.UseStateForUnknown(),
 							},
