@@ -57,6 +57,14 @@ resource "biganimal_cluster" "single_node_cluster" {
     start_time = "00:00"
   }
 
+  # pe_allowed_principal_ids = [
+  #   <example_value>
+  # ]
+
+  # service_account_ids = [
+  #   <only_needed_for_bah:gcp_clusters>
+  # ]
+
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = true
