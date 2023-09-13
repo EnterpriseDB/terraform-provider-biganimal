@@ -207,7 +207,7 @@ output "faraway_replica_ids" {
 
 ### Required
 
-- `cloud_provider` (String) Cloud provider. For example, "aws", "azure" or "gcp".
+- `cloud_provider` (String) Cloud provider. For example, "aws", "azure", "gcp" or "bah:aws", "bah:gcp".
 - `cluster_name` (String) Name of the cluster.
 - `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
 - `password` (String) Password for the user edb_admin. It must be 12 characters or more.
@@ -305,7 +305,7 @@ Required:
 Optional:
 
 - `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
-- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.
 
 
 <a id="nestedblock--timeouts"></a>
