@@ -86,6 +86,8 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"start_time": basetypes.NewStringValue("03:00"),
 	}
 
+	defaultBackupRetentionPeriod := "3d"
+
 	defaultDgAttr := map[string]attr.Value{
 		"region":                  basetypes.NewObjectValueMust(regionType, defaultRegion),
 		"cloud_provider":          basetypes.NewObjectValueMust(cloudProviderType, defaultCloudProvider),
@@ -101,7 +103,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"phase":                   basetypes.NewStringUnknown(),
 		"resizing_pvc":            basetypes.NewSetUnknown(resizingPvcElemType),
 		"allowed_ip_ranges":       basetypes.NewSetValueMust(allowedIpRangesElemType, defaultAllowedIpRange),
-		"backup_retention_period": basetypes.NewStringValue("3d"),
+		"backup_retention_period": basetypes.NewStringValue(defaultBackupRetentionPeriod),
 		"cluster_architecture":    basetypes.NewObjectValueMust(clusterArchAttrType, defaultClusterArch),
 		"csp_auth":                basetypes.NewBoolValue(false),
 		"instance_type":           basetypes.NewObjectValueMust(instanceTypeType, defaultInstanceType),
@@ -160,7 +162,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"phase":                   basetypes.NewStringUnknown(),
 		"resizing_pvc":            basetypes.NewSetUnknown(resizingPvcElemType),
 		"allowed_ip_ranges":       basetypes.NewSetValueMust(allowedIpRangesElemType, defaultAllowedIpRange),
-		"backup_retention_period": basetypes.NewStringValue("3d"),
+		"backup_retention_period": basetypes.NewStringValue(defaultBackupRetentionPeriod),
 		"cluster_architecture":    basetypes.NewObjectValueMust(clusterArchAttrType, defaultClusterArch),
 		"csp_auth":                basetypes.NewBoolValue(false),
 		"instance_type":           basetypes.NewObjectValueMust(instanceTypeType, defaultInstanceType),
@@ -175,6 +177,31 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			},
 		),
 	}
+
+	updateObjectAttr := map[string]attr.Value{}
+
+	for k, v := range defaultDgAttr {
+		updateObjectAttr[k] = v
+	}
+
+	updateObjectAttr["allowed_ip_ranges"] = basetypes.NewSetValueMust(allowedIpRangesElemType, []attr.Value{
+		basetypes.NewObjectValueMust(allowedIpRangesElemObjectType, map[string]attr.Value{
+			"cidr_block":  basetypes.NewStringValue("168.0.0.1/32"),
+			"description": basetypes.NewStringValue("updated"),
+		}),
+	})
+	updateObjectAttr["backup_retention_period"] = basetypes.NewStringValue("5d")
+	updateObjectAttr["cluster_architecture"] = basetypes.NewObjectValueMust(clusterArchAttrType, map[string]attr.Value{
+		"cluster_architecture_id":   basetypes.NewStringValue("pgd"),
+		"cluster_architecture_name": basetypes.NewStringUnknown(),
+		"nodes":                     basetypes.NewFloat64Value(1),
+		"witness_nodes":             basetypes.NewFloat64Unknown(),
+	})
+
+	updateObject := basetypes.NewObjectValueMust(defaultDgAttrTypes, updateObjectAttr)
+	updateObjects := []attr.Value{}
+	updateObjects = append(updateObjects, updateObject)
+	updateSet := basetypes.NewSetValueMust(defaultDgObject.Type(ctx), updateObjects)
 
 	type args struct {
 		ctx  context.Context
@@ -222,6 +249,24 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			expectedWarningsCount:  1,
 			expectedWarningSummary: []string{"Removing data group"},
 			expectedPlanElements:   defaultDgObjects,
+		},
+		{
+			name: "Update object expected success",
+			args: args{
+				req: planmodifier.SetRequest{
+					StateValue: defaultDgSet,
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: updateSet,
+				},
+			},
+			expectedWarningsCount: 3,
+			expectedWarningSummary: []string{
+				"Allowed IP ranges changed",
+				"Backup retention changed",
+				"Cluster architecture changed",
+			},
+			expectedPlanElements: updateObjects,
 		},
 	}
 	for _, tt := range tests {

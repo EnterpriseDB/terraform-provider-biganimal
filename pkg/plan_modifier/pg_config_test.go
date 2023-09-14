@@ -33,6 +33,13 @@ func Test_customPGConfigModifier_PlanModifySet(t *testing.T) {
 		)
 	}
 
+	userCustomPgConfigValues := []attr.Value([]attr.Value(append(defaultPgConfigDefaultsObjects,
+		basetypes.NewObjectValueMust(pgConfigObjectType, map[string]attr.Value{
+			"name":  basetypes.NewStringValue("test name"),
+			"value": basetypes.NewStringValue("test value"),
+		}),
+	)))
+
 	// defaultPgConfigSet := basetypes.NewSetValueMust(pgConfigElemType, defaultPgConfigDefaultsObjects)
 
 	type args struct {
@@ -61,6 +68,34 @@ func Test_customPGConfigModifier_PlanModifySet(t *testing.T) {
 			expectedWarningsCount:  1,
 			expectedWarningSummary: []string{"PG config changed"},
 			expectedPlanElements:   defaultPgConfigDefaultsObjects,
+		},
+		{
+			name: "Add user custom pg confg value on create expected success",
+			args: args{
+				req: planmodifier.SetRequest{
+					StateValue: basetypes.NewSetNull(pgConfigElemType),
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: basetypes.NewSetValueMust(pgConfigElemType, userCustomPgConfigValues),
+				},
+			},
+			expectedWarningsCount:  1,
+			expectedWarningSummary: []string{"PG config changed"},
+			expectedPlanElements:   userCustomPgConfigValues,
+		},
+		{
+			name: "Add user custom pg confg value on update expected success",
+			args: args{
+				req: planmodifier.SetRequest{
+					StateValue: basetypes.NewSetValueMust(pgConfigElemType, defaultPgConfigDefaultsObjects),
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: basetypes.NewSetValueMust(pgConfigElemType, userCustomPgConfigValues),
+				},
+			},
+			expectedWarningsCount:  1,
+			expectedWarningSummary: []string{"PG config changed"},
+			expectedPlanElements:   userCustomPgConfigValues,
 		},
 	}
 	for _, tt := range tests {
