@@ -238,6 +238,9 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								"witness_nodes": schema.Float64Attribute{
 									Description: "Witness nodes count.",
 									Computed:    true,
+									PlanModifiers: []planmodifier.Float64{
+										float64planmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
