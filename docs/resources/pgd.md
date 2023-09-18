@@ -251,6 +251,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       cloud_provider = {
         cloud_provider_id = "azure"
       }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
+      }
     }
   ]
 }
@@ -502,6 +507,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       cloud_provider = {
         cloud_provider_id = "aws"
+      }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
       }
     }
   ]
@@ -755,6 +765,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       cloud_provider = {
         cloud_provider_id = "gcp"
       }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
+      }
     }
   ]
 }
@@ -947,6 +962,7 @@ Optional:
 
 - `cloud_provider` (Attributes) Witness Group cloud provider id. It can be set during creation only and can be different than the cloud provider of the data groups. Once set, cannot be changed. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
+- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--witness_groups--maintenance_window))
 
 Read-Only:
 
@@ -981,6 +997,19 @@ Read-Only:
 - `cluster_architecture_name` (String) Name.
 - `nodes` (Number) Nodes.
 - `witness_nodes` (Number) Witness nodes count.
+
+
+<a id="nestedatt--witness_groups--maintenance_window"></a>
+### Nested Schema for `witness_groups.maintenance_window`
+
+Required:
+
+- `is_enabled` (Boolean) Is maintenance window enabled.
+
+Optional:
+
+- `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
+- `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
 <a id="nestedatt--witness_groups--instance_type"></a>
