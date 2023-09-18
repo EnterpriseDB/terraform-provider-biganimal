@@ -54,7 +54,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -148,7 +148,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -202,7 +202,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -306,7 +306,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -400,7 +400,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -454,7 +454,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -558,7 +558,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -652,7 +652,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -706,7 +706,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -841,13 +841,10 @@ Required:
 - `cluster_architecture_id` (String) Cluster architecture ID.
 - `nodes` (Number) Node count.
 
-Optional:
-
-- `witness_nodes` (Number) Witness nodes count.
-
 Read-Only:
 
 - `cluster_architecture_name` (String) Cluster architecture name.
+- `witness_nodes` (Number) Witness nodes count.
 
 
 <a id="nestedatt--data_groups--instance_type"></a>
@@ -946,10 +943,10 @@ Required:
 Optional:
 
 - `cloud_provider` (Attributes) Witness Group cloud provider id. It can be set during creation only and can be different than the cloud provider of the data groups. Once set, cannot be changed. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
-- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 
 Read-Only:
 
+- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 - `cluster_type` (String) Type of the Specified Cluster
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
