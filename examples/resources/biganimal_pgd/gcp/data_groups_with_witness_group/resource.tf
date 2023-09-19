@@ -149,6 +149,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       cloud_provider = {
         cloud_provider_id = "gcp"
       }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
+      }
     }
   ]
 }
