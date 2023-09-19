@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.0"
+      version = "0.6.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -104,7 +104,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.0"
+      version = "0.6.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -267,7 +267,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.0"
+      version = "0.6.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -361,7 +361,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.0"
+      version = "0.6.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -524,7 +524,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.0"
+      version = "0.6.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -618,7 +618,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.0"
+      version = "0.6.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -958,7 +958,6 @@ Required:
 Optional:
 
 - `cloud_provider` (Attributes) Witness Group cloud provider id. It can be set during creation only and can be different than the cloud provider of the data groups. Once set, cannot be changed. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
-- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--witness_groups--maintenance_window))
 
 Read-Only:
@@ -986,17 +985,6 @@ Optional:
 - `cloud_provider_id` (String) Cloud provider id.
 
 
-<a id="nestedatt--witness_groups--cluster_architecture"></a>
-### Nested Schema for `witness_groups.cluster_architecture`
-
-Read-Only:
-
-- `cluster_architecture_id` (String) Cluster architecture ID.
-- `cluster_architecture_name` (String) Name.
-- `nodes` (Number) Nodes.
-- `witness_nodes` (Number) Witness nodes count.
-
-
 <a id="nestedatt--witness_groups--maintenance_window"></a>
 ### Nested Schema for `witness_groups.maintenance_window`
 
@@ -1008,6 +996,17 @@ Optional:
 
 - `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
 - `start_time` (String) Start time. "hh:mm", for example: "23:59".
+
+
+<a id="nestedatt--witness_groups--cluster_architecture"></a>
+### Nested Schema for `witness_groups.cluster_architecture`
+
+Read-Only:
+
+- `cluster_architecture_id` (String) Cluster architecture ID.
+- `cluster_architecture_name` (String) Name.
+- `nodes` (Number) Nodes.
+- `witness_nodes` (Number) Witness nodes count.
 
 
 <a id="nestedatt--witness_groups--instance_type"></a>
