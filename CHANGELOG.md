@@ -1,5 +1,6 @@
 ## v0.6.1 (September 19. 2023)
 Features:
+* BigAnimal Terraform Provider now supports BigAnimal Hosted(BAH) AWS and Google Cloud provider for `biganimal_cluster` resources
 * Custom maintenance window support for `biganimal_cluster` resources
 * Custom maintenance window support for the Witness groups in the `biganimal_pgd` resources
 
