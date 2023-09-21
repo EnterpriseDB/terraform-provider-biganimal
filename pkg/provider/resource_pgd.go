@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
@@ -238,11 +239,11 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									Description: "Node count.",
 									Required:    true,
 								},
-								"witness_nodes": schema.Float64Attribute{
+								"witness_nodes": schema.Int64Attribute{
 									Description: "Witness nodes count.",
 									Computed:    true,
-									PlanModifiers: []planmodifier.Float64{
-										float64planmodifier.UseStateForUnknown(),
+									PlanModifiers: []planmodifier.Int64{
+										int64planmodifier.UseStateForUnknown(),
 									},
 								},
 							},
@@ -631,7 +632,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ClusterArchitectureId:   v.ClusterArchitecture.ClusterArchitectureId,
 			ClusterArchitectureName: clusterArchName,
 			Nodes:                   v.ClusterArchitecture.Nodes,
-			WitnessNodes:            v.ClusterArchitecture.WitnessNodes,
+			WitnessNodes:            utils.ToPointer(float64(v.ClusterArchitecture.WitnessNodes.ValueInt64())),
 		}
 
 		apiDGModel := pgdApi.DataGroup{
@@ -1041,7 +1042,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ClusterArchitectureId:   apiDGModel.ClusterArchitecture.ClusterArchitectureId,
 					ClusterArchitectureName: types.StringPointerValue(apiDGModel.ClusterArchitecture.ClusterArchitectureName),
 					Nodes:                   apiDGModel.ClusterArchitecture.Nodes,
-					WitnessNodes:            apiDGModel.ClusterArchitecture.WitnessNodes,
+					WitnessNodes:            types.Int64Value(int64(*apiDGModel.ClusterArchitecture.WitnessNodes)),
 				}
 
 				// conditions
