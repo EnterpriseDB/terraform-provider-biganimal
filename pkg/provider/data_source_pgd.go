@@ -164,7 +164,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 									Description: "Node count.",
 									Computed:    true,
 								},
-								"witness_nodes": schema.Float64Attribute{
+								"witness_nodes": schema.Int64Attribute{
 									Description: "Witness nodes count.",
 									Computed:    true,
 								},
