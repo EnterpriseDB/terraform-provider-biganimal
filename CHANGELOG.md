@@ -11,6 +11,7 @@ Enhancements:
 * Dependency updates
 * PG Config values warnings support for `biganimal_pgd` and `biganimal_cluster` resources
 * Changed default data nodes from 2 to 3 for `biganimal_pgd` resource
+* Add and change validations for `biganimal_cluster` resources
 
 ## v0.6.0 (August 28. 2023)
 Features:
