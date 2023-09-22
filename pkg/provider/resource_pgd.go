@@ -650,28 +650,32 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		}
 
 		svAccIds := &[]string{}
+
 		svAccIdsTf, err := v.ServiceAccountIds.ToTerraformValue(ctx)
 		if err != nil {
 			diags.AddError("service account ids to terraform value error", err.Error())
-		}
-
-		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		svAccIdsTf.As(&svAccIds)
+		err = svAccIdsTf.As(&svAccIds)
+		if err != nil {
+			diags.AddError("service account ids terraform type As error", err.Error())
+			return
+		}
 
 		principalIds := &[]string{}
+
 		principalIdsTf, err := v.PeAllowedPrincipalIds.ToTerraformValue(ctx)
 		if err != nil {
 			diags.AddError("pe allowed principal ids to terraform value error", err.Error())
-		}
-
-		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		principalIdsTf.As(&principalIds)
+		err = principalIdsTf.As(&principalIds)
+		if err != nil {
+			diags.AddError("pe allowed principal ids terraform type As error", err.Error())
+			return
+		}
 
 		apiDGModel := pgdApi.DataGroup{
 			AllowedIpRanges:       v.AllowedIpRanges,
@@ -859,28 +863,32 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 
 		svAccIds := &[]string{}
+
 		svAccIdsTf, err := v.ServiceAccountIds.ToTerraformValue(ctx)
 		if err != nil {
 			diags.AddError("service account ids to terraform value error", err.Error())
-		}
-
-		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		svAccIdsTf.As(&svAccIds)
+		err = svAccIdsTf.As(&svAccIds)
+		if err != nil {
+			diags.AddError("service account ids terraform type As error", err.Error())
+			return
+		}
 
 		principalIds := &[]string{}
+
 		principalIdsTf, err := v.PeAllowedPrincipalIds.ToTerraformValue(ctx)
 		if err != nil {
 			diags.AddError("pe allowed principal ids to terraform value error", err.Error())
-		}
-
-		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		principalIdsTf.As(&principalIds)
+		err = principalIdsTf.As(&principalIds)
+		if err != nil {
+			diags.AddError("pe allowed principal ids terraform type As error", err.Error())
+			return
+		}
 
 		// only allow fields which are able to be modified in the request for updating
 		reqDg := pgdApi.DataGroup{
