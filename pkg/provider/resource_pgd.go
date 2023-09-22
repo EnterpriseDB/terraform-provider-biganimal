@@ -649,32 +649,26 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			WitnessNodes:            utils.ToPointer(float64(v.ClusterArchitecture.WitnessNodes.ValueInt64())),
 		}
 
-		svAccIds := &[]string{}
+		svAccIds := []string{}
 
-		svAccIdsTf, err := v.ServiceAccountIds.ToTerraformValue(ctx)
-		if err != nil {
-			diags.AddError("service account ids to terraform value error", err.Error())
-			return
+		if !v.ServiceAccountIds.IsNull() {
+			diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 		}
 
-		err = svAccIdsTf.As(&svAccIds)
-		if err != nil {
-			diags.AddError("service account ids terraform type As error", err.Error())
-			return
-		}
+		principalIds := []string{}
 
-		principalIds := &[]string{}
+		if !v.PeAllowedPrincipalIds.IsNull() {
+			diags = v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 
-		principalIdsTf, err := v.PeAllowedPrincipalIds.ToTerraformValue(ctx)
-		if err != nil {
-			diags.AddError("pe allowed principal ids to terraform value error", err.Error())
-			return
-		}
-
-		err = principalIdsTf.As(&principalIds)
-		if err != nil {
-			diags.AddError("pe allowed principal ids terraform type As error", err.Error())
-			return
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 		}
 
 		apiDGModel := pgdApi.DataGroup{
@@ -692,8 +686,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Region:                v.Region,
 			Storage:               storage,
-			ServiceAccountIds:     svAccIds,
-			PeAllowedPrincipalIds: principalIds,
+			ServiceAccountIds:     &svAccIds,
+			PeAllowedPrincipalIds: &principalIds,
 		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
@@ -862,32 +856,26 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			groupId = nil
 		}
 
-		svAccIds := &[]string{}
+		svAccIds := []string{}
 
-		svAccIdsTf, err := v.ServiceAccountIds.ToTerraformValue(ctx)
-		if err != nil {
-			diags.AddError("service account ids to terraform value error", err.Error())
-			return
+		if !v.ServiceAccountIds.IsNull() {
+			diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 		}
 
-		err = svAccIdsTf.As(&svAccIds)
-		if err != nil {
-			diags.AddError("service account ids terraform type As error", err.Error())
-			return
-		}
+		principalIds := []string{}
 
-		principalIds := &[]string{}
+		if !v.PeAllowedPrincipalIds.IsNull() {
+			diags = v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 
-		principalIdsTf, err := v.PeAllowedPrincipalIds.ToTerraformValue(ctx)
-		if err != nil {
-			diags.AddError("pe allowed principal ids to terraform value error", err.Error())
-			return
-		}
-
-		err = principalIdsTf.As(&principalIds)
-		if err != nil {
-			diags.AddError("pe allowed principal ids terraform type As error", err.Error())
-			return
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 		}
 
 		// only allow fields which are able to be modified in the request for updating
@@ -902,8 +890,8 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
-			ServiceAccountIds:     svAccIds,
-			PeAllowedPrincipalIds: principalIds,
+			ServiceAccountIds:     &svAccIds,
+			PeAllowedPrincipalIds: &principalIds,
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
