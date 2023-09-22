@@ -131,6 +131,40 @@ func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId st
 	return &response.Data, err
 }
 
+func (c PGDClient) GetServiceAccountIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.ServiceAccountIds, error) {
+	response := struct {
+		Data models.ServiceAccountIds `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/service-account-ids", projectID, cspID, regionID)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return &models.ServiceAccountIds{}, err
+	}
+
+	if json.Unmarshal(body, &response.Data) != nil {
+		return &models.ServiceAccountIds{}, err
+	}
+	return &response.Data, nil
+}
+
+func (c PGDClient) GetPeAllowedPrincipalIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.PeAllowedPrincipalIds, error) {
+	response := struct {
+		Data models.PeAllowedPrincipalIds `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/pe-allowed-principal-ids", projectID, cspID, regionID)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return &models.PeAllowedPrincipalIds{}, err
+	}
+
+	if json.Unmarshal(body, &response.Data) != nil {
+		return &models.PeAllowedPrincipalIds{}, err
+	}
+	return &response.Data, nil
+}
+
 func (c PGDClient) Delete(ctx context.Context, projectId, id string) error {
 	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, id)
 	_, err := c.doRequest(ctx, http.MethodDelete, url, nil)
