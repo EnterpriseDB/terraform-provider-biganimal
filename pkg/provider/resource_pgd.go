@@ -646,7 +646,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ClusterArchitectureId:   v.ClusterArchitecture.ClusterArchitectureId,
 			ClusterArchitectureName: clusterArchName,
 			Nodes:                   v.ClusterArchitecture.Nodes,
-			WitnessNodes:            utils.ToPointer(float64(v.ClusterArchitecture.WitnessNodes.ValueInt64())),
 		}
 
 		svAccIds := []string{}
