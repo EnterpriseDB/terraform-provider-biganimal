@@ -649,57 +649,59 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		}
 
 		svAccIds := &[]string{}
-		if !v.ServiceAccountIds.IsNull() {
-			diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-		} else {
-			sids, err := p.client.GetServiceAccountIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-			if err != nil {
-				diags.AddError("pgd get service account ids error", err.Error())
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				return
-			}
-			svAccIds = utils.ToPointer(sids.Data)
-
-			// if it doesn't have any existing service account ids then use config
-			if svAccIds != nil && len(*svAccIds) == 0 {
+		principalIds := &[]string{}
+		if strings.Contains(*v.Provider.CloudProviderId, "bah") {
+			if !v.ServiceAccountIds.IsNull() {
 				diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 				resp.Diagnostics.Append(diags...)
 				if resp.Diagnostics.HasError() {
 					return
 				}
-			}
-		}
-
-		principalIds := &[]string{}
-		if !v.PeAllowedPrincipalIds.IsNull() {
-			diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-		} else {
-			pids, err := p.client.GetPeAllowedPrincipalIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-			if err != nil {
-				diags.AddError("pgd get pe allowed principal ids error", err.Error())
-				if resp.Diagnostics.HasError() {
+			} else {
+				sids, err := p.client.GetServiceAccountIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+				if err != nil {
+					diags.AddError("pgd get service account ids error", err.Error())
+					if resp.Diagnostics.HasError() {
+						return
+					}
 					return
 				}
-				return
-			}
-			principalIds = utils.ToPointer(pids.Data)
+				svAccIds = utils.ToPointer(sids.Data)
 
-			// if it doesn't have any existing service account ids then use config
-			if principalIds != nil && len(*principalIds) == 0 {
+				// if it doesn't have any existing service account ids then use config
+				if svAccIds != nil && len(*svAccIds) == 0 {
+					diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+					resp.Diagnostics.Append(diags...)
+					if resp.Diagnostics.HasError() {
+						return
+					}
+				}
+			}
+
+			if !v.PeAllowedPrincipalIds.IsNull() {
 				diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 				resp.Diagnostics.Append(diags...)
 				if resp.Diagnostics.HasError() {
 					return
+				}
+			} else {
+				pids, err := p.client.GetPeAllowedPrincipalIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+				if err != nil {
+					diags.AddError("pgd get pe allowed principal ids error", err.Error())
+					if resp.Diagnostics.HasError() {
+						return
+					}
+					return
+				}
+				principalIds = utils.ToPointer(pids.Data)
+
+				// if it doesn't have any existing service account ids then use config
+				if principalIds != nil && len(*principalIds) == 0 {
+					diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+					resp.Diagnostics.Append(diags...)
+					if resp.Diagnostics.HasError() {
+						return
+					}
 				}
 			}
 		}
@@ -890,57 +892,59 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 
 		svAccIds := &[]string{}
-		if !v.ServiceAccountIds.IsNull() {
-			diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-		} else {
-			sids, err := p.client.GetServiceAccountIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-			if err != nil {
-				diags.AddError("pgd get service account ids error", err.Error())
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				return
-			}
-			svAccIds = utils.ToPointer(sids.Data)
-
-			// if it doesn't have any existing service account ids then use config
-			if svAccIds != nil && len(*svAccIds) == 0 {
+		principalIds := &[]string{}
+		if strings.Contains(*v.Provider.CloudProviderId, "bah") {
+			if !v.ServiceAccountIds.IsNull() {
 				diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 				resp.Diagnostics.Append(diags...)
 				if resp.Diagnostics.HasError() {
 					return
 				}
-			}
-		}
-
-		principalIds := &[]string{}
-		if !v.PeAllowedPrincipalIds.IsNull() {
-			diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-		} else {
-			pids, err := p.client.GetPeAllowedPrincipalIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-			if err != nil {
-				diags.AddError("pgd get pe allowed principal ids error", err.Error())
-				if resp.Diagnostics.HasError() {
+			} else {
+				sids, err := p.client.GetServiceAccountIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+				if err != nil {
+					diags.AddError("pgd get service account ids error", err.Error())
+					if resp.Diagnostics.HasError() {
+						return
+					}
 					return
 				}
-				return
-			}
-			principalIds = utils.ToPointer(pids.Data)
+				svAccIds = utils.ToPointer(sids.Data)
 
-			// if it doesn't have any existing service account ids then use config
-			if principalIds != nil && len(*principalIds) == 0 {
+				// if it doesn't have any existing service account ids then use config
+				if svAccIds != nil && len(*svAccIds) == 0 {
+					diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+					resp.Diagnostics.Append(diags...)
+					if resp.Diagnostics.HasError() {
+						return
+					}
+				}
+			}
+
+			if !v.PeAllowedPrincipalIds.IsNull() {
 				diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 				resp.Diagnostics.Append(diags...)
 				if resp.Diagnostics.HasError() {
 					return
+				}
+			} else {
+				pids, err := p.client.GetPeAllowedPrincipalIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+				if err != nil {
+					diags.AddError("pgd get pe allowed principal ids error", err.Error())
+					if resp.Diagnostics.HasError() {
+						return
+					}
+					return
+				}
+				principalIds = utils.ToPointer(pids.Data)
+
+				// if it doesn't have any existing service account ids then use config
+				if principalIds != nil && len(*principalIds) == 0 {
+					diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+					resp.Diagnostics.Append(diags...)
+					if resp.Diagnostics.HasError() {
+						return
+					}
 				}
 			}
 		}
