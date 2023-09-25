@@ -48,6 +48,10 @@ func (c PGDClient) ReadByName(ctx context.Context, projectId, name string, most_
 		}
 	}
 
+	if len(clusters.Data) == 0 {
+		return nil, fmt.Errorf("cluster with name: %v not found", name)
+	}
+
 	return &clusters.Data[0], err
 }
 
