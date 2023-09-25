@@ -68,6 +68,7 @@ type ClusterResourceModel struct {
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
+	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -383,6 +384,11 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				ElementType:         types.StringType,
 				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
+
+			"superuser_access": schema.BoolAttribute{
+				MarkdownDescription: "Is superuser access enabled.",
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -572,6 +578,7 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	clusterResource.PgType = types.StringValue(cluster.PgType.PgTypeId)
 	clusterResource.FarawayReplicaIds = StringSliceToSet(cluster.FarawayReplicaIds)
 	clusterResource.PrivateNetworking = types.BoolPointerValue(cluster.PrivateNetworking)
+	clusterResource.SuperuserAccess = types.BoolPointerValue(cluster.SuperuserAccess)
 
 	if cluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := cluster.FirstRecoverabilityPointAt.String()
@@ -718,6 +725,7 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
+		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}
