@@ -9,11 +9,14 @@ import (
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	pgdApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -21,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
@@ -235,9 +239,12 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 									Description: "Node count.",
 									Required:    true,
 								},
-								"witness_nodes": schema.Float64Attribute{
+								"witness_nodes": schema.Int64Attribute{
 									Description: "Witness nodes count.",
-									Optional:    true,
+									Computed:    true,
+									PlanModifiers: []planmodifier.Int64{
+										int64planmodifier.UseStateForUnknown(),
+									},
 								},
 							},
 						},
@@ -399,7 +406,7 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{
 							Description: "Cluster architecture.",
-							Optional:    true,
+							Computed:    true,
 							PlanModifiers: []planmodifier.Object{
 								objectplanmodifier.UseStateForUnknown(),
 							},
@@ -529,6 +536,36 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
+						"maintenance_window": schema.SingleNestedAttribute{
+							MarkdownDescription: "Custom maintenance window.",
+							Optional:            true,
+							Computed:            true,
+							PlanModifiers: []planmodifier.Object{
+								plan_modifier.MaintenanceWindowForUnknown(),
+							},
+							Attributes: map[string]schema.Attribute{
+								"is_enabled": schema.BoolAttribute{
+									MarkdownDescription: "Is maintenance window enabled.",
+									Required:            true,
+								},
+								"start_day": schema.Int64Attribute{
+									MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
+									Optional:            true,
+									Computed:            true,
+									Validators: []validator.Int64{
+										int64validator.Between(0, 6),
+									},
+								},
+								"start_time": schema.StringAttribute{
+									MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
+									Optional:            true,
+									Computed:            true,
+									Validators: []validator.String{
+										startTimeValidator(),
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -595,7 +632,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ClusterArchitectureId:   v.ClusterArchitecture.ClusterArchitectureId,
 			ClusterArchitectureName: clusterArchName,
 			Nodes:                   v.ClusterArchitecture.Nodes,
-			WitnessNodes:            v.ClusterArchitecture.WitnessNodes,
+			WitnessNodes:            utils.ToPointer(float64(v.ClusterArchitecture.WitnessNodes.ValueInt64())),
 		}
 
 		apiDGModel := pgdApi.DataGroup{
@@ -655,6 +692,17 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 				Region: &pgdApi.Region{
 					RegionId: wg.Region.RegionId.ValueString(),
 				},
+			}
+
+			if wg.MaintenanceWindow != nil {
+				wgReq.MaintenanceWindow = &commonApi.MaintenanceWindow{
+					IsEnabled: wg.MaintenanceWindow.IsEnabled,
+					StartTime: wg.MaintenanceWindow.StartTime.ValueStringPointer(),
+				}
+
+				if !wg.MaintenanceWindow.StartDay.IsUnknown() && !wg.MaintenanceWindow.StartDay.IsNull() {
+					wgReq.MaintenanceWindow.StartDay = utils.ToPointer(float64(wg.MaintenanceWindow.StartDay.ValueInt64()))
+				}
 			}
 
 			*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
@@ -841,6 +889,17 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 					},
 				}
 
+				if wg.MaintenanceWindow != nil {
+					wgReq.MaintenanceWindow = &commonApi.MaintenanceWindow{
+						IsEnabled: wg.MaintenanceWindow.IsEnabled,
+						StartTime: wg.MaintenanceWindow.StartTime.ValueStringPointer(),
+					}
+
+					if !wg.MaintenanceWindow.StartDay.IsUnknown() && !wg.MaintenanceWindow.StartDay.IsNull() {
+						wgReq.MaintenanceWindow.StartDay = utils.ToPointer(float64(wg.MaintenanceWindow.StartDay.ValueInt64()))
+					}
+				}
+
 				*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 			} else {
 				// keep existing witness group when updating a data group
@@ -983,7 +1042,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ClusterArchitectureId:   apiDGModel.ClusterArchitecture.ClusterArchitectureId,
 					ClusterArchitectureName: types.StringPointerValue(apiDGModel.ClusterArchitecture.ClusterArchitectureName),
 					Nodes:                   apiDGModel.ClusterArchitecture.Nodes,
-					WitnessNodes:            apiDGModel.ClusterArchitecture.WitnessNodes,
+					WitnessNodes:            types.Int64Value(int64(*apiDGModel.ClusterArchitecture.WitnessNodes)),
 				}
 
 				// conditions
@@ -1099,12 +1158,11 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				clusterArch := types.ObjectNull(clusterArchTFType.AttrTypes)
 				if apiWGModel.ClusterArchitecture != nil {
-
 					ob, diag := types.ObjectValue(clusterArchTFType.AttrTypes, map[string]attr.Value{
 						"cluster_architecture_id":   types.StringValue(apiWGModel.ClusterArchitecture.ClusterArchitectureId),
 						"cluster_architecture_name": types.StringValue(*apiWGModel.ClusterArchitecture.ClusterArchitectureName),
 						"nodes":                     types.Float64Value(apiWGModel.ClusterArchitecture.Nodes),
-						"witness_nodes":             types.Float64Value(*apiWGModel.ClusterArchitecture.WitnessNodes),
+						"witness_nodes":             types.Float64PointerValue(apiWGModel.ClusterArchitecture.WitnessNodes),
 					})
 					if diag.HasError() {
 						diags.Append(diag...)
@@ -1198,6 +1256,16 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					storage = ob
 				}
 
+				// maintenance window
+				var mw *commonTerraform.MaintenanceWindow
+				if apiWGModel.MaintenanceWindow != nil {
+					mw = &commonTerraform.MaintenanceWindow{
+						IsEnabled: apiWGModel.MaintenanceWindow.IsEnabled,
+						StartTime: types.StringPointerValue(apiWGModel.MaintenanceWindow.StartTime),
+						StartDay:  types.Int64Value(int64(*apiWGModel.MaintenanceWindow.StartDay)),
+					}
+				}
+
 				tfWGModel := terraform.WitnessGroup{
 					GroupId:             types.StringPointerValue(apiWGModel.GroupId),
 					ClusterArchitecture: clusterArch,
@@ -1207,6 +1275,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					Region:              region,
 					Storage:             storage,
 					Phase:               types.StringPointerValue(apiWGModel.Phase),
+					MaintenanceWindow:   mw,
 				}
 
 				*wgs = append(*wgs, tfWGModel)

@@ -46,7 +46,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -100,7 +100,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -148,6 +148,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       cloud_provider = {
         cloud_provider_id = "gcp"
+      }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
       }
     }
   ]

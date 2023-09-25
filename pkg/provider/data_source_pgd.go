@@ -164,7 +164,7 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 									Description: "Node count.",
 									Computed:    true,
 								},
-								"witness_nodes": schema.Float64Attribute{
+								"witness_nodes": schema.Int64Attribute{
 									Description: "Witness nodes count.",
 									Computed:    true,
 								},
@@ -373,6 +373,24 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 								"volume_type": schema.StringAttribute{
 									Description: "Volume type.",
+									Computed:    true,
+								},
+							},
+						},
+						"maintenance_window": schema.SingleNestedAttribute{
+							Description: "Custom maintenance window.",
+							Computed:    true,
+							Attributes: map[string]schema.Attribute{
+								"is_enabled": schema.BoolAttribute{
+									Description: "Is maintenance window enabled.",
+									Computed:    true,
+								},
+								"start_day": schema.Int64Attribute{
+									Description: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
+									Computed:    true,
+								},
+								"start_time": schema.StringAttribute{
+									Description: "Start time. \"hh:mm\", for example: \"23:59\".",
 									Computed:    true,
 								},
 							},

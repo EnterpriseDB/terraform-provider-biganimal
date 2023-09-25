@@ -54,7 +54,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -148,7 +148,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -202,7 +202,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -250,6 +250,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       cloud_provider = {
         cloud_provider_id = "azure"
+      }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
       }
     }
   ]
@@ -306,7 +311,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -400,7 +405,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -454,7 +459,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -502,6 +507,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       cloud_provider = {
         cloud_provider_id = "aws"
+      }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
       }
     }
   ]
@@ -558,7 +568,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -652,7 +662,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -706,7 +716,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       backup_retention_period = "6d"
       cluster_architecture = {
         cluster_architecture_id = "pgd"
-        nodes                   = 2
+        nodes                   = 3
       }
       csp_auth = false
       instance_type = {
@@ -754,6 +764,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       cloud_provider = {
         cloud_provider_id = "gcp"
+      }
+      maintenance_window = {
+        is_enabled = true
+        start_day  = 3
+        start_time = "03:00"
       }
     }
   ]
@@ -841,13 +856,10 @@ Required:
 - `cluster_architecture_id` (String) Cluster architecture ID.
 - `nodes` (Number) Node count.
 
-Optional:
-
-- `witness_nodes` (Number) Witness nodes count.
-
 Read-Only:
 
 - `cluster_architecture_name` (String) Cluster architecture name.
+- `witness_nodes` (Number) Witness nodes count.
 
 
 <a id="nestedatt--data_groups--instance_type"></a>
@@ -947,9 +959,11 @@ Optional:
 
 - `cloud_provider` (Attributes) Witness Group cloud provider id. It can be set during creation only and can be different than the cloud provider of the data groups. Once set, cannot be changed. (see [below for nested schema](#nestedatt--witness_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
+- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--witness_groups--maintenance_window))
 
 Read-Only:
 
+- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--witness_groups--cluster_architecture))
 - `cluster_type` (String) Type of the Specified Cluster
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
@@ -981,6 +995,19 @@ Read-Only:
 - `cluster_architecture_name` (String) Name.
 - `nodes` (Number) Nodes.
 - `witness_nodes` (Number) Witness nodes count.
+
+
+<a id="nestedatt--witness_groups--maintenance_window"></a>
+### Nested Schema for `witness_groups.maintenance_window`
+
+Required:
+
+- `is_enabled` (Boolean) Is maintenance window enabled.
+
+Optional:
+
+- `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
+- `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
 <a id="nestedatt--witness_groups--instance_type"></a>

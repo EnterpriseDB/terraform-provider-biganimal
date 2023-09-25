@@ -147,7 +147,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						},
 					},
 					"throughput": schema.StringAttribute{
-						MarkdownDescription: "Throughput is automatically calculated by BigAnimal based on the IOPS input.",
+						MarkdownDescription: "Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.",
 						Optional:            true,
 						Computed:            true,
 						PlanModifiers: []planmodifier.String{
@@ -273,7 +273,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\", \"azure\" or \"gcp\".",
+				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
 				Required:    true,
 			},
 			"pg_type": schema.StringAttribute{
