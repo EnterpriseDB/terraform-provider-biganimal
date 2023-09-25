@@ -648,25 +648,59 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			Nodes:                   v.ClusterArchitecture.Nodes,
 		}
 
-		svAccIds := []string{}
-
+		svAccIds := &[]string{}
 		if !v.ServiceAccountIds.IsNull() {
 			diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-
 			resp.Diagnostics.Append(diags...)
 			if resp.Diagnostics.HasError() {
 				return
 			}
+		} else {
+			sids, err := p.client.GetServiceAccountIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+			if err != nil {
+				diags.AddError("pgd get service account ids error", err.Error())
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				return
+			}
+			svAccIds = utils.ToPointer(sids.Data)
+
+			// if it doesn't have any existing service account ids then use config
+			if svAccIds != nil && len(*svAccIds) == 0 {
+				diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+			}
 		}
 
-		principalIds := []string{}
-
+		principalIds := &[]string{}
 		if !v.PeAllowedPrincipalIds.IsNull() {
-			diags = v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-
+			diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 			resp.Diagnostics.Append(diags...)
 			if resp.Diagnostics.HasError() {
 				return
+			}
+		} else {
+			pids, err := p.client.GetPeAllowedPrincipalIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+			if err != nil {
+				diags.AddError("pgd get pe allowed principal ids error", err.Error())
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				return
+			}
+			principalIds = utils.ToPointer(pids.Data)
+
+			// if it doesn't have any existing service account ids then use config
+			if principalIds != nil && len(*principalIds) == 0 {
+				diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
 			}
 		}
 
@@ -685,8 +719,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Region:                v.Region,
 			Storage:               storage,
-			ServiceAccountIds:     &svAccIds,
-			PeAllowedPrincipalIds: &principalIds,
+			ServiceAccountIds:     svAccIds,
+			PeAllowedPrincipalIds: principalIds,
 		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
@@ -855,25 +889,59 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			groupId = nil
 		}
 
-		svAccIds := []string{}
-
+		svAccIds := &[]string{}
 		if !v.ServiceAccountIds.IsNull() {
 			diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-
 			resp.Diagnostics.Append(diags...)
 			if resp.Diagnostics.HasError() {
 				return
 			}
+		} else {
+			sids, err := p.client.GetServiceAccountIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+			if err != nil {
+				diags.AddError("pgd get service account ids error", err.Error())
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				return
+			}
+			svAccIds = utils.ToPointer(sids.Data)
+
+			// if it doesn't have any existing service account ids then use config
+			if svAccIds != nil && len(*svAccIds) == 0 {
+				diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+			}
 		}
 
-		principalIds := []string{}
-
+		principalIds := &[]string{}
 		if !v.PeAllowedPrincipalIds.IsNull() {
-			diags = v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-
+			diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 			resp.Diagnostics.Append(diags...)
 			if resp.Diagnostics.HasError() {
 				return
+			}
+		} else {
+			pids, err := p.client.GetPeAllowedPrincipalIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
+			if err != nil {
+				diags.AddError("pgd get pe allowed principal ids error", err.Error())
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				return
+			}
+			principalIds = utils.ToPointer(pids.Data)
+
+			// if it doesn't have any existing service account ids then use config
+			if principalIds != nil && len(*principalIds) == 0 {
+				diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
 			}
 		}
 
@@ -889,8 +957,8 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
-			ServiceAccountIds:     &svAccIds,
-			PeAllowedPrincipalIds: &principalIds,
+			ServiceAccountIds:     svAccIds,
+			PeAllowedPrincipalIds: principalIds,
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
