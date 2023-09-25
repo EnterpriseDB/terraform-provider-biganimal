@@ -75,7 +75,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp"
       }
       region = {
         region_id = "us-east1"
@@ -136,7 +136,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp"
       }
       region = {
         region_id = "europe-west1"
@@ -161,7 +161,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "asia-south1"
       }
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp"
       }
       maintenance_window = {
         is_enabled = true

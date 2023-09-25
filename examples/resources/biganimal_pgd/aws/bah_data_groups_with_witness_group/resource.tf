@@ -75,7 +75,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws"
       }
       region = {
         region_id = "eu-west-1"
@@ -132,7 +132,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws"
       }
       region = {
         region_id = "eu-west-2"
@@ -153,7 +153,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "us-east-1"
       }
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws"
       }
       maintenance_window = {
         is_enabled = true
