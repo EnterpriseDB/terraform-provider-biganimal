@@ -648,66 +648,9 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			Nodes:                   v.ClusterArchitecture.Nodes,
 		}
 
-		svAccIds := &[]string{}
-		principalIds := &[]string{}
-		if strings.Contains(*v.Provider.CloudProviderId, "bah") {
-			if !v.ServiceAccountIds.IsNull() {
-				diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-			} else {
-				sids, err := p.client.GetServiceAccountIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-				if err != nil {
-					diags.AddError("pgd get service account ids error", err.Error())
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
-					return
-				}
-				svAccIds = utils.ToPointer(sids.Data)
-
-				// if it doesn't have any existing service account ids then use config
-				if svAccIds != nil && len(*svAccIds) == 0 {
-					diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
-				}
-			}
-
-			if strings.Contains(*v.Provider.CloudProviderId, "bah:gcp") {
-				if !v.PeAllowedPrincipalIds.IsNull() {
-					diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
-				} else {
-					pids, err := p.client.GetPeAllowedPrincipalIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-					if err != nil {
-						diags.AddError("pgd get pe allowed principal ids error", err.Error())
-						resp.Diagnostics.Append(diags...)
-						if resp.Diagnostics.HasError() {
-							return
-						}
-						return
-					}
-					principalIds = utils.ToPointer(pids.Data)
-
-					// if it doesn't have any existing service account ids then use config
-					if principalIds != nil && len(*principalIds) == 0 {
-						diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-						resp.Diagnostics.Append(diags...)
-						if resp.Diagnostics.HasError() {
-							return
-						}
-					}
-				}
-			}
+		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, config.ProjectId, v)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		apiDGModel := pgdApi.DataGroup{
@@ -895,66 +838,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			groupId = nil
 		}
 
-		svAccIds := &[]string{}
-		principalIds := &[]string{}
-		if strings.Contains(*v.Provider.CloudProviderId, "bah") {
-			if !v.ServiceAccountIds.IsNull() {
-				diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-			} else {
-				sids, err := p.client.GetServiceAccountIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-				if err != nil {
-					diags.AddError("pgd get service account ids error", err.Error())
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
-					return
-				}
-				svAccIds = utils.ToPointer(sids.Data)
-
-				// if it doesn't have any existing service account ids then use config
-				if svAccIds != nil && len(*svAccIds) == 0 {
-					diags := v.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
-				}
-			}
-
-			if strings.Contains(*v.Provider.CloudProviderId, "bah:gcp") {
-				if !v.PeAllowedPrincipalIds.IsNull() {
-					diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
-				} else {
-					pids, err := p.client.GetPeAllowedPrincipalIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
-					if err != nil {
-						diags.AddError("pgd get pe allowed principal ids error", err.Error())
-						resp.Diagnostics.Append(diags...)
-						if resp.Diagnostics.HasError() {
-							return
-						}
-						return
-					}
-					principalIds = utils.ToPointer(pids.Data)
-
-					// if it doesn't have any existing service account ids then use config
-					if principalIds != nil && len(*principalIds) == 0 {
-						diags := v.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
-						resp.Diagnostics.Append(diags...)
-						if resp.Diagnostics.HasError() {
-							return
-						}
-					}
-				}
-			}
+		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, plan.ProjectId, v)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		// only allow fields which are able to be modified in the request for updating
@@ -1476,6 +1362,61 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), utils.ToPointer(idParts[0]))...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
+}
+
+func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
+	if strings.Contains(*dg.Provider.CloudProviderId, "bah") {
+		if !dg.ServiceAccountIds.IsNull() {
+			elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+			if elemDiag.HasError() {
+				diags.Append(elemDiag...)
+				return nil, nil
+			}
+		} else {
+			sids, err := client.GetServiceAccountIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
+			if err != nil {
+				diags.AddError("pgd get service account ids error", err.Error())
+				return nil, nil
+			}
+			svAccIds = utils.ToPointer(sids.Data)
+
+			// if it doesn't have any existing service account ids then use config
+			if svAccIds != nil && len(*svAccIds) == 0 {
+				elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+				if elemDiag.HasError() {
+					diags.Append(elemDiag...)
+					return nil, nil
+				}
+			}
+		}
+
+		if strings.Contains(*dg.Provider.CloudProviderId, "bah:gcp") {
+			if !dg.PeAllowedPrincipalIds.IsNull() {
+				elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+				if elemDiag.HasError() {
+					diags.Append(elemDiag...)
+					return nil, nil
+				}
+			} else {
+				pids, err := client.GetPeAllowedPrincipalIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
+				if err != nil {
+					diags.AddError("pgd get pe allowed principal ids error", err.Error())
+					return nil, nil
+				}
+				principalIds = utils.ToPointer(pids.Data)
+
+				// if it doesn't have any existing service account ids then use config
+				if principalIds != nil && len(*principalIds) == 0 {
+					elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+					if elemDiag.HasError() {
+						diags.Append(elemDiag...)
+						return nil, nil
+					}
+				}
+			}
+		}
+	}
+	return
 }
 
 func buildApiStorage(tfStorage terraform.Storage) *models.Storage {
