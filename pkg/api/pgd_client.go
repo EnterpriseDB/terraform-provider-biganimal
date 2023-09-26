@@ -15,6 +15,8 @@ import (
 
 type PGDClient struct{ API }
 
+var clusterClient = ClusterClient{}
+
 func NewPGDClient(api API) *PGDClient {
 	httpClient := http.Client{
 		Timeout: 60 * time.Second,
@@ -22,6 +24,7 @@ func NewPGDClient(api API) *PGDClient {
 
 	api.HTTPClient = httpClient
 	c := PGDClient{API: api}
+	clusterClient = ClusterClient{API: api}
 	return &c
 }
 
@@ -136,37 +139,11 @@ func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId st
 }
 
 func (c PGDClient) GetServiceAccountIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.ServiceAccountIds, error) {
-	response := struct {
-		Data models.ServiceAccountIds `json:"data"`
-	}{}
-
-	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/service-account-ids", projectID, cspID, regionID)
-	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return &models.ServiceAccountIds{}, err
-	}
-
-	if json.Unmarshal(body, &response.Data) != nil {
-		return &models.ServiceAccountIds{}, err
-	}
-	return &response.Data, nil
+	return clusterClient.GetServiceAccountIds(ctx, projectID, cspID, regionID)
 }
 
 func (c PGDClient) GetPeAllowedPrincipalIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.PeAllowedPrincipalIds, error) {
-	response := struct {
-		Data models.PeAllowedPrincipalIds `json:"data"`
-	}{}
-
-	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s/pe-allowed-principal-ids", projectID, cspID, regionID)
-	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return &models.PeAllowedPrincipalIds{}, err
-	}
-
-	if json.Unmarshal(body, &response.Data) != nil {
-		return &models.PeAllowedPrincipalIds{}, err
-	}
-	return &response.Data, nil
+	return clusterClient.GetPeAllowedPrincipalIds(ctx, projectID, cspID, regionID)
 }
 
 func (c PGDClient) Delete(ctx context.Context, projectId, id string) error {
