@@ -661,6 +661,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 				sids, err := p.client.GetServiceAccountIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
 				if err != nil {
 					diags.AddError("pgd get service account ids error", err.Error())
+					resp.Diagnostics.Append(diags...)
 					if resp.Diagnostics.HasError() {
 						return
 					}
@@ -689,6 +690,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 					pids, err := p.client.GetPeAllowedPrincipalIds(ctx, config.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
 					if err != nil {
 						diags.AddError("pgd get pe allowed principal ids error", err.Error())
+						resp.Diagnostics.Append(diags...)
 						if resp.Diagnostics.HasError() {
 							return
 						}
@@ -906,6 +908,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 				sids, err := p.client.GetServiceAccountIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
 				if err != nil {
 					diags.AddError("pgd get service account ids error", err.Error())
+					resp.Diagnostics.Append(diags...)
 					if resp.Diagnostics.HasError() {
 						return
 					}
@@ -934,6 +937,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 					pids, err := p.client.GetPeAllowedPrincipalIds(ctx, plan.ProjectId, *v.Provider.CloudProviderId, v.Region.RegionId)
 					if err != nil {
 						diags.AddError("pgd get pe allowed principal ids error", err.Error())
+						resp.Diagnostics.Append(diags...)
 						if resp.Diagnostics.HasError() {
 							return
 						}
