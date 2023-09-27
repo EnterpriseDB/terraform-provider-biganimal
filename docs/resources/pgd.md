@@ -350,9 +350,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
-      pe_allowed_principal_ids = [
-        "development-data-1234567"
-      ]
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+      # ]
     },
   ]
 }
@@ -447,9 +447,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
-      pe_allowed_principal_ids = [
-        "development-data-1234567"
-      ]
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+      # ]
     },
     {
       allowed_ip_ranges = [
@@ -504,9 +504,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 2
         start_time = "15:00"
       }
-      pe_allowed_principal_ids = [
-        "development-data-1234567"
-      ]
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+      # ]
     }
   ]
   witness_groups = [
@@ -784,7 +784,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## BigAnimal Hosted(BAH) PGD AWS One Data Group Example
+## PGD AWS BigAnimal Hosted(BAH) One Data Group Example
 ```terraform
 terraform {
   required_providers {
@@ -881,7 +881,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## BigAnimal Hosted(BAH) PGD AWS Two Data Groups with One Witness Group Example
+## PGD AWS BigAnimal Hosted(BAH) Two Data Groups with One Witness Group Example
 ```terraform
 terraform {
   required_providers {
@@ -1307,7 +1307,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## BigAnimal Hosted(BAH) PGD GCP One Data Group Example
+## PGD GCP BigAnimal Hosted(BAH)  One Data Group Example
 ```terraform
 terraform {
   required_providers {
@@ -1408,7 +1408,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## BigAnimal Hosted(BAH) PGD GCP Two Data Groups with One Witness Group Example
+## PGD GCP BigAnimal Hosted(BAH)  Two Data Groups with One Witness Group Example
 ```terraform
 terraform {
   required_providers {
