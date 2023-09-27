@@ -379,6 +379,20 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 								},
 							},
 						},
+						"service_account_ids": schema.SetAttribute{
+							Description:   "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
+							Optional:      true,
+							Computed:      true,
+							ElementType:   types.StringType,
+							PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+						},
+						"pe_allowed_principal_ids": schema.SetAttribute{
+							Description:   "Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.",
+							Optional:      true,
+							Computed:      true,
+							ElementType:   types.StringType,
+							PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+						},
 					},
 				},
 			},
@@ -632,7 +646,11 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ClusterArchitectureId:   v.ClusterArchitecture.ClusterArchitectureId,
 			ClusterArchitectureName: clusterArchName,
 			Nodes:                   v.ClusterArchitecture.Nodes,
-			WitnessNodes:            utils.ToPointer(float64(v.ClusterArchitecture.WitnessNodes.ValueInt64())),
+		}
+
+		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, config.ProjectId, v)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		apiDGModel := pgdApi.DataGroup{
@@ -650,6 +668,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Region:                v.Region,
 			Storage:               storage,
+			ServiceAccountIds:     svAccIds,
+			PeAllowedPrincipalIds: principalIds,
 		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
@@ -818,7 +838,12 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			groupId = nil
 		}
 
-		// only allow fields which are able to be modifed in the request for updating
+		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, plan.ProjectId, v)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// only allow fields which are able to be modified in the request for updating
 		reqDg := pgdApi.DataGroup{
 			GroupId:               groupId,
 			ClusterType:           utils.ToPointer("data_group"),
@@ -830,9 +855,11 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
+			ServiceAccountIds:     svAccIds,
+			PeAllowedPrincipalIds: principalIds,
 		}
 
-		// signals that it doesn't have an existing group id so this is a new group to add needs extra fields
+		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
 		if reqDg.GroupId == nil {
 			reqDg.Provider = v.Provider
 			reqDg.Region = v.Region
@@ -1017,9 +1044,9 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 	}
 }
 
-func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, clusterResp models.Cluster, dgs *[]terraform.DataGroup, wgs *[]terraform.WitnessGroup) {
-	*dgs = []terraform.DataGroup{}
-	*wgs = []terraform.WitnessGroup{}
+func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, clusterResp models.Cluster, asDgs *[]terraform.DataGroup, asWgs *[]terraform.WitnessGroup) {
+	*asDgs = []terraform.DataGroup{}
+	*asWgs = []terraform.WitnessGroup{}
 
 	for _, v := range *clusterResp.Groups {
 		switch apiGroupResp := v.(type) {
@@ -1102,6 +1129,24 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					Throughput:         types.StringPointerValue(apiDGModel.Storage.Throughput),
 				}
 
+				// service account ids
+				serviceAccIds := []attr.Value{}
+				if apiDGModel.ServiceAccountIds != nil && len(*apiDGModel.ServiceAccountIds) != 0 {
+					for _, v := range *apiDGModel.ServiceAccountIds {
+						v := v
+						serviceAccIds = append(serviceAccIds, types.StringPointerValue(&v))
+					}
+				}
+
+				// pe allowed principal ids account ids
+				principalIds := []attr.Value{}
+				if apiDGModel.PeAllowedPrincipalIds != nil && len(*apiDGModel.PeAllowedPrincipalIds) != 0 {
+					for _, v := range *apiDGModel.PeAllowedPrincipalIds {
+						v := v
+						principalIds = append(principalIds, types.StringPointerValue(&v))
+					}
+				}
+
 				tfDGModel := terraform.DataGroup{
 					GroupId:               types.StringPointerValue(apiDGModel.GroupId),
 					AllowedIpRanges:       apiDGModel.AllowedIpRanges,
@@ -1126,9 +1171,11 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ResizingPvc:           types.SetValueMust(types.StringType, resizingPvc),
 					Storage:               storage,
 					MaintenanceWindow:     apiDGModel.MaintenanceWindow,
+					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
+					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 				}
 
-				*dgs = append(*dgs, tfDGModel)
+				*asDgs = append(*asDgs, tfDGModel)
 			}
 
 			if apiGroupResp["clusterType"] == "witness_group" {
@@ -1278,7 +1325,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:   mw,
 				}
 
-				*wgs = append(*wgs, tfWGModel)
+				*asWgs = append(*asWgs, tfWGModel)
 			}
 		}
 	}
@@ -1315,6 +1362,61 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), utils.ToPointer(idParts[0]))...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
+}
+
+func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
+	if strings.Contains(*dg.Provider.CloudProviderId, "bah") {
+		if !dg.ServiceAccountIds.IsNull() {
+			elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+			if elemDiag.HasError() {
+				diags.Append(elemDiag...)
+				return nil, nil
+			}
+		} else {
+			sids, err := client.GetServiceAccountIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
+			if err != nil {
+				diags.AddError("pgd get service account ids error", err.Error())
+				return nil, nil
+			}
+			svAccIds = utils.ToPointer(sids.Data)
+
+			// if it doesn't have any existing service account ids then use config
+			if svAccIds != nil && len(*svAccIds) == 0 {
+				elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+				if elemDiag.HasError() {
+					diags.Append(elemDiag...)
+					return nil, nil
+				}
+			}
+		}
+
+		if strings.Contains(*dg.Provider.CloudProviderId, "bah:gcp") {
+			if !dg.PeAllowedPrincipalIds.IsNull() {
+				elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+				if elemDiag.HasError() {
+					diags.Append(elemDiag...)
+					return nil, nil
+				}
+			} else {
+				pids, err := client.GetPeAllowedPrincipalIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
+				if err != nil {
+					diags.AddError("pgd get pe allowed principal ids error", err.Error())
+					return nil, nil
+				}
+				principalIds = utils.ToPointer(pids.Data)
+
+				// if it doesn't have any existing service account ids then use config
+				if principalIds != nil && len(*principalIds) == 0 {
+					elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+					if elemDiag.HasError() {
+						diags.Append(elemDiag...)
+						return nil, nil
+					}
+				}
+			}
+		}
+	}
+	return
 }
 
 func buildApiStorage(tfStorage terraform.Storage) *models.Storage {

@@ -30,4 +30,6 @@ type DataGroup struct {
 	ResizingPvc           types.Set                 `tfsdk:"resizing_pvc"`
 	Storage               *Storage                  `tfsdk:"storage"`
 	MaintenanceWindow     *models.MaintenanceWindow `tfsdk:"maintenance_window"`
+	ServiceAccountIds     types.Set                 `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds types.Set                 `tfsdk:"pe_allowed_principal_ids"`
 }

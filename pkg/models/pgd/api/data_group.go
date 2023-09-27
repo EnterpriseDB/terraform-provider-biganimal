@@ -26,4 +26,6 @@ type DataGroup struct {
 	ResizingPvc           *[]string                 `json:"resizingPvc,omitempty"`
 	Storage               *models.Storage           `json:"storage,omitempty"`
 	MaintenanceWindow     *models.MaintenanceWindow `json:"maintenanceWindow,omitempty"`
+	ServiceAccountIds     *[]string                 `json:"serviceAccountIds,omitempty"`
+	PeAllowedPrincipalIds *[]string                 `json:"peAllowedPrincipalIds,omitempty"`
 }
