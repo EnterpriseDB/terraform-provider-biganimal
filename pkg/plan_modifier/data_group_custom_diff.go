@@ -52,25 +52,36 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		for _, pDg := range planDgs {
 			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
 			if stateRegion.Equal(planRegion) {
-				// set the unknowns manually mainly for delete group.
-				// if we don't set manually they will be set automatically if you put the state in plan value
-				// and they will be set by plan dg index against state dg index which will be in wrong order
-				// if deleting a group.
+				// set the unknowns manually for delete and add group.
+				// if we don't set manually and it is set the same way as useStateForUnknown,
+				// then when it puts the state in plan value it will be set by plan dg index
+				// against state dg index which will be in wrong order if delete a group.
 				pDgAttrTypes := types.ObjectNull(planDgs[0].(basetypes.ObjectValue).AttributeTypes(ctx))
 				pDgAttrValues := pDg.(basetypes.ObjectValue).Attributes()
-				pDgAttrValues["cluster_name"] = sDg.(basetypes.ObjectValue).Attributes()["cluster_name"]
-				pDgAttrValues["cluster_type"] = sDg.(basetypes.ObjectValue).Attributes()["cluster_type"]
-				pDgAttrValues["conditions"] = sDg.(basetypes.ObjectValue).Attributes()["conditions"]
-				pDgAttrValues["connection_uri"] = sDg.(basetypes.ObjectValue).Attributes()["connection_uri"]
-				pDgAttrValues["created_at"] = sDg.(basetypes.ObjectValue).Attributes()["created_at"]
-				pDgAttrValues["group_id"] = sDg.(basetypes.ObjectValue).Attributes()["group_id"]
-				pDgAttrValues["logs_url"] = sDg.(basetypes.ObjectValue).Attributes()["logs_url"]
-				pDgAttrValues["metrics_url"] = sDg.(basetypes.ObjectValue).Attributes()["metrics_url"]
-				pDgAttrValues["phase"] = sDg.(basetypes.ObjectValue).Attributes()["phase"]
-				pDgAttrValues["resizing_pvc"] = sDg.(basetypes.ObjectValue).Attributes()["resizing_pvc"]
+				sDgAttrValues := sDg.(basetypes.ObjectValue).Attributes()
 
-				pDgStorage := pDg.(basetypes.ObjectValue).Attributes()["storage"].(basetypes.ObjectValue).Attributes()
-				sDgStorage := sDg.(basetypes.ObjectValue).Attributes()["storage"].(basetypes.ObjectValue).Attributes()
+				pDgClusterArch := pDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).Attributes()
+				sDgClusterArch := sDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).Attributes()
+				clusterArchAttrTypes := types.ObjectNull(pDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).AttributeTypes(ctx))
+				ClusterArchAttrValues := pDgClusterArch
+				ClusterArchAttrValues["cluster_architecture_name"] = sDgClusterArch["cluster_architecture_name"]
+				ClusterArchAttrValues["witness_nodes"] = sDgClusterArch["witness_nodes"]
+
+				pDgAttrValues["cluster_architecture"] = types.ObjectValueMust(clusterArchAttrTypes.AttributeTypes(ctx), ClusterArchAttrValues)
+
+				pDgAttrValues["cluster_name"] = sDgAttrValues["cluster_name"]
+				pDgAttrValues["cluster_type"] = sDgAttrValues["cluster_type"]
+				pDgAttrValues["conditions"] = sDgAttrValues["conditions"]
+				pDgAttrValues["connection_uri"] = sDgAttrValues["connection_uri"]
+				pDgAttrValues["created_at"] = sDgAttrValues["created_at"]
+				pDgAttrValues["group_id"] = sDgAttrValues["group_id"]
+				pDgAttrValues["logs_url"] = sDgAttrValues["logs_url"]
+				pDgAttrValues["metrics_url"] = sDgAttrValues["metrics_url"]
+				pDgAttrValues["phase"] = sDgAttrValues["phase"]
+				pDgAttrValues["resizing_pvc"] = sDgAttrValues["resizing_pvc"]
+
+				pDgStorage := pDgAttrValues["storage"].(basetypes.ObjectValue).Attributes()
+				sDgStorage := sDgAttrValues["storage"].(basetypes.ObjectValue).Attributes()
 				storageAttrTypes := types.ObjectNull(pDgAttrValues["storage"].(basetypes.ObjectValue).AttributeTypes(ctx))
 				storageAttrValues := pDgStorage
 				storageAttrValues["iops"] = sDgStorage["iops"]

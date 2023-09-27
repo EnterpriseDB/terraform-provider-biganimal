@@ -50,7 +50,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "aws:m5.large"
+        instance_type_id = "gcp:e2-highcpu-4"
       }
       pg_config = [
         {
@@ -63,9 +63,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       storage = {
-        volume_type       = "gp3"
-        volume_properties = "gp3"
-        size              = "4 Gi"
+        volume_type       = "pd-ssd"
+        volume_properties = "pd-ssd"
+        size              = "10 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -75,16 +75,23 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:gcp"
       }
       region = {
-        region_id = "eu-central-1"
+        region_id = "us-east1"
       }
       maintenance_window = {
         is_enabled = true
         start_day  = 6
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "development-data-123456"
+      # ]
+
+      # service_account_ids = [
+      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+      # ]
     }
   ]
 }

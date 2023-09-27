@@ -10,9 +10,12 @@ The document generation tool looks for files in the following locations by defau
 
 ## biganimal_cluster resource examples
 * [Single node cluster example](./resources/biganimal_cluster/single_node/resource.tf)
-  * [Single node cluster example on AWS](./resources/biganimal_cluster/single_node/aws/resource.tf)
-  * [Single node cluster example on Azure](./resources/biganimal_cluster/single_node/azure/resource.tf)
-  * [Single node cluster example on Google Cloud](./resources/biganimal_cluster/single_node/gcp/resource.tf)
+  * [Single node cluster example on AWS(Your Cloud Account)](./resources/biganimal_cluster/single_node/aws/resource.tf)
+  * [Single node cluster example on Azure(Your Cloud Account)](./resources/biganimal_cluster/single_node/azure/resource.tf)
+  * [Single node cluster example on Google Cloud(Your Cloud Account)](./resources/biganimal_cluster/single_node/gcp/resource.tf)
+  * [Single node cluster example on AWS(BigAnimal Hosted)](./resources/biganimal_cluster/single_node/bah_aws/resource.tf)
+  * [Single node cluster example on Google Cloud(BigAnimal Hosted)](./resources/biganimal_cluster/single_node/bah_gcp/resource.tf)
+
 * [Primary/Standby High availability cluster example](./resources/biganimal_cluster/ha/resource.tf)
 * For Distributed High Availability cluster examples, please check [the biganimal_pgd resource examples below](#biganimal_pgd-resource-examples-for-managing-distributed-high-availability-clusters)
 

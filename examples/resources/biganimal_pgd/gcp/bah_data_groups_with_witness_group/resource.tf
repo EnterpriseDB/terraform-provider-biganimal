@@ -50,7 +50,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "azure:Standard_D2s_v3"
+        instance_type_id = "gcp:e2-highcpu-4"
       }
       pg_config = [
         {
@@ -63,9 +63,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       storage = {
-        volume_type       = "azurepremiumstorage"
-        volume_properties = "P2"
-        size              = "8 Gi"
+        volume_type       = "pd-ssd"
+        volume_properties = "pd-ssd"
+        size              = "10 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -75,16 +75,23 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "bah:gcp"
       }
       region = {
-        region_id = "northeurope"
+        region_id = "us-east1"
       }
       maintenance_window = {
         is_enabled = true
-        start_day  = 1
+        start_day  = 6
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "development-data-123456"
+      # ]
+
+      # service_account_ids = [
+      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+      # ]
     },
     {
       allowed_ip_ranges = [
@@ -104,7 +111,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "azure:Standard_D2s_v3"
+        instance_type_id = "gcp:e2-highcpu-4"
       }
       pg_config = [
         {
@@ -117,9 +124,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       storage = {
-        volume_type       = "azurepremiumstorage"
-        volume_properties = "P2"
-        size              = "8 Gi"
+        volume_type       = "pd-ssd"
+        volume_properties = "pd-ssd"
+        size              = "10 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -129,25 +136,32 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "bah:gcp"
       }
       region = {
-        region_id = "eastus"
+        region_id = "europe-west1"
       }
       maintenance_window = {
         is_enabled = true
-        start_day  = 2
-        start_time = "15:00"
+        start_day  = 5
+        start_time = "12:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "development-data-123456"
+      # ]
+
+      # service_account_ids = [
+      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+      # ]
     }
   ]
   witness_groups = [
     {
       region = {
-        region_id = "canadacentral"
+        region_id = "asia-south1"
       }
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "bah:gcp"
       }
       maintenance_window = {
         is_enabled = true

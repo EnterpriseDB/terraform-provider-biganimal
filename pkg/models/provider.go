@@ -21,3 +21,11 @@ type AzureConnection struct {
 	SubscriptionId string `json:"subscriptionId"`
 	TenantId       string `json:"tenantId"`
 }
+
+type ServiceAccountIds struct {
+	Data []string `json:"data"`
+}
+
+type PeAllowedPrincipalIds struct {
+	Data []string `json:"data"`
+}

@@ -66,6 +66,8 @@ type ClusterResourceModel struct {
 	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                       `tfsdk:"created_at"`
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
+	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -144,7 +146,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						},
 					},
 					"throughput": schema.StringAttribute{
-						MarkdownDescription: "Throughput is automatically calculated by BigAnimal based on the IOPS input.",
+						MarkdownDescription: "Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.",
 						Optional:            true,
 						Computed:            true,
 						PlanModifiers: []planmodifier.String{
@@ -270,7 +272,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\", \"azure\" or \"gcp\".",
+				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
 				Required:    true,
 			},
 			"pg_type": schema.StringAttribute{
@@ -366,6 +368,21 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
+			"service_account_ids": schema.SetAttribute{
+				MarkdownDescription: "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.StringType,
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+
+			"pe_allowed_principal_ids": schema.SetAttribute{
+				MarkdownDescription: "Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.StringType,
+				PlanModifiers:       []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
 }
@@ -379,10 +396,18 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	clusterId, err := c.client.Create(ctx, config.ProjectId, makeClusterForCreate(config))
+	clusterModel, err := c.makeClusterForCreate(ctx, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
+		}
+		return
+	}
+
+	clusterId, err := c.client.Create(ctx, config.ProjectId, clusterModel)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
 		}
 		return
 	}
@@ -438,10 +463,18 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	_, err := c.client.Update(ctx, makeClusterFoUpdate(plan), plan.ProjectId, *plan.ClusterId)
+	clusterModel, err := c.makeClusterForUpdate(ctx, plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
+		}
+		return
+	}
+
+	_, err = c.client.Update(ctx, clusterModel, plan.ProjectId, *plan.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating cluster API request", err.Error())
 		}
 		return
 	}
@@ -577,6 +610,14 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 		}
 	}
 
+	if cluster.PeAllowedPrincipalIds != nil {
+		clusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&cluster.PeAllowedPrincipalIds))
+	}
+
+	if cluster.ServiceAccountIds != nil {
+		clusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&cluster.ServiceAccountIds))
+	}
+
 	return nil
 }
 
@@ -597,7 +638,63 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 		})
 }
 
-func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
+func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) (models.Cluster, error) {
+	cluster := generateGenericClusterModel(clusterResource)
+	// add BAH Code
+	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
+		return c.addBAHFields(ctx, cluster, clusterResource)
+	} else {
+		return cluster, nil
+	}
+}
+
+func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) (models.Cluster, error) {
+	clusterRscCSP := clusterResource.CloudProvider
+	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
+	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
+
+	// If there is an existing Principal Account Id for that Region, use that one.
+	pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
+	if err != nil {
+		return models.Cluster{}, err
+	}
+	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
+
+	// If there is no existing value, user should provide one
+	if cluster.PeAllowedPrincipalIds != nil && len(*cluster.PeAllowedPrincipalIds) == 0 {
+		// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+		// while encoding JSON objects
+		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+		plist := []string{}
+		for _, peId := range clusterRscPrincipalIds.Elements() {
+			plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
+		}
+
+		cluster.PeAllowedPrincipalIds = utils.ToPointer(plist)
+	}
+
+	if clusterRscCSP.ValueString() == "bah:gcp" {
+		// If there is an existing Service Account Id for that Region, use that one.
+		sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
+		cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
+
+		// If there is no existing value, user should provide one
+		if cluster.ServiceAccountIds != nil && len(*cluster.ServiceAccountIds) == 0 {
+			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+			// while encoding JSON objects.
+			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+			slist := []string{}
+			for _, saId := range clusterRscSvcAcntIds.Elements() {
+				slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
+			}
+
+			cluster.ServiceAccountIds = utils.ToPointer(slist)
+		}
+	}
+	return cluster, nil
+}
+
+func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cluster {
 	cluster := models.Cluster{
 		ClusterName: clusterResource.ClusterName.ValueStringPointer(),
 		Password:    clusterResource.Password.ValueStringPointer(),
@@ -655,14 +752,17 @@ func makeClusterForCreate(clusterResource ClusterResourceModel) models.Cluster {
 	return cluster
 }
 
-func makeClusterFoUpdate(clusterResource ClusterResourceModel) *models.Cluster {
-	cluster := makeClusterForCreate(clusterResource)
+func (c *clusterResource) makeClusterForUpdate(ctx context.Context, clusterResource ClusterResourceModel) (*models.Cluster, error) {
+	cluster, err := c.makeClusterForCreate(ctx, clusterResource)
+	if err != nil {
+		return nil, err
+	}
 	cluster.ClusterId = nil
 	cluster.PgType = nil
 	cluster.PgVersion = nil
 	cluster.Provider = nil
 	cluster.Region = nil
-	return &cluster
+	return &cluster, nil
 }
 
 func NewClusterResource() resource.Resource {

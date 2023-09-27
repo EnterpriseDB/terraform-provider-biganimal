@@ -119,6 +119,7 @@ Read-Only:
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--data_groups--maintenance_window))
 - `metrics_url` (String) The URL to find the metrics of this cluster.
+- `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--data_groups--pg_config))
 - `pg_type` (Attributes) Postgres type. (see [below for nested schema](#nestedatt--data_groups--pg_type))
 - `pg_version` (Attributes) Postgres version. (see [below for nested schema](#nestedatt--data_groups--pg_version))
@@ -126,6 +127,7 @@ Read-Only:
 - `private_networking` (Boolean) Is private networking enabled.
 - `region` (Attributes) Region. (see [below for nested schema](#nestedatt--data_groups--region))
 - `resizing_pvc` (Set of String) Resizing PVC.
+- `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--data_groups--storage))
 
 <a id="nestedatt--data_groups--allowed_ip_ranges"></a>
@@ -242,6 +244,7 @@ Read-Only:
 - `cluster_type` (String) Type of the Specified Cluster
 - `group_id` (String) Group id of witness group.
 - `instance_type` (Attributes) Instance type. (see [below for nested schema](#nestedatt--witness_groups--instance_type))
+- `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--witness_groups--maintenance_window))
 - `phase` (String) Current phase of the witness group.
 - `region` (Attributes) Region. (see [below for nested schema](#nestedatt--witness_groups--region))
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--witness_groups--storage))
@@ -271,6 +274,16 @@ Read-Only:
 Read-Only:
 
 - `instance_type_id` (String) Witness group instance type id.
+
+
+<a id="nestedatt--witness_groups--maintenance_window"></a>
+### Nested Schema for `witness_groups.maintenance_window`
+
+Read-Only:
+
+- `is_enabled` (Boolean) Is maintenance window enabled.
+- `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
+- `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
 <a id="nestedatt--witness_groups--region"></a>
