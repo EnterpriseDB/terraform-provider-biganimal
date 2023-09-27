@@ -280,6 +280,17 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
+						"service_account_ids": schema.SetAttribute{
+							Description: "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
+							Computed:    true,
+							ElementType: types.StringType,
+						},
+
+						"pe_allowed_principal_ids": schema.SetAttribute{
+							Description: "Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.",
+							Computed:    true,
+							ElementType: types.StringType,
+						},
 					},
 				},
 			},
