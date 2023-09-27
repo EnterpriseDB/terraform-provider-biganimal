@@ -15,6 +15,8 @@ import (
 
 type PGDClient struct{ API }
 
+var clusterClient = ClusterClient{}
+
 func NewPGDClient(api API) *PGDClient {
 	httpClient := http.Client{
 		Timeout: 60 * time.Second,
@@ -22,6 +24,7 @@ func NewPGDClient(api API) *PGDClient {
 
 	api.HTTPClient = httpClient
 	c := PGDClient{API: api}
+	clusterClient = ClusterClient{API: api}
 	return &c
 }
 
@@ -46,6 +49,10 @@ func (c PGDClient) ReadByName(ctx context.Context, projectId, name string, most_
 		} else {
 			return &models.Cluster{}, ErrorClustersSameName
 		}
+	}
+
+	if len(clusters.Data) == 0 {
+		return nil, fmt.Errorf("cluster with name: %v not found", name)
 	}
 
 	return &clusters.Data[0], err
@@ -129,6 +136,14 @@ func (c PGDClient) CalculateWitnessGroupParams(ctx context.Context, projectId st
 
 	err = json.Unmarshal(body, &response)
 	return &response.Data, err
+}
+
+func (c PGDClient) GetServiceAccountIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.ServiceAccountIds, error) {
+	return clusterClient.GetServiceAccountIds(ctx, projectID, cspID, regionID)
+}
+
+func (c PGDClient) GetPeAllowedPrincipalIds(ctx context.Context, projectID string, cspID string, regionID string) (*models.PeAllowedPrincipalIds, error) {
+	return clusterClient.GetPeAllowedPrincipalIds(ctx, projectID, cspID, regionID)
 }
 
 func (c PGDClient) Delete(ctx context.Context, projectId, id string) error {
