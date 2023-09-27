@@ -386,8 +386,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			"superuser_access": schema.BoolAttribute{
-				MarkdownDescription: "Is superuser access enabled.",
+				MarkdownDescription: "Enable to grant superuser access to the edb_admin role.",
 				Optional:            true,
+				Computed:            true,
 			},
 		},
 	}
