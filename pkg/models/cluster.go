@@ -172,6 +172,7 @@ type Cluster struct {
 	MaintenanceWindow          *commonApi.MaintenanceWindow `json:"maintenanceWindow,omitempty"`
 	ServiceAccountIds          *[]string                    `json:"serviceAccountIds,omitempty"`
 	PeAllowedPrincipalIds      *[]string                    `json:"peAllowedPrincipalIds,omitempty"`
+	SuperuserAccess            *bool                        `json:"superuserAccess,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'

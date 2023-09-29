@@ -102,6 +102,10 @@ output "storage" {
   value = data.biganimal_cluster.this.storage
 }
 
+output "superuser_access" {
+  value = coalesce(data.biganimal_cluster.this.superuser_access, false)
+}
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
@@ -159,6 +163,7 @@ output "service_account_ids" {
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--storage))
+- `superuser_access` (Boolean) Is superuser access enabled.
 
 <a id="nestedatt--allowed_ip_ranges"></a>
 ### Nested Schema for `allowed_ip_ranges`
