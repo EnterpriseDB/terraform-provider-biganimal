@@ -97,6 +97,10 @@ output "storage" {
   value = data.biganimal_cluster.this.storage
 }
 
+output "superuser_access" {
+  value = coalesce(data.biganimal_cluster.this.superuser_access, false)
+}
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }

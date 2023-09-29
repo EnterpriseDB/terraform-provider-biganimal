@@ -89,6 +89,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   cloud_provider        = "azure"
   read_only_connections = false
   region                = "eastus2"
+  superuser_access      = true
 }
 
 output "password" {
@@ -182,6 +183,7 @@ resource "biganimal_cluster" "ha_cluster" {
   cloud_provider        = "aws"
   read_only_connections = true
   region                = "us-east-1"
+  superuser_access      = true
 }
 
 output "password" {
@@ -229,6 +231,7 @@ output "faraway_replica_ids" {
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `storage` (Block, Optional) Storage. (see [below for nested schema](#nestedblock--storage))
+- `superuser_access` (Boolean) Enable to grant superuser access to the edb_admin role.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
