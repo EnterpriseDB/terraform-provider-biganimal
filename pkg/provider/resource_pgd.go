@@ -46,12 +46,8 @@ type pgdResource struct {
 	client *api.PGDClient
 }
 
-func (p pgdResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_pgd"
-}
-
-func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
+func PgdSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
 		MarkdownDescription: "The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.",
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
@@ -585,6 +581,14 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			},
 		},
 	}
+}
+
+func (p pgdResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_pgd"
+}
+
+func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = PgdSchema(ctx)
 }
 
 // Configure adds the provider configured client to the data source.

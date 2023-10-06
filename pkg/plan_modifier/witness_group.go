@@ -10,24 +10,24 @@ import (
 )
 
 func CustomWitnessGroupDiffConfig() planmodifier.Set {
-	return customWitnessGroupDiffModifier{}
+	return CustomWitnessGroupDiffModifier{}
 }
 
-// customWitnessGroupModifier implements the plan modifier.
-type customWitnessGroupDiffModifier struct{}
+// CustomWitnessGroupModifier implements the plan modifier.
+type CustomWitnessGroupDiffModifier struct{}
 
 // Description returns a human-readable description of the plan modifier.
-func (m customWitnessGroupDiffModifier) Description(_ context.Context) string {
+func (m CustomWitnessGroupDiffModifier) Description(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // MarkdownDescription returns a markdown description of the plan modifier.
-func (m customWitnessGroupDiffModifier) MarkdownDescription(_ context.Context) string {
+func (m CustomWitnessGroupDiffModifier) MarkdownDescription(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // PlanModifySet implements the plan modification logic.
-func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+func (m CustomWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	if req.StateValue.IsNull() {
 		return
 	}
@@ -69,11 +69,12 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 	}
 
 	// validations
-	for _, pWg := range planWgs {
-		for _, sWg := range stateWgs {
+	for pk, pWg := range planWgs {
+		for sk, sWg := range stateWgs {
 			planRegion := pWg.(basetypes.ObjectValue).Attributes()["region"]
 			stateRegion := sWg.(basetypes.ObjectValue).Attributes()["region"]
-			if !stateRegion.Equal(planRegion) {
+
+			if !stateRegion.Equal(planRegion) && pk == sk {
 				resp.Diagnostics.AddError("Witness group region cannot be changed",
 					fmt.Sprintf("Witness group region cannot be changed. Witness group region changed from expected value %v to %v in config",
 						stateRegion,
@@ -84,7 +85,7 @@ func (m customWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 			planCloudProvider := pWg.(basetypes.ObjectValue).Attributes()["cloud_provider"]
 			stateCloudProvider := sWg.(basetypes.ObjectValue).Attributes()["cloud_provider"]
 
-			if !planCloudProvider.Equal(stateCloudProvider) {
+			if !planCloudProvider.Equal(stateCloudProvider) && pk == sk {
 				resp.Diagnostics.AddError("Witness group cloud provider cannot be changed",
 					fmt.Sprintf("witness group cloud provider cannot be changed. witness group cloud provider changed from expected value: %v to %v in config",
 						stateCloudProvider,
