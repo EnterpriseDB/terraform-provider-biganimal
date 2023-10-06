@@ -261,7 +261,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## PGD Azure BigAnimal Hosted(BAH) One Data Group Example
+## PGD Azure BigAnimal's cloud account One Data Group Example
 ```terraform
 terraform {
   required_providers {
@@ -358,7 +358,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## PGD Azure BigAnimal Hosted(BAH) Two Data Groups with One Witness Group Example
+## PGD Azure BigAnimal's cloud account Two Data Groups with One Witness Group Example
 ```terraform
 terraform {
   required_providers {
@@ -784,7 +784,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## PGD AWS BigAnimal Hosted(BAH) One Data Group Example
+## PGD AWS BigAnimal's cloud account One Data Group Example
 ```terraform
 terraform {
   required_providers {
@@ -881,7 +881,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## PGD AWS BigAnimal Hosted(BAH) Two Data Groups with One Witness Group Example
+## PGD AWS BigAnimal's cloud account Two Data Groups with One Witness Group Example
 ```terraform
 terraform {
   required_providers {
@@ -1307,7 +1307,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## PGD GCP BigAnimal Hosted(BAH)  One Data Group Example
+## PGD GCP BigAnimal's cloud account One Data Group Example
 ```terraform
 terraform {
   required_providers {
@@ -1408,7 +1408,7 @@ resource "biganimal_pgd" "pgd_cluster" {
 }
 ```
 
-## PGD GCP BigAnimal Hosted(BAH)  Two Data Groups with One Witness Group Example
+## PGD GCP BigAnimal's cloud account Two Data Groups with One Witness Group Example
 ```terraform
 terraform {
   required_providers {
