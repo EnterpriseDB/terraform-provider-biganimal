@@ -46,12 +46,8 @@ type pgdResource struct {
 	client *api.PGDClient
 }
 
-func (p pgdResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_pgd"
-}
-
-func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
+func PgdSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
 		MarkdownDescription: "The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.",
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
@@ -585,6 +581,14 @@ func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 			},
 		},
 	}
+}
+
+func (p pgdResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_pgd"
+}
+
+func (p pgdResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = PgdSchema(ctx)
 }
 
 // Configure adds the provider configured client to the data source.
@@ -1366,23 +1370,23 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
 	if strings.Contains(*dg.Provider.CloudProviderId, "bah") {
-		if !dg.ServiceAccountIds.IsNull() {
-			elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+		if !dg.PeAllowedPrincipalIds.IsNull() {
+			elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 			if elemDiag.HasError() {
 				diags.Append(elemDiag...)
 				return nil, nil
 			}
 		} else {
-			sids, err := client.GetServiceAccountIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
+			pids, err := client.GetPeAllowedPrincipalIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
 			if err != nil {
-				diags.AddError("pgd get service account ids error", err.Error())
+				diags.AddError("pgd get pe allowed principal ids error", err.Error())
 				return nil, nil
 			}
-			svAccIds = utils.ToPointer(sids.Data)
+			principalIds = utils.ToPointer(pids.Data)
 
 			// if it doesn't have any existing service account ids then use config
-			if svAccIds != nil && len(*svAccIds) == 0 {
-				elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
+			if principalIds != nil && len(*principalIds) == 0 {
+				elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 				if elemDiag.HasError() {
 					diags.Append(elemDiag...)
 					return nil, nil
@@ -1391,23 +1395,23 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 		}
 
 		if strings.Contains(*dg.Provider.CloudProviderId, "bah:gcp") {
-			if !dg.PeAllowedPrincipalIds.IsNull() {
-				elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+			if !dg.ServiceAccountIds.IsNull() {
+				elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 				if elemDiag.HasError() {
 					diags.Append(elemDiag...)
 					return nil, nil
 				}
 			} else {
-				pids, err := client.GetPeAllowedPrincipalIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
+				sids, err := client.GetServiceAccountIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
 				if err != nil {
-					diags.AddError("pgd get pe allowed principal ids error", err.Error())
+					diags.AddError("pgd get service account ids error", err.Error())
 					return nil, nil
 				}
-				principalIds = utils.ToPointer(pids.Data)
+				svAccIds = utils.ToPointer(sids.Data)
 
 				// if it doesn't have any existing service account ids then use config
-				if principalIds != nil && len(*principalIds) == 0 {
-					elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
+				if svAccIds != nil && len(*svAccIds) == 0 {
+					elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 					if elemDiag.HasError() {
 						diags.Append(elemDiag...)
 						return nil, nil

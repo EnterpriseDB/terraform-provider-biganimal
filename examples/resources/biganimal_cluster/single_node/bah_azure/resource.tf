@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.6.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -75,10 +75,12 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
-  cloud_provider        = "azure"
+  cloud_provider        = "bah:azure"
   read_only_connections = false
   region                = "eastus2"
-  superuser_access      = true
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+  # ]
 }
 
 output "password" {

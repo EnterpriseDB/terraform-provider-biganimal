@@ -78,6 +78,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   cloud_provider        = "aws"
   read_only_connections = false
   region                = "us-east-1"
+  superuser_access      = true
 }
 
 output "password" {

@@ -75,6 +75,7 @@ type clusterDatasourceModel struct {
 	MaintenanceWindow          *terraformCommon.MaintenanceWindow  `tfsdk:"maintenance_window"`
 	ServiceAccountIds          types.Set                           `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                           `tfsdk:"pe_allowed_principal_ids"`
+	SuperuserAccess            types.Bool                          `tfsdk:"superuser_access"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -331,6 +332,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Optional:    true,
 				ElementType: types.StringType,
 			},
+			"superuser_access": schema.BoolAttribute{
+				MarkdownDescription: "Is superuser access enabled.",
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -393,6 +398,7 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.PgVersion = types.StringValue(cluster.PgVersion.PgVersionId)
 	data.PgType = types.StringValue(cluster.PgType.PgTypeId)
 	data.PrivateNetworking = types.BoolPointerValue(cluster.PrivateNetworking)
+	data.SuperuserAccess = types.BoolPointerValue(cluster.SuperuserAccess)
 
 	if cluster.FarawayReplicaIds != nil {
 		data.FarawayReplicaIds = *cluster.FarawayReplicaIds
