@@ -1,3 +1,19 @@
+## v0.6.1 (September 19. 2023)
+Features:
+* BigAnimal Terraform Provider now supports BigAnimal Hosted(BAH) AWS, Azure and Google Cloud provider for `biganimal_cluster` and `biganimal_pgd` resources
+* Custom maintenance window support for `biganimal_cluster` resources
+* Custom maintenance window support for the Witness groups in the `biganimal_pgd` resources
+
+Bug Fixes:
+* Removed PGD upscale not supported note in `biganimal_pgd` resource docs
+* Small bug fixes in `biganimal_pgd` resources
+
+Enhancements:
+* Dependency updates
+* PG Config values warnings support for `biganimal_pgd` and `biganimal_cluster` resources
+* Changed default data nodes from 2 to 3 for `biganimal_pgd` resource
+* Add and change validations for `biganimal_cluster` resources
+
 ## v0.6.0 (August 28. 2023)
 Features:
 * Added examples for PGD resources on Google Cloud.
