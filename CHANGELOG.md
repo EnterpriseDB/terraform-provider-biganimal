@@ -1,4 +1,4 @@
-## v0.6.1 (September 19. 2023)
+## v0.6.1 (October 18. 2023)
 Features:
 * BigAnimal Terraform Provider now supports BigAnimal's cloud account AWS, Azure and Google Cloud provider for `biganimal_cluster` and `biganimal_pgd` resources
 * Custom maintenance window support for `biganimal_cluster` resources
