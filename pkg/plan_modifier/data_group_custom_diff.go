@@ -146,10 +146,12 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			return
 		}
 		var stateDgKey *int
+		var stateDgRegion string
 		for k := range stateDgs {
 			if stateDgs[k].(basetypes.ObjectValue).Attributes()["region"].Equal(planDg.(basetypes.ObjectValue).Attributes()["region"]) {
 				k := k
 				stateDgKey = &k
+				stateDgRegion = stateDgs[k].(basetypes.ObjectValue).Attributes()["region"].String()
 				break
 			}
 		}
@@ -166,9 +168,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateAllowedIps := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
 
 			if !planAllowedIps.Equal(stateAllowedIps) {
-				resp.Diagnostics.AddWarning("Allowed IP ranges changed", fmt.Sprintf("Allowed IP ranges have changed from %v to %v",
+				resp.Diagnostics.AddWarning("Allowed IP ranges changed", fmt.Sprintf("Allowed IP ranges have changed from %v to %v for data group with region %v",
 					stateAllowedIps,
-					planAllowedIps))
+					planAllowedIps,
+					stateDgRegion))
 			}
 
 			// backup retention period
@@ -176,9 +179,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateBackupRetention := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["backup_retention_period"]
 
 			if !planBackupRetention.Equal(stateBackupRetention) {
-				resp.Diagnostics.AddWarning("Backup retention changed", fmt.Sprintf("backup retention period has changed from %v to %v",
+				resp.Diagnostics.AddWarning("Backup retention changed", fmt.Sprintf("backup retention period has changed from %v to %v for data group with region %v",
 					stateBackupRetention,
-					planBackupRetention))
+					planBackupRetention,
+					stateDgRegion))
 			}
 
 			// cluster architecture
@@ -194,9 +198,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			sArchNodes := stateArch.(basetypes.ObjectValue).Attributes()["nodes"]
 
 			if !pArchId.Equal(sArchId) || !pArchWitnessNodes.Equal(sArchWitnessNodes) || !pArchNodes.Equal(sArchNodes) {
-				resp.Diagnostics.AddWarning("Cluster architecture changed", fmt.Sprintf("Cluster architecture changed from %v to %v",
+				resp.Diagnostics.AddWarning("Cluster architecture changed", fmt.Sprintf("Cluster architecture changed from %v to %v for data group with region %v",
 					stateArch,
-					planArch))
+					planArch,
+					stateDgRegion))
 			}
 
 			// csp auth
@@ -204,9 +209,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateCspAuth := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["csp_auth"]
 
 			if !planCspAuth.Equal(stateCspAuth) {
-				resp.Diagnostics.AddWarning("CSP auth changed", fmt.Sprintf("CSP auth changed from %v to %v",
+				resp.Diagnostics.AddWarning("CSP auth changed", fmt.Sprintf("CSP auth changed from %v to %v for data group with region %v",
 					stateCspAuth,
-					planCspAuth))
+					planCspAuth,
+					stateDgRegion))
 			}
 
 			// instance type
@@ -214,9 +220,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateInstanceType := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["instance_type"]
 
 			if !planInstanceType.Equal(stateInstanceType) {
-				resp.Diagnostics.AddWarning("Instance type changed", fmt.Sprintf("Instance type changed from %v to %v",
+				resp.Diagnostics.AddWarning("Instance type changed", fmt.Sprintf("Instance type changed from %v to %v for data group with region %v",
 					stateInstanceType,
-					planInstanceType))
+					planInstanceType,
+					stateDgRegion))
 			}
 
 			// storage
@@ -232,9 +239,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			sStorageSize := stateStorage.(basetypes.ObjectValue).Attributes()["size"]
 
 			if !pStorageType.Equal(sStorageType) || !pStorageProperties.Equal(sStorageProperties) || !pStorageSize.Equal(sStorageSize) {
-				resp.Diagnostics.AddWarning("Storage changed", fmt.Sprintf("Storage changed from %v to %v",
+				resp.Diagnostics.AddWarning("Storage changed", fmt.Sprintf("Storage changed from %v to %v for data group with region %v",
 					stateStorage,
-					planStorage))
+					planStorage,
+					stateDgRegion))
 			}
 
 			// pg type
@@ -243,9 +251,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 			if !planPGType.Equal(statePGType) {
 				resp.Diagnostics.AddError("PG type cannot be changed",
-					fmt.Sprintf("PG type cannot be changed. PG type changed from expected value %v to %v in config",
+					fmt.Sprintf("PG type cannot be changed. PG type changed from expected value %v to %v in config for data group with region %v",
 						statePGType,
-						planPGType))
+						planPGType,
+						stateDgRegion))
 				return
 			}
 
@@ -255,9 +264,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 			if !planPGVersion.Equal(statePGVersion) {
 				resp.Diagnostics.AddError("PG version cannot be changed",
-					fmt.Sprintf("PG version cannot be changed. PG version changed from expected value %v to %v in config",
+					fmt.Sprintf("PG version cannot be changed. PG version changed from expected value %v to %v in config for data group with region %v",
 						statePGVersion,
-						planPGVersion))
+						planPGVersion,
+						stateDgRegion))
 				return
 			}
 
@@ -266,9 +276,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateNetworking := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["private_networking"]
 
 			if !planNetworking.Equal(stateNetworking) {
-				resp.Diagnostics.AddWarning("Private networking changed", fmt.Sprintf("Private networking changed from %v to %v",
+				resp.Diagnostics.AddWarning("Private networking changed", fmt.Sprintf("Private networking changed from %v to %v for data group with region %v",
 					stateNetworking,
-					planNetworking))
+					planNetworking,
+					stateDgRegion))
 			}
 
 			// cloud provider
@@ -277,9 +288,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 			if !planCloudProvider.Equal(stateCloudProvider) {
 				resp.Diagnostics.AddError("Cloud provider cannot be changed",
-					fmt.Sprintf("Cloud provider cannot be changed. Cloud provider changed from expected value: %v to %v in config",
+					fmt.Sprintf("Cloud provider cannot be changed. Cloud provider changed from expected value: %v to %v in config for data group with region %v",
 						stateCloudProvider,
-						planCloudProvider))
+						planCloudProvider,
+						stateDgRegion))
 				return
 			}
 
@@ -288,9 +300,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateRegion := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["region"]
 
 			if !planRegion.Equal(stateRegion) {
-				resp.Diagnostics.AddWarning("Region changed", fmt.Sprintf("Region changed from %v to %v",
+				resp.Diagnostics.AddWarning("Region changed", fmt.Sprintf("Region changed from %v to %v for data group with region %v",
 					stateRegion,
-					planRegion))
+					planRegion,
+					stateDgRegion))
 			}
 
 			// maintenance window
@@ -298,9 +311,10 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			stateMw := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["maintenance_window"]
 
 			if !planMW.Equal(stateMw) {
-				resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v",
+				resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v for data group with region %v",
 					stateMw,
-					planMW))
+					planMW,
+					stateDgRegion))
 			}
 		}
 
