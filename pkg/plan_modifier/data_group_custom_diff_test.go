@@ -21,18 +21,21 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 
 	pgdSchema := provider.PgdSchema(ctx)
 
-	regionType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["region"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	cloudProviderType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["cloud_provider"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	storageAttrType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["storage"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	conditionsElemType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["conditions"].(schema.Attribute).GetType().(types.SetType).ElemType
-	resizingPvcElemType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["resizing_pvc"].(schema.Attribute).GetType().(types.SetType).ElemType
-	allowedIpRangesElemType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType
-	allowedIpRangesElemObjectType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
-	clusterArchAttrType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["cluster_architecture"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	instanceTypeType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["instance_type"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	pgTypeType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["pg_type"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	pgVersionType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["pg_version"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	cmwType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["maintenance_window"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	// dgAttrType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes().Type().ValueType(ctx).Type(ctx).(types.ObjectType).AttributeTypes()
+
+	dgsSchemaAttr := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()
+	regionType := dgsSchemaAttr["region"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	cloudProviderType := dgsSchemaAttr["cloud_provider"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	storageAttrType := dgsSchemaAttr["storage"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	conditionsElemType := dgsSchemaAttr["conditions"].(schema.Attribute).GetType().(types.SetType).ElemType
+	resizingPvcElemType := dgsSchemaAttr["resizing_pvc"].(schema.Attribute).GetType().(types.SetType).ElemType
+	allowedIpRangesElemType := dgsSchemaAttr["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType
+	allowedIpRangesElemObjectType := dgsSchemaAttr["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
+	clusterArchAttrType := dgsSchemaAttr["cluster_architecture"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	instanceTypeType := dgsSchemaAttr["instance_type"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	pgTypeType := dgsSchemaAttr["pg_type"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	pgVersionType := dgsSchemaAttr["pg_version"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	cmwType := dgsSchemaAttr["maintenance_window"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
 
 	defaultRegion := map[string]attr.Value{
 		"region_id": basetypes.NewStringValue("us-east-1"),
@@ -65,7 +68,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"cluster_architecture_id":   basetypes.NewStringValue("pgd"),
 		"cluster_architecture_name": basetypes.NewStringUnknown(),
 		"nodes":                     basetypes.NewFloat64Value(3),
-		"witness_nodes":             basetypes.NewFloat64Unknown(),
+		"witness_nodes":             basetypes.NewInt64Unknown(),
 	}
 
 	defaultInstanceType := map[string]attr.Value{
@@ -195,7 +198,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"cluster_architecture_id":   basetypes.NewStringValue("pgd"),
 		"cluster_architecture_name": basetypes.NewStringUnknown(),
 		"nodes":                     basetypes.NewFloat64Value(1),
-		"witness_nodes":             basetypes.NewFloat64Unknown(),
+		"witness_nodes":             basetypes.NewInt64Unknown(),
 	})
 
 	updateObject := basetypes.NewObjectValueMust(defaultDgAttrTypes, updateObjectAttr)

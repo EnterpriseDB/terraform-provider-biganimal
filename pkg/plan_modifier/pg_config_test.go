@@ -19,8 +19,9 @@ func Test_customPGConfigModifier_PlanModifySet(t *testing.T) {
 	ctx := context.Background()
 
 	pgdSchema := provider.PgdSchema(ctx)
-	pgConfigElemType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["pg_config"].(schema.Attribute).GetType().(types.SetType).ElemType
-	pgConfigObjectType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["pg_config"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
+	dgsSchemaAttr := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()
+	pgConfigElemType := dgsSchemaAttr["pg_config"].(schema.Attribute).GetType().(types.SetType).ElemType
+	pgConfigObjectType := dgsSchemaAttr["pg_config"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
 
 	defaultPgConfigDefaultsObjects := []attr.Value{}
 

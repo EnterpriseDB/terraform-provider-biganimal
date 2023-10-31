@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func CustomDataGroupDiffConfig() planmodifier.Set {
@@ -43,6 +47,55 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 	newPlan := []attr.Value{}
 
+	fullSchema := req.State.Schema
+
+	var test []terraform.DataGroup
+	// t, _ := req.StateValue.ToTerraformValue(ctx)
+	// t.As(&test)
+	req.StateValue.ElementsAs(ctx, &test, false)
+
+	tft := []tftypes.Value{}
+	for _, v := range req.StateValue.Elements() {
+		t, _ := v.ToTerraformValue(ctx)
+		tft = append(tft, t)
+	}
+
+	vv := map[string]tftypes.Value{
+		"data_groups": tftypes.NewValue(tftypes.Object{
+			AttributeTypes: map[string]tftypes.Type{
+				"cluster_name": tftypes.String,
+			},
+		},
+			map[string]tftypes.Value{
+				"cluster_name": tftypes.NewValue(tftypes.String, "hello"),
+			}),
+	}
+
+	objType := tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"cluster_name": tftypes.String,
+		},
+	}
+
+	rootT := tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"data_groups": objType,
+		},
+	}
+
+	// dgSchemaPath, _ := req.State.Schema.AttributeAtTerraformPath(ctx, tftypes.NewAttributePath().WithAttributeName("data_groups"))
+	// _ = dgSchemaPath
+	// tp, _ := req.State.Schema.AttributeAtTerraformPath(ctx, tftypes.NewAttributePath().WithAttributeName("data_groups"))
+	// _ = tp
+	testState := tfsdk.State{Schema: req.State.Schema, Raw: tftypes.NewValue(rootT, vv)}
+	// testState := tfsdk.State{Raw: tftypes.NewValue(tftypes.Set{}, tft)}
+	// testState := tfsdk.State{}
+	diag := testState.SetAttribute(ctx, path.Root("data_groups"), test)
+	_ = diag
+
+	dgTFType := new(types.Set)
+	testState.GetAttribute(ctx, path.Root("data_groups"), dgTFType)
+
 	// Need to sort the plan according to the state this is so the compare and setting unknowns are correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	// sort the order of the plan the same as the state, state is from the read and plan is from the config
@@ -59,6 +112,25 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				pDgAttrTypes := types.ObjectNull(planDgs[0].(basetypes.ObjectValue).AttributeTypes(ctx))
 				pDgAttrValues := pDg.(basetypes.ObjectValue).Attributes()
 				sDgAttrValues := sDg.(basetypes.ObjectValue).Attributes()
+
+				// pdt, _ := pDg.ToTerraformValue(ctx)
+				// sdt, _ := sDg.ToTerraformValue(ctx)
+				// diff, _ := pdt.Diff(sdt)
+				// _ = diff
+
+				// var dgm terraform.DataGroup
+				// pdt.As(&dgm)
+
+				// var sgm terraform.DataGroup
+				// // sdt.As(&sgm)
+				// sDg.(basetypes.ObjectValue).As(ctx, &sgm, basetypes.ObjectAsOptions{})
+
+				// dgm.ClusterName = sgm.ClusterName
+
+				// sampleState := tfsdk.State{Schema: req.State.Schema}
+				// sampleState.Set(ctx, sgm)
+				// tt := sampleState.Raw
+				// _ = tt
 
 				pDgClusterArch := pDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).Attributes()
 				sDgClusterArch := sDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).Attributes()
@@ -86,6 +158,8 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				storageAttrValues := pDgStorage
 				storageAttrValues["iops"] = sDgStorage["iops"]
 				storageAttrValues["throughput"] = sDgStorage["throughput"]
+
+				pDgStorage["iops"] = sDgStorage["iops"]
 
 				pDgAttrValues["storage"] = types.ObjectValueMust(storageAttrTypes.AttributeTypes(ctx), storageAttrValues)
 
