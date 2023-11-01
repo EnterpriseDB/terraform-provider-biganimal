@@ -47,54 +47,64 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 	newPlan := []attr.Value{}
 
-	fullSchema := req.State.Schema
+	// fullSchema := req.State.Schema
 
 	var test []terraform.DataGroup
 	// t, _ := req.StateValue.ToTerraformValue(ctx)
 	// t.As(&test)
-	req.StateValue.ElementsAs(ctx, &test, false)
+	diag := req.StateValue.ElementsAs(ctx, &test, false)
+	_ = diag
 
-	tft := []tftypes.Value{}
+	tfvv := []tftypes.Value{}
 	for _, v := range req.StateValue.Elements() {
 		t, _ := v.ToTerraformValue(ctx)
-		tft = append(tft, t)
+		tfvv = append(tfvv, t)
 	}
 
-	vv := map[string]tftypes.Value{
-		"data_groups": tftypes.NewValue(tftypes.Object{
-			AttributeTypes: map[string]tftypes.Type{
-				"cluster_name": tftypes.String,
-			},
-		},
-			map[string]tftypes.Value{
-				"cluster_name": tftypes.NewValue(tftypes.String, "hello"),
-			}),
-	}
+	// vv := map[string]tftypes.Value{
+	// 	"data_groups": tftypes.NewValue(tftypes.Object{
+	// 		AttributeTypes: map[string]tftypes.Type{
+	// 			"cluster_name": tftypes.String,
+	// 		},
+	// 	},
+	// 		map[string]tftypes.Value{
+	// 			"cluster_name": tftypes.NewValue(tftypes.String, "hello"),
+	// 		}),
+	// }
 
-	objType := tftypes.Object{
-		AttributeTypes: map[string]tftypes.Type{
-			"cluster_name": tftypes.String,
-		},
-	}
+	// objType := tftypes.Object{
+	// 	AttributeTypes: map[string]tftypes.Type{
+	// 		"cluster_name": tftypes.String,
+	// 	},
+	// }
 
-	rootT := tftypes.Object{
-		AttributeTypes: map[string]tftypes.Type{
-			"data_groups": objType,
-		},
-	}
+	// rootT := tftypes.Object{
+	// 	AttributeTypes: map[string]tftypes.Type{
+	// 		"data_groups": objType,
+	// 	},
+	// }
+
+	// dgTFType := new(types.Set)
+	// req.State.GetAttribute(ctx, path.Root("data_groups"), dgTFType)
+	// dgV, _ := dgTFType.ToTerraformValue(ctx)
+	// ttt := dgV.Type()
 
 	// dgSchemaPath, _ := req.State.Schema.AttributeAtTerraformPath(ctx, tftypes.NewAttributePath().WithAttributeName("data_groups"))
 	// _ = dgSchemaPath
 	// tp, _ := req.State.Schema.AttributeAtTerraformPath(ctx, tftypes.NewAttributePath().WithAttributeName("data_groups"))
 	// _ = tp
-	testState := tfsdk.State{Schema: req.State.Schema, Raw: tftypes.NewValue(rootT, vv)}
+
+	testState := tfsdk.State{Schema: req.State.Schema, Raw: req.State.Raw}
+	// testState := tfsdk.State{Schema: req.State.Schema, Raw: tftypes.NewValue(ttt, tfvv)}
+	// testState := tfsdk.State{Schema: req.State.Schema}
 	// testState := tfsdk.State{Raw: tftypes.NewValue(tftypes.Set{}, tft)}
 	// testState := tfsdk.State{}
-	diag := testState.SetAttribute(ctx, path.Root("data_groups"), test)
+	diag = testState.SetAttribute(ctx, path.Root("data_groups"), test)
 	_ = diag
 
-	dgTFType := new(types.Set)
-	testState.GetAttribute(ctx, path.Root("data_groups"), dgTFType)
+	result := new(types.Set)
+	testState.GetAttribute(ctx, path.Root("data_groups"), result)
+	_ = result
 
 	// Need to sort the plan according to the state this is so the compare and setting unknowns are correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
