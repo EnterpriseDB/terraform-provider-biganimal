@@ -3,15 +3,13 @@ package plan_modifier
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func CustomDataGroupDiffConfig() planmodifier.Set {
@@ -37,160 +35,63 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		return
 	}
 
-	planDgs := resp.PlanValue.Elements()
-	stateDgs := req.StateValue.Elements()
-
-	if len(planDgs) == 0 {
+	if len(resp.PlanValue.Elements()) == 0 {
 		resp.Diagnostics.AddWarning("No data groups in config", "No data groups in config please add at least 1 data group")
 		return
 	}
 
-	newPlan := []attr.Value{}
+	newPlan := []terraform.DataGroup{}
 
-	// fullSchema := req.State.Schema
-
-	var test []terraform.DataGroup
-	// t, _ := req.StateValue.ToTerraformValue(ctx)
-	// t.As(&test)
-	diag := req.StateValue.ElementsAs(ctx, &test, false)
-	_ = diag
-
-	tfvv := []tftypes.Value{}
-	for _, v := range req.StateValue.Elements() {
-		t, _ := v.ToTerraformValue(ctx)
-		tfvv = append(tfvv, t)
+	var stateDgsObs []terraform.DataGroup
+	diag := req.StateValue.ElementsAs(ctx, &stateDgsObs, false)
+	if diag.ErrorsCount() > 0 {
+		resp.Diagnostics.AddError("Element as error", "Element as error for state value")
+		return
 	}
 
-	// vv := map[string]tftypes.Value{
-	// 	"data_groups": tftypes.NewValue(tftypes.Object{
-	// 		AttributeTypes: map[string]tftypes.Type{
-	// 			"cluster_name": tftypes.String,
-	// 		},
-	// 	},
-	// 		map[string]tftypes.Value{
-	// 			"cluster_name": tftypes.NewValue(tftypes.String, "hello"),
-	// 		}),
-	// }
-
-	// objType := tftypes.Object{
-	// 	AttributeTypes: map[string]tftypes.Type{
-	// 		"cluster_name": tftypes.String,
-	// 	},
-	// }
-
-	// rootT := tftypes.Object{
-	// 	AttributeTypes: map[string]tftypes.Type{
-	// 		"data_groups": objType,
-	// 	},
-	// }
-
-	// dgTFType := new(types.Set)
-	// req.State.GetAttribute(ctx, path.Root("data_groups"), dgTFType)
-	// dgV, _ := dgTFType.ToTerraformValue(ctx)
-	// ttt := dgV.Type()
-
-	// dgSchemaPath, _ := req.State.Schema.AttributeAtTerraformPath(ctx, tftypes.NewAttributePath().WithAttributeName("data_groups"))
-	// _ = dgSchemaPath
-	// tp, _ := req.State.Schema.AttributeAtTerraformPath(ctx, tftypes.NewAttributePath().WithAttributeName("data_groups"))
-	// _ = tp
-
-	testState := tfsdk.State{Schema: req.State.Schema, Raw: req.State.Raw}
-	// testState := tfsdk.State{Schema: req.State.Schema, Raw: tftypes.NewValue(ttt, tfvv)}
-	// testState := tfsdk.State{Schema: req.State.Schema}
-	// testState := tfsdk.State{Raw: tftypes.NewValue(tftypes.Set{}, tft)}
-	// testState := tfsdk.State{}
-	diag = testState.SetAttribute(ctx, path.Root("data_groups"), test)
-	_ = diag
-
-	result := new(types.Set)
-	testState.GetAttribute(ctx, path.Root("data_groups"), result)
-	_ = result
+	var planDgsObs []terraform.DataGroup
+	diag = resp.PlanValue.ElementsAs(ctx, &planDgsObs, false)
+	if diag.ErrorsCount() > 0 {
+		resp.Diagnostics.AddError("Element as error", "Element as error for plan value")
+		return
+	}
 
 	// Need to sort the plan according to the state this is so the compare and setting unknowns are correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	// sort the order of the plan the same as the state, state is from the read and plan is from the config
 	// plan will compare against state from read() and plan will also verify it is the same as the config via schema types
-	for _, sDg := range stateDgs {
-		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
-		for _, pDg := range planDgs {
-			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
-			if stateRegion.Equal(planRegion) {
-				// set the unknowns manually for delete and add group.
-				// if we don't set manually and it is set the same way as useStateForUnknown,
-				// then when it puts the state in plan value it will be set by plan dg index
-				// against state dg index which will be in wrong order if delete a group.
-				pDgAttrTypes := types.ObjectNull(planDgs[0].(basetypes.ObjectValue).AttributeTypes(ctx))
-				pDgAttrValues := pDg.(basetypes.ObjectValue).Attributes()
-				sDgAttrValues := sDg.(basetypes.ObjectValue).Attributes()
+	for _, sDg := range stateDgsObs {
+		for _, pDg := range planDgsObs {
+			// set the unknowns manually for delete and add group.
+			// if we don't set manually and it is set the same way as useStateForUnknown,
+			// then when it puts the state in plan value it will be set by plan dg index
+			// against state dg index which will be in wrong order if delete a group.
+			if reflect.DeepEqual(sDg.Region, pDg.Region) {
+				pDg.ClusterArchitecture.ClusterArchitectureName = sDg.ClusterArchitecture.ClusterArchitectureName
+				pDg.ClusterArchitecture.WitnessNodes = sDg.ClusterArchitecture.WitnessNodes
+				pDg.ClusterName = sDg.ClusterName
+				pDg.ClusterType = sDg.ClusterType
+				pDg.Conditions = sDg.Conditions
+				pDg.Connection = sDg.Connection
+				pDg.CreatedAt = sDg.CreatedAt
+				pDg.GroupId = sDg.GroupId
+				pDg.LogsUrl = sDg.LogsUrl
+				pDg.MetricsUrl = sDg.MetricsUrl
+				pDg.Phase = sDg.Phase
+				pDg.ResizingPvc = sDg.ResizingPvc
+				pDg.Storage.Iops = sDg.Storage.Iops
+				pDg.Storage.Throughput = sDg.Storage.Throughput
 
-				// pdt, _ := pDg.ToTerraformValue(ctx)
-				// sdt, _ := sDg.ToTerraformValue(ctx)
-				// diff, _ := pdt.Diff(sdt)
-				// _ = diff
-
-				// var dgm terraform.DataGroup
-				// pdt.As(&dgm)
-
-				// var sgm terraform.DataGroup
-				// // sdt.As(&sgm)
-				// sDg.(basetypes.ObjectValue).As(ctx, &sgm, basetypes.ObjectAsOptions{})
-
-				// dgm.ClusterName = sgm.ClusterName
-
-				// sampleState := tfsdk.State{Schema: req.State.Schema}
-				// sampleState.Set(ctx, sgm)
-				// tt := sampleState.Raw
-				// _ = tt
-
-				pDgClusterArch := pDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).Attributes()
-				sDgClusterArch := sDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).Attributes()
-				clusterArchAttrTypes := types.ObjectNull(pDgAttrValues["cluster_architecture"].(basetypes.ObjectValue).AttributeTypes(ctx))
-				ClusterArchAttrValues := pDgClusterArch
-				ClusterArchAttrValues["cluster_architecture_name"] = sDgClusterArch["cluster_architecture_name"]
-				ClusterArchAttrValues["witness_nodes"] = sDgClusterArch["witness_nodes"]
-
-				pDgAttrValues["cluster_architecture"] = types.ObjectValueMust(clusterArchAttrTypes.AttributeTypes(ctx), ClusterArchAttrValues)
-
-				pDgAttrValues["cluster_name"] = sDgAttrValues["cluster_name"]
-				pDgAttrValues["cluster_type"] = sDgAttrValues["cluster_type"]
-				pDgAttrValues["conditions"] = sDgAttrValues["conditions"]
-				pDgAttrValues["connection_uri"] = sDgAttrValues["connection_uri"]
-				pDgAttrValues["created_at"] = sDgAttrValues["created_at"]
-				pDgAttrValues["group_id"] = sDgAttrValues["group_id"]
-				pDgAttrValues["logs_url"] = sDgAttrValues["logs_url"]
-				pDgAttrValues["metrics_url"] = sDgAttrValues["metrics_url"]
-				pDgAttrValues["phase"] = sDgAttrValues["phase"]
-				pDgAttrValues["resizing_pvc"] = sDgAttrValues["resizing_pvc"]
-
-				pDgStorage := pDgAttrValues["storage"].(basetypes.ObjectValue).Attributes()
-				sDgStorage := sDgAttrValues["storage"].(basetypes.ObjectValue).Attributes()
-				storageAttrTypes := types.ObjectNull(pDgAttrValues["storage"].(basetypes.ObjectValue).AttributeTypes(ctx))
-				storageAttrValues := pDgStorage
-				storageAttrValues["iops"] = sDgStorage["iops"]
-				storageAttrValues["throughput"] = sDgStorage["throughput"]
-
-				pDgStorage["iops"] = sDgStorage["iops"]
-
-				pDgAttrValues["storage"] = types.ObjectValueMust(storageAttrTypes.AttributeTypes(ctx), storageAttrValues)
-
-				dgOb, diag := types.ObjectValue(pDgAttrTypes.AttributeTypes(ctx), pDgAttrValues)
-				if diag.HasError() {
-					resp.Diagnostics.Append(diag...)
-					return
-				}
-
-				newPlan = append(newPlan, dgOb)
+				newPlan = append(newPlan, pDg)
 			}
 		}
 	}
 
 	// add new groups
-	for _, pDg := range planDgs {
+	for _, pDg := range planDgsObs {
 		planGroupExistsInStateGroups := false
-		planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
-		for _, sDg := range stateDgs {
-			stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
-			if stateRegion.Equal(planRegion) {
+		for _, sDg := range stateDgsObs {
+			if reflect.DeepEqual(sDg.Region, pDg.Region) {
 				planGroupExistsInStateGroups = true
 				break
 			}
@@ -198,24 +99,22 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 		if !planGroupExistsInStateGroups {
 			newPlan = append(newPlan, pDg)
-			resp.Diagnostics.AddWarning("Adding new data group", fmt.Sprintf("Adding new data group with region %v", planRegion))
+			resp.Diagnostics.AddWarning("Adding new data group", fmt.Sprintf("Adding new data group with region %v", pDg.Region))
 		}
 	}
 
 	// remove groups
-	for _, sDg := range stateDgs {
+	for _, sDg := range stateDgsObs {
 		stateGroupExistsInPlanGroups := false
-		stateRegion := sDg.(basetypes.ObjectValue).Attributes()["region"]
-		for _, pDg := range planDgs {
-			planRegion := pDg.(basetypes.ObjectValue).Attributes()["region"]
-			if stateRegion.Equal(planRegion) {
+		for _, pDg := range planDgsObs {
+			if reflect.DeepEqual(sDg.Region, pDg.Region) {
 				stateGroupExistsInPlanGroups = true
 				break
 			}
 		}
 
 		if !stateGroupExistsInPlanGroups {
-			resp.Diagnostics.AddWarning("Removing data group", fmt.Sprintf("Removing data group with region %v", stateRegion))
+			resp.Diagnostics.AddWarning("Removing data group", fmt.Sprintf("Removing data group with region %v", sDg.Region))
 		}
 	}
 
@@ -223,170 +122,130 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		resp.Diagnostics.AddWarning("Plan data group generation error", "Plan data group error: regions may not be matching, regions missing in config or no data groups in config")
 		return
 	}
-	resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
 
-	for _, planDg := range resp.PlanValue.Elements() {
-		if stateDgs == nil {
+	customState := tfsdk.State{Schema: req.Plan.Schema, Raw: req.Plan.Raw}
+	diag = customState.SetAttribute(ctx, path.Root("data_groups"), planDgsObs)
+	if diag.ErrorsCount() > 0 {
+		resp.Diagnostics.AddError("Set attribute error", "Set attribute data groups error")
+		return
+	}
+
+	tfDgs := new(types.Set)
+	customState.GetAttribute(ctx, path.Root("data_groups"), tfDgs)
+
+	resp.PlanValue = *tfDgs
+
+	for _, pDg := range planDgsObs {
+		if len(stateDgsObs) == 0 {
 			return
 		}
-		var stateDgKey *int
-		for k := range stateDgs {
-			if stateDgs[k].(basetypes.ObjectValue).Attributes()["region"].Equal(planDg.(basetypes.ObjectValue).Attributes()["region"]) {
-				k := k
-				stateDgKey = &k
+		var foundStateDg *terraform.DataGroup
+		for _, sDg := range stateDgsObs {
+			if reflect.DeepEqual(sDg.Region, pDg.Region) {
+				foundStateDg = &sDg
 				break
 			}
 		}
 
 		// data group may not exist in state because user is adding a new group with a new region
-		if stateDgKey == nil {
+		if foundStateDg == nil {
 			continue
 		}
 
-		if stateDgKey != nil {
+		if foundStateDg != nil {
 
 			// allowed ips
-			planAllowedIps := planDg.(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
-			stateAllowedIps := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["allowed_ip_ranges"]
-
-			if !planAllowedIps.Equal(stateAllowedIps) {
+			if !reflect.DeepEqual(pDg.AllowedIpRanges, foundStateDg.AllowedIpRanges) {
 				resp.Diagnostics.AddWarning("Allowed IP ranges changed", fmt.Sprintf("Allowed IP ranges have changed from %v to %v",
-					stateAllowedIps,
-					planAllowedIps))
+					*foundStateDg.AllowedIpRanges,
+					*pDg.AllowedIpRanges))
 			}
 
 			// backup retention period
-			planBackupRetention := planDg.(basetypes.ObjectValue).Attributes()["backup_retention_period"]
-			stateBackupRetention := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["backup_retention_period"]
-
-			if !planBackupRetention.Equal(stateBackupRetention) {
+			if !reflect.DeepEqual(pDg.BackupRetentionPeriod, foundStateDg.BackupRetentionPeriod) {
 				resp.Diagnostics.AddWarning("Backup retention changed", fmt.Sprintf("backup retention period has changed from %v to %v",
-					stateBackupRetention,
-					planBackupRetention))
+					*foundStateDg.BackupRetentionPeriod,
+					*pDg.BackupRetentionPeriod))
 			}
 
 			// cluster architecture
-			planArch := planDg.(basetypes.ObjectValue).Attributes()["cluster_architecture"]
-			stateArch := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["cluster_architecture"]
-
-			pArchId := planArch.(basetypes.ObjectValue).Attributes()["cluster_architecture_id"]
-			pArchWitnessNodes := planArch.(basetypes.ObjectValue).Attributes()["witness_nodes"]
-			pArchNodes := planArch.(basetypes.ObjectValue).Attributes()["nodes"]
-
-			sArchId := stateArch.(basetypes.ObjectValue).Attributes()["cluster_architecture_id"]
-			sArchWitnessNodes := stateArch.(basetypes.ObjectValue).Attributes()["witness_nodes"]
-			sArchNodes := stateArch.(basetypes.ObjectValue).Attributes()["nodes"]
-
-			if !pArchId.Equal(sArchId) || !pArchWitnessNodes.Equal(sArchWitnessNodes) || !pArchNodes.Equal(sArchNodes) {
+			if pDg.ClusterArchitecture.ClusterArchitectureId != foundStateDg.ClusterArchitecture.ClusterArchitectureId ||
+				pDg.ClusterArchitecture.Nodes != foundStateDg.ClusterArchitecture.Nodes {
 				resp.Diagnostics.AddWarning("Cluster architecture changed", fmt.Sprintf("Cluster architecture changed from %v to %v",
-					stateArch,
-					planArch))
+					*foundStateDg.ClusterArchitecture,
+					*pDg.ClusterArchitecture))
 			}
 
 			// csp auth
-			planCspAuth := planDg.(basetypes.ObjectValue).Attributes()["csp_auth"]
-			stateCspAuth := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["csp_auth"]
-
-			if !planCspAuth.Equal(stateCspAuth) {
+			if !reflect.DeepEqual(pDg.CspAuth, foundStateDg.CspAuth) {
 				resp.Diagnostics.AddWarning("CSP auth changed", fmt.Sprintf("CSP auth changed from %v to %v",
-					stateCspAuth,
-					planCspAuth))
+					*foundStateDg.CspAuth,
+					*pDg.CspAuth))
 			}
 
 			// instance type
-			planInstanceType := planDg.(basetypes.ObjectValue).Attributes()["instance_type"]
-			stateInstanceType := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["instance_type"]
-
-			if !planInstanceType.Equal(stateInstanceType) {
+			if !reflect.DeepEqual(pDg.InstanceType, foundStateDg.InstanceType) {
 				resp.Diagnostics.AddWarning("Instance type changed", fmt.Sprintf("Instance type changed from %v to %v",
-					stateInstanceType,
-					planInstanceType))
+					*foundStateDg.InstanceType,
+					*pDg.InstanceType))
 			}
 
 			// storage
-			planStorage := planDg.(basetypes.ObjectValue).Attributes()["storage"]
-			stateStorage := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["storage"]
-
-			pStorageType := planStorage.(basetypes.ObjectValue).Attributes()["volume_type"]
-			pStorageProperties := planStorage.(basetypes.ObjectValue).Attributes()["volume_properties"]
-			pStorageSize := planStorage.(basetypes.ObjectValue).Attributes()["size"]
-
-			sStorageType := stateStorage.(basetypes.ObjectValue).Attributes()["volume_type"]
-			sStorageProperties := stateStorage.(basetypes.ObjectValue).Attributes()["volume_properties"]
-			sStorageSize := stateStorage.(basetypes.ObjectValue).Attributes()["size"]
-
-			if !pStorageType.Equal(sStorageType) || !pStorageProperties.Equal(sStorageProperties) || !pStorageSize.Equal(sStorageSize) {
+			if pDg.Storage.VolumeTypeId != foundStateDg.Storage.VolumeTypeId ||
+				pDg.Storage.VolumePropertiesId != foundStateDg.Storage.VolumePropertiesId ||
+				pDg.Storage.Size != foundStateDg.Storage.Size {
 				resp.Diagnostics.AddWarning("Storage changed", fmt.Sprintf("Storage changed from %v to %v",
-					stateStorage,
-					planStorage))
+					*foundStateDg.Storage,
+					*pDg.Storage))
 			}
 
 			// pg type
-			planPGType := planDg.(basetypes.ObjectValue).Attributes()["pg_type"]
-			statePGType := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_type"]
-
-			if !planPGType.Equal(statePGType) {
+			if !reflect.DeepEqual(pDg.PgType, foundStateDg.PgType) {
 				resp.Diagnostics.AddError("PG type cannot be changed",
 					fmt.Sprintf("PG type cannot be changed. PG type changed from expected value %v to %v in config",
-						statePGType,
-						planPGType))
+						*foundStateDg.PgType,
+						*pDg.PgType))
 				return
 			}
 
 			// pg version
-			planPGVersion := planDg.(basetypes.ObjectValue).Attributes()["pg_version"]
-			statePGVersion := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_version"]
-
-			if !planPGVersion.Equal(statePGVersion) {
+			if !reflect.DeepEqual(pDg.PgVersion, foundStateDg.PgVersion) {
 				resp.Diagnostics.AddError("PG version cannot be changed",
 					fmt.Sprintf("PG version cannot be changed. PG version changed from expected value %v to %v in config",
-						statePGVersion,
-						planPGVersion))
+						*foundStateDg.PgVersion,
+						*pDg.PgVersion))
 				return
 			}
 
 			// networking
-			planNetworking := planDg.(basetypes.ObjectValue).Attributes()["private_networking"]
-			stateNetworking := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["private_networking"]
-
-			if !planNetworking.Equal(stateNetworking) {
+			if !reflect.DeepEqual(pDg.PrivateNetworking, foundStateDg.PrivateNetworking) {
 				resp.Diagnostics.AddWarning("Private networking changed", fmt.Sprintf("Private networking changed from %v to %v",
-					stateNetworking,
-					planNetworking))
+					*foundStateDg.PrivateNetworking,
+					*pDg.PrivateNetworking))
 			}
 
 			// cloud provider
-			planCloudProvider := planDg.(basetypes.ObjectValue).Attributes()["cloud_provider"]
-			stateCloudProvider := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["cloud_provider"]
-
-			if !planCloudProvider.Equal(stateCloudProvider) {
+			if !reflect.DeepEqual(pDg.Provider, foundStateDg.Provider) {
 				resp.Diagnostics.AddError("Cloud provider cannot be changed",
 					fmt.Sprintf("Cloud provider cannot be changed. Cloud provider changed from expected value: %v to %v in config",
-						stateCloudProvider,
-						planCloudProvider))
+						*foundStateDg.Provider,
+						*pDg.Provider))
 				return
 			}
 
 			// region
-			planRegion := planDg.(basetypes.ObjectValue).Attributes()["region"]
-			stateRegion := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["region"]
-
-			if !planRegion.Equal(stateRegion) {
+			if !reflect.DeepEqual(pDg.Region, foundStateDg.Region) {
 				resp.Diagnostics.AddWarning("Region changed", fmt.Sprintf("Region changed from %v to %v",
-					stateRegion,
-					planRegion))
+					*foundStateDg.Region,
+					*pDg.Region))
 			}
 
 			// maintenance window
-			planMW := planDg.(basetypes.ObjectValue).Attributes()["maintenance_window"]
-			stateMw := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["maintenance_window"]
-
-			if !planMW.Equal(stateMw) {
+			if !reflect.DeepEqual(pDg.MaintenanceWindow, foundStateDg.MaintenanceWindow) {
 				resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v",
-					stateMw,
-					planMW))
+					*foundStateDg.MaintenanceWindow,
+					*pDg.MaintenanceWindow))
 			}
 		}
-
 	}
 }
