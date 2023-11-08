@@ -45,14 +45,14 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	var stateDgsObs []terraform.DataGroup
 	diag := req.StateValue.ElementsAs(ctx, &stateDgsObs, false)
 	if diag.ErrorsCount() > 0 {
-		resp.Diagnostics.AddError("Element as error", "Element as error for state value")
+		resp.Diagnostics.Append(diag...)
 		return
 	}
 
 	var planDgsObs []terraform.DataGroup
 	diag = resp.PlanValue.ElementsAs(ctx, &planDgsObs, false)
 	if diag.ErrorsCount() > 0 {
-		resp.Diagnostics.AddError("Element as error", "Element as error for plan value")
+		resp.Diagnostics.Append(diag...)
 		return
 	}
 
@@ -126,7 +126,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	customState := tfsdk.State{Schema: req.Plan.Schema, Raw: req.Plan.Raw}
 	diag = customState.SetAttribute(ctx, path.Root("data_groups"), planDgsObs)
 	if diag.ErrorsCount() > 0 {
-		resp.Diagnostics.AddError("Set attribute error", "Set attribute data groups error")
+		resp.Diagnostics.Append(diag...)
 		return
 	}
 
