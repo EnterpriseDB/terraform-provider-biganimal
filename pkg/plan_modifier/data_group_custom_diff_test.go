@@ -202,6 +202,9 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 				"start_time": basetypes.NewStringValue("06:00"),
 			},
 		),
+		"service_account_ids":      basetypes.NewSetValueMust(saElemType, defaultSa),
+		"pe_allowed_principal_ids": basetypes.NewSetValueMust(peElemType, defaultPe),
+		"pg_config":                basetypes.NewSetValueMust(pgElemType, defaultPg),
 	}
 
 	_ = addGroupObject
@@ -331,40 +334,42 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		expectedWarningSummary []string
 		expectedPlanElements   []attr.Value
 	}{
-		// {
-		// 	name: "Add dg expect success",
-		// 	args: args{
-		// 		req: planmodifier.SetRequest{
-		// 			StateValue: defaultDgSet,
-		// 		},
-		// 		resp: &planmodifier.SetResponse{
-		// 			PlanValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-		// 				append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
-		// 			),
-		// 		},
-		// 	},
-		// 	expectedWarningsCount:  1,
-		// 	expectedWarningSummary: []string{"Adding new data group"},
-		// 	expectedPlanElements: append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes,
-		// 		addGroupObject,
-		// 	)),
-		// },
-		// {
-		// 	name: "Remove dg expect success",
-		// 	args: args{
-		// 		req: planmodifier.SetRequest{
-		// 			StateValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-		// 				append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
-		// 			),
-		// 		},
-		// 		resp: &planmodifier.SetResponse{
-		// 			PlanValue: defaultDgSet,
-		// 		},
-		// 	},
-		// 	expectedWarningsCount:  1,
-		// 	expectedWarningSummary: []string{"Removing data group"},
-		// 	expectedPlanElements:   defaultDgObjects,
-		// },
+		{
+			name: "Add dg expect success",
+			args: args{
+				ctx: ctx,
+				req: planmodifier.SetRequest{
+					Plan:       tfsdk.Plan{Schema: sss, Raw: tftypes.NewValue(rootOb.Type(ctx).TerraformType(ctx), vv)},
+					StateValue: defaultDgSet,
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
+						append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
+					),
+				},
+			},
+			expectedWarningsCount:  1,
+			expectedWarningSummary: []string{"Adding new data group"},
+			expectedPlanElements:   append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
+		},
+		{
+			name: "Remove dg expect success",
+			args: args{
+				ctx: ctx,
+				req: planmodifier.SetRequest{
+					Plan: tfsdk.Plan{Schema: sss, Raw: tftypes.NewValue(rootOb.Type(ctx).TerraformType(ctx), vv)},
+					StateValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
+						append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
+					),
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: defaultDgSet,
+				},
+			},
+			expectedWarningsCount:  1,
+			expectedWarningSummary: []string{"Removing data group"},
+			expectedPlanElements:   defaultDgObjects,
+		},
 		{
 			name: "Update object expect success",
 			args: args{
@@ -377,11 +382,11 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 					PlanValue: updateSet,
 				},
 			},
-			expectedWarningsCount: 1,
+			expectedWarningsCount: 3,
 			expectedWarningSummary: []string{
-				//"Allowed IP ranges changed",
+				"Allowed IP ranges changed",
 				"Backup retention changed",
-				//"Cluster architecture changed",
+				"Cluster architecture changed",
 			},
 			expectedPlanElements: updateObjects,
 		},
