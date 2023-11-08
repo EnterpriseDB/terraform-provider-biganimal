@@ -97,43 +97,19 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	tfDefaultDgs := new(types.Set)
 	customState.GetAttribute(ctx, path.Root("data_groups"), tfDefaultDgs)
 
-	// addGroupObject := map[string]attr.Value{
-	// 	"region": basetypes.NewObjectValueMust(regionType,
-	// 		map[string]attr.Value{
-	// 			"region_id": basetypes.NewStringValue("us-east-2"),
-	// 		},
-	// 	),
-	// 	"cloud_provider":          basetypes.NewObjectValueMust(cloudProviderType, defaultCloudProvider),
-	// 	"storage":                 basetypes.NewObjectValueMust(storageAttrType, defaultStorage),
-	// 	"cluster_name":            basetypes.NewStringUnknown(),
-	// 	"cluster_type":            basetypes.NewStringUnknown(),
-	// 	"conditions":              basetypes.NewSetUnknown(conditionsElemType),
-	// 	"connection_uri":          basetypes.NewStringUnknown(),
-	// 	"created_at":              basetypes.NewStringUnknown(),
-	// 	"group_id":                basetypes.NewStringUnknown(),
-	// 	"logs_url":                basetypes.NewStringUnknown(),
-	// 	"metrics_url":             basetypes.NewStringUnknown(),
-	// 	"phase":                   basetypes.NewStringUnknown(),
-	// 	"resizing_pvc":            basetypes.NewSetUnknown(resizingPvcElemType),
-	// 	"allowed_ip_ranges":       basetypes.NewSetValueMust(allowedIpRangesElemType, defaultAllowedIpRange),
-	// 	"backup_retention_period": basetypes.NewStringValue(defaultBackupRetentionPeriod),
-	// 	"cluster_architecture":    basetypes.NewObjectValueMust(clusterArchAttrType, defaultClusterArch),
-	// 	"csp_auth":                basetypes.NewBoolValue(false),
-	// 	"instance_type":           basetypes.NewObjectValueMust(instanceTypeType, defaultInstanceType),
-	// 	"pg_type":                 basetypes.NewObjectValueMust(pgTypeType, defaultPgType),
-	// 	"pg_version":              basetypes.NewObjectValueMust(pgVersionType, defaultPgVersion),
-	// 	"private_networking":      basetypes.NewBoolValue(false),
-	// 	"maintenance_window": basetypes.NewObjectValueMust(cmwType,
-	// 		map[string]attr.Value{
-	// 			"is_enabled": basetypes.NewBoolValue(true),
-	// 			"start_day":  basetypes.NewFloat64Value(2),
-	// 			"start_time": basetypes.NewStringValue("06:00"),
-	// 		},
-	// 	),
-	// 	"service_account_ids":      basetypes.NewSetValueMust(saElemType, []attr.Value{}),
-	// 	"pe_allowed_principal_ids": basetypes.NewSetValueMust(peElemType, []attr.Value{}),
-	// 	"pg_config":                basetypes.NewSetValueMust(pgElemType, []attr.Value{}),
-	// }
+	addedDgs := []terraform.DataGroup(defaultDgs)
+	addDg := terraform.DataGroup(defaultDgs[0])
+	addedDgs = append(addedDgs, addDg)
+
+	customState = tfsdk.State{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)}
+	diag = customState.SetAttribute(ctx, path.Root("data_groups"), addedDgs)
+	if diag.ErrorsCount() > 0 {
+		_ = fmt.Errorf("set attribute data groups error")
+		return
+	}
+
+	tfAddedDgs := new(types.Set)
+	customState.GetAttribute(ctx, path.Root("data_groups"), tfAddedDgs)
 
 	updatedDgs := []terraform.DataGroup(defaultDgs)
 	updatedDgs[0].AllowedIpRanges = &[]models.AllowedIpRange{
@@ -173,42 +149,38 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		expectedWarningSummary []string
 		expectedPlanElements   []attr.Value
 	}{
-		// {
-		// 	name: "Add dg expect success",
-		// 	args: args{
-		// 		ctx: ctx,
-		// 		req: planmodifier.SetRequest{
-		// 			Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
-		// 			StateValue: defaultDgSet,
-		// 		},
-		// 		resp: &planmodifier.SetResponse{
-		// 			PlanValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-		// 				append(defaultDgObjects, basetypes.NewObjectValueMust(dgElemAttrType, addGroupObject)),
-		// 			),
-		// 		},
-		// 	},
-		// 	expectedWarningsCount:  1,
-		// 	expectedWarningSummary: []string{"Adding new data group"},
-		// 	expectedPlanElements:   append(defaultDgObjects, basetypes.NewObjectValueMust(dgElemAttrType, addGroupObject)),
-		// },
-		// {
-		// 	name: "Remove dg expect success",
-		// 	args: args{
-		// 		ctx: ctx,
-		// 		req: planmodifier.SetRequest{
-		// 			Plan: tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
-		// 			StateValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-		// 				append(defaultDgObjects, basetypes.NewObjectValueMust(dgElemAttrType, addGroupObject)),
-		// 			),
-		// 		},
-		// 		resp: &planmodifier.SetResponse{
-		// 			PlanValue: defaultDgSet,
-		// 		},
-		// 	},
-		// 	expectedWarningsCount:  1,
-		// 	expectedWarningSummary: []string{"Removing data group"},
-		// 	expectedPlanElements:   defaultDgObjects,
-		// },
+		{
+			name: "Add dg expect success",
+			args: args{
+				ctx: ctx,
+				req: planmodifier.SetRequest{
+					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
+					StateValue: *tfDefaultDgs,
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: *tfAddedDgs,
+				},
+			},
+			expectedWarningsCount:  1,
+			expectedWarningSummary: []string{"Adding new data group"},
+			expectedPlanElements:   tfAddedDgs.Elements(),
+		},
+		{
+			name: "Remove dg expect success",
+			args: args{
+				ctx: ctx,
+				req: planmodifier.SetRequest{
+					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
+					StateValue: *tfAddedDgs,
+				},
+				resp: &planmodifier.SetResponse{
+					PlanValue: *tfUpdatedDgs,
+				},
+			},
+			expectedWarningsCount:  1,
+			expectedWarningSummary: []string{"Removing data group"},
+			expectedPlanElements:   tfUpdatedDgs.Elements(),
+		},
 		{
 			name: "Update object expect success",
 			args: args{
