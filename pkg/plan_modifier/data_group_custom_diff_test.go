@@ -24,6 +24,12 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 
 	pgdSchema := provider.PgdSchema(ctx)
 
+	dgSchema := schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"data_groups": pgdSchema.Attributes["data_groups"].(schema.NestedAttribute),
+		},
+	}
+
 	// dgAttrType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes().Type().ValueType(ctx).Type(ctx).(types.ObjectType).AttributeTypes()
 
 	dgsSchemaAttr := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()
@@ -42,6 +48,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	saElemType := dgsSchemaAttr["service_account_ids"].(schema.Attribute).GetType().(types.SetType).ElemType
 	peElemType := dgsSchemaAttr["pe_allowed_principal_ids"].(schema.Attribute).GetType().(types.SetType).ElemType
 	pgElemType := dgsSchemaAttr["pg_config"].(schema.Attribute).GetType().(types.SetType).ElemType
+	dgElemAttrType := pgdSchema.Attributes["data_groups"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
 
 	defaultRegion := map[string]attr.Value{
 		"region_id": basetypes.NewStringValue("us-east-1"),
@@ -125,35 +132,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"pg_config":                basetypes.NewSetValueMust(pgElemType, []attr.Value{}),
 	}
 
-	defaultDgAttrTypes := map[string]attr.Type{
-		"region":                   defaultDgAttr["region"].Type(ctx),
-		"cloud_provider":           defaultDgAttr["cloud_provider"].Type(ctx),
-		"storage":                  defaultDgAttr["storage"].Type(ctx),
-		"cluster_name":             defaultDgAttr["cluster_name"].Type(ctx),
-		"cluster_type":             defaultDgAttr["cluster_type"].Type(ctx),
-		"conditions":               defaultDgAttr["conditions"].Type(ctx),
-		"connection_uri":           defaultDgAttr["connection_uri"].Type(ctx),
-		"created_at":               defaultDgAttr["created_at"].Type(ctx),
-		"group_id":                 defaultDgAttr["group_id"].Type(ctx),
-		"logs_url":                 defaultDgAttr["logs_url"].Type(ctx),
-		"metrics_url":              defaultDgAttr["metrics_url"].Type(ctx),
-		"phase":                    defaultDgAttr["phase"].Type(ctx),
-		"resizing_pvc":             defaultDgAttr["resizing_pvc"].Type(ctx),
-		"allowed_ip_ranges":        defaultDgAttr["allowed_ip_ranges"].Type(ctx),
-		"backup_retention_period":  defaultDgAttr["backup_retention_period"].Type(ctx),
-		"cluster_architecture":     defaultDgAttr["cluster_architecture"].Type(ctx),
-		"csp_auth":                 defaultDgAttr["csp_auth"].Type(ctx),
-		"instance_type":            defaultDgAttr["instance_type"].Type(ctx),
-		"pg_type":                  defaultDgAttr["pg_type"].Type(ctx),
-		"pg_version":               defaultDgAttr["pg_version"].Type(ctx),
-		"private_networking":       defaultDgAttr["private_networking"].Type(ctx),
-		"maintenance_window":       defaultDgAttr["maintenance_window"].Type(ctx),
-		"service_account_ids":      defaultDgAttr["service_account_ids"].Type(ctx),
-		"pe_allowed_principal_ids": defaultDgAttr["pe_allowed_principal_ids"].Type(ctx),
-		"pg_config":                defaultDgAttr["pg_config"].Type(ctx),
-	}
-
-	defaultDgObject := basetypes.NewObjectValueMust(defaultDgAttrTypes, defaultDgAttr)
+	defaultDgObject := basetypes.NewObjectValueMust(dgElemAttrType, defaultDgAttr)
 	defaultDgObjects := []attr.Value{}
 	defaultDgObjects = append(defaultDgObjects, defaultDgObject)
 	defaultDgSet := basetypes.NewSetValueMust(defaultDgObject.Type(ctx), defaultDgObjects)
@@ -216,7 +195,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"witness_nodes":             basetypes.NewInt64Unknown(),
 	})
 
-	updateObject := basetypes.NewObjectValueMust(defaultDgAttrTypes, updateObjectAttr)
+	updateObject := basetypes.NewObjectValueMust(dgElemAttrType, updateObjectAttr)
 	updateObjects := []attr.Value{}
 	updateObjects = append(updateObjects, updateObject)
 	updateSet := basetypes.NewSetValueMust(defaultDgObject.Type(ctx), updateObjects)
@@ -238,12 +217,6 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			"data_groups": defaultDgSet,
 		},
 	)
-
-	dgSchema := schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"data_groups": pgdSchema.Attributes["data_groups"].(schema.NestedAttribute),
-		},
-	}
 
 	type args struct {
 		ctx  context.Context
@@ -268,13 +241,13 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 				},
 				resp: &planmodifier.SetResponse{
 					PlanValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-						append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
+						append(defaultDgObjects, basetypes.NewObjectValueMust(dgElemAttrType, addGroupObject)),
 					),
 				},
 			},
 			expectedWarningsCount:  1,
 			expectedWarningSummary: []string{"Adding new data group"},
-			expectedPlanElements:   append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
+			expectedPlanElements:   append(defaultDgObjects, basetypes.NewObjectValueMust(dgElemAttrType, addGroupObject)),
 		},
 		{
 			name: "Remove dg expect success",
@@ -283,7 +256,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 				req: planmodifier.SetRequest{
 					Plan: tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.Type(ctx).TerraformType(ctx), rawRootValue)},
 					StateValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-						append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
+						append(defaultDgObjects, basetypes.NewObjectValueMust(dgElemAttrType, addGroupObject)),
 					),
 				},
 				resp: &planmodifier.SetResponse{
