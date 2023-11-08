@@ -32,6 +32,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
@@ -657,6 +658,34 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			return
 		}
 
+		var svAccIdsGo []string
+		if !svAccIds.IsNull() && !svAccIds.IsUnknown() {
+			diag := svAccIds.ElementsAs(ctx, &svAccIdsGo, false)
+			resp.Diagnostics.Append(diag...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
+
+		var principalIdsGo []string
+		if !principalIds.IsNull() && !principalIds.IsUnknown() {
+			diag := principalIds.ElementsAs(ctx, &principalIdsGo, false)
+			resp.Diagnostics.Append(diag...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
+
+		var sIdResult *[]string
+		if len(svAccIdsGo) > 0 {
+			sIdResult = &svAccIdsGo
+		}
+
+		var pIdResult *[]string
+		if len(principalIdsGo) > 0 {
+			pIdResult = &principalIdsGo
+		}
+
 		apiDGModel := pgdApi.DataGroup{
 			AllowedIpRanges:       v.AllowedIpRanges,
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
@@ -672,8 +701,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Region:                v.Region,
 			Storage:               storage,
-			ServiceAccountIds:     svAccIds,
-			PeAllowedPrincipalIds: principalIds,
+			ServiceAccountIds:     sIdResult,
+			PeAllowedPrincipalIds: pIdResult,
 		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
@@ -847,6 +876,34 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			return
 		}
 
+		var svAccIdsGo []string
+		if !svAccIds.IsNull() && !svAccIds.IsUnknown() {
+			diag := svAccIds.ElementsAs(ctx, &svAccIdsGo, false)
+			resp.Diagnostics.Append(diag...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
+
+		var principalIdsGo []string
+		if !principalIds.IsNull() && !principalIds.IsUnknown() {
+			diag := principalIds.ElementsAs(ctx, &principalIdsGo, false)
+			resp.Diagnostics.Append(diag...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
+
+		var sIdResult *[]string
+		if len(svAccIdsGo) > 0 {
+			sIdResult = &svAccIdsGo
+		}
+
+		var pIdResult *[]string
+		if len(principalIdsGo) > 0 {
+			pIdResult = &principalIdsGo
+		}
+
 		// only allow fields which are able to be modified in the request for updating
 		reqDg := pgdApi.DataGroup{
 			GroupId:               groupId,
@@ -859,8 +916,8 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			PrivateNetworking:     v.PrivateNetworking,
 			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
-			ServiceAccountIds:     svAccIds,
-			PeAllowedPrincipalIds: principalIds,
+			ServiceAccountIds:     sIdResult,
+			PeAllowedPrincipalIds: pIdResult,
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
@@ -873,6 +930,8 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			}
 			reqDg.PgType = v.PgType
 			reqDg.PgVersion = v.PgVersion
+			reqDg.ServiceAccountIds = sIdResult
+			reqDg.PeAllowedPrincipalIds = pIdResult
 		}
 
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, reqDg)
@@ -1368,28 +1427,34 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
 }
 
-func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
+func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds basetypes.SetValue) {
 	if strings.Contains(*dg.Provider.CloudProviderId, "bah") {
 		if !dg.PeAllowedPrincipalIds.IsNull() {
 			elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 			if elemDiag.HasError() {
 				diags.Append(elemDiag...)
-				return nil, nil
+				return basetypes.NewSetNull(basetypes.SetType{}), basetypes.NewSetNull(basetypes.SetType{})
 			}
 		} else {
 			pids, err := client.GetPeAllowedPrincipalIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
 			if err != nil {
 				diags.AddError("pgd get pe allowed principal ids error", err.Error())
-				return nil, nil
+				return basetypes.NewSetNull(basetypes.SetType{}), basetypes.NewSetNull(basetypes.SetType{})
 			}
-			principalIds = utils.ToPointer(pids.Data)
+
+			setOfPrincipalIds := []attr.Value{}
+			for _, v := range pids.Data {
+				setOfPrincipalIds = append(setOfPrincipalIds, basetypes.NewStringValue(v))
+			}
+
+			principalIds = basetypes.NewSetValueMust(basetypes.StringType{}, setOfPrincipalIds)
 
 			// if it doesn't have any existing service account ids then use config
-			if principalIds != nil && len(*principalIds) == 0 {
+			if !principalIds.IsNull() && len(principalIds.Elements()) == 0 {
 				elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 				if elemDiag.HasError() {
 					diags.Append(elemDiag...)
-					return nil, nil
+					return basetypes.NewSetNull(basetypes.SetType{}), basetypes.NewSetNull(basetypes.SetType{})
 				}
 			}
 		}
@@ -1399,22 +1464,28 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 				elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 				if elemDiag.HasError() {
 					diags.Append(elemDiag...)
-					return nil, nil
+					return basetypes.NewSetNull(basetypes.SetType{}), basetypes.NewSetNull(basetypes.SetType{})
 				}
 			} else {
 				sids, err := client.GetServiceAccountIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
 				if err != nil {
 					diags.AddError("pgd get service account ids error", err.Error())
-					return nil, nil
+					return basetypes.NewSetNull(basetypes.SetType{}), basetypes.NewSetNull(basetypes.SetType{})
 				}
-				svAccIds = utils.ToPointer(sids.Data)
+
+				setOfSvAccIds := []attr.Value{}
+				for _, v := range sids.Data {
+					setOfSvAccIds = append(setOfSvAccIds, basetypes.NewStringValue(v))
+				}
+
+				svAccIds = basetypes.NewSetValueMust(basetypes.StringType{}, setOfSvAccIds)
 
 				// if it doesn't have any existing service account ids then use config
-				if svAccIds != nil && len(*svAccIds) == 0 {
+				if !svAccIds.IsNull() && len(svAccIds.Elements()) == 0 {
 					elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 					if elemDiag.HasError() {
 						diags.Append(elemDiag...)
-						return nil, nil
+						return basetypes.NewSetNull(basetypes.SetType{}), basetypes.NewSetNull(basetypes.SetType{})
 					}
 				}
 			}
