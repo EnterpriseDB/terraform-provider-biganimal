@@ -2,6 +2,7 @@ package plan_modifier_test
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -22,12 +23,6 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	ctx := context.Background()
 
 	pgdSchema := provider.PgdSchema(ctx)
-
-	// clusterArchPathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
-	// 	tftypes.AttributeName("cluster_architecture"),
-	// })
-
-	// pp, _ := pgdSchema.AttributeAtPath(ctx, path.Root("data_groups"))
 
 	// dgAttrType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes().Type().ValueType(ctx).Type(ctx).(types.ObjectType).AttributeTypes()
 
@@ -100,12 +95,6 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"start_time": basetypes.NewStringValue("03:00"),
 	}
 
-	defaultSa := []attr.Value{}
-
-	defaultPe := []attr.Value{}
-
-	defaultPg := []attr.Value{}
-
 	defaultBackupRetentionPeriod := "3d"
 
 	defaultDgAttr := map[string]attr.Value{
@@ -131,9 +120,9 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		"pg_version":               basetypes.NewObjectValueMust(pgVersionType, defaultPgVersion),
 		"private_networking":       basetypes.NewBoolValue(false),
 		"maintenance_window":       basetypes.NewObjectValueMust(cmwType, defaultCmw),
-		"service_account_ids":      basetypes.NewSetValueMust(saElemType, defaultSa),
-		"pe_allowed_principal_ids": basetypes.NewSetValueMust(peElemType, defaultPe),
-		"pg_config":                basetypes.NewSetValueMust(pgElemType, defaultPg),
+		"service_account_ids":      basetypes.NewSetValueMust(saElemType, []attr.Value{}),
+		"pe_allowed_principal_ids": basetypes.NewSetValueMust(peElemType, []attr.Value{}),
+		"pg_config":                basetypes.NewSetValueMust(pgElemType, []attr.Value{}),
 	}
 
 	defaultDgAttrTypes := map[string]attr.Type{
@@ -202,99 +191,10 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 				"start_time": basetypes.NewStringValue("06:00"),
 			},
 		),
-		"service_account_ids":      basetypes.NewSetValueMust(saElemType, defaultSa),
-		"pe_allowed_principal_ids": basetypes.NewSetValueMust(peElemType, defaultPe),
-		"pg_config":                basetypes.NewSetValueMust(pgElemType, defaultPg),
+		"service_account_ids":      basetypes.NewSetValueMust(saElemType, []attr.Value{}),
+		"pe_allowed_principal_ids": basetypes.NewSetValueMust(peElemType, []attr.Value{}),
+		"pg_config":                basetypes.NewSetValueMust(pgElemType, []attr.Value{}),
 	}
-
-	_ = addGroupObject
-
-	// ob := basetypes.NewObjectValueMust(map[string]attr.Type{
-	// 	"data_groups": basetypes.ObjectType{AttrTypes: defaultDgAttrTypes},
-	// },
-	// 	map[string]attr.Value{
-	// 		"data_groups": basetypes.NewObjectValueMust(defaultDgAttrTypes, defaultDgAttr),
-	// 	},
-	// )
-
-	// old
-	// dgt := basetypes.ObjectType{AttrTypes: defaultDgAttrTypes}
-
-	// // dgv := basetypes.NewObjectValueMust(defaultDgAttrTypes, defaultDgAttr)
-
-	// // ddd := basetypes.NewObjectValueMust(dgt, dgv)
-
-	// tt := basetypes.NewSetValueMust(dgt, defaultDgObjects)
-
-	// xx, _ := basetypes.NewObjectValueMust(defaultDgAttrTypes, defaultDgAttr).ToTerraformValue(ctx)
-	// vv := []tftypes.Value{}
-	// vv = append(vv, xx)
-
-	// old end
-
-	bb := basetypes.NewObjectValueMust(defaultDgAttrTypes, defaultDgAttr)
-	// xx, _ := bb.ToTerraformValue(ctx)
-
-	gg := []attr.Value{}
-	gg = append(gg, bb)
-	zz := basetypes.NewSetValueMust(bb.Type(ctx), gg)
-	yy, _ := zz.ToTerraformValue(ctx)
-	vv := map[string]tftypes.Value{
-		"data_groups": yy,
-	}
-
-	rootOb := basetypes.NewObjectValueMust(map[string]attr.Type{
-		"data_groups": zz.Type(ctx),
-	},
-		map[string]attr.Value{
-			"data_groups": zz,
-		},
-	)
-
-	// sss := schema.Schema{
-	// 	Attributes: map[string]schema.Attribute{
-	// 		"data_groups": schema.SetNestedAttribute{NestedObject: schema.NestedAttributeObject{
-	// 			Attributes: pgdSchema.Attributes["data_groups"].(schema.NestedAttribute),
-	// 		}},
-	// 	},
-	// }
-
-	sss := schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"data_groups": pgdSchema.Attributes["data_groups"].(schema.NestedAttribute),
-		},
-	}
-
-	// rootOb := basetypes.NewObjectValueMust(map[string]attr.Type{
-	// 	"data_groups": basetypes.ObjectType{AttrTypes: defaultDgAttrTypes},
-	// },
-	// 	map[string]attr.Value{
-	// 		"data_groups": basetypes.NewObjectValueMust(defaultDgAttrTypes, defaultDgAttr),
-	// 	},
-	// )
-
-	// sss := schema.Schema{
-	// 	Attributes: map[string]schema.Attribute{
-	// 		"data_groups": schema.ObjectAttribute{AttributeTypes: defaultDgAttrTypes},
-	// 	},
-	// }
-
-	// vv := map[string]tftypes.Value{
-	// 	"data_groups": tftypes.NewValue(tftypes.Object{
-	// 		AttributeTypes: map[string]tftypes.Type{
-	// 			"cluster_name": tftypes.String,
-	// 		},
-	// 	},
-	// 		map[string]tftypes.Value{
-	// 			"cluster_name": tftypes.NewValue(tftypes.String, "hello"),
-	// 		}),
-	// }
-
-	// objType := tftypes.Object{
-	// 	AttributeTypes: map[string]tftypes.Type{
-	// 		"cluster_name": tftypes.String,
-	// 	},
-	// }
 
 	updateObjectAttr := map[string]attr.Value{}
 
@@ -321,6 +221,30 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	updateObjects = append(updateObjects, updateObject)
 	updateSet := basetypes.NewSetValueMust(defaultDgObject.Type(ctx), updateObjects)
 
+	defaultDgSetTf, err := defaultDgSet.ToTerraformValue(ctx)
+	if err != nil {
+		fmt.Printf("dg set to terraform value error: %v", err)
+		return
+	}
+
+	rawRootValue := map[string]tftypes.Value{
+		"data_groups": defaultDgSetTf,
+	}
+
+	rawRootType := basetypes.NewObjectValueMust(map[string]attr.Type{
+		"data_groups": defaultDgSet.Type(ctx),
+	},
+		map[string]attr.Value{
+			"data_groups": defaultDgSet,
+		},
+	)
+
+	dgSchema := schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"data_groups": pgdSchema.Attributes["data_groups"].(schema.NestedAttribute),
+		},
+	}
+
 	type args struct {
 		ctx  context.Context
 		req  planmodifier.SetRequest
@@ -339,7 +263,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: planmodifier.SetRequest{
-					Plan:       tfsdk.Plan{Schema: sss, Raw: tftypes.NewValue(rootOb.Type(ctx).TerraformType(ctx), vv)},
+					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.Type(ctx).TerraformType(ctx), rawRootValue)},
 					StateValue: defaultDgSet,
 				},
 				resp: &planmodifier.SetResponse{
@@ -357,7 +281,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: planmodifier.SetRequest{
-					Plan: tfsdk.Plan{Schema: sss, Raw: tftypes.NewValue(rootOb.Type(ctx).TerraformType(ctx), vv)},
+					Plan: tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.Type(ctx).TerraformType(ctx), rawRootValue)},
 					StateValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
 						append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
 					),
@@ -375,7 +299,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				req: planmodifier.SetRequest{
-					Plan:       tfsdk.Plan{Schema: sss, Raw: tftypes.NewValue(rootOb.Type(ctx).TerraformType(ctx), vv)},
+					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.Type(ctx).TerraformType(ctx), rawRootValue)},
 					StateValue: defaultDgSet,
 				},
 				resp: &planmodifier.SetResponse{
