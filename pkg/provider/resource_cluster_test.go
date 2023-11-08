@@ -50,6 +50,7 @@ func TestAccResourceCluster_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "backup_retention_period", "10d"),
 					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "cluster_architecture.id", "ha"),
 					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "cluster_architecture.nodes", "2"),
+					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "cluster_architecture.name", "Primary/Standby High Availability"),
 				),
 			},
 		},
@@ -103,6 +104,7 @@ func clusterResourceConfig(cluster_name, projectID, provider, region string) str
   pg_version            = "15"
   private_networking    = false
   read_only_connections = false
+  superuser_access      = true
 }`, cluster_name, projectID, provider, region)
 }
 
@@ -118,6 +120,7 @@ func clusterResourceConfigForUpdate(cluster_name, projectID, provider, region st
   cluster_architecture {
     id    = "ha"
     nodes = 2
+    name = "Primary/Standby High Availability"
   }
   csp_auth = true
 
@@ -153,5 +156,6 @@ func clusterResourceConfigForUpdate(cluster_name, projectID, provider, region st
   pg_version            = "15"
   private_networking    = false
   read_only_connections = false
+  superuser_access      = true
 }`, cluster_name, projectID, provider, region)
 }
