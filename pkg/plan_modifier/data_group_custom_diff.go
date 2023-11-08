@@ -99,7 +99,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 		if !planGroupExistsInStateGroups {
 			newPlan = append(newPlan, pDg)
-			resp.Diagnostics.AddWarning("Adding new data group", fmt.Sprintf("Adding new data group with region %v", pDg.Region))
+			resp.Diagnostics.AddWarning("Adding new data group", fmt.Sprintf("Adding new data group with region %v", pDg.Region.RegionId))
 		}
 	}
 
@@ -114,7 +114,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		}
 
 		if !stateGroupExistsInPlanGroups {
-			resp.Diagnostics.AddWarning("Removing data group", fmt.Sprintf("Removing data group with region %v", sDg.Region))
+			resp.Diagnostics.AddWarning("Removing data group", fmt.Sprintf("Removing data group with region %v", sDg.Region.RegionId))
 		}
 	}
 
