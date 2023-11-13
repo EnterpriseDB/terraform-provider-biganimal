@@ -69,6 +69,7 @@ type ClusterResourceModel struct {
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
+	FromDeleted                *bool                              `tfsdk:"from_deleted"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -390,6 +391,10 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: "Enable to grant superuser access to the edb_admin role.",
 				Optional:            true,
 				Computed:            true,
+			},
+			"from_deleted": schema.BoolAttribute{
+				Description: "For restoring a cluster. Specifies if the cluster you want to restore is deleted",
+				Optional:    true,
 			},
 		},
 	}
