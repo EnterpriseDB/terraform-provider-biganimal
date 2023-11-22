@@ -101,6 +101,10 @@ output "superuser_access" {
   value = coalesce(data.biganimal_cluster.this.superuser_access, false)
 }
 
+output "pgvector" {
+  value = coalesce(data.biganimal_cluster.this.pgvector, false)
+}
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
