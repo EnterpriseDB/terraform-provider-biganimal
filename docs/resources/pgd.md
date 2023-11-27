@@ -96,6 +96,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     },
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD Azure Two Data Groups with One Witness Group Example
@@ -259,6 +264,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD Azure BigAnimal's cloud account One Data Group Example
@@ -355,6 +365,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       # ]
     },
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -525,6 +540,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD AWS One Data Group Example
@@ -618,6 +638,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -782,6 +807,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD AWS BigAnimal's cloud account One Data Group Example
@@ -878,6 +908,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       # ]
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -1048,6 +1083,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD GCP One Data Group Example
@@ -1141,6 +1181,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -1305,6 +1350,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD GCP BigAnimal's cloud account One Data Group Example
@@ -1405,6 +1455,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       # ]
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -1582,6 +1637,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
