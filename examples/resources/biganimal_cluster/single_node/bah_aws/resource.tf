@@ -77,6 +77,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   cloud_provider        = "bah:aws"
   read_only_connections = false
   region                = "us-east-1"
+  pgvector              = true
 }
 
 output "password" {

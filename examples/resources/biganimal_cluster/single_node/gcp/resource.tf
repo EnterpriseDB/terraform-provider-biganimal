@@ -79,6 +79,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   read_only_connections = false
   region                = "us-east1"
   superuser_access      = true
+  pgvector              = true
 }
 
 output "password" {
