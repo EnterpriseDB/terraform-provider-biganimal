@@ -90,6 +90,10 @@ resource "biganimal_cluster" "single_node_cluster" {
   read_only_connections = false
   region                = "eastus2"
   superuser_access      = true
+  pgvector              = true
+  # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
+  # restore_from_deleted  = true
+  # restore_point         = "2006-01-02T15:04:05-0700"
 }
 
 output "password" {
@@ -184,6 +188,10 @@ resource "biganimal_cluster" "ha_cluster" {
   read_only_connections = true
   region                = "us-east-1"
   superuser_access      = true
+  pgvector              = true
+  # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
+  # restore_from_deleted  = true
+  # restore_point         = "2006-01-02T15:04:05-0700"
 }
 
 output "password" {
@@ -224,11 +232,17 @@ output "faraway_replica_ids" {
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
 - `cluster_architecture` (Block, Optional) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
+- `import_from_deleted` (Boolean) Used by import function only to import a deleted cluster
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
+- `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `pg_config` (Block Set) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
+- `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
+- `restore_cluster_id` (String) For restoring a cluster. Specifies the cluster id to restore
+- `restore_from_deleted` (Boolean) For restoring a cluster. Specifies if the cluster you want to restore is deleted
+- `restore_point` (String) For restoring a cluster. Specifies restore point e.g. 2006-01-02T15:04:05-0700. Leave empty to restore from latest point
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `storage` (Block, Optional) Storage. (see [below for nested schema](#nestedblock--storage))
 - `superuser_access` (Boolean) Enable to grant superuser access to the edb_admin role.
@@ -269,7 +283,7 @@ Required:
 - `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
 
-Read-Only:
+Optional:
 
 - `name` (String) Name.
 

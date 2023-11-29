@@ -106,6 +106,10 @@ output "superuser_access" {
   value = coalesce(data.biganimal_cluster.this.superuser_access, false)
 }
 
+output "pgvector" {
+  value = coalesce(data.biganimal_cluster.this.pgvector, false)
+}
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
@@ -156,6 +160,7 @@ output "service_account_ids" {
 - `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
 - `pg_version` (String) Postgres version.
+- `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `phase` (String) Current phase of the cluster.
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.

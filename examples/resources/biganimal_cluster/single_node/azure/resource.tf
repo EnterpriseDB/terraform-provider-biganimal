@@ -80,6 +80,9 @@ resource "biganimal_cluster" "single_node_cluster" {
   region                = "eastus2"
   superuser_access      = true
   pgvector              = true
+  # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
+  # restore_from_deleted  = true
+  # restore_point         = "2006-01-02T15:04:05-0700"
 }
 
 output "password" {

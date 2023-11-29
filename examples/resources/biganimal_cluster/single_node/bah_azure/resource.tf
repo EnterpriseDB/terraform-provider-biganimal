@@ -79,6 +79,10 @@ resource "biganimal_cluster" "single_node_cluster" {
   read_only_connections = false
   region                = "eastus2"
   pgvector              = true
+  # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
+  # restore_from_deleted  = true
+  # restore_point         = "2006-01-02T15:04:05-0700"
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
   # ]

@@ -69,8 +69,12 @@ type ClusterResourceModel struct {
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
-	FromDeleted                *bool                              `tfsdk:"from_deleted"`
+	ImportFromDeleted          types.Bool                         `tfsdk:"import_from_deleted"`
+	RestoreFromDeleted         *bool                              `tfsdk:"restore_from_deleted"`
+	RestoreClusterId           *string                            `tfsdk:"restore_cluster_id"`
+	RestorePoint               types.String                       `tfsdk:"restore_point"`
 	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
+	MostRecent                 types.Bool                         `tfsdk:"most_recent"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -238,6 +242,10 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: "Name of the cluster.",
 				Required:            true,
 			},
+			"most_recent": schema.BoolAttribute{
+				MarkdownDescription: "Show the most recent cluster when there are multiple clusters with the same name.",
+				Optional:            true,
+			},
 			"phase": schema.StringAttribute{
 				MarkdownDescription: "Current phase of the cluster.",
 				Computed:            true,
@@ -393,8 +401,21 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 			},
-			"from_deleted": schema.BoolAttribute{
+			"import_from_deleted": schema.BoolAttribute{
+				Description: "Used by import function only to import a deleted cluster",
+				Optional:    true,
+			},
+			"restore_from_deleted": schema.BoolAttribute{
 				Description: "For restoring a cluster. Specifies if the cluster you want to restore is deleted",
+				Optional:    true,
+			},
+			"restore_cluster_id": schema.StringAttribute{
+				Description:   "For restoring a cluster. Specifies the cluster id to restore",
+				Optional:      true,
+				PlanModifiers: []planmodifier.String{plan_modifier.CustomRestoreClusterId()},
+			},
+			"restore_point": schema.StringAttribute{
+				Description: "For restoring a cluster. Specifies restore point e.g. 2006-01-02T15:04:05-0700. Leave empty to restore from latest point",
 				Optional:    true,
 			},
 			"pgvector": schema.BoolAttribute{
@@ -424,12 +445,45 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	clusterId, err := c.client.Create(ctx, config.ProjectId, clusterModel)
-	if err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
+	var clusterId string
+
+	if config.RestoreClusterId != nil {
+		var restoreModel models.RestoreCluster
+		err := utils.CopyObjectJson(clusterModel, &restoreModel)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error copy object json in restore cluster API request", err.Error())
+			}
+			return
 		}
-		return
+
+		if config.RestoreFromDeleted != nil && *config.RestoreFromDeleted {
+			clusterId, err = c.client.RestoreClusterFromDeleted(ctx, config.ProjectId, *config.RestoreClusterId, restoreModel)
+			if err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error restore cluster API request", err.Error())
+				}
+				return
+			}
+		} else {
+			clusterId, err = c.client.RestoreCluster(ctx, config.ProjectId, *config.RestoreClusterId, restoreModel)
+			if err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error restore cluster API request", err.Error())
+				}
+				return
+			}
+		}
+
+	} else {
+		clusterId, err = c.client.Create(ctx, config.ProjectId, clusterModel)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
+			}
+			return
+		}
+
 	}
 
 	config.ClusterId = &clusterId
@@ -537,7 +591,7 @@ func (c *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 func (c *clusterResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, "/")
-	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+	if len(idParts) < 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
 			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id. Got: %q", req.ID),
@@ -547,12 +601,27 @@ func (c *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
+
+	if len(idParts) > 2 && idParts[2] == "import-from-deleted" {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("import_from_deleted"), true)...)
+	}
 }
 
 func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterResourceModel) error {
-	cluster, err := c.client.Read(ctx, clusterResource.ProjectId, *clusterResource.ClusterId)
-	if err != nil {
-		return err
+	var cluster *models.Cluster
+
+	if clusterResource.ImportFromDeleted.ValueBool() {
+		deletedCluster, err := c.client.ReadDeletedCluster(ctx, clusterResource.ProjectId, *clusterResource.ClusterId)
+		if err != nil {
+			return err
+		}
+		cluster = deletedCluster
+	} else {
+		existingCluster, err := c.client.Read(ctx, clusterResource.ProjectId, *clusterResource.ClusterId)
+		if err != nil {
+			return err
+		}
+		cluster = existingCluster
 	}
 
 	connection, err := c.client.ConnectionString(ctx, clusterResource.ProjectId, *clusterResource.ClusterId)
