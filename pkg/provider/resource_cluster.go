@@ -69,6 +69,7 @@ type ClusterResourceModel struct {
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
+	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -391,6 +392,12 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 			},
+			"pgvector": schema.BoolAttribute{
+				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
 }
@@ -581,6 +588,14 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	clusterResource.FarawayReplicaIds = StringSliceToSet(cluster.FarawayReplicaIds)
 	clusterResource.PrivateNetworking = types.BoolPointerValue(cluster.PrivateNetworking)
 	clusterResource.SuperuserAccess = types.BoolPointerValue(cluster.SuperuserAccess)
+	if cluster.Extensions != nil {
+		for _, v := range *cluster.Extensions {
+			if v.Enabled && v.ExtensionId == "pgvector" {
+				clusterResource.Pgvector = types.BoolValue(true)
+				break
+			}
+		}
+	}
 
 	if cluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := cluster.FirstRecoverabilityPointAt.String()
@@ -728,6 +743,11 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
+	}
+
+	cluster.Extensions = &[]models.ClusterExtension{}
+	if clusterResource.Pgvector.ValueBool() {
+		*cluster.Extensions = append(*cluster.Extensions, models.ClusterExtension{Enabled: true, ExtensionId: "pgvector"})
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}

@@ -336,6 +336,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: "Is superuser access enabled.",
 				Computed:            true,
 			},
+			"pgvector": schema.BoolAttribute{
+				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
+				Computed:            true,
+			},
 		},
 	}
 }

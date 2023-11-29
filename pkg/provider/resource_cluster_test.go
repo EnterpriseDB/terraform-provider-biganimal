@@ -105,6 +105,7 @@ func clusterResourceConfig(cluster_name, projectID, provider, region string) str
   private_networking    = false
   read_only_connections = false
   superuser_access      = true
+  pgvector              = true
 }`, cluster_name, projectID, provider, region)
 }
 
@@ -157,5 +158,6 @@ func clusterResourceConfigForUpdate(cluster_name, projectID, provider, region st
   private_networking    = false
   read_only_connections = false
   superuser_access      = true
+  pgvector              = true
 }`, cluster_name, projectID, provider, region)
 }
