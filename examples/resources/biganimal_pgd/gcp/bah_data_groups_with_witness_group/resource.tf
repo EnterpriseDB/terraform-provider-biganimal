@@ -171,3 +171,8 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
