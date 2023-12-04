@@ -82,10 +82,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 				Description: "Show the most recent cluster when there are multiple clusters with the same name",
 				Optional:    true,
 			},
-			"from_deleted": schema.BoolAttribute{
-				Description: "For restoring a cluster. Specifies if the cluster you want to restore is deleted",
-				Optional:    true,
-			},
 			"password": schema.StringAttribute{
 				Description: "Password for the user edb_admin. It must be 12 characters or more.",
 				Required:    true,
