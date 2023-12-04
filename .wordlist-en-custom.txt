@@ -8,6 +8,7 @@ IAM
 IOPS
 InstanceType
 MPL
+pgvector
 PGD
 Postgres
 aws
