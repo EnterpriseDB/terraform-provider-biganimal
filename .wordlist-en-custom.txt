@@ -28,6 +28,7 @@ gp
 hh
 highcpu
 iam
+init
 io
 ip
 nestedatt
@@ -36,7 +37,10 @@ nestedobjatt
 pgd
 pgextended
 postgres
+prj
 ssd
 terraform
+tfstate
 ultradisk
+uncomment
 uri
