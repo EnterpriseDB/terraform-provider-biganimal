@@ -420,7 +420,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.Object{
-					plan_modifier.MaintenanceWindowForUnknown(),
+					plan_modifier.CustomPgBouncer(),
 				},
 				Attributes: map[string]schema.Attribute{
 					"is_enabled": schema.BoolAttribute{
@@ -694,6 +694,7 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	}
 
 	if cluster.PgBouncer != nil {
+		clusterResource.PgBouncer = &PgBouncerModel{}
 		*clusterResource.PgBouncer = PgBouncerModel{
 			IsEnabled: cluster.PgBouncer.IsEnabled,
 		}
