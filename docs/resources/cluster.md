@@ -215,8 +215,8 @@ output "faraway_replica_ids" {
 ## Restoring a cluster
 
 Here are the steps to restore a cluster:
-1. Use an example config in the examples folder, uncomment the following fields restore_cluster_id=p-123456789, restore_from_deleted=true and enter your cluster id you want to restore and set to true respectively(for restoring an existing cluster, set false)
-2. Use commands terraform init and terraform import biganimal_cluster.single_node_cluster prj_123456789/p-123456789/import-from-deleted to import a deleted cluster into terraform(use import biganimal_cluster.single_node_cluster prj_123456789/p-123456789 to import an existing cluster)
+1. Use an example config in the examples folder, uncomment the following fields restore_cluster_id=p-123456789, restore_from_deleted=true and enter your cluster id you want to restore and set to true respectively(for restoring an active cluster, set to false)
+2. Use commands terraform init and terraform import biganimal_cluster.single_node_cluster prj_123456789/p-123456789/import-from-deleted to import a deleted cluster into terraform(use import biganimal_cluster.single_node_cluster prj_123456789/p-123456789 to import an active cluster)
 3. Use command terraform plan to compare and diff your config with the imported cluster(source cluster) and edit config where appropriate. You can also use terraform show to see the source cluster which you can copy and paste the field values into your config
 4. Remove state by deleting the file terraform.tfstate or use the commands terraform state rm 'biganimal_cluster.single_node_cluster' and terraform state rm 'random_password.password'
 5. Use command terraform init and terraform apply to restore the cluster, it will show a warning saying you are trying to restore a cluster
@@ -242,7 +242,7 @@ Here are the steps to restore a cluster:
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
 - `cluster_architecture` (Block, Optional) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
-- `import_from_deleted` (Boolean) Used by import function only to import a deleted cluster
+- `import_from_deleted` (Boolean) Used by the import function only to import a deleted cluster
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
@@ -251,7 +251,7 @@ Here are the steps to restore a cluster:
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `restore_cluster_id` (String) For restoring a cluster. Specifies the cluster id to restore
-- `restore_from_deleted` (Boolean) For restoring a cluster. Specifies if the cluster you want to restore is deleted
+- `restore_from_deleted` (Boolean) For restoring a cluster. Specifies if the cluster you want to restore is from deleted
 - `restore_point` (String) For restoring a cluster. Specifies restore point e.g. 2006-01-02T15:04:05-0700. Leave empty to restore from latest point
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `storage` (Block, Optional) Storage. (see [below for nested schema](#nestedblock--storage))
