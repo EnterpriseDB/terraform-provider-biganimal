@@ -402,11 +402,11 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 			},
 			"import_from_deleted": schema.BoolAttribute{
-				Description: "Used by import function only to import a deleted cluster",
+				Description: "Used by the import function only to import a deleted cluster",
 				Optional:    true,
 			},
 			"restore_from_deleted": schema.BoolAttribute{
-				Description: "For restoring a cluster. Specifies if the cluster you want to restore is deleted",
+				Description: "For restoring a cluster. Specifies if the cluster you want to restore is from deleted",
 				Optional:    true,
 			},
 			"restore_cluster_id": schema.StringAttribute{
