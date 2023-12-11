@@ -340,6 +340,37 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
 				Computed:            true,
 			},
+			"pg_bouncer": schema.SingleNestedAttribute{
+				MarkdownDescription: "Pg bouncer.",
+				Optional:            true,
+				Computed:            true,
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is pg bouncer enabled.",
+						Required:            true,
+					},
+					"settings": schema.SetNestedAttribute{
+						Description: "Pg bouncer settings.",
+						Optional:    true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									Description: "Name.",
+									Required:    true,
+								},
+								"operation": schema.StringAttribute{
+									Description: "Operation.",
+									Required:    true,
+								},
+								"value": schema.StringAttribute{
+									Description: "Value.",
+									Required:    true,
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
