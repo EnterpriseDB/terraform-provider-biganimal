@@ -90,22 +90,22 @@ resource "biganimal_cluster" "single_node_cluster" {
   read_only_connections = false
   region                = "eastus2"
   superuser_access      = true
-  pgvector              = true
+  pgvector              = false
 
   pg_bouncer = {
-    is_enabled = true
-    settings = [
-      {
-        name      = "autodb_idle_timeout"
-        operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
-        value     = "5000"
-      },
-      {
-        name      = "client_idle_timeout"
-        operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
-        value     = "6000"
-      },
-    ]
+    is_enabled = false
+    #  settings = [ # uncomment and set settings if is_enabled is true
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
   }
 }
 
@@ -201,22 +201,22 @@ resource "biganimal_cluster" "ha_cluster" {
   read_only_connections = true
   region                = "us-east-1"
   superuser_access      = true
-  pgvector              = true
+  pgvector              = false
 
   pg_bouncer = {
-    is_enabled = true
-    settings = [
-      {
-        name      = "autodb_idle_timeout"
-        operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
-        value     = "5000"
-      },
-      {
-        name      = "client_idle_timeout"
-        operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
-        value     = "6000"
-      },
-    ]
+    is_enabled = false
+    #  settings = [ # uncomment and set settings if is_enabled is true
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
   }
 }
 

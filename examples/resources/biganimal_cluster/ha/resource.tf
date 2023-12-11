@@ -82,18 +82,18 @@ resource "biganimal_cluster" "ha_cluster" {
 
   pg_bouncer = {
     is_enabled = false
-  #  settings = [ # uncomment and set settings if is_enabled is true
-  #    {
-  #      name      = "autodb_idle_timeout"
-  #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
-  #      value     = "5000"
-  #    },
-  #    {
-  #      name      = "client_idle_timeout"
-  #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
-  #      value     = "6000"
-  #    },
-  #  ]
+    #  settings = [ # uncomment and set settings if is_enabled is true
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
   }
 }
 
