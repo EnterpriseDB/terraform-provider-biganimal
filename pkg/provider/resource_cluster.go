@@ -439,6 +439,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 								"operation": schema.StringAttribute{
 									Description: "Operation.",
 									Required:    true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("read-write", "read-only"),
+									},
 								},
 								"value": schema.StringAttribute{
 									Description: "Value.",
