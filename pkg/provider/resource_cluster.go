@@ -428,7 +428,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Required:            true,
 					},
 					"settings": schema.SetNestedAttribute{
-						Description: "Pg bouncer settings.",
+						Description: "PgBouncer Configuration Settings.",
 						Optional:    true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{

@@ -189,7 +189,7 @@ Required:
 
 Optional:
 
-- `settings` (Attributes Set) Pg bouncer settings. (see [below for nested schema](#nestedatt--pg_bouncer--settings))
+- `settings` (Attributes Set) PgBouncer Configuration Settings. (see [below for nested schema](#nestedatt--pg_bouncer--settings))
 
 <a id="nestedatt--pg_bouncer--settings"></a>
 ### Nested Schema for `pg_bouncer.settings`

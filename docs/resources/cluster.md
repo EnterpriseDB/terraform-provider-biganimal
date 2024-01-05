@@ -94,7 +94,7 @@ resource "biganimal_cluster" "single_node_cluster" {
 
   pg_bouncer = {
     is_enabled = false
-    #  settings = [ # uncomment and set settings if is_enabled is true
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
     #    {
     #      name      = "autodb_idle_timeout"
     #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
@@ -205,7 +205,7 @@ resource "biganimal_cluster" "ha_cluster" {
 
   pg_bouncer = {
     is_enabled = false
-    #  settings = [ # uncomment and set settings if is_enabled is true
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
     #    {
     #      name      = "autodb_idle_timeout"
     #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
@@ -333,7 +333,7 @@ Required:
 
 Optional:
 
-- `settings` (Attributes Set) Pg bouncer settings. (see [below for nested schema](#nestedatt--pg_bouncer--settings))
+- `settings` (Attributes Set) PgBouncer Configuration Settings. (see [below for nested schema](#nestedatt--pg_bouncer--settings))
 
 <a id="nestedatt--pg_bouncer--settings"></a>
 ### Nested Schema for `pg_bouncer.settings`
