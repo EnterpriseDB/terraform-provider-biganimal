@@ -69,6 +69,9 @@ type ClusterResourceModel struct {
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
+	FromDeleted                *bool                              `tfsdk:"from_deleted"`
+	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
+	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -95,6 +98,17 @@ type PgConfigResourceModel struct {
 type AllowedIpRangesResourceModel struct {
 	CidrBlock   string       `tfsdk:"cidr_block"`
 	Description types.String `tfsdk:"description"`
+}
+
+type PgBouncerModel struct {
+	IsEnabled bool                      `tfsdk:"is_enabled"`
+	Settings  *[]PgBouncerSettingsModel `tfsdk:"settings"`
+}
+
+type PgBouncerSettingsModel struct {
+	Name      string `tfsdk:"name"`
+	Operation string `tfsdk:"operation"`
+	Value     string `tfsdk:"value"`
 }
 
 type clusterResource struct {
@@ -206,6 +220,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 					"name": schema.StringAttribute{
 						MarkdownDescription: "Name.",
+						Optional:            true,
 						Computed:            true,
 						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
@@ -389,6 +404,53 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: "Enable to grant superuser access to the edb_admin role.",
 				Optional:            true,
 				Computed:            true,
+			},
+			"from_deleted": schema.BoolAttribute{
+				Description: "For restoring a cluster. Specifies if the cluster you want to restore is deleted",
+				Optional:    true,
+			},
+			"pgvector": schema.BoolAttribute{
+				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
+			"pg_bouncer": schema.SingleNestedAttribute{
+				MarkdownDescription: "Pg bouncer.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					plan_modifier.CustomPgBouncer(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is pg bouncer enabled.",
+						Required:            true,
+					},
+					"settings": schema.SetNestedAttribute{
+						Description: "PgBouncer Configuration Settings.",
+						Optional:    true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									Description: "Name.",
+									Required:    true,
+								},
+								"operation": schema.StringAttribute{
+									Description: "Operation.",
+									Required:    true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("read-write", "read-only"),
+									},
+								},
+								"value": schema.StringAttribute{
+									Description: "Value.",
+									Required:    true,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -580,6 +642,14 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 	clusterResource.FarawayReplicaIds = StringSliceToSet(cluster.FarawayReplicaIds)
 	clusterResource.PrivateNetworking = types.BoolPointerValue(cluster.PrivateNetworking)
 	clusterResource.SuperuserAccess = types.BoolPointerValue(cluster.SuperuserAccess)
+	if cluster.Extensions != nil {
+		for _, v := range *cluster.Extensions {
+			if v.Enabled && v.ExtensionId == "pgvector" {
+				clusterResource.Pgvector = types.BoolValue(true)
+				break
+			}
+		}
+	}
 
 	if cluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := cluster.FirstRecoverabilityPointAt.String()
@@ -624,6 +694,24 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 
 	if cluster.ServiceAccountIds != nil {
 		clusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&cluster.ServiceAccountIds))
+	}
+
+	if cluster.PgBouncer != nil {
+		clusterResource.PgBouncer = &PgBouncerModel{}
+		*clusterResource.PgBouncer = PgBouncerModel{
+			IsEnabled: cluster.PgBouncer.IsEnabled,
+		}
+
+		if cluster.PgBouncer.Settings != nil {
+			clusterResource.PgBouncer.Settings = &[]PgBouncerSettingsModel{}
+			for _, v := range *cluster.PgBouncer.Settings {
+				*clusterResource.PgBouncer.Settings = append(*clusterResource.PgBouncer.Settings, PgBouncerSettingsModel{
+					Name:      *v.Name,
+					Operation: *v.Operation,
+					Value:     *v.Value,
+				})
+			}
+		}
 	}
 
 	return nil
@@ -729,6 +817,11 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
 	}
 
+	cluster.Extensions = &[]models.ClusterExtension{}
+	if clusterResource.Pgvector.ValueBool() {
+		*cluster.Extensions = append(*cluster.Extensions, models.ClusterExtension{Enabled: true, ExtensionId: "pgvector"})
+	}
+
 	allowedIpRanges := []models.AllowedIpRange{}
 	for _, ipRange := range clusterResource.AllowedIpRanges {
 		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
@@ -755,6 +848,24 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 
 		if !clusterResource.MaintenanceWindow.StartDay.IsNull() && !clusterResource.MaintenanceWindow.StartDay.IsUnknown() {
 			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay.ValueInt64Pointer()))
+		}
+	}
+
+	if clusterResource.PgBouncer != nil {
+		cluster.PgBouncer = &models.PgBouncer{}
+		cluster.PgBouncer.IsEnabled = clusterResource.PgBouncer.IsEnabled
+		if clusterResource.PgBouncer.Settings != nil {
+			cluster.PgBouncer.Settings = &[]models.PgBouncerSettings{}
+			for _, v := range *clusterResource.PgBouncer.Settings {
+				v := v
+				*cluster.PgBouncer.Settings = append(*cluster.PgBouncer.Settings,
+					models.PgBouncerSettings{
+						Name:      &v.Name,
+						Operation: &v.Operation,
+						Value:     &v.Value,
+					},
+				)
+			}
 		}
 	}
 
