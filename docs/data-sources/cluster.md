@@ -106,6 +106,10 @@ output "superuser_access" {
   value = coalesce(data.biganimal_cluster.this.superuser_access, false)
 }
 
+output "pgvector" {
+  value = coalesce(data.biganimal_cluster.this.pgvector, false)
+}
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
@@ -133,6 +137,7 @@ output "service_account_ids" {
 - `faraway_replica_ids` (Set of String)
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
 - `pe_allowed_principal_ids` (Set of String)
+- `pg_bouncer` (Attributes) Pg bouncer. (see [below for nested schema](#nestedatt--pg_bouncer))
 - `service_account_ids` (Set of String)
 
 ### Read-Only
@@ -156,6 +161,7 @@ output "service_account_ids" {
 - `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
 - `pg_version` (String) Postgres version.
+- `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `phase` (String) Current phase of the cluster.
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
@@ -172,6 +178,28 @@ Read-Only:
 
 - `cidr_block` (String) CIDR block.
 - `description` (String) CIDR block description.
+
+
+<a id="nestedatt--pg_bouncer"></a>
+### Nested Schema for `pg_bouncer`
+
+Required:
+
+- `is_enabled` (Boolean) Is pg bouncer enabled.
+
+Optional:
+
+- `settings` (Attributes Set) PgBouncer Configuration Settings. (see [below for nested schema](#nestedatt--pg_bouncer--settings))
+
+<a id="nestedatt--pg_bouncer--settings"></a>
+### Nested Schema for `pg_bouncer.settings`
+
+Required:
+
+- `name` (String) Name.
+- `operation` (String) Operation.
+- `value` (String) Value.
+
 
 
 <a id="nestedatt--cluster_architecture"></a>

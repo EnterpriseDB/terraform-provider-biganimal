@@ -71,6 +71,7 @@ type ClusterResourceModel struct {
 	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
 	FromDeleted                *bool                              `tfsdk:"from_deleted"`
 	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
+	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -97,6 +98,17 @@ type PgConfigResourceModel struct {
 type AllowedIpRangesResourceModel struct {
 	CidrBlock   string       `tfsdk:"cidr_block"`
 	Description types.String `tfsdk:"description"`
+}
+
+type PgBouncerModel struct {
+	IsEnabled bool                      `tfsdk:"is_enabled"`
+	Settings  *[]PgBouncerSettingsModel `tfsdk:"settings"`
+}
+
+type PgBouncerSettingsModel struct {
+	Name      string `tfsdk:"name"`
+	Operation string `tfsdk:"operation"`
+	Value     string `tfsdk:"value"`
 }
 
 type clusterResource struct {
@@ -403,6 +415,43 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"pg_bouncer": schema.SingleNestedAttribute{
+				MarkdownDescription: "Pg bouncer.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					plan_modifier.CustomPgBouncer(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"is_enabled": schema.BoolAttribute{
+						MarkdownDescription: "Is pg bouncer enabled.",
+						Required:            true,
+					},
+					"settings": schema.SetNestedAttribute{
+						Description: "PgBouncer Configuration Settings.",
+						Optional:    true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									Description: "Name.",
+									Required:    true,
+								},
+								"operation": schema.StringAttribute{
+									Description: "Operation.",
+									Required:    true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("read-write", "read-only"),
+									},
+								},
+								"value": schema.StringAttribute{
+									Description: "Value.",
+									Required:    true,
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -647,6 +696,24 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 		clusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&cluster.ServiceAccountIds))
 	}
 
+	if cluster.PgBouncer != nil {
+		clusterResource.PgBouncer = &PgBouncerModel{}
+		*clusterResource.PgBouncer = PgBouncerModel{
+			IsEnabled: cluster.PgBouncer.IsEnabled,
+		}
+
+		if cluster.PgBouncer.Settings != nil {
+			clusterResource.PgBouncer.Settings = &[]PgBouncerSettingsModel{}
+			for _, v := range *cluster.PgBouncer.Settings {
+				*clusterResource.PgBouncer.Settings = append(*clusterResource.PgBouncer.Settings, PgBouncerSettingsModel{
+					Name:      *v.Name,
+					Operation: *v.Operation,
+					Value:     *v.Value,
+				})
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -781,6 +848,24 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 
 		if !clusterResource.MaintenanceWindow.StartDay.IsNull() && !clusterResource.MaintenanceWindow.StartDay.IsUnknown() {
 			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay.ValueInt64Pointer()))
+		}
+	}
+
+	if clusterResource.PgBouncer != nil {
+		cluster.PgBouncer = &models.PgBouncer{}
+		cluster.PgBouncer.IsEnabled = clusterResource.PgBouncer.IsEnabled
+		if clusterResource.PgBouncer.Settings != nil {
+			cluster.PgBouncer.Settings = &[]models.PgBouncerSettings{}
+			for _, v := range *clusterResource.PgBouncer.Settings {
+				v := v
+				*cluster.PgBouncer.Settings = append(*cluster.PgBouncer.Settings,
+					models.PgBouncerSettings{
+						Name:      &v.Name,
+						Operation: &v.Operation,
+						Value:     &v.Value,
+					},
+				)
+			}
 		}
 	}
 

@@ -34,6 +34,8 @@ nestedblock
 nestedobjatt
 pgd
 pgextended
+pgBouncer
+pgvector
 postgres
 ssd
 terraform
