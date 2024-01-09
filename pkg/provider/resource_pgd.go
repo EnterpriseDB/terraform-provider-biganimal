@@ -195,7 +195,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							PlanModifiers: []planmodifier.Set{
-								plan_modifier.CustomAllowedIps(),
+								setplanmodifier.UseStateForUnknown(),
 							},
 						},
 						"pg_config": schema.SetNestedAttribute{

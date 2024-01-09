@@ -29,7 +29,50 @@ func (m CustomDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 
 // PlanModifySet implements the plan modification logic.
 func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+	networkingAllowedIpRangesSetFunc := func(description string) basetypes.SetValue {
+		defaultAttrs := map[string]attr.Value{"cidr_block": basetypes.NewStringValue("0.0.0.0/0"), "description": basetypes.NewStringValue(description)}
+		defaultAttrTypes := map[string]attr.Type{"cidr_block": defaultAttrs["cidr_block"].Type(ctx), "description": defaultAttrs["description"].Type(ctx)}
+
+		defaultObjectValue := basetypes.NewObjectValueMust(defaultAttrTypes, defaultAttrs)
+		setOfObjects := []attr.Value{}
+		setOfObjects = append(setOfObjects, defaultObjectValue)
+		return basetypes.NewSetValueMust(defaultObjectValue.Type(ctx), setOfObjects)
+	}
+
 	if req.StateValue.IsNull() {
+
+		newNetworkingPlan := []attr.Value{}
+		for _, pDg := range resp.PlanValue.Elements() {
+			pDgAttrTypes := types.ObjectNull(pDg.(basetypes.ObjectValue).AttributeTypes(ctx))
+			pDgAttrValues := pDg.(basetypes.ObjectValue).Attributes()
+
+			if pDgAttrValues["private_networking"].(basetypes.BoolValue).ValueBool() {
+				// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
+				pDgAttrValues["allowed_ip_ranges"] = networkingAllowedIpRangesSetFunc("To allow all access")
+				dgOb, diag := types.ObjectValue(pDgAttrTypes.AttributeTypes(ctx), pDgAttrValues)
+				if diag.HasError() {
+					resp.Diagnostics.Append(diag...)
+					return
+				}
+
+				newNetworkingPlan = append(newNetworkingPlan, dgOb)
+			} else if len(pDgAttrValues["allowed_ip_ranges"].(types.Set).Elements()) == 0 {
+				// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
+				pDgAttrValues["allowed_ip_ranges"] = networkingAllowedIpRangesSetFunc("")
+				dgOb, diag := types.ObjectValue(pDgAttrTypes.AttributeTypes(ctx), pDgAttrValues)
+				if diag.HasError() {
+					resp.Diagnostics.Append(diag...)
+					return
+				}
+
+				newNetworkingPlan = append(newNetworkingPlan, dgOb)
+			}
+		}
+
+		if len(newNetworkingPlan) != 0 {
+			resp.PlanValue = basetypes.NewSetValueMust(newNetworkingPlan[0].Type(ctx), newNetworkingPlan)
+		}
+
 		return
 	}
 
@@ -88,6 +131,14 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				storageAttrValues["throughput"] = sDgStorage["throughput"]
 
 				pDgAttrValues["storage"] = types.ObjectValueMust(storageAttrTypes.AttributeTypes(ctx), storageAttrValues)
+
+				// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
+				if pDgAttrValues["private_networking"].(basetypes.BoolValue).ValueBool() {
+					pDgAttrValues["allowed_ip_ranges"] = networkingAllowedIpRangesSetFunc("To allow all access")
+					// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
+				} else if len(pDgAttrValues["allowed_ip_ranges"].(basetypes.SetValue).Elements()) == 0 {
+					pDgAttrValues["allowed_ip_ranges"] = networkingAllowedIpRangesSetFunc("")
+				}
 
 				dgOb, diag := types.ObjectValue(pDgAttrTypes.AttributeTypes(ctx), pDgAttrValues)
 				if diag.HasError() {
