@@ -94,6 +94,23 @@ resource "biganimal_cluster" "single_node_cluster" {
   # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
   # restore_from_deleted  = true
   # restore_point         = "2006-01-02T15:04:05-0700"
+  pgvector              = false
+
+  pg_bouncer = {
+    is_enabled = false
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
+  }
 }
 
 output "password" {
@@ -192,6 +209,23 @@ resource "biganimal_cluster" "ha_cluster" {
   # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
   # restore_from_deleted  = true
   # restore_point         = "2006-01-02T15:04:05-0700"
+  pgvector              = false
+
+  pg_bouncer = {
+    is_enabled = false
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
+  }
 }
 
 output "password" {
@@ -246,6 +280,7 @@ Here are the steps to restore a cluster:
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
+- `pg_bouncer` (Attributes) Pg bouncer. (see [below for nested schema](#nestedatt--pg_bouncer))
 - `pg_config` (Block Set) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
 - `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `private_networking` (Boolean) Is private networking enabled.
@@ -309,6 +344,28 @@ Optional:
 
 - `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
 - `start_time` (String) Start time. "hh:mm", for example: "23:59".
+
+
+<a id="nestedatt--pg_bouncer"></a>
+### Nested Schema for `pg_bouncer`
+
+Required:
+
+- `is_enabled` (Boolean) Is pg bouncer enabled.
+
+Optional:
+
+- `settings` (Attributes Set) PgBouncer Configuration Settings. (see [below for nested schema](#nestedatt--pg_bouncer--settings))
+
+<a id="nestedatt--pg_bouncer--settings"></a>
+### Nested Schema for `pg_bouncer.settings`
+
+Required:
+
+- `name` (String) Name.
+- `operation` (String) Operation.
+- `value` (String) Value.
+
 
 
 <a id="nestedblock--pg_config"></a>

@@ -78,10 +78,26 @@ resource "biganimal_cluster" "single_node_cluster" {
   cloud_provider        = "bah:azure"
   read_only_connections = false
   region                = "eastus2"
-  pgvector              = true
+  pgvector              = false
   # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
   # restore_from_deleted  = true
   # restore_point         = "2006-01-02T15:04:05-0700"
+  
+  pg_bouncer = {
+    is_enabled = false
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
+  }
 
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"

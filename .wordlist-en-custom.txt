@@ -36,6 +36,8 @@ nestedblock
 nestedobjatt
 pgd
 pgextended
+pgBouncer
+pgvector
 postgres
 prj
 ssd

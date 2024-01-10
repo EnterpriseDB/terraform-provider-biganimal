@@ -28,7 +28,7 @@ repos:
 
   # pre-commit hook to verify commit messages are conventional commit compliant
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: 3.2.1
+    rev: v3.13.0
     hooks:
       - id: commitizen
         stages: [commit-msg]
