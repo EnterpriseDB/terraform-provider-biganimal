@@ -80,9 +80,6 @@ resource "biganimal_cluster" "single_node_cluster" {
   region                = "us-east1"
   superuser_access      = true
   pgvector              = false
-  # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
-  # restore_from_deleted  = true
-  # restore_point         = "2006-01-02T15:04:05-0700"
 
   pg_bouncer = {
     is_enabled = false
@@ -99,6 +96,10 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
+  # restore_from_deleted  = true
+  # restore_point         = "2006-01-02T15:04:05-0700"
 }
 
 output "password" {
