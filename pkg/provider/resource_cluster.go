@@ -253,10 +253,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				MarkdownDescription: "Name of the cluster.",
 				Required:            true,
 			},
-			"most_recent": schema.BoolAttribute{
-				MarkdownDescription: "Show the most recent cluster when there are multiple clusters with the same name.",
-				Optional:            true,
-			},
 			"phase": schema.StringAttribute{
 				MarkdownDescription: "Current phase of the cluster.",
 				Computed:            true,
