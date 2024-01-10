@@ -642,7 +642,7 @@ func (c *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 	if len(idParts) < 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id. Got: %q", req.ID),
+			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id/<optional action>. Got: %q", req.ID),
 		)
 		return
 	}
