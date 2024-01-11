@@ -181,7 +181,8 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						},
 						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
-							Required:    true,
+							Optional:    true,
+							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"cidr_block": schema.StringAttribute{
@@ -195,7 +196,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							PlanModifiers: []planmodifier.Set{
-								plan_modifier.CustomAllowedIps(),
+								setplanmodifier.UseStateForUnknown(),
 							},
 						},
 						"pg_config": schema.SetNestedAttribute{
