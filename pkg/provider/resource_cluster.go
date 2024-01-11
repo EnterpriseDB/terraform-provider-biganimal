@@ -28,6 +28,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -101,8 +102,8 @@ type AllowedIpRangesResourceModel struct {
 }
 
 type PgBouncerModel struct {
-	IsEnabled bool                      `tfsdk:"is_enabled"`
-	Settings  *[]PgBouncerSettingsModel `tfsdk:"settings"`
+	IsEnabled bool      `tfsdk:"is_enabled"`
+	Settings  types.Set `tfsdk:"settings"`
 }
 
 type PgBouncerSettingsModel struct {
@@ -430,6 +431,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					"settings": schema.SetNestedAttribute{
 						Description: "PgBouncer Configuration Settings.",
 						Optional:    true,
+						Computed:    true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"name": schema.StringAttribute{
@@ -702,15 +704,31 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 			IsEnabled: cluster.PgBouncer.IsEnabled,
 		}
 
-		if cluster.PgBouncer.Settings != nil {
-			clusterResource.PgBouncer.Settings = &[]PgBouncerSettingsModel{}
+		settingsElemType := map[string]attr.Type{"name": types.StringType, "operation": types.StringType, "value": types.StringType}
+		elem := basetypes.NewObjectValueMust(settingsElemType, map[string]attr.Value{
+			"name":      basetypes.NewStringValue(""),
+			"operation": basetypes.NewStringValue(""),
+			"value":     basetypes.NewStringValue(""),
+		})
+
+		if !cluster.PgBouncer.IsEnabled {
+			clusterResource.PgBouncer.Settings = basetypes.NewSetNull(elem.Type(ctx))
+		} else if cluster.PgBouncer.IsEnabled &&
+			cluster.PgBouncer.Settings != nil &&
+			len(*cluster.PgBouncer.Settings) == 0 {
+			clusterResource.PgBouncer.Settings = basetypes.NewSetNull(elem.Type(ctx))
+		} else if cluster.PgBouncer.Settings != nil && len(*cluster.PgBouncer.Settings) > 0 {
+			settings := []attr.Value{}
+
 			for _, v := range *cluster.PgBouncer.Settings {
-				*clusterResource.PgBouncer.Settings = append(*clusterResource.PgBouncer.Settings, PgBouncerSettingsModel{
-					Name:      *v.Name,
-					Operation: *v.Operation,
-					Value:     *v.Value,
+				object := basetypes.NewObjectValueMust(settingsElemType, map[string]attr.Value{
+					"name":      basetypes.NewStringValue(*v.Name),
+					"operation": basetypes.NewStringValue(*v.Operation),
+					"value":     basetypes.NewStringValue(*v.Value),
 				})
+				settings = append(settings, object)
 			}
+			clusterResource.PgBouncer.Settings = basetypes.NewSetValueMust(elem.Type(ctx), settings)
 		}
 	}
 
@@ -854,18 +872,22 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 	if clusterResource.PgBouncer != nil {
 		cluster.PgBouncer = &models.PgBouncer{}
 		cluster.PgBouncer.IsEnabled = clusterResource.PgBouncer.IsEnabled
-		if clusterResource.PgBouncer.Settings != nil {
+		if !clusterResource.PgBouncer.Settings.IsNull() {
 			cluster.PgBouncer.Settings = &[]models.PgBouncerSettings{}
-			for _, v := range *clusterResource.PgBouncer.Settings {
-				v := v
+			for _, v := range clusterResource.PgBouncer.Settings.Elements() {
+				name := v.(basetypes.ObjectValue).Attributes()["name"].(basetypes.StringValue)
+				operation := v.(basetypes.ObjectValue).Attributes()["operation"].(basetypes.StringValue)
+				value := v.(basetypes.ObjectValue).Attributes()["value"].(basetypes.StringValue)
 				*cluster.PgBouncer.Settings = append(*cluster.PgBouncer.Settings,
 					models.PgBouncerSettings{
-						Name:      &v.Name,
-						Operation: &v.Operation,
-						Value:     &v.Value,
+						Name:      name.ValueStringPointer(),
+						Operation: operation.ValueStringPointer(),
+						Value:     value.ValueStringPointer(),
 					},
 				)
 			}
+		} else if clusterResource.PgBouncer.Settings.IsNull() {
+			cluster.PgBouncer.Settings = &[]models.PgBouncerSettings{}
 		}
 	}
 
