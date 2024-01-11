@@ -251,7 +251,7 @@ output "faraway_replica_ids" {
 Here are the steps to restore a cluster:
 1. Use an example config in the examples folder, uncomment the following fields restore_cluster_id=p-123456789, restore_from_deleted=true and enter your cluster id you want to restore and set to true respectively(for restoring an active cluster, set to false)
 2. Use commands terraform init and terraform import biganimal_cluster.single_node_cluster prj_123456789/p-123456789/import-from-deleted to import a deleted cluster into terraform(use import biganimal_cluster.single_node_cluster prj_123456789/p-123456789 to import an active cluster)
-3. Use command terraform plan to compare and diff your config with the imported cluster(source cluster) and edit config where appropriate. You can also use terraform show to see the source cluster which you can copy and paste the field values into your config
+3. Use command terraform plan to compare and diff your config with the imported cluster(source cluster) and edit config where appropriate. You can also use terraform show to see the source cluster which you can copy and paste the field values into your config. The config fields 'cloud_provider', 'pg_type', 'pg_version' and 'private_networking' are unmodifiable and have to match the source cluster
 4. Remove state by deleting the file terraform.tfstate or use the commands terraform state rm 'biganimal_cluster.single_node_cluster' and terraform state rm 'random_password.password'
 5. Use command terraform init and terraform apply to restore the cluster, it will show a warning saying you are trying to restore a cluster
 6. Remove or comment the field restore_cluster_id=p-123456789 in the config after the restore has completed
@@ -278,7 +278,6 @@ Here are the steps to restore a cluster:
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
 - `import_from_deleted` (Boolean) Used by the import function only to import a deleted cluster
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
-- `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `pg_bouncer` (Attributes) Pg bouncer. (see [below for nested schema](#nestedatt--pg_bouncer))
 - `pg_config` (Block Set) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))

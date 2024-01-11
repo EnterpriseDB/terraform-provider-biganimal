@@ -36,7 +36,7 @@ func (m customRestoreClusterIdModifier) PlanModifyString(ctx context.Context, re
 	if !req.PlanValue.IsNull() {
 		resp.Diagnostics.AddWarning(
 			"You are restoring a cluster",
-			"You are restoring a cluster. After restoring the cluster, please remove field 'restore_cluster_id' and optionally remove fields 'restore_from_deleted' and 'restore_point' from the config",
+			"You are restoring a cluster.  The config fields 'cloud_provider', 'pg_type', 'pg_version' and 'private_networking' are unmodifiable and have to match the source cluster. After restoring the cluster, please remove fields 'restore_cluster_id','restore_from_deleted' and 'restore_point' from the config",
 		)
 	}
 }
