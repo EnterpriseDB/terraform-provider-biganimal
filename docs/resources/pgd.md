@@ -1656,7 +1656,6 @@ output "password" {
 
 ### Optional
 
-- `from_deleted` (Boolean) For restoring a cluster. Specifies if the cluster you want to restore is deleted
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
 - `project_id` (String) BigAnimal Project ID.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

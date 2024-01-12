@@ -258,7 +258,6 @@ output "faraway_replica_ids" {
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
 - `cluster_architecture` (Block, Optional) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
-- `from_deleted` (Boolean) For restoring a cluster. Specifies if the cluster you want to restore is deleted
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `pg_bouncer` (Attributes) Pg bouncer. (see [below for nested schema](#nestedatt--pg_bouncer))
