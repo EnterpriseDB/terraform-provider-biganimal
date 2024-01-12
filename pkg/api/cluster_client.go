@@ -40,13 +40,28 @@ func (c ClusterClient) Create(ctx context.Context, projectId string, model any) 
 
 	url := fmt.Sprintf("projects/%s/clusters", projectId)
 	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
-
 	if err != nil {
 		return "", err
 	}
 
 	err = json.Unmarshal(body, &response)
 	return response.Data.ClusterId, err
+}
+
+func (c ClusterClient) ReadDeletedCluster(ctx context.Context, projectId, id string) (*models.Cluster, error) {
+	response := struct {
+		Data models.Cluster `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("projects/%s/deleted-clusters/%s", projectId, id)
+	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return &response.Data, err
+	}
+
+	err = json.Unmarshal(body, &response)
+
+	return &response.Data, err
 }
 
 func (c ClusterClient) Read(ctx context.Context, projectId, id string) (*models.Cluster, error) {
@@ -73,18 +88,18 @@ func (c ClusterClient) ReadByName(ctx context.Context, projectId, name string, m
 	url := fmt.Sprintf("projects/%s/clusters?name=%s", projectId, name)
 	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return &models.Cluster{}, err
+		return nil, err
 	}
 
 	if err := json.Unmarshal(body, &clusters); err != nil {
-		return &models.Cluster{}, err
+		return nil, err
 	}
 
 	if len(clusters.Data) != 1 {
 		if most_recent {
 			sort.Slice(clusters.Data, func(i, j int) bool { return clusters.Data[i].CreatedAt.Seconds > clusters.Data[j].CreatedAt.Seconds })
 		} else {
-			return &models.Cluster{}, ErrorClustersSameName
+			return nil, ErrorClustersSameName
 		}
 	}
 
@@ -174,4 +189,48 @@ func (c ClusterClient) GetPeAllowedPrincipalIds(ctx context.Context, projectID s
 		return &models.PeAllowedPrincipalIds{}, err
 	}
 	return &response.Data, nil
+}
+
+func (c ClusterClient) RestoreCluster(ctx context.Context, projectId, clusterId string, model models.RestoreCluster) (string, error) {
+	response := struct {
+		Data struct {
+			ClusterId string `json:"clusterId"`
+		} `json:"data"`
+	}{}
+
+	b, err := json.Marshal(model)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("projects/%s/clusters/%s/restore", projectId, clusterId)
+	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &response)
+	return response.Data.ClusterId, err
+}
+
+func (c ClusterClient) RestoreClusterFromDeleted(ctx context.Context, projectId, clusterId string, model models.RestoreCluster) (string, error) {
+	response := struct {
+		Data struct {
+			ClusterId string `json:"clusterId"`
+		} `json:"data"`
+	}{}
+
+	b, err := json.Marshal(model)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("projects/%s/deleted-clusters/%s/restore", projectId, clusterId)
+	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &response)
+	return response.Data.ClusterId, err
 }

@@ -8,6 +8,7 @@ IAM
 IOPS
 InstanceType
 MPL
+pgvector
 PGD
 Postgres
 aws
@@ -27,6 +28,7 @@ gp
 hh
 highcpu
 iam
+init
 io
 ip
 nestedatt
@@ -37,7 +39,10 @@ pgextended
 pgBouncer
 pgvector
 postgres
+prj
 ssd
 terraform
+tfstate
 ultradisk
+uncomment
 uri

@@ -72,6 +72,10 @@ resource "biganimal_cluster" "single_node_cluster" {
     start_time = "03:00"
   }
 
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+  # ]
+
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
@@ -96,9 +100,9 @@ resource "biganimal_cluster" "single_node_cluster" {
     #  ]
   }
 
-  # pe_allowed_principal_ids = [
-  #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
-  # ]
+  # restore_cluster_id    = "p-123456789" # uncomment to restore cluster
+  # restore_from_deleted  = true
+  # restore_point         = "2006-01-02T15:04:05-0700"
 }
 
 output "password" {
