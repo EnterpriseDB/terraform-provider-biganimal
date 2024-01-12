@@ -79,6 +79,7 @@ func (m CustomPgBouncerModifier) PlanModifyObject(ctx context.Context, req planm
 		// if is_enabled = true and settings = []
 	} else if !req.PlanValue.IsNull() &&
 		req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue).ValueBool() &&
+		!req.PlanValue.Attributes()["settings"].IsUnknown() &&
 		len(req.PlanValue.Attributes()["settings"].(basetypes.SetValue).Elements()) == 0 {
 		resp.Diagnostics.AddError("if pg_bouncer.is_enabled = true then pg_bouncer.settings cannot be []", "please remove pg_bouncer.settings or set pg_bouncer.settings")
 
