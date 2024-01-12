@@ -11,7 +11,7 @@ Bug Fixes:
 Enhancements:
 * Dependency updates
 * Improved warnings for `biganimal_pgd` resources
-* Updated example links in the examples README 
+* Updated example links in the examples README
 
 ## v0.6.1 (October 18. 2023)
 Features:
