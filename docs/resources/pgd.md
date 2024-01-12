@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -109,7 +109,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -277,7 +277,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -379,7 +379,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -553,7 +553,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -652,7 +652,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -820,7 +820,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -922,7 +922,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1096,7 +1096,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1195,7 +1195,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1363,7 +1363,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1469,7 +1469,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1656,6 +1656,7 @@ output "password" {
 
 ### Optional
 
+- `from_deleted` (Boolean) For restoring a cluster. Specifies if the cluster you want to restore is deleted
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
 - `project_id` (String) BigAnimal Project ID.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -1671,7 +1672,6 @@ output "password" {
 
 Required:
 
-- `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--data_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--data_groups--cluster_architecture))
@@ -1687,6 +1687,7 @@ Required:
 
 Optional:
 
+- `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
 - `cluster_type` (String) Type of the Specified Cluster
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
@@ -1702,15 +1703,6 @@ Read-Only:
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the data group.
 - `resizing_pvc` (Set of String) Resizing PVC.
-
-<a id="nestedatt--data_groups--allowed_ip_ranges"></a>
-### Nested Schema for `data_groups.allowed_ip_ranges`
-
-Required:
-
-- `cidr_block` (String) CIDR block
-- `description` (String) Description of CIDR block
-
 
 <a id="nestedatt--data_groups--cloud_provider"></a>
 ### Nested Schema for `data_groups.cloud_provider`
@@ -1798,6 +1790,15 @@ Optional:
 - `iops` (String) IOPS for the selected volume.
 - `size` (String) Size of the volume.
 - `throughput` (String) Throughput.
+
+
+<a id="nestedatt--data_groups--allowed_ip_ranges"></a>
+### Nested Schema for `data_groups.allowed_ip_ranges`
+
+Required:
+
+- `cidr_block` (String) CIDR block
+- `description` (String) Description of CIDR block
 
 
 <a id="nestedatt--data_groups--conditions"></a>
