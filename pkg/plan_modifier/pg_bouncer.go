@@ -43,7 +43,7 @@ func (m CustomPgBouncerModifier) PlanModifyObject(ctx context.Context, req planm
 	if !req.PlanValue.IsNull() && len(req.PlanValue.Attributes()["settings"].(basetypes.SetValue).Elements()) > 0 {
 		if !req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue).ValueBool() {
 			if !req.PlanValue.Attributes()["settings"].(basetypes.SetValue).IsNull() {
-				resp.Diagnostics.AddError("pg_bouncer.is_enabled = false but pg_bouncer.settings exist", "please remove pg_bouncer.settings if pg_bouncer.is_enabled = false")
+				resp.Diagnostics.AddError("if pg_bouncer.is_enabled = false then pg_bouncer.settings should be removed", "please remove pg_bouncer.settings if pg_bouncer.is_enabled = false")
 				return
 			}
 		} else if req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue).ValueBool() {
@@ -76,9 +76,15 @@ func (m CustomPgBouncerModifier) PlanModifyObject(ctx context.Context, req planm
 
 			return
 		}
+		// if is_enabled = true and settings = []
+	} else if !req.PlanValue.IsNull() &&
+		req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue).ValueBool() &&
+		len(req.PlanValue.Attributes()["settings"].(basetypes.SetValue).Elements()) == 0 {
+		resp.Diagnostics.AddError("if pg_bouncer.is_enabled = true then pg_bouncer.settings cannot be []", "please remove pg_bouncer.settings or set pg_bouncer.settings")
+
+		return
 	}
 
-	// Do nothing if there is a known planned value.
 	if !req.PlanValue.IsUnknown() {
 		return
 	}
