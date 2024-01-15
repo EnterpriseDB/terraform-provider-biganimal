@@ -1,4 +1,4 @@
-## v0.7.0 (January 12. 2024)
+## v0.7.1 (January 15. 2024)
 Features:
 * Pgvector support for `biganimal_cluster` resources
 * PgBouncer support for `biganimal_cluster` resources
