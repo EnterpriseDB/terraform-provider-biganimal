@@ -39,10 +39,10 @@ repos:
     rev: v1.86.0
     hooks:
       - id: terraform_fmt
-      - id: tfupdate
-        name: Auto update hashicorp/random provider version
-        args:
-          - --args=provider random
+      #- id: tfupdate
+      #  name: Auto update hashicorp/random provider version
+      #  args:
+      #    - --args=provider random
 
   # pre-commit hooks for golang
   - repo: https://github.com/dnephin/pre-commit-golang
