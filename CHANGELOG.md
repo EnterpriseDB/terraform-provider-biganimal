@@ -1,3 +1,18 @@
+## v0.7.0 (January 12. 2024)
+Features:
+* Pgvector support for `biganimal_cluster` resources
+* PgBouncer support for `biganimal_cluster` resources
+* BigAnimal Terraform Provider now can output password for `biganimal_pgd` resources
+
+Bug Fixes:
+* Private networking and allowed IP ranges mismatching plan bug fix
+* Other bug fixes
+
+Enhancements:
+* Dependency updates
+* Improved warnings for `biganimal_pgd` resources
+* Updated example links in the examples README
+
 ## v0.6.1 (October 18. 2023)
 Features:
 * BigAnimal Terraform Provider now supports BigAnimal's cloud account AWS, Azure and Google Cloud provider for `biganimal_cluster` and `biganimal_pgd` resources
