@@ -3,7 +3,7 @@ module github.com/EnterpriseDB/terraform-provider-biganimal
 go 1.21
 
 require (
-	github.com/aws/aws-sdk-go v1.45.0
+	github.com/aws/aws-sdk-go v1.50.4
 	github.com/google/uuid v1.3.1
 	github.com/h2non/gock v1.2.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
