@@ -37,17 +37,22 @@ terraform {
 provider "biganimal" {
   # Configuration options
   ba_bearer_token = <redacted> // See Getting an API Token section for details
+  ba_access_key = <redacted> // See Getting an Access Key section for details
   // ba_api_uri   = "https://portal.biganimal.com/api/v3" // Optional
 }
 ```
 
-You can also set the `BA_BEARER_TOKEN` and `BA_API_URI` env vars. When those environment variables are present, you
-don't need to add any configuration options to the provider block described above.
+You can also set the `BA_BEARER_TOKEN`, `BA_ACCESS_KEY` and `BA_API_URI` env vars. When those environment variables are present, you
+don't need to add any configuration options to the provider block described above. Only either `BA_BEARER_TOKEN` or `BA_ACCESS_KEY` needs to be set, if both are set then `BA_ACCESS_KEY` will take priority and be used.
 
 ```bash
 export BA_BEARER_TOKEN=<redacted>
+export BA_ACCESS_KEY=<redacted>
 export BA_API_URI=https://portal.biganimal.com/api/v3
 ```
+
+> [!WARNING]
+> OAuth2 authorization and thus `BA_BEARER_TOKEN` will be deprecated in future CLI releases. It is recommended to use `BA_ACCESS_KEY` as soon as you can.
 
 ### Getting an API Token
 
@@ -57,6 +62,12 @@ environment or add this token to the provider block.
 Please
 visit [Using the get-token script](https://www.enterprisedb.com/docs/biganimal/latest/reference/api/#using-the-get-token-script)
 for more details.
+
+### Getting an Access Key
+
+You can use an ccess key to access the BigAnimal API. The advantage of an access key compared to an API token is that it can be set to have a long expiry date which will aide automation.
+
+To get an access key or manage access keys Log in to https://portal.biganimal.com/, click on your user account and click "Access Keys". Alternatively you can use this link here https://portal.enterprisedb.network/access-keys
 
 ## Development
 
