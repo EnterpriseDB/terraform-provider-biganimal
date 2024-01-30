@@ -9,11 +9,12 @@ import (
 type API struct {
 	BaseURL    string
 	Token      string
+	AccessKey  string
 	UserAgent  string
 	HTTPClient http.Client
 }
 
-func NewAPI(ba_bearer_token, ba_api_uri, userAgent string) *API {
+func NewAPI(ba_access_key, ba_bearer_token, ba_api_uri, userAgent string) *API {
 	httpClient := http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -21,6 +22,7 @@ func NewAPI(ba_bearer_token, ba_api_uri, userAgent string) *API {
 	api := &API{
 		BaseURL:    ba_api_uri,
 		Token:      ba_bearer_token,
+		AccessKey:  ba_access_key,
 		UserAgent:  userAgent,
 		HTTPClient: httpClient,
 	}

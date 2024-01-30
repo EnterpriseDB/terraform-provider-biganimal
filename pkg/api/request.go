@@ -10,7 +10,7 @@ import (
 )
 
 func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.Reader) ([]byte, error) {
-	var url = fmt.Sprintf("%s/%s", api.BaseURL, path)
+	url := fmt.Sprintf("%s/%s", api.BaseURL, path)
 	req, err := http.NewRequest(httpMethod, url, body)
 	if err != nil {
 		return nil, err
@@ -19,8 +19,13 @@ func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.R
 	tflog.Debug(ctx, url)
 
 	req.Header.Add("user-agent", api.UserAgent)
-	req.Header.Add("authorization", "Bearer "+api.Token)
 	req.Header.Add("content-type", "application/json")
+
+	if api.AccessKey != "" {
+		req.Header.Add("x-access-key", api.AccessKey)
+	} else {
+		req.Header.Add("authorization", "Bearer "+api.Token)
+	}
 
 	res, err := api.HTTPClient.Do(req)
 	if err != nil {
@@ -36,5 +41,4 @@ func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.R
 	}
 
 	return out, err
-
 }
