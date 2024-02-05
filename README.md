@@ -67,7 +67,7 @@ for more details.
 
 You can use an ccess key to access the BigAnimal API. The advantage of an access key compared to an API token is that it can be set to have a long expiry date which will aide automation.
 
-To get an access key or manage access keys Log in to https://portal.biganimal.com/, click on your user account and click "Access Keys". Alternatively you can use this link here https://portal.enterprisedb.network/access-keys
+To get an access key or manage access keys Log in to https://portal.biganimal.com/, hover over your username and from the drop down click "Access Keys".
 
 ## Development
 
