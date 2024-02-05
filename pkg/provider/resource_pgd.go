@@ -211,7 +211,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							PlanModifiers: []planmodifier.Set{
-								plan_modifier.CustomPGConfig(),
+								setplanmodifier.UseStateForUnknown(),
 							},
 						},
 						"cluster_architecture": schema.SingleNestedAttribute{

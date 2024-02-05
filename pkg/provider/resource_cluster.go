@@ -189,7 +189,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 			"pg_config": schema.SetNestedBlock{
 				MarkdownDescription: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
-				PlanModifiers:       []planmodifier.Set{plan_modifier.CustomPGConfig()},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
@@ -653,14 +655,22 @@ func (c *clusterResource) read(ctx context.Context, clusterResource *ClusterReso
 		clusterResource.FirstRecoverabilityPointAt = &firstPointAt
 	}
 
-	clusterResource.PgConfig = []PgConfigResourceModel{}
+	newPgConfig := []PgConfigResourceModel{}
 	if configs := cluster.PgConfig; configs != nil {
-		for _, kv := range *configs {
-			clusterResource.PgConfig = append(clusterResource.PgConfig, PgConfigResourceModel{
-				Name:  kv.Name,
-				Value: kv.Value,
-			})
+		for _, cRPgConfig := range clusterResource.PgConfig {
+			for _, kv := range *configs {
+				if cRPgConfig.Value == kv.Value {
+					newPgConfig = append(newPgConfig, PgConfigResourceModel{
+						Name:  kv.Name,
+						Value: kv.Value,
+					})
+				}
+			}
 		}
+	}
+
+	if len(newPgConfig) > 0 {
+		clusterResource.PgConfig = newPgConfig
 	}
 
 	clusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
