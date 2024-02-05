@@ -41,7 +41,7 @@ func NewSDKProvider(version string) func() *sdkschema.Provider {
 					Sensitive:   false,
 					Optional:    true,
 				},
-				"ba_access_key": {
+				"edb_tf_access_key": {
 					Type:        sdkschema.TypeString,
 					Description: "BigAnimal Access Key",
 					Sensitive:   false,
@@ -76,17 +76,17 @@ func configure(version string, p *sdkschema.Provider) func(context.Context, *sdk
 		// If the credential data are provided inside a provider block, get them first
 		// If they are not provided, the schema_* credentials will be empty strings
 		schema_ba_bearer_token := schema.Get("ba_bearer_token").(string)
-		schema_ba_access_key := schema.Get("ba_access_key").(string)
+		schema_edb_tf_access_key := schema.Get("edb_tf_access_key").(string)
 		schema_ba_api_uri := schema.Get("ba_api_uri").(string)
 
-		data := &providerData{BaAPIUri: &schema_ba_api_uri, BaBearerToken: &schema_ba_bearer_token, BaAccessKey: &schema_ba_access_key}
+		data := &providerData{BaAPIUri: &schema_ba_api_uri, BaBearerToken: &schema_ba_bearer_token, EdbTFAccessKey: &schema_edb_tf_access_key}
 		ok, summary, detail := checkProviderConfig(data)
 		if !ok {
 			return nil, diag.Diagnostics{diag.Diagnostic{Severity: diag.Error, Summary: summary, Detail: detail}}
 		}
 
 		userAgent := fmt.Sprintf("%s/%s", "terraform-provider-biganimal", version)
-		return api.NewAPI(*data.BaAccessKey, *data.BaBearerToken, *data.BaAPIUri, userAgent), nil
+		return api.NewAPI(*data.EdbTFAccessKey, *data.BaBearerToken, *data.BaAPIUri, userAgent), nil
 	}
 }
 
@@ -96,9 +96,9 @@ type bigAnimalProvider struct {
 
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
-	BaBearerToken *string `tfsdk:"ba_bearer_token"`
-	BaAccessKey   *string `tfsdk:"ba_access_key"`
-	BaAPIUri      *string `tfsdk:"ba_api_uri"`
+	BaBearerToken  *string `tfsdk:"ba_bearer_token"`
+	EdbTFAccessKey *string `tfsdk:"edb_tf_access_key"`
+	BaAPIUri       *string `tfsdk:"ba_api_uri"`
 }
 
 func NewFrameworkProvider(version string) func() provider.Provider {
@@ -131,7 +131,7 @@ func (b bigAnimalProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	userAgent := fmt.Sprintf("%s/%s", "terraform-provider-biganimal", b.version)
-	client := api.NewAPI(*data.BaAccessKey, *data.BaBearerToken, *data.BaAPIUri, userAgent)
+	client := api.NewAPI(*data.EdbTFAccessKey, *data.BaBearerToken, *data.BaAPIUri, userAgent)
 	resp.ResourceData = client
 	resp.DataSourceData = client
 }
@@ -145,15 +145,15 @@ func checkProviderConfig(data *providerData) (ok bool, summary, detail string) {
 	}
 
 	// access key environment variable takes precedence over access key schema field
-	accessKey := os.Getenv("BA_ACCESS_KEY")
+	accessKey := os.Getenv("EDB_TF_ACCESS_KEY")
 	if accessKey != "" {
-		data.BaAccessKey = &accessKey
-	} else if data.BaAccessKey == nil || *data.BaAccessKey == "" {
-		data.BaAccessKey = &accessKey
+		data.EdbTFAccessKey = &accessKey
+	} else if data.EdbTFAccessKey == nil || *data.EdbTFAccessKey == "" {
+		data.EdbTFAccessKey = &accessKey
 	}
 
-	if *data.BaAccessKey == "" && *data.BaBearerToken == "" {
-		return false, "Unable to find BA_ACCESS_KEY or BA_BEARER_TOKEN", "BA_ACCESS_KEY and BA_BEARER_TOKEN both cannot be an empty string"
+	if *data.EdbTFAccessKey == "" && *data.BaBearerToken == "" {
+		return false, "Unable to find EDB_TF_ACCESS_KEY or BA_BEARER_TOKEN", "EDB_TF_ACCESS_KEY and BA_BEARER_TOKEN both cannot be an empty string"
 	}
 
 	if data.BaAPIUri == nil || *data.BaAPIUri == "" {
@@ -175,7 +175,7 @@ func (b bigAnimalProvider) Schema(ctx context.Context, request provider.SchemaRe
 				Sensitive:           false,
 				Optional:            true,
 			},
-			"ba_access_key": frameworkschema.StringAttribute{
+			"edb_tf_access_key": frameworkschema.StringAttribute{
 				MarkdownDescription: "BigAnimal Access Key",
 				Sensitive:           false,
 				Optional:            true,

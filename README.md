@@ -37,22 +37,22 @@ terraform {
 provider "biganimal" {
   # Configuration options
   ba_bearer_token = <redacted> // See Getting an API Token section for details
-  ba_access_key = <redacted> // See Getting an Access Key section for details
+  edb_tf_access_key = <redacted> // See Getting an Access Key section for details
   // ba_api_uri   = "https://portal.biganimal.com/api/v3" // Optional
 }
 ```
 
-You can also set the `BA_BEARER_TOKEN`, `BA_ACCESS_KEY` and `BA_API_URI` env vars. When those environment variables are present, you
-don't need to add any configuration options to the provider block described above. Only either `BA_BEARER_TOKEN` or `BA_ACCESS_KEY` needs to be set, if both are set then `BA_ACCESS_KEY` will take priority and be used.
+You can also set the `BA_BEARER_TOKEN`, `EDB_TF_ACCESS_KEY` and `BA_API_URI` env vars. When those environment variables are present, you
+don't need to add any configuration options to the provider block described above. Only either `BA_BEARER_TOKEN` or `EDB_TF_ACCESS_KEY` needs to be set, if both are set then `EDB_TF_ACCESS_KEY` will take priority and be used.
 
 ```bash
 export BA_BEARER_TOKEN=<redacted>
-export BA_ACCESS_KEY=<redacted>
+export EDB_TF_ACCESS_KEY=<redacted>
 export BA_API_URI=https://portal.biganimal.com/api/v3
 ```
 
 > [!WARNING]
-> OAuth2 authorization and thus `BA_BEARER_TOKEN` will be deprecated in future CLI releases. It is recommended to use `BA_ACCESS_KEY` as soon as you can.
+> OAuth2 authorization and thus `BA_BEARER_TOKEN` will be deprecated in future CLI releases. It is recommended to use `EDB_TF_ACCESS_KEY` as soon as you can.
 
 ### Getting an API Token
 
