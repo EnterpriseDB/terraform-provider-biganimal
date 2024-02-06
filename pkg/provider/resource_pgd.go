@@ -771,10 +771,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	// 	return
 	// }
 
-	// config.DataGroups = []terraform.DataGroup{}
-	// config.WitnessGroups = []terraform.WitnessGroup{}
-
-	// buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &config.DataGroups, &config.WitnessGroups)
+	// buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &config)
 	// if resp.Diagnostics.HasError() {
 	// 	return
 	// }
@@ -807,7 +804,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ClusterId = clusterResp.ClusterId
 	state.ClusterName = clusterResp.ClusterName
 
-	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &state.DataGroups, &state.WitnessGroups)
+	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &state)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -980,9 +977,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	// 	return
 	// }
 
-	// plan.DataGroups = []terraform.DataGroup{}
-	// plan.WitnessGroups = []terraform.WitnessGroup{}
-
 	// buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &plan.DataGroups, &plan.WitnessGroups)
 	// if resp.Diagnostics.HasError() {
 	// 	return
@@ -1024,19 +1018,19 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 	return true, nil
 }
 
-func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, pgd *PGD) retry.RetryFunc {
+func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, pgdTfResource *PGD) retry.RetryFunc {
 	return func() *retry.RetryError {
-		pgdResp, err := p.client.Read(ctx, pgd.ProjectId, *pgd.ClusterId)
+		pgdResp, err := p.client.Read(ctx, pgdTfResource.ProjectId, *pgdTfResource.ClusterId)
 		if err != nil {
 			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
 		}
 
-		buildTFGroupsAs(ctx, diags, state, *pgdResp, &pgd.DataGroups, &pgd.WitnessGroups)
+		buildTFGroupsAs(ctx, diags, state, *pgdResp, pgdTfResource)
 		if diags.HasError() {
 			return retry.NonRetryableError(fmt.Errorf("unable to copy group, got error: %s", err))
 		}
 
-		isHealthy, err := p.isHealthy(ctx, pgd.DataGroups, pgd.WitnessGroups)
+		isHealthy, err := p.isHealthy(ctx, pgdTfResource.DataGroups, pgdTfResource.WitnessGroups)
 		if err != nil {
 			return retry.NonRetryableError(fmt.Errorf("error getting health: %s", err))
 		}
@@ -1049,9 +1043,10 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 	}
 }
 
-func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, clusterResp models.Cluster, asDgs *[]terraform.DataGroup, asWgs *[]terraform.WitnessGroup) {
-	*asDgs = []terraform.DataGroup{}
-	*asWgs = []terraform.WitnessGroup{}
+func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, clusterResp models.Cluster, asPgdTFResource *PGD) {
+	originalTFDgs := asPgdTFResource.DataGroups
+	asPgdTFResource.DataGroups = []terraform.DataGroup{}
+	asPgdTFResource.WitnessGroups = []terraform.WitnessGroup{}
 
 	for _, v := range *clusterResp.Groups {
 		switch apiGroupResp := v.(type) {
@@ -1116,6 +1111,28 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					conditionsSet = types.SetValueMust(conditionsElemType, conditions)
 				}
 
+				// pgConfig
+				var newPgConfig []models.KeyValue
+				var tfPgConfig *[]models.KeyValue
+				if originalTFDgs != nil {
+					for _, pgdTFResourceDG := range originalTFDgs {
+						if pgdTFResourceDG.Region.RegionId == apiDGModel.Region.RegionId {
+							tfPgConfig = pgdTFResourceDG.PgConfig
+							break
+						}
+					}
+				}
+
+				if tfPgConfig != nil && apiDGModel.PgConfig != nil {
+					for _, tfPgConf := range *tfPgConfig {
+						for _, apiPgConf := range *apiDGModel.PgConfig {
+							if tfPgConf.Name == apiPgConf.Name {
+								newPgConfig = append(newPgConfig, models.KeyValue{Name: apiPgConf.Name, Value: apiPgConf.Value})
+							}
+						}
+					}
+				}
+
 				// resizing pvc
 				resizingPvc := []attr.Value{}
 				if apiDGModel.ResizingPvc != nil && len(*apiDGModel.ResizingPvc) != 0 {
@@ -1166,7 +1183,6 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					InstanceType:          apiDGModel.InstanceType,
 					LogsUrl:               types.StringPointerValue(apiDGModel.LogsUrl),
 					MetricsUrl:            types.StringPointerValue(apiDGModel.MetricsUrl),
-					PgConfig:              apiDGModel.PgConfig,
 					PgType:                apiDGModel.PgType,
 					PgVersion:             apiDGModel.PgVersion,
 					Phase:                 types.StringPointerValue(apiDGModel.Phase),
@@ -1179,8 +1195,11 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 				}
+				if len(newPgConfig) > 0 {
+					tfDGModel.PgConfig = &newPgConfig
+				}
 
-				*asDgs = append(*asDgs, tfDGModel)
+				asPgdTFResource.DataGroups = append(asPgdTFResource.DataGroups, tfDGModel)
 			}
 
 			if apiGroupResp["clusterType"] == "witness_group" {
@@ -1330,7 +1349,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:   mw,
 				}
 
-				*asWgs = append(*asWgs, tfWGModel)
+				asPgdTFResource.WitnessGroups = append(asPgdTFResource.WitnessGroups, tfWGModel)
 			}
 		}
 	}
