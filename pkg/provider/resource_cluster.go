@@ -655,6 +655,7 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
 	}
 
+	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
 	if configs := apiCluster.PgConfig; configs != nil {
 		for _, tfCRPgConfig := range tfClusterResource.PgConfig {

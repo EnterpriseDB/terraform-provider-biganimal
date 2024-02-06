@@ -1111,7 +1111,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					conditionsSet = types.SetValueMust(conditionsElemType, conditions)
 				}
 
-				// pgConfig
+				// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 				var newPgConfig []models.KeyValue
 				var tfPgConfig *[]models.KeyValue
 				for _, pgdTFResourceDG := range originalTFDgs {
