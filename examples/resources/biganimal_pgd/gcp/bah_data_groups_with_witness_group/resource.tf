@@ -65,7 +65,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -126,7 +126,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
