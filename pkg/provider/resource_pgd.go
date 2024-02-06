@@ -1114,12 +1114,10 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				// pgConfig
 				var newPgConfig []models.KeyValue
 				var tfPgConfig *[]models.KeyValue
-				if originalTFDgs != nil {
-					for _, pgdTFResourceDG := range originalTFDgs {
-						if pgdTFResourceDG.Region.RegionId == apiDGModel.Region.RegionId {
-							tfPgConfig = pgdTFResourceDG.PgConfig
-							break
-						}
+				for _, pgdTFResourceDG := range originalTFDgs {
+					if pgdTFResourceDG.Region.RegionId == apiDGModel.Region.RegionId {
+						tfPgConfig = pgdTFResourceDG.PgConfig
+						break
 					}
 				}
 
