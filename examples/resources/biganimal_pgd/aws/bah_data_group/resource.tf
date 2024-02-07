@@ -65,7 +65,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
