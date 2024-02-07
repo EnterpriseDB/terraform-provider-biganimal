@@ -1,3 +1,10 @@
+## v0.7.1 (February 07. 2024)
+Bug Fixes:
+* Fixed pg config to only use user custom config values in plan and not include default config values
+
+Enhancements:
+* Updated default storage size from 4 Gi to 32 Gi in examples for `biganimal_pgd` resources
+
 ## v0.7.0 (January 12. 2024)
 Features:
 * Pgvector support for `biganimal_cluster` resources
