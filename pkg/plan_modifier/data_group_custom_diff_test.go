@@ -2,16 +2,24 @@ package plan_modifier_test
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/provider"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
@@ -21,187 +29,120 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 
 	pgdSchema := provider.PgdSchema(ctx)
 
-	regionType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["region"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	cloudProviderType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["cloud_provider"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	storageAttrType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["storage"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	conditionsElemType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["conditions"].(schema.Attribute).GetType().(types.SetType).ElemType
-	resizingPvcElemType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["resizing_pvc"].(schema.Attribute).GetType().(types.SetType).ElemType
-	allowedIpRangesElemType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType
-	allowedIpRangesElemObjectType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
-	clusterArchAttrType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["cluster_architecture"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	instanceTypeType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["instance_type"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	pgTypeType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["pg_type"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	pgVersionType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["pg_version"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-	cmwType := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()["maintenance_window"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
-
-	defaultRegion := map[string]attr.Value{
-		"region_id": basetypes.NewStringValue("us-east-1"),
+	dgSchema := schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"data_groups": pgdSchema.Attributes["data_groups"].(schema.NestedAttribute),
+		},
 	}
 
-	defaultCloudProvider := map[string]attr.Value{
-		"cloud_provider_id": basetypes.NewStringValue("aws"),
+	// dgsSchemaAttr := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()
+	// conditionsElemType := dgsSchemaAttr["conditions"].(schema.Attribute).GetType().(types.SetType).ElemType
+	// dgsSchemaAttr := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()
+	// allowedIpRangesElemType := dgsSchemaAttr["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType
+	// allowedIpRangesElemObjectType := dgsSchemaAttr["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
+	// clusterArchAttrType := dgsSchemaAttr["cluster_architecture"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
+	// dgElemAttrType := pgdSchema.Attributes["data_groups"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
+	dgTfValue, _ := pgdSchema.Attributes["data_groups"].GetType().ValueType(ctx).ToTerraformValue(ctx)
+	dgType := pgdSchema.Attributes["data_groups"].GetType()
+
+	dgAttrTypes := dgType.(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
+
+	rawRootValue := map[string]tftypes.Value{
+		"data_groups": dgTfValue,
 	}
 
-	defaultStorage := map[string]attr.Value{
-		"volume_type":       basetypes.NewStringValue("gp3"),
-		"volume_properties": basetypes.NewStringValue("gp3"),
-		"size":              basetypes.NewStringValue("4 Gi"),
-		"iops":              basetypes.NewStringUnknown(),
-		"throughput":        basetypes.NewStringUnknown(),
-	}
+	rawRootType := basetypes.ObjectType{AttrTypes: map[string]attr.Type{
+		"data_groups": dgType,
+	}}
 
-	defaultAllowedIpRange := []attr.Value{
-		basetypes.NewObjectValueMust(allowedIpRangesElemObjectType, map[string]attr.Value{
-			"cidr_block":  basetypes.NewStringValue("127.0.0.1/32"),
-			"description": basetypes.NewStringValue("test ip 1"),
-		}),
-		basetypes.NewObjectValueMust(allowedIpRangesElemObjectType, map[string]attr.Value{
-			"cidr_block":  basetypes.NewStringValue("192.0.0.1/32"),
-			"description": basetypes.NewStringValue("test ip 2"),
-		}),
-	}
-
-	defaultClusterArch := map[string]attr.Value{
-		"cluster_architecture_id":   basetypes.NewStringValue("pgd"),
-		"cluster_architecture_name": basetypes.NewStringUnknown(),
-		"nodes":                     basetypes.NewFloat64Value(3),
-		"witness_nodes":             basetypes.NewFloat64Unknown(),
-	}
-
-	defaultInstanceType := map[string]attr.Value{
-		"instance_type_id": basetypes.NewStringValue("aws:m5.large"),
-	}
-
-	defaultPgType := map[string]attr.Value{
-		"pg_type_id": basetypes.NewStringValue("epas"),
-	}
-
-	defaultPgVersion := map[string]attr.Value{
-		"pg_version_id": basetypes.NewStringValue("15"),
-	}
-
-	defaultCmw := map[string]attr.Value{
-		"is_enabled": basetypes.NewBoolValue(true),
-		"start_day":  basetypes.NewFloat64Value(1),
-		"start_time": basetypes.NewStringValue("03:00"),
-	}
-
-	defaultBackupRetentionPeriod := "3d"
-
-	defaultDgAttr := map[string]attr.Value{
-		"region":                  basetypes.NewObjectValueMust(regionType, defaultRegion),
-		"cloud_provider":          basetypes.NewObjectValueMust(cloudProviderType, defaultCloudProvider),
-		"storage":                 basetypes.NewObjectValueMust(storageAttrType, defaultStorage),
-		"cluster_name":            basetypes.NewStringUnknown(),
-		"cluster_type":            basetypes.NewStringUnknown(),
-		"conditions":              basetypes.NewSetUnknown(conditionsElemType),
-		"connection_uri":          basetypes.NewStringUnknown(),
-		"created_at":              basetypes.NewStringUnknown(),
-		"group_id":                basetypes.NewStringUnknown(),
-		"logs_url":                basetypes.NewStringUnknown(),
-		"metrics_url":             basetypes.NewStringUnknown(),
-		"phase":                   basetypes.NewStringUnknown(),
-		"resizing_pvc":            basetypes.NewSetUnknown(resizingPvcElemType),
-		"allowed_ip_ranges":       basetypes.NewSetValueMust(allowedIpRangesElemType, defaultAllowedIpRange),
-		"backup_retention_period": basetypes.NewStringValue(defaultBackupRetentionPeriod),
-		"cluster_architecture":    basetypes.NewObjectValueMust(clusterArchAttrType, defaultClusterArch),
-		"csp_auth":                basetypes.NewBoolValue(false),
-		"instance_type":           basetypes.NewObjectValueMust(instanceTypeType, defaultInstanceType),
-		"pg_type":                 basetypes.NewObjectValueMust(pgTypeType, defaultPgType),
-		"pg_version":              basetypes.NewObjectValueMust(pgVersionType, defaultPgVersion),
-		"private_networking":      basetypes.NewBoolValue(false),
-		"maintenance_window":      basetypes.NewObjectValueMust(cmwType, defaultCmw),
-	}
-
-	defaultDgAttrTypes := map[string]attr.Type{
-		"region":                  defaultDgAttr["region"].Type(ctx),
-		"cloud_provider":          defaultDgAttr["cloud_provider"].Type(ctx),
-		"storage":                 defaultDgAttr["storage"].Type(ctx),
-		"cluster_name":            defaultDgAttr["cluster_name"].Type(ctx),
-		"cluster_type":            defaultDgAttr["cluster_type"].Type(ctx),
-		"conditions":              defaultDgAttr["conditions"].Type(ctx),
-		"connection_uri":          defaultDgAttr["connection_uri"].Type(ctx),
-		"created_at":              defaultDgAttr["created_at"].Type(ctx),
-		"group_id":                defaultDgAttr["group_id"].Type(ctx),
-		"logs_url":                defaultDgAttr["logs_url"].Type(ctx),
-		"metrics_url":             defaultDgAttr["metrics_url"].Type(ctx),
-		"phase":                   defaultDgAttr["phase"].Type(ctx),
-		"resizing_pvc":            defaultDgAttr["resizing_pvc"].Type(ctx),
-		"allowed_ip_ranges":       defaultDgAttr["allowed_ip_ranges"].Type(ctx),
-		"backup_retention_period": defaultDgAttr["backup_retention_period"].Type(ctx),
-		"cluster_architecture":    defaultDgAttr["cluster_architecture"].Type(ctx),
-		"csp_auth":                defaultDgAttr["csp_auth"].Type(ctx),
-		"instance_type":           defaultDgAttr["instance_type"].Type(ctx),
-		"pg_type":                 defaultDgAttr["pg_type"].Type(ctx),
-		"pg_version":              defaultDgAttr["pg_version"].Type(ctx),
-		"private_networking":      defaultDgAttr["private_networking"].Type(ctx),
-		"maintenance_window":      defaultDgAttr["maintenance_window"].Type(ctx),
-	}
-
-	defaultDgObject := basetypes.NewObjectValueMust(defaultDgAttrTypes, defaultDgAttr)
-	defaultDgObjects := []attr.Value{}
-	defaultDgObjects = append(defaultDgObjects, defaultDgObject)
-	defaultDgSet := basetypes.NewSetValueMust(defaultDgObject.Type(ctx), defaultDgObjects)
-
-	addGroupObject := map[string]attr.Value{
-		"region": basetypes.NewObjectValueMust(regionType,
-			map[string]attr.Value{
-				"region_id": basetypes.NewStringValue("us-east-2"),
+	defaultDgs := []terraform.DataGroup{
+		{
+			Region:   &api.Region{RegionId: "us-east-1"},
+			Provider: &api.CloudProvider{CloudProviderId: utils.ToPointer("aws")},
+			Storage: &terraform.Storage{
+				VolumeTypeId:       basetypes.NewStringValue("gp3"),
+				VolumePropertiesId: basetypes.NewStringValue("gp3"),
+				Size:               basetypes.NewStringValue("4 Gi"),
+				Iops:               basetypes.NewStringUnknown(),
+				Throughput:         basetypes.NewStringUnknown(),
 			},
-		),
-		"cloud_provider":          basetypes.NewObjectValueMust(cloudProviderType, defaultCloudProvider),
-		"storage":                 basetypes.NewObjectValueMust(storageAttrType, defaultStorage),
-		"cluster_name":            basetypes.NewStringUnknown(),
-		"cluster_type":            basetypes.NewStringUnknown(),
-		"conditions":              basetypes.NewSetUnknown(conditionsElemType),
-		"connection_uri":          basetypes.NewStringUnknown(),
-		"created_at":              basetypes.NewStringUnknown(),
-		"group_id":                basetypes.NewStringUnknown(),
-		"logs_url":                basetypes.NewStringUnknown(),
-		"metrics_url":             basetypes.NewStringUnknown(),
-		"phase":                   basetypes.NewStringUnknown(),
-		"resizing_pvc":            basetypes.NewSetUnknown(resizingPvcElemType),
-		"allowed_ip_ranges":       basetypes.NewSetValueMust(allowedIpRangesElemType, defaultAllowedIpRange),
-		"backup_retention_period": basetypes.NewStringValue(defaultBackupRetentionPeriod),
-		"cluster_architecture":    basetypes.NewObjectValueMust(clusterArchAttrType, defaultClusterArch),
-		"csp_auth":                basetypes.NewBoolValue(false),
-		"instance_type":           basetypes.NewObjectValueMust(instanceTypeType, defaultInstanceType),
-		"pg_type":                 basetypes.NewObjectValueMust(pgTypeType, defaultPgType),
-		"pg_version":              basetypes.NewObjectValueMust(pgVersionType, defaultPgVersion),
-		"private_networking":      basetypes.NewBoolValue(false),
-		"maintenance_window": basetypes.NewObjectValueMust(cmwType,
-			map[string]attr.Value{
-				"is_enabled": basetypes.NewBoolValue(true),
-				"start_day":  basetypes.NewFloat64Value(2),
-				"start_time": basetypes.NewStringValue("06:00"),
+			AllowedIpRanges: &[]models.AllowedIpRange{
+				{CidrBlock: "127.0.0.1/32", Description: "test ip 1"},
+				{CidrBlock: "192.0.0.1/32", Description: "test ip 2"},
 			},
-		),
+			ClusterArchitecture: &terraform.ClusterArchitecture{
+				ClusterArchitectureId:   "pgd",
+				ClusterArchitectureName: basetypes.NewStringUnknown(),
+				Nodes:                   3,
+				WitnessNodes:            basetypes.NewInt64Unknown(),
+			},
+			InstanceType: &api.InstanceType{InstanceTypeId: "aws:m5.large"},
+			PgType:       &api.PgType{PgTypeId: "epas"},
+			PgVersion:    &api.PgVersion{PgVersionId: "15"},
+			MaintenanceWindow: &models.MaintenanceWindow{
+				IsEnabled: utils.ToPointer(true),
+				StartDay:  utils.ToPointer(float64(1)),
+				StartTime: utils.ToPointer("03:00"),
+			},
+			BackupRetentionPeriod: utils.ToPointer("3d"),
+			ServiceAccountIds:     basetypes.NewSetUnknown(dgAttrTypes["service_account_ids"].(types.SetType).ElemType),
+			PeAllowedPrincipalIds: basetypes.NewSetUnknown(dgAttrTypes["pe_allowed_principal_ids"].(types.SetType).ElemType),
+			PgConfig:              &[]models.KeyValue{},
+			Conditions:            basetypes.NewSetUnknown(dgAttrTypes["conditions"].(types.SetType).ElemType),
+			ResizingPvc:           basetypes.NewSetUnknown(dgAttrTypes["resizing_pvc"].(types.SetType).ElemType),
+		},
 	}
 
-	updateObjectAttr := map[string]attr.Value{}
-
-	for k, v := range defaultDgAttr {
-		updateObjectAttr[k] = v
+	customState := tfsdk.State{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)}
+	diag := customState.SetAttribute(ctx, path.Root("data_groups"), defaultDgs)
+	if diag.ErrorsCount() > 0 {
+		fmt.Printf("set attribute data groups error: %v", diag.Errors())
+		return
 	}
 
-	updateObjectAttr["allowed_ip_ranges"] = basetypes.NewSetValueMust(allowedIpRangesElemType, []attr.Value{
-		basetypes.NewObjectValueMust(allowedIpRangesElemObjectType, map[string]attr.Value{
-			"cidr_block":  basetypes.NewStringValue("168.0.0.1/32"),
-			"description": basetypes.NewStringValue("updated"),
-		}),
-	})
-	updateObjectAttr["backup_retention_period"] = basetypes.NewStringValue("5d")
-	updateObjectAttr["cluster_architecture"] = basetypes.NewObjectValueMust(clusterArchAttrType, map[string]attr.Value{
-		"cluster_architecture_id":   basetypes.NewStringValue("pgd"),
-		"cluster_architecture_name": basetypes.NewStringUnknown(),
-		"nodes":                     basetypes.NewFloat64Value(1),
-		"witness_nodes":             basetypes.NewFloat64Unknown(),
-	})
+	tfDefaultDgs := new(types.Set)
+	customState.GetAttribute(ctx, path.Root("data_groups"), tfDefaultDgs)
 
-	updateObject := basetypes.NewObjectValueMust(defaultDgAttrTypes, updateObjectAttr)
-	updateObjects := []attr.Value{}
-	updateObjects = append(updateObjects, updateObject)
-	updateSet := basetypes.NewSetValueMust(defaultDgObject.Type(ctx), updateObjects)
+	addedDgs := []terraform.DataGroup(defaultDgs)
+	newDg := defaultDgs[0]
+	newDg.Region = &api.Region{RegionId: "us-east-2"}
+	addDg := terraform.DataGroup(newDg)
+	addedDgs = append(addedDgs, addDg)
+
+	customState = tfsdk.State{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)}
+	diag = customState.SetAttribute(ctx, path.Root("data_groups"), addedDgs)
+	if diag.ErrorsCount() > 0 {
+		fmt.Printf("set attribute data groups error %v", diag.Errors())
+		return
+	}
+
+	tfAddedDgs := new(types.Set)
+	customState.GetAttribute(ctx, path.Root("data_groups"), tfAddedDgs)
+
+	updatedDgs := []terraform.DataGroup(defaultDgs)
+	updatedDgs[0].AllowedIpRanges = &[]models.AllowedIpRange{
+		{
+			CidrBlock:   "168.0.0.1/32",
+			Description: "updated",
+		},
+	}
+	updatedDgs[0].BackupRetentionPeriod = utils.ToPointer("5d")
+	updatedDgs[0].ClusterArchitecture = &terraform.ClusterArchitecture{
+		ClusterArchitectureId:   "pgd",
+		ClusterArchitectureName: basetypes.NewStringUnknown(),
+		Nodes:                   1,
+		WitnessNodes:            basetypes.NewInt64Unknown(),
+	}
+
+	customState = tfsdk.State{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)}
+	diag = customState.SetAttribute(ctx, path.Root("data_groups"), updatedDgs)
+	if diag.ErrorsCount() > 0 {
+		fmt.Printf("set attribute data groups error: %v", diag.Errors())
+		return
+	}
+
+	tfUpdatedDgs := new(types.Set)
+	customState.GetAttribute(ctx, path.Root("data_groups"), tfUpdatedDgs)
 
 	type args struct {
 		ctx  context.Context
@@ -217,47 +158,47 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		expectedPlanElements   []attr.Value
 	}{
 		{
-			name: "Add dg expected success",
+			name: "Add dg expect success",
 			args: args{
+				ctx: ctx,
 				req: planmodifier.SetRequest{
-					StateValue: defaultDgSet,
+					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
+					StateValue: *tfDefaultDgs,
 				},
 				resp: &planmodifier.SetResponse{
-					PlanValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-						append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
-					),
+					PlanValue: *tfAddedDgs,
 				},
 			},
 			expectedWarningsCount:  1,
 			expectedWarningSummary: []string{"Adding new data group"},
-			expectedPlanElements: append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes,
-				addGroupObject,
-			)),
+			expectedPlanElements:   tfAddedDgs.Elements(),
 		},
 		{
-			name: "Remove dg expected success",
+			name: "Remove dg expect success",
 			args: args{
+				ctx: ctx,
 				req: planmodifier.SetRequest{
-					StateValue: basetypes.NewSetValueMust(defaultDgObject.Type(ctx),
-						append(defaultDgObjects, basetypes.NewObjectValueMust(defaultDgAttrTypes, addGroupObject)),
-					),
+					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
+					StateValue: *tfAddedDgs,
 				},
 				resp: &planmodifier.SetResponse{
-					PlanValue: defaultDgSet,
+					PlanValue: *tfDefaultDgs,
 				},
 			},
 			expectedWarningsCount:  1,
 			expectedWarningSummary: []string{"Removing data group"},
-			expectedPlanElements:   defaultDgObjects,
+			expectedPlanElements:   tfDefaultDgs.Elements(),
 		},
 		{
-			name: "Update object expected success",
+			name: "Update object expect success",
 			args: args{
+				ctx: ctx,
 				req: planmodifier.SetRequest{
-					StateValue: defaultDgSet,
+					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
+					StateValue: *tfDefaultDgs,
 				},
 				resp: &planmodifier.SetResponse{
-					PlanValue: updateSet,
+					PlanValue: *tfUpdatedDgs,
 				},
 			},
 			expectedWarningsCount: 3,
@@ -266,7 +207,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 				"Backup retention changed",
 				"Cluster architecture changed",
 			},
-			expectedPlanElements: updateObjects,
+			expectedPlanElements: tfUpdatedDgs.Elements(),
 		},
 	}
 	for _, tt := range tests {
