@@ -367,6 +367,17 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 					planMW,
 					stateDgRegion))
 			}
+
+			// pg config
+			planPgConfig := planDg.(basetypes.ObjectValue).Attributes()["pg_config"]
+			statePgConfig := stateDgs[*stateDgKey].(basetypes.ObjectValue).Attributes()["pg_config"]
+
+			if !planPgConfig.Equal(statePgConfig) {
+				resp.Diagnostics.AddWarning("Pg config changed", fmt.Sprintf("Pg config changed from %v to %v for data group with region %v",
+					statePgConfig,
+					planPgConfig,
+					stateDgRegion))
+			}
 		}
 
 	}

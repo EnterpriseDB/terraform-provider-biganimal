@@ -455,10 +455,15 @@ func (p pgdDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	data.ID = cluster.ClusterId
 	data.ClusterID = cluster.ClusterId
 
-	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *cluster, &data.DataGroups, &data.WitnessGroups)
+	buildGroups := PGD{}
+
+	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *cluster, &buildGroups)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	data.DataGroups = buildGroups.DataGroups
+	data.WitnessGroups = buildGroups.WitnessGroups
 
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
