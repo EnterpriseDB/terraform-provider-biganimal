@@ -964,6 +964,10 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		return
 	}
 
+	// sleep for 3 seconds as the API can respond with the change and healthy state straight away
+	// possibly a bug in the API
+	time.Sleep(20 * time.Second)
+
 	plan.ID = plan.ClusterId
 
 	// retry func

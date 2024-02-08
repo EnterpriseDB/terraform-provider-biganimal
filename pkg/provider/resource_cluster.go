@@ -552,7 +552,12 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	// sleep for 3 seconds as the API can respond with the change and healthy state straight away
+	// possibly a bug in the API
+	time.Sleep(20 * time.Second)
+
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
+
 	resp.Diagnostics.Append(diagnostics...)
 	if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
