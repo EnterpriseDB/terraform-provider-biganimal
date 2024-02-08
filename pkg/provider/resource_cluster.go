@@ -552,8 +552,8 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	// sleep for 3 seconds as the API can respond with the change and healthy state straight away
-	// possibly a bug in the API
+	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
+	// this is possibly a bug in the API
 	time.Sleep(20 * time.Second)
 
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
