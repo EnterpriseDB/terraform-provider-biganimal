@@ -65,7 +65,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -119,7 +119,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
