@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -73,7 +73,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -109,7 +109,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -172,7 +172,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -226,7 +226,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -277,7 +277,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -340,7 +340,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -379,7 +379,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -442,7 +442,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -499,7 +499,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -553,7 +553,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -616,7 +616,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -652,7 +652,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -715,7 +715,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -769,7 +769,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -820,7 +820,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -883,7 +883,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -922,7 +922,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -985,7 +985,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1042,7 +1042,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1096,7 +1096,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -1159,7 +1159,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1195,7 +1195,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -1258,7 +1258,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1312,7 +1312,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1363,7 +1363,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -1426,7 +1426,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1469,7 +1469,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.7.0"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -1532,7 +1532,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1593,7 +1593,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
