@@ -12,7 +12,10 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 )
 
-type ClusterClient struct{ API }
+type ClusterClient struct {
+	API
+	CommonCluster
+}
 
 func NewClusterClient(api API) *ClusterClient {
 	httpClient := http.Client{
@@ -20,7 +23,7 @@ func NewClusterClient(api API) *ClusterClient {
 	}
 
 	api.HTTPClient = httpClient
-	c := ClusterClient{API: api}
+	c := ClusterClient{API: api, CommonCluster: CommonCluster{API: api}}
 	return &c
 }
 
@@ -40,7 +43,6 @@ func (c ClusterClient) Create(ctx context.Context, projectId string, model any) 
 
 	url := fmt.Sprintf("projects/%s/clusters", projectId)
 	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
-
 	if err != nil {
 		return "", err
 	}
