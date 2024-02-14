@@ -520,6 +520,11 @@ func (c *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
+	if state.Phase == nil || *state.Phase != models.PHASE_HEALTHY {
+		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -547,7 +552,12 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
+	// this is possibly a bug in the API
+	time.Sleep(20 * time.Second)
+
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
+
 	resp.Diagnostics.Append(diagnostics...)
 	if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
