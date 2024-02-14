@@ -52,7 +52,7 @@ export BA_API_URI=https://portal.biganimal.com/api/v3
 ```
 
 > [!WARNING]
-> OAuth2 authorization and thus `BA_BEARER_TOKEN` will be deprecated in future CLI releases. It is recommended to use `EDB_TF_ACCESS_KEY` as soon as you can.
+> OAuth2 authorization and thus `BA_BEARER_TOKEN` will be deprecated in future Terraform Provider releases. It is recommended to use `EDB_TF_ACCESS_KEY` as soon as you can.
 
 ### Getting an API Token
 
@@ -65,7 +65,7 @@ for more details.
 
 ### Getting an Access Key
 
-You can use an ccess key to access the BigAnimal API. The advantage of an access key compared to an API token is that it can be set to have a long expiry date which will aide automation.
+You can use an access key to access the BigAnimal API. The advantage of an access key compared to an API token is that it can be set to have a long expiry date which will aide automation.
 
 To get an access key or manage access keys Log in to https://portal.biganimal.com/, hover over your username and from the drop down click "Access Keys".
 
