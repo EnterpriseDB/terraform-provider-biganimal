@@ -503,7 +503,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	if config.Pause.ValueBool() == true {
+	if config.Pause.ValueBool() {
 		_, err = c.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -565,7 +565,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	if plan.Pause.ValueBool() == false && plan.Phase != nil {
+	if !plan.Pause.ValueBool() && plan.Phase != nil {
 		_, err := c.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -609,7 +609,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	if plan.Pause.ValueBool() == true {
+	if plan.Pause.ValueBool() {
 		_, err = c.client.ClusterPause(ctx, plan.ProjectId, *plan.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
