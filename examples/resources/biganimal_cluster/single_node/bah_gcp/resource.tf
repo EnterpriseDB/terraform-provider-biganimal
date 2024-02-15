@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
   }
 }
@@ -71,6 +71,23 @@ resource "biganimal_cluster" "single_node_cluster" {
   cloud_provider        = "bah:gcp"
   read_only_connections = false
   region                = "europe-west1"
+  pgvector              = false
+
+  pg_bouncer = {
+    is_enabled = false
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
+  }
 }
 
 output "password" {

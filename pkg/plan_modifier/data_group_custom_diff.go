@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -31,7 +32,37 @@ func (m CustomDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 
 // PlanModifySet implements the plan modification logic.
 func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+	// private networking case when doing create
 	if req.StateValue.IsNull() {
+		var planDgsObs []terraform.DataGroup
+		diag := resp.PlanValue.ElementsAs(ctx, &planDgsObs, false)
+		if diag.ErrorsCount() > 0 {
+			resp.Diagnostics.Append(diag...)
+			return
+		}
+
+		for _, pDg := range planDgsObs {
+			// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
+			if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
+				pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: "To allow all access"}}
+				// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
+			} else if pDg.AllowedIpRanges != nil && len(*pDg.AllowedIpRanges) == 0 {
+				pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: ""}}
+			}
+		}
+
+		mapState := tfsdk.State{Schema: req.Plan.Schema, Raw: req.Plan.Raw}
+		diag = mapState.SetAttribute(ctx, path.Root("data_groups"), planDgsObs)
+		if diag.ErrorsCount() > 0 {
+			resp.Diagnostics.Append(diag...)
+			return
+		}
+
+		tfDgsMap := new(types.Set)
+		mapState.GetAttribute(ctx, path.Root("data_groups"), tfDgsMap)
+
+		resp.PlanValue = *tfDgsMap
+
 		return
 	}
 
@@ -40,7 +71,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		return
 	}
 
-	newPlan := []terraform.DataGroup{}
+	newDgPlan := []terraform.DataGroup{}
 
 	var stateDgsObs []terraform.DataGroup
 	diag := req.StateValue.ElementsAs(ctx, &stateDgsObs, false)
@@ -82,7 +113,15 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				pDg.Storage.Iops = sDg.Storage.Iops
 				pDg.Storage.Throughput = sDg.Storage.Throughput
 
-				newPlan = append(newPlan, pDg)
+				// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
+				if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
+					pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: "To allow all access"}}
+					// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
+				} else if pDg.AllowedIpRanges != nil && len(*pDg.AllowedIpRanges) == 0 {
+					pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: ""}}
+				}
+
+				newDgPlan = append(newDgPlan, pDg)
 			}
 		}
 	}
@@ -98,7 +137,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		}
 
 		if !planGroupExistsInStateGroups {
-			newPlan = append(newPlan, pDg)
+			newDgPlan = append(newDgPlan, pDg)
 			resp.Diagnostics.AddWarning("Adding new data group", fmt.Sprintf("Adding new data group with region %v", pDg.Region.RegionId))
 		}
 	}
@@ -118,22 +157,22 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		}
 	}
 
-	if len(newPlan) == 0 {
+	if len(newDgPlan) == 0 {
 		resp.Diagnostics.AddWarning("Plan data group generation error", "Plan data group error: regions may not be matching, regions missing in config or no data groups in config")
 		return
 	}
 
-	customState := tfsdk.State{Schema: req.Plan.Schema, Raw: req.Plan.Raw}
-	diag = customState.SetAttribute(ctx, path.Root("data_groups"), planDgsObs)
+	mapState := tfsdk.State{Schema: req.Plan.Schema, Raw: req.Plan.Raw}
+	diag = mapState.SetAttribute(ctx, path.Root("data_groups"), planDgsObs)
 	if diag.ErrorsCount() > 0 {
 		resp.Diagnostics.Append(diag...)
 		return
 	}
 
-	tfDgs := new(types.Set)
-	customState.GetAttribute(ctx, path.Root("data_groups"), tfDgs)
+	tfDgsMap := new(types.Set)
+	mapState.GetAttribute(ctx, path.Root("data_groups"), tfDgsMap)
 
-	resp.PlanValue = *tfDgs
+	resp.PlanValue = *tfDgsMap
 
 	for _, pDg := range planDgsObs {
 		if len(stateDgsObs) == 0 {
@@ -256,6 +295,14 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v for data group with region %v",
 					*foundStateDg.MaintenanceWindow,
 					*pDg.MaintenanceWindow,
+					foundStateDg.Region.RegionId))
+			}
+
+			// pg config
+			if !reflect.DeepEqual(pDg.PgConfig, foundStateDg.PgConfig) {
+				resp.Diagnostics.AddWarning("Pg config changed", fmt.Sprintf("Pg config changed from %v to %v for data group with region %v",
+					*foundStateDg.PgConfig,
+					*pDg.PgConfig,
 					foundStateDg.Region.RegionId))
 			}
 		}

@@ -1,3 +1,26 @@
+## v0.7.1 (February 07. 2024)
+Bug Fixes:
+* Fixed pg config to only use user custom config values in plan and not include default config values
+* Small bug fixes on create/update operation for `biganimal_pgd` and `biganimal_cluster` resources
+
+Enhancements:
+* Updated default storage size from 4 Gi to 32 Gi in examples for `biganimal_pgd` resources
+
+## v0.7.0 (January 12. 2024)
+Features:
+* Pgvector support for `biganimal_cluster` resources
+* PgBouncer support for `biganimal_cluster` resources
+* BigAnimal Terraform Provider now can output password for `biganimal_pgd` resources
+
+Bug Fixes:
+* Private networking and allowed IP ranges mismatching plan bug fix
+* Other bug fixes
+
+Enhancements:
+* Dependency updates
+* Improved warnings for `biganimal_pgd` resources
+* Updated example links in the examples README
+
 ## v0.6.1 (October 18. 2023)
 Features:
 * BigAnimal Terraform Provider now supports BigAnimal's cloud account AWS, Azure and Google Cloud provider for `biganimal_cluster` and `biganimal_pgd` resources

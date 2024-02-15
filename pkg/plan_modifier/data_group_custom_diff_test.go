@@ -36,12 +36,16 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	}
 
 	// dgsSchemaAttr := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()
+	// conditionsElemType := dgsSchemaAttr["conditions"].(schema.Attribute).GetType().(types.SetType).ElemType
+	// dgsSchemaAttr := pgdSchema.Attributes["data_groups"].(schema.NestedAttribute).GetNestedObject().GetAttributes()
 	// allowedIpRangesElemType := dgsSchemaAttr["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType
 	// allowedIpRangesElemObjectType := dgsSchemaAttr["allowed_ip_ranges"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
 	// clusterArchAttrType := dgsSchemaAttr["cluster_architecture"].(schema.Attribute).GetType().(types.ObjectType).AttributeTypes()
 	// dgElemAttrType := pgdSchema.Attributes["data_groups"].(schema.Attribute).GetType().(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
 	dgTfValue, _ := pgdSchema.Attributes["data_groups"].GetType().ValueType(ctx).ToTerraformValue(ctx)
 	dgType := pgdSchema.Attributes["data_groups"].GetType()
+
+	dgAttrTypes := dgType.(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
 
 	rawRootValue := map[string]tftypes.Value{
 		"data_groups": dgTfValue,
@@ -81,16 +85,18 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 				StartTime: utils.ToPointer("03:00"),
 			},
 			BackupRetentionPeriod: utils.ToPointer("3d"),
-			ServiceAccountIds:     basetypes.SetValue{},
-			PeAllowedPrincipalIds: basetypes.SetValue{},
+			ServiceAccountIds:     basetypes.NewSetUnknown(dgAttrTypes["service_account_ids"].(types.SetType).ElemType),
+			PeAllowedPrincipalIds: basetypes.NewSetUnknown(dgAttrTypes["pe_allowed_principal_ids"].(types.SetType).ElemType),
 			PgConfig:              &[]models.KeyValue{},
+			Conditions:            basetypes.NewSetUnknown(dgAttrTypes["conditions"].(types.SetType).ElemType),
+			ResizingPvc:           basetypes.NewSetUnknown(dgAttrTypes["resizing_pvc"].(types.SetType).ElemType),
 		},
 	}
 
 	customState := tfsdk.State{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)}
 	diag := customState.SetAttribute(ctx, path.Root("data_groups"), defaultDgs)
 	if diag.ErrorsCount() > 0 {
-		_ = fmt.Errorf("set attribute data groups error")
+		fmt.Printf("set attribute data groups error: %v", diag.Errors())
 		return
 	}
 
@@ -98,13 +104,15 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	customState.GetAttribute(ctx, path.Root("data_groups"), tfDefaultDgs)
 
 	addedDgs := []terraform.DataGroup(defaultDgs)
-	addDg := terraform.DataGroup(defaultDgs[0])
+	newDg := defaultDgs[0]
+	newDg.Region = &api.Region{RegionId: "us-east-2"}
+	addDg := terraform.DataGroup(newDg)
 	addedDgs = append(addedDgs, addDg)
 
 	customState = tfsdk.State{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)}
 	diag = customState.SetAttribute(ctx, path.Root("data_groups"), addedDgs)
 	if diag.ErrorsCount() > 0 {
-		_ = fmt.Errorf("set attribute data groups error")
+		fmt.Printf("set attribute data groups error %v", diag.Errors())
 		return
 	}
 
@@ -129,7 +137,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	customState = tfsdk.State{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)}
 	diag = customState.SetAttribute(ctx, path.Root("data_groups"), updatedDgs)
 	if diag.ErrorsCount() > 0 {
-		_ = fmt.Errorf("set attribute data groups error")
+		fmt.Printf("set attribute data groups error: %v", diag.Errors())
 		return
 	}
 
@@ -174,12 +182,12 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 					StateValue: *tfAddedDgs,
 				},
 				resp: &planmodifier.SetResponse{
-					PlanValue: *tfUpdatedDgs,
+					PlanValue: *tfDefaultDgs,
 				},
 			},
 			expectedWarningsCount:  1,
 			expectedWarningSummary: []string{"Removing data group"},
-			expectedPlanElements:   tfUpdatedDgs.Elements(),
+			expectedPlanElements:   tfDefaultDgs.Elements(),
 		},
 		{
 			name: "Update object expect success",

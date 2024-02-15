@@ -10,11 +10,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -73,7 +73,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -95,6 +95,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     },
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -104,11 +109,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -167,7 +172,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -221,7 +226,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -258,6 +263,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -267,11 +277,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -330,7 +340,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -356,6 +366,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     },
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD Azure BigAnimal's cloud account Two Data Groups with One Witness Group Example
@@ -364,11 +379,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -427,7 +442,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -484,7 +499,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -525,6 +540,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD AWS One Data Group Example
@@ -533,11 +553,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -596,7 +616,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -618,6 +638,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -627,11 +652,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -690,7 +715,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -744,7 +769,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -782,6 +807,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD AWS BigAnimal's cloud account One Data Group Example
@@ -790,11 +820,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -853,7 +883,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -879,6 +909,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD AWS BigAnimal's cloud account Two Data Groups with One Witness Group Example
@@ -887,11 +922,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -950,7 +985,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1007,7 +1042,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "gp3"
         volume_properties = "gp3"
-        size              = "4 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1048,6 +1083,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD GCP One Data Group Example
@@ -1056,11 +1096,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -1119,7 +1159,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1141,6 +1181,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -1150,11 +1195,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -1213,7 +1258,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1267,7 +1312,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1304,6 +1349,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -1313,11 +1363,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -1376,7 +1426,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1406,6 +1456,11 @@ resource "biganimal_pgd" "pgd_cluster" {
     }
   ]
 }
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
+}
 ```
 
 ## PGD GCP BigAnimal's cloud account Two Data Groups with One Witness Group Example
@@ -1414,11 +1469,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -1477,7 +1532,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1538,7 +1593,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "pd-ssd"
         volume_properties = "pd-ssd"
-        size              = "10 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -1582,6 +1637,11 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     }
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }
 ```
 
@@ -1611,7 +1671,6 @@ resource "biganimal_pgd" "pgd_cluster" {
 
 Required:
 
-- `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period
 - `cloud_provider` (Attributes) Cloud provider. (see [below for nested schema](#nestedatt--data_groups--cloud_provider))
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--data_groups--cluster_architecture))
@@ -1627,6 +1686,7 @@ Required:
 
 Optional:
 
+- `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
 - `cluster_type` (String) Type of the Specified Cluster
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
@@ -1642,15 +1702,6 @@ Read-Only:
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the data group.
 - `resizing_pvc` (Set of String) Resizing PVC.
-
-<a id="nestedatt--data_groups--allowed_ip_ranges"></a>
-### Nested Schema for `data_groups.allowed_ip_ranges`
-
-Required:
-
-- `cidr_block` (String) CIDR block
-- `description` (String) Description of CIDR block
-
 
 <a id="nestedatt--data_groups--cloud_provider"></a>
 ### Nested Schema for `data_groups.cloud_provider`
@@ -1738,6 +1789,15 @@ Optional:
 - `iops` (String) IOPS for the selected volume.
 - `size` (String) Size of the volume.
 - `throughput` (String) Throughput.
+
+
+<a id="nestedatt--data_groups--allowed_ip_ranges"></a>
+### Nested Schema for `data_groups.allowed_ip_ranges`
+
+Required:
+
+- `cidr_block` (String) CIDR block
+- `description` (String) Description of CIDR block
 
 
 <a id="nestedatt--data_groups--conditions"></a>

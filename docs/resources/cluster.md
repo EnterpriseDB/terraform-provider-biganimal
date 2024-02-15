@@ -13,11 +13,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -90,6 +90,23 @@ resource "biganimal_cluster" "single_node_cluster" {
   read_only_connections = false
   region                = "eastus2"
   superuser_access      = true
+  pgvector              = false
+
+  pg_bouncer = {
+    is_enabled = false
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
+  }
 }
 
 output "password" {
@@ -108,11 +125,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -184,6 +201,23 @@ resource "biganimal_cluster" "ha_cluster" {
   read_only_connections = true
   region                = "us-east-1"
   superuser_access      = true
+  pgvector              = false
+
+  pg_bouncer = {
+    is_enabled = false
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
+  }
 }
 
 output "password" {
@@ -226,7 +260,9 @@ output "faraway_replica_ids" {
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
+- `pg_bouncer` (Attributes) Pg bouncer. (see [below for nested schema](#nestedatt--pg_bouncer))
 - `pg_config` (Block Set) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
+- `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
@@ -269,7 +305,7 @@ Required:
 - `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
 
-Read-Only:
+Optional:
 
 - `name` (String) Name.
 
@@ -285,6 +321,28 @@ Optional:
 
 - `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
 - `start_time` (String) Start time. "hh:mm", for example: "23:59".
+
+
+<a id="nestedatt--pg_bouncer"></a>
+### Nested Schema for `pg_bouncer`
+
+Required:
+
+- `is_enabled` (Boolean) Is pg bouncer enabled.
+
+Optional:
+
+- `settings` (Attributes Set) PgBouncer Configuration Settings. (see [below for nested schema](#nestedatt--pg_bouncer--settings))
+
+<a id="nestedatt--pg_bouncer--settings"></a>
+### Nested Schema for `pg_bouncer.settings`
+
+Required:
+
+- `name` (String) Name.
+- `operation` (String) Operation.
+- `value` (String) Value.
+
 
 
 <a id="nestedblock--pg_config"></a>

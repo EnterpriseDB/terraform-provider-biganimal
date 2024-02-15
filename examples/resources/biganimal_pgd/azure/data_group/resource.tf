@@ -2,11 +2,11 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.6.1"
+      version = "0.7.1"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.0"
     }
   }
 }
@@ -65,7 +65,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       storage = {
         volume_type       = "azurepremiumstorage"
         volume_properties = "P2"
-        size              = "8 Gi"
+        size              = "32 Gi"
       }
       pg_type = {
         pg_type_id = "epas"
@@ -87,4 +87,9 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
     },
   ]
+}
+
+output "password" {
+  sensitive = true
+  value     = resource.biganimal_pgd.pgd_cluster.password
 }

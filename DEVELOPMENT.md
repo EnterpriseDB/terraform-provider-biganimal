@@ -59,7 +59,9 @@ _export_BA_env_vars_completions()
 
 complete -F _export_BA_env_vars_completions export_BA_env_vars
 ```
+## How to manage the BigAnimal Access Key?
 
+To manage and get an access key please refer to the readme here: [Readme](./README.md#using-the-provider) file.
 
 ## How to test your local copy of the provider?
 
