@@ -371,6 +371,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					},
 				},
 			},
+			"pause": schema.BoolAttribute{
+				Description: "Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy",
+				Optional:    true,
+			},
 		},
 	}
 }
