@@ -636,9 +636,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 		storage := buildApiStorage(*v.Storage)
 
-		if v.AllowedIpRanges == nil {
-			v.AllowedIpRanges = &[]models.AllowedIpRange{}
-		}
 		if v.PgConfig == nil {
 			v.PgConfig = &[]models.KeyValue{}
 		}
@@ -660,7 +657,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		}
 
 		apiDGModel := pgdApi.DataGroup{
-			AllowedIpRanges:       v.AllowedIpRanges,
+			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
@@ -864,7 +861,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		reqDg := pgdApi.DataGroup{
 			GroupId:               groupId,
 			ClusterType:           utils.ToPointer("data_group"),
-			AllowedIpRanges:       v.AllowedIpRanges,
+			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			CspAuth:               v.CspAuth,
 			InstanceType:          v.InstanceType,
@@ -1188,9 +1185,48 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					}
 				}
 
+				// allowed ip ranges
+				allwdIpRngsPathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
+					tftypes.AttributeName("allowed_ip_ranges"),
+				})
+
+				allwdIpRngsAttr, _ := dgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(allwdIpRngsPathSteps.NextStep())
+				allwdIpRngsTFType, ok := allwdIpRngsAttr.(types.SetType)
+				if !ok {
+					diags.AddError("provider casting error", "cannot cast allowed_ip_ranges response to set type")
+					return
+				}
+
+				allwdIpRngsElemTFType, ok := allwdIpRngsTFType.ElemType.(types.ObjectType)
+				if !ok {
+					diags.AddError("provider casting error", "cannot cast allowed_ip_ranges element response to object type")
+					return
+				}
+				allowedIpRanges := []attr.Value{}
+				if apiDGModel.AllowedIpRanges != nil && len(*apiDGModel.AllowedIpRanges) > 0 {
+					for _, v := range *apiDGModel.AllowedIpRanges {
+						v := v
+						ob, diag := types.ObjectValue(allwdIpRngsElemTFType.AttrTypes, map[string]attr.Value{
+							"cidr_block":  types.StringValue(*&v.CidrBlock),
+							"description": types.StringValue(*&v.Description),
+						})
+						if diag.HasError() {
+							diags.Append(diag...)
+							return
+						}
+						allowedIpRanges = append(allowedIpRanges, ob)
+					}
+				}
+
+				allwdIpRngsElemType := types.ObjectType{AttrTypes: allwdIpRngsElemTFType.AttrTypes}
+				allwdIpRngsSet := types.SetNull(allwdIpRngsElemType)
+				if len(allowedIpRanges) > 0 {
+					allwdIpRngsSet = types.SetValueMust(allwdIpRngsElemType, allowedIpRanges)
+				}
+
 				tfDGModel := terraform.DataGroup{
 					GroupId:               types.StringPointerValue(apiDGModel.GroupId),
-					AllowedIpRanges:       apiDGModel.AllowedIpRanges,
+					AllowedIpRanges:       allwdIpRngsSet,
 					BackupRetentionPeriod: apiDGModel.BackupRetentionPeriod,
 					ClusterArchitecture:   clusterArch,
 					ClusterName:           types.StringPointerValue(apiDGModel.ClusterName),
@@ -1472,6 +1508,19 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 		}
 	}
 	return
+}
+
+func buildApiAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
+	apiAllowedIpRanges := &[]models.AllowedIpRange{}
+
+	for _, v := range tfAllowedIpRanges.Elements() {
+		*apiAllowedIpRanges = append(*apiAllowedIpRanges, models.AllowedIpRange{
+			CidrBlock:   v.(types.Object).Attributes()["cidr_block"].(types.String).ValueString(),
+			Description: v.(types.Object).Attributes()["description"].(types.String).ValueString(),
+		})
+	}
+
+	return apiAllowedIpRanges
 }
 
 func buildApiStorage(tfStorage terraform.Storage) *models.Storage {

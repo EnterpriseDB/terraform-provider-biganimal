@@ -8,7 +8,7 @@ import (
 
 type DataGroup struct {
 	GroupId               types.String              `tfsdk:"group_id"`
-	AllowedIpRanges       *[]models.AllowedIpRange  `tfsdk:"allowed_ip_ranges"`
+	AllowedIpRanges       types.Set                 `tfsdk:"allowed_ip_ranges"`
 	BackupRetentionPeriod *string                   `tfsdk:"backup_retention_period"`
 	ClusterArchitecture   *ClusterArchitecture      `tfsdk:"cluster_architecture"`
 	ClusterName           types.String              `tfsdk:"cluster_name"`

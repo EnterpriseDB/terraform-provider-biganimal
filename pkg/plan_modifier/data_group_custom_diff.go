@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 func CustomDataGroupDiffConfig() planmodifier.Set {
@@ -32,8 +33,8 @@ func (m CustomDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 
 // PlanModifySet implements the plan modification logic.
 func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
-	// private networking case when doing create
 	if req.StateValue.IsNull() {
+		// private networking case when doing create
 		var planDgsObs []terraform.DataGroup
 		diag := resp.PlanValue.ElementsAs(ctx, &planDgsObs, false)
 		if diag.ErrorsCount() > 0 {
@@ -44,10 +45,24 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		for _, pDg := range planDgsObs {
 			// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
 			if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
-				pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: "To allow all access"}}
+				pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
+					basetypes.NewObjectValueMust(
+						pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
+						map[string]attr.Value{
+							"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
+							"description": basetypes.NewStringValue("To allow all access"),
+						}),
+				})
 				// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
-			} else if pDg.AllowedIpRanges != nil && len(*pDg.AllowedIpRanges) == 0 {
-				pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: ""}}
+			} else if pDg.AllowedIpRanges.IsNull() || len(pDg.AllowedIpRanges.Elements()) == 0 {
+				pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
+					basetypes.NewObjectValueMust(
+						pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
+						map[string]attr.Value{
+							"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
+							"description": basetypes.NewStringValue(""),
+						}),
+				})
 			}
 		}
 
@@ -115,10 +130,24 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 				// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
 				if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
-					pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: "To allow all access"}}
+					pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
+						basetypes.NewObjectValueMust(
+							pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
+							map[string]attr.Value{
+								"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
+								"description": basetypes.NewStringValue("To allow all access"),
+							}),
+					})
 					// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
-				} else if pDg.AllowedIpRanges != nil && len(*pDg.AllowedIpRanges) == 0 {
-					pDg.AllowedIpRanges = &[]models.AllowedIpRange{{CidrBlock: "0.0.0.0/0", Description: ""}}
+				} else if pDg.AllowedIpRanges.IsNull() || len(pDg.AllowedIpRanges.Elements()) == 0 {
+					pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
+						basetypes.NewObjectValueMust(
+							pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
+							map[string]attr.Value{
+								"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
+								"description": basetypes.NewStringValue(""),
+							}),
+					})
 				}
 
 				newDgPlan = append(newDgPlan, pDg)
@@ -196,8 +225,8 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			// allowed ips
 			if !reflect.DeepEqual(pDg.AllowedIpRanges, foundStateDg.AllowedIpRanges) {
 				resp.Diagnostics.AddWarning("Allowed IP ranges changed", fmt.Sprintf("Allowed IP ranges have changed from %v to %v for data group with region %v",
-					*foundStateDg.AllowedIpRanges,
-					*pDg.AllowedIpRanges,
+					foundStateDg.AllowedIpRanges.String(),
+					pDg.AllowedIpRanges.String(),
 					foundStateDg.Region.RegionId))
 			}
 
