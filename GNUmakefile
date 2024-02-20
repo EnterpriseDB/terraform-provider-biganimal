@@ -48,7 +48,7 @@ testacc:
 
 .PHONY: docs
 unexport BA_BEARER_TOKEN
-unexport EDB_TF_ACCESS_KEY
+unexport BA_ACCESS_KEY
 unexport BA_API_URI
 docs:
 	go generate
