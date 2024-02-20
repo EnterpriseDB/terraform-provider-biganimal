@@ -1204,8 +1204,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					for _, v := range *apiDGModel.AllowedIpRanges {
 						v := v
 						ob, diag := types.ObjectValue(allwdIpRngsElemTFType.AttrTypes, map[string]attr.Value{
-							"cidr_block":  types.StringValue(*&v.CidrBlock),
-							"description": types.StringValue(*&v.Description),
+							"cidr_block":  types.StringValue(v.CidrBlock),
+							"description": types.StringValue(v.Description),
 						})
 						if diag.HasError() {
 							diags.Append(diag...)
