@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 func CustomDataGroupDiffConfig() planmodifier.Set {
@@ -46,21 +45,21 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
 			if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
 				pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
-					basetypes.NewObjectValueMust(
+					types.ObjectValueMust(
 						pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
 						map[string]attr.Value{
-							"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
-							"description": basetypes.NewStringValue("To allow all access"),
+							"cidr_block":  types.StringValue("0.0.0.0/0"),
+							"description": types.StringValue("To allow all access"),
 						}),
 				})
 				// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
 			} else if pDg.AllowedIpRanges.IsNull() || len(pDg.AllowedIpRanges.Elements()) == 0 {
 				pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
-					basetypes.NewObjectValueMust(
+					types.ObjectValueMust(
 						pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
 						map[string]attr.Value{
-							"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
-							"description": basetypes.NewStringValue(""),
+							"cidr_block":  types.StringValue("0.0.0.0/0"),
+							"description": types.StringValue(""),
 						}),
 				})
 			}
@@ -131,23 +130,28 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
 				if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
 					pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
-						basetypes.NewObjectValueMust(
+						types.ObjectValueMust(
 							pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
 							map[string]attr.Value{
-								"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
-								"description": basetypes.NewStringValue("To allow all access"),
+								"cidr_block":  types.StringValue("0.0.0.0/0"),
+								"description": types.StringValue("To allow all access"),
 							}),
 					})
 					// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
 				} else if pDg.AllowedIpRanges.IsNull() || len(pDg.AllowedIpRanges.Elements()) == 0 {
 					pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
-						basetypes.NewObjectValueMust(
+						types.ObjectValueMust(
 							pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
 							map[string]attr.Value{
-								"cidr_block":  basetypes.NewStringValue("0.0.0.0/0"),
-								"description": basetypes.NewStringValue(""),
+								"cidr_block":  types.StringValue("0.0.0.0/0"),
+								"description": types.StringValue(""),
 							}),
 					})
+				}
+
+				// if private networking has change then connection string will change
+				if sDg.PrivateNetworking != pDg.PrivateNetworking {
+					pDg.Connection = types.StringUnknown()
 				}
 
 				newDgPlan = append(newDgPlan, pDg)
@@ -192,7 +196,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 	}
 
 	mapState := tfsdk.State{Schema: req.Plan.Schema, Raw: req.Plan.Raw}
-	diag = mapState.SetAttribute(ctx, path.Root("data_groups"), planDgsObs)
+	diag = mapState.SetAttribute(ctx, path.Root("data_groups"), newDgPlan)
 	if diag.ErrorsCount() > 0 {
 		resp.Diagnostics.Append(diag...)
 		return
@@ -203,7 +207,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 
 	resp.PlanValue = *tfDgsMap
 
-	for _, pDg := range planDgsObs {
+	for _, pDg := range newDgPlan {
 		if len(stateDgsObs) == 0 {
 			return
 		}

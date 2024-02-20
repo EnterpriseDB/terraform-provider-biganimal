@@ -149,9 +149,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"connection_uri": schema.StringAttribute{
 							Description: "Data group connection URI.",
 							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the data group.",
@@ -1130,7 +1127,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				}
 
 				// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
-				var newPgConfig []models.KeyValue
+				newPgConfig := []models.KeyValue{}
 				var tfPgConfig *[]models.KeyValue
 				for _, pgdTFResourceDG := range originalTFDgs {
 					if pgdTFResourceDG.Region.RegionId == apiDGModel.Region.RegionId {
@@ -1193,13 +1190,13 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				allwdIpRngsAttr, _ := dgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(allwdIpRngsPathSteps.NextStep())
 				allwdIpRngsTFType, ok := allwdIpRngsAttr.(types.SetType)
 				if !ok {
-					diags.AddError("provider casting error", "cannot cast allowed_ip_ranges response to set type")
+					diags.AddError("provider type assertion error", "cannot type assert allowed_ip_ranges response to set type")
 					return
 				}
 
 				allwdIpRngsElemTFType, ok := allwdIpRngsTFType.ElemType.(types.ObjectType)
 				if !ok {
-					diags.AddError("provider casting error", "cannot cast allowed_ip_ranges element response to object type")
+					diags.AddError("provider type assertion  error", "cannot type assert allowed_ip_ranges element response to object type")
 					return
 				}
 				allowedIpRanges := []attr.Value{}
@@ -1238,6 +1235,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					InstanceType:          apiDGModel.InstanceType,
 					LogsUrl:               types.StringPointerValue(apiDGModel.LogsUrl),
 					MetricsUrl:            types.StringPointerValue(apiDGModel.MetricsUrl),
+					PgConfig:              &newPgConfig,
 					PgType:                apiDGModel.PgType,
 					PgVersion:             apiDGModel.PgVersion,
 					Phase:                 types.StringPointerValue(apiDGModel.Phase),
@@ -1249,9 +1247,6 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:     apiDGModel.MaintenanceWindow,
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
-				}
-				if len(newPgConfig) > 0 {
-					tfDGModel.PgConfig = &newPgConfig
 				}
 
 				asPgdTFResource.DataGroups = append(asPgdTFResource.DataGroups, tfDGModel)
