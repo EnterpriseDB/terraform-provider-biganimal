@@ -136,6 +136,7 @@ output "service_account_ids" {
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--allowed_ip_ranges))
 - `faraway_replica_ids` (Set of String)
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
+- `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy
 - `pe_allowed_principal_ids` (Set of String)
 - `pg_bouncer` (Attributes) Pg bouncer. (see [below for nested schema](#nestedatt--pg_bouncer))
 - `service_account_ids` (Set of String)

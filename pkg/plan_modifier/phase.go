@@ -4,7 +4,11 @@ import (
 	"context"
 	"strings"
 
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func CustomPhaseForUnknown() planmodifier.String {
@@ -43,7 +47,28 @@ func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req
 
 	resp.PlanValue = req.StateValue
 
-	if !strings.Contains(resp.PlanValue.String(), "Cluster in healthy state") {
+	var planObject map[string]tftypes.Value
+
+	err := req.Plan.Raw.As(&planObject)
+	if err != nil {
+		resp.Diagnostics.AddError("Mapping plan object in custom phase plan modifier error", err.Error())
+		return
+	}
+
+	var pause bool
+	err = planObject["pause"].As(&pause)
+	if err != nil {
+		resp.Diagnostics.AddError("Mapping bool pause in custom phase plan modifier error", err.Error())
+		return
+	}
+
+	if pause {
+		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(models.PHASE_PAUSED))
+	} else {
+		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(models.PHASE_HEALTHY))
+	}
+
+	if !strings.Contains(resp.PlanValue.String(), models.PHASE_HEALTHY) && !strings.Contains(resp.PlanValue.String(), models.PHASE_PAUSED) {
 		resp.Diagnostics.AddError("Cluster not in not ready for update operations", "Cluster not in healthy state for update operations please wait...")
 		return
 	}
