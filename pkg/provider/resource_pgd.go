@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
@@ -87,6 +88,11 @@ func PgdSchema(ctx context.Context) schema.Schema {
 				Description: "Password for the user edb_admin. It must be 12 characters or more.",
 				Required:    true,
 				Sensitive:   true,
+			},
+			"pause": schema.BoolAttribute{
+				MarkdownDescription: "Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy",
+				Optional:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
@@ -607,6 +613,7 @@ type PGD struct {
 	MostRecent    *bool                    `tfsdk:"most_recent"`
 	Password      *string                  `tfsdk:"password"`
 	Timeouts      timeouts.Value           `tfsdk:"timeouts"`
+	Pause         types.Bool               `tfsdk:"pause"`
 	DataGroups    []terraform.DataGroup    `tfsdk:"data_groups"`
 	WitnessGroups []terraform.WitnessGroup `tfsdk:"witness_groups"`
 }
@@ -747,7 +754,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_HEALTHY),
 	)
 
 	if err != nil {
@@ -757,6 +764,31 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not create PGD cluster, unexpected error: "+err.Error())
 		return
 	}
+
+	if config.Pause.ValueBool() {
+		_, err = p.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
+			}
+			return
+		}
+
+		err = retry.RetryContext(
+			ctx,
+			timeout-time.Minute,
+			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_PAUSED),
+		)
+
+		if err != nil {
+			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+				return
+			}
+			resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not create PGD cluster with pause state, unexpected error: "+err.Error())
+			return
+		}
+	}
+
 	// end of retry func
 
 	// uncomment below and comment retry func above to skip retry for testing purposes
@@ -805,14 +837,14 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	}
 
 	for _, v := range state.DataGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY {
+		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
 			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 			return
 		}
 	}
 
 	for _, v := range state.WitnessGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY {
+		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
 			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 			return
 		}
@@ -831,6 +863,32 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	timeout, _ := plan.Timeouts.Update(ctx, 60*time.Minute)
+
+	if !plan.Pause.ValueBool() {
+		_, err := p.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
+			}
+			return
+		}
+
+		err = retry.RetryContext(
+			ctx,
+			timeout-time.Minute,
+			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
+		)
+
+		if err != nil {
+			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+				return
+			}
+			resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster with resume state, unexpected error: "+err.Error())
+			return
+		}
 	}
 
 	clusterReqBody := models.Cluster{
@@ -968,12 +1026,11 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	plan.ID = plan.ClusterId
 
 	// retry func
-	timeout, _ := plan.Timeouts.Update(ctx, 60*time.Minute)
 
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
 	)
 
 	if err != nil {
@@ -982,6 +1039,30 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 		resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster, unexpected error: "+err.Error())
 		return
+	}
+
+	if plan.Pause.ValueBool() {
+		_, err = p.client.ClusterPause(ctx, plan.ProjectId, *plan.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
+			}
+			return
+		}
+
+		err = retry.RetryContext(
+			ctx,
+			timeout-time.Minute,
+			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_PAUSED),
+		)
+
+		if err != nil {
+			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+				return
+			}
+			resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster with pause state, unexpected error: "+err.Error())
+			return
+		}
 	}
 	// end of retry func
 
@@ -1004,9 +1085,9 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	}
 }
 
-func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, wgs []terraform.WitnessGroup) (bool, error) {
+func (p pgdResource) isPhase(ctx context.Context, phase string, dgs []terraform.DataGroup, wgs []terraform.WitnessGroup) (bool, error) {
 	for _, v := range dgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != phase {
 			return false, nil
 		}
 
@@ -1025,7 +1106,7 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 	}
 
 	for _, v := range wgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != phase {
 			return false, nil
 		}
 	}
@@ -1033,7 +1114,7 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 	return true, nil
 }
 
-func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, pgdTfResource *PGD) retry.RetryFunc {
+func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, pgdTfResource *PGD, expectedPhase string) retry.RetryFunc {
 	return func() *retry.RetryError {
 		pgdResp, err := p.client.Read(ctx, pgdTfResource.ProjectId, *pgdTfResource.ClusterId)
 		if err != nil {
@@ -1045,12 +1126,12 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 			return retry.NonRetryableError(fmt.Errorf("unable to copy group, got error: %s", err))
 		}
 
-		isHealthy, err := p.isHealthy(ctx, pgdTfResource.DataGroups, pgdTfResource.WitnessGroups)
+		ready, err := p.isPhase(ctx, expectedPhase, pgdTfResource.DataGroups, pgdTfResource.WitnessGroups)
 		if err != nil {
 			return retry.NonRetryableError(fmt.Errorf("error getting health: %s", err))
 		}
 
-		if !isHealthy {
+		if !ready {
 			return retry.RetryableError(errors.New("instance not yet ready"))
 		}
 
