@@ -741,6 +741,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	if config.Pause.ValueBool() {
+		// don't out the real config, we only need to check the phase has paused
+		config := config
 		_, err = p.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -849,7 +851,18 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	timeout, _ := plan.Timeouts.Update(ctx, 60*time.Minute)
 
-	if !plan.Pause.ValueBool() && state.Pause.ValueBool() {
+	// cluster = pause,  tf pause = true, error cannot update paused cluster please set pause = false
+	// cluster = pause,  tf pause = false, it will resume, update
+	// cluster != pause, tf pause = true, it will update and pause
+	// cluster != pause, tf pause = false, it will update
+	if p.isPaused(ctx, state.DataGroups, state.WitnessGroups) && plan.Pause.ValueBool() {
+		resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
+		return
+	}
+
+	if p.isPaused(ctx, state.DataGroups, state.WitnessGroups) && !plan.Pause.ValueBool() {
+		// don't out the real plan, we only need to check the phase has paused
+		plan := plan
 		_, err := p.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
