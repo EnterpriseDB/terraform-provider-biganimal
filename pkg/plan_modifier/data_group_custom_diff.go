@@ -116,7 +116,6 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				pDg.ClusterArchitecture.WitnessNodes = sDg.ClusterArchitecture.WitnessNodes
 				pDg.ClusterName = sDg.ClusterName
 				pDg.ClusterType = sDg.ClusterType
-				pDg.Conditions = sDg.Conditions
 				pDg.Connection = sDg.Connection
 				pDg.CreatedAt = sDg.CreatedAt
 				pDg.GroupId = sDg.GroupId
