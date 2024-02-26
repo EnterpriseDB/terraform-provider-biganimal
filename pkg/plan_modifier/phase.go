@@ -58,6 +58,4 @@ func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req
 	} else {
 		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(models.PHASE_HEALTHY))
 	}
-
-	return
 }
