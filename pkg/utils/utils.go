@@ -34,3 +34,8 @@ func ToValue[T any](p *T) T {
 	}
 	return *p
 }
+
+func PrintJson(i interface{}) string {
+	s, _ := json.Marshal(i)
+	return string(s)
+}
