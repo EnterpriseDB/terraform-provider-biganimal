@@ -42,5 +42,4 @@ Credentials can be provided by using the `BA_BEARER_TOKEN` or `BA_ACCESS_KEY` en
 ### Optional
 
 - `ba_access_key` (String) BigAnimal Access Key
-- `ba_api_uri` (String) BigAnimal API URL
 - `ba_bearer_token` (String) BigAnimal Bearer Token
