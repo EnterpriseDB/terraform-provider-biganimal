@@ -31,6 +31,7 @@ func (m customPhaseForUnknownModifier) MarkdownDescription(_ context.Context) st
 // PlanModifyString implements the plan modification logic.
 func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
 	// req.StateValue.IsNull() means it is creating
+	// req.StateValue here is from the read
 	if !req.StateValue.IsNull() {
 		if !strings.Contains(req.StateValue.String(), models.PHASE_HEALTHY) && !strings.Contains(req.StateValue.String(), models.PHASE_PAUSED) {
 			resp.Diagnostics.AddError("Cluster not ready for update operations", "Cluster not in healthy state for update operations please wait...")
