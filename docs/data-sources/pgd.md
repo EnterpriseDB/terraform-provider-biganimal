@@ -110,7 +110,6 @@ Read-Only:
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--data_groups--cluster_architecture))
 - `cluster_name` (String) Name of the group.
 - `cluster_type` (String) Type of the Specified Cluster
-- `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--data_groups--conditions))
 - `connection_uri` (String) Data group connection URI.
 - `created_at` (String) Cluster creation time.
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
@@ -156,15 +155,6 @@ Read-Only:
 - `cluster_architecture_name` (String) Cluster architecture name.
 - `nodes` (Number) Node count.
 - `witness_nodes` (Number) Witness nodes count.
-
-
-<a id="nestedatt--data_groups--conditions"></a>
-### Nested Schema for `data_groups.conditions`
-
-Read-Only:
-
-- `condition_status` (String) Condition status
-- `type` (String) Type
 
 
 <a id="nestedatt--data_groups--instance_type"></a>

@@ -1657,6 +1657,7 @@ output "password" {
 ### Optional
 
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
+- `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy
 - `project_id` (String) BigAnimal Project ID.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
@@ -1694,7 +1695,6 @@ Optional:
 Read-Only:
 
 - `cluster_name` (String) Name of the group.
-- `conditions` (Attributes Set) Conditions. (see [below for nested schema](#nestedatt--data_groups--conditions))
 - `connection_uri` (String) Data group connection URI.
 - `created_at` (String) Cluster creation time.
 - `group_id` (String) Group ID of the group.
@@ -1798,15 +1798,6 @@ Required:
 
 - `cidr_block` (String) CIDR block
 - `description` (String) Description of CIDR block
-
-
-<a id="nestedatt--data_groups--conditions"></a>
-### Nested Schema for `data_groups.conditions`
-
-Read-Only:
-
-- `condition_status` (String) Condition status
-- `type` (String) Type
 
 
 

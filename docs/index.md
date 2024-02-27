@@ -28,7 +28,6 @@ provider "biganimal" {
   // in an environment variable then the access key set in the environment variable
   // will take priority and be used
   ba_access_key = "<redacted>"
-  //ba_api_uri   = "https://portal.biganimal.com/api/v3" // Optional
 }
 # Manage the resources
 ```
