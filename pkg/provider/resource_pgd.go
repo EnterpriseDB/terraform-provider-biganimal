@@ -813,20 +813,6 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 		return
 	}
 
-	for _, v := range state.DataGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
-			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
-			return
-		}
-	}
-
-	for _, v := range state.WitnessGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
-			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
-			return
-		}
-	}
-
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
