@@ -565,7 +565,19 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	if !plan.Pause.ValueBool() && plan.Phase != nil {
+	var state ClusterResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if *state.Phase == models.PHASE_PAUSED && plan.Pause.ValueBool() {
+		resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
+		return
+	}
+
+	if *state.Phase == models.PHASE_PAUSED && !plan.Pause.ValueBool() {
 		_, err := c.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
