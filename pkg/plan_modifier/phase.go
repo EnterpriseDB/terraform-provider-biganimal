@@ -30,22 +30,13 @@ func (m customPhaseForUnknownModifier) MarkdownDescription(_ context.Context) st
 
 // PlanModifyString implements the plan modification logic.
 func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	// Do nothing if there is no state value.
-	if req.StateValue.IsNull() {
-		return
+	// req.StateValue.IsNull() means it is creating
+	if !req.StateValue.IsNull() {
+		if !strings.Contains(req.StateValue.String(), models.PHASE_HEALTHY) && !strings.Contains(req.StateValue.String(), models.PHASE_PAUSED) {
+			resp.Diagnostics.AddError("Cluster not ready for update operations", "Cluster not in healthy state for update operations please wait...")
+			return
+		}
 	}
-
-	// Do nothing if there is a known planned value.
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
-
-	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
-	if req.ConfigValue.IsUnknown() {
-		return
-	}
-
-	resp.PlanValue = req.StateValue
 
 	var planObject map[string]tftypes.Value
 
@@ -66,10 +57,5 @@ func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req
 		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(models.PHASE_PAUSED))
 	} else {
 		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(models.PHASE_HEALTHY))
-	}
-
-	if !strings.Contains(resp.PlanValue.String(), models.PHASE_HEALTHY) && !strings.Contains(resp.PlanValue.String(), models.PHASE_PAUSED) {
-		resp.Diagnostics.AddError("Cluster not in not ready for update operations", "Cluster not in healthy state for update operations please wait...")
-		return
 	}
 }

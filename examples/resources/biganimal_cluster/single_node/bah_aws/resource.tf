@@ -30,6 +30,7 @@ variable "project_id" {
 resource "biganimal_cluster" "single_node_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
+  pause        = false
 
   allowed_ip_ranges {
     cidr_block  = "192.168.0.1/32"
