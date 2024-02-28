@@ -39,6 +39,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -138,6 +139,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -306,6 +308,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -408,6 +411,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -582,6 +586,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -681,6 +686,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -849,6 +855,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -951,6 +958,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -1125,6 +1133,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -1224,6 +1233,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -1392,6 +1402,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -1498,6 +1509,7 @@ resource "biganimal_pgd" "pgd_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   password     = resource.random_password.password.result
+  pause        = false
   data_groups = [
     {
       allowed_ip_ranges = [
