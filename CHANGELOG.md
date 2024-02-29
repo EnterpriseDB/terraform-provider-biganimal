@@ -1,3 +1,7 @@
+## v0.8.1 (February 29. 2024)
+Features:
+* Updated access key requirements documentation
+
 ## v0.8.0 (February 29. 2024)
 Features:
 * New access keys authorisation support using provider resource or environment variable
