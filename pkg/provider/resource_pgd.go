@@ -853,33 +853,36 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		}
 	}
 
-	if p.isPaused(ctx, state.DataGroups, state.WitnessGroups) && plan.Pause.ValueBool() {
-		resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
-		return
-	}
-
-	if p.isPaused(ctx, state.DataGroups, state.WitnessGroups) && !plan.Pause.ValueBool() {
-		// don't out the real plan, we only need to check the phase has paused
-		plan := plan
-		_, err := p.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
-		if err != nil {
-			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-				resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
-			}
+	// if a pgd data group or witness group is paused
+	if p.isPaused(ctx, state.DataGroups, state.WitnessGroups) {
+		if plan.Pause.ValueBool() {
+			resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
 			return
 		}
 
-		err = retry.RetryContext(
-			ctx,
-			timeout-time.Minute,
-			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
-		)
-		if err != nil {
-			if appendDiagFromBAErr(err, &resp.Diagnostics) {
+		if !plan.Pause.ValueBool() {
+			// don't out the real plan, we only need to check the phase has paused
+			plan := plan
+			_, err := p.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
+			if err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
+				}
 				return
 			}
-			resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster with resume state, unexpected error: "+err.Error())
-			return
+
+			err = retry.RetryContext(
+				ctx,
+				timeout-time.Minute,
+				p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
+			)
+			if err != nil {
+				if appendDiagFromBAErr(err, &resp.Diagnostics) {
+					return
+				}
+				resp.Diagnostics.AddError("Error retrying PGD cluster", "Could not update PGD cluster with resume state, unexpected error: "+err.Error())
+				return
+			}
 		}
 	}
 
