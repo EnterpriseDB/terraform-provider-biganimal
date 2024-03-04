@@ -567,6 +567,15 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	// cluster = pause,   tf pause = true, it will error and say you will need to set pause = false to update
+	// cluster = pause,   tf pause = false, it will resume then update
+	// cluster = healthy, tf pause = true, it will update then pause
+	// cluster = healthy, tf pause = false, it will update
+	if *state.Phase != models.PHASE_HEALTHY && *state.Phase != models.PHASE_PAUSED {
+		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
+		return
+	}
+
 	if *state.Phase == models.PHASE_PAUSED && plan.Pause.ValueBool() {
 		resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
 		return

@@ -2,7 +2,6 @@ package plan_modifier
 
 import (
 	"context"
-	"strings"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
@@ -30,14 +29,7 @@ func (m customPhaseForUnknownModifier) MarkdownDescription(_ context.Context) st
 
 // PlanModifyString implements the plan modification logic.
 func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	// req.StateValue.IsNull() means it is creating
-	if !req.StateValue.IsNull() {
-		if !strings.Contains(req.StateValue.String(), models.PHASE_HEALTHY) && !strings.Contains(req.StateValue.String(), models.PHASE_PAUSED) {
-			resp.Diagnostics.AddError("Cluster not ready for update operations", "Cluster not in healthy state for update operations please wait...")
-			return
-		}
-	}
-
+	// always set phase
 	var planObject map[string]tftypes.Value
 
 	err := req.Plan.Raw.As(&planObject)
