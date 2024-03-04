@@ -731,7 +731,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		timeout-time.Minute,
 		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_HEALTHY),
 	)
-
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
 			return
@@ -756,7 +755,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			timeout-time.Minute,
 			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_PAUSED),
 		)
-
 		if err != nil {
 			if appendDiagFromBAErr(err, &resp.Diagnostics) {
 				return
@@ -838,9 +836,23 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	timeout, _ := plan.Timeouts.Update(ctx, 60*time.Minute)
 
 	// cluster = pause,  tf pause = true, error cannot update paused cluster please set pause = false
-	// cluster = pause,  tf pause = false, it will resume, update
-	// cluster != pause, tf pause = true, it will update and pause
+	// cluster = pause,  tf pause = false, it will resume then update
+	// cluster != pause, tf pause = true, it will update then pause
 	// cluster != pause, tf pause = false, it will update
+	for _, v := range state.DataGroups {
+		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
+			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
+			return
+		}
+	}
+
+	for _, v := range state.WitnessGroups {
+		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
+			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
+			return
+		}
+	}
+
 	if p.isPaused(ctx, state.DataGroups, state.WitnessGroups) && plan.Pause.ValueBool() {
 		resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
 		return
@@ -862,7 +874,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			timeout-time.Minute,
 			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
 		)
-
 		if err != nil {
 			if appendDiagFromBAErr(err, &resp.Diagnostics) {
 				return
@@ -1013,7 +1024,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		timeout-time.Minute,
 		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
 	)
-
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
 			return
@@ -1036,7 +1046,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			timeout-time.Minute,
 			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_PAUSED),
 		)
-
 		if err != nil {
 			if appendDiagFromBAErr(err, &resp.Diagnostics) {
 				return
