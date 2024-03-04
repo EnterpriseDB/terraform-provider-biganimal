@@ -90,9 +90,12 @@ func PgdSchema(ctx context.Context) schema.Schema {
 				Sensitive:   true,
 			},
 			"pause": schema.BoolAttribute{
-				MarkdownDescription: "Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy",
-				Optional:            true,
-				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				MarkdownDescription: `Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. 
+				Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. 
+				While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes
+				Pausing a Postgres Distributed(PGD) cluster shuts down all cluster nodes`,
+				Optional:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
