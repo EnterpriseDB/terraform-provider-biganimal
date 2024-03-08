@@ -45,7 +45,7 @@ func (m MaintenanceWindowForUnknownModifier) PlanModifyObject(ctx context.Contex
 			return
 		}
 
-		if mwOb.IsEnabled != nil && *mwOb.IsEnabled == false {
+		if mwOb.IsEnabled != nil && !*mwOb.IsEnabled {
 			if (mwOb.StartDay != nil && *mwOb.StartDay != 0) ||
 				(mwOb.StartTime != nil && *mwOb.StartTime != "00:00") {
 				resp.Diagnostics.AddError("Maintenance window start_day and start_time cannot be set if is_enabled is false", "Please either remove or comment out start_time and start_day values or the whole maintenance_window block.")
