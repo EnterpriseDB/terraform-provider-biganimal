@@ -455,9 +455,12 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 			"pause": schema.BoolAttribute{
-				MarkdownDescription: "Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy",
-				Optional:            true,
-				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				MarkdownDescription: "Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. " +
+					"Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. " +
+					"While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. " +
+					"Pausing a high availability cluster shuts down all cluster nodes",
+				Optional:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}
@@ -576,25 +579,27 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	if *state.Phase == models.PHASE_PAUSED && plan.Pause.ValueBool() {
-		resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
-		return
-	}
-
-	if *state.Phase == models.PHASE_PAUSED && !plan.Pause.ValueBool() {
-		_, err := c.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
-		if err != nil {
-			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-				resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
-			}
+	if *state.Phase == models.PHASE_PAUSED {
+		if plan.Pause.ValueBool() {
+			resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
 			return
 		}
 
-		if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
-			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-				resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+		if !plan.Pause.ValueBool() {
+			_, err := c.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
+			if err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
+				}
+				return
 			}
-			return
+
+			if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+				}
+				return
+			}
 		}
 	}
 

@@ -4,7 +4,7 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=EnterpriseDB
 NAME=biganimal
 BINARY=terraform-provider-${NAME}
-VERSION=0.7.1
+VERSION=0.8.1
 
 # Figure out the OS and ARCH of the
 # builder machine

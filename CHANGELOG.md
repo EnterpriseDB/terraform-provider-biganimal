@@ -1,3 +1,11 @@
+## v0.8.1 (February 29. 2024)
+Features:
+* Updated access key requirements documentation
+
+## v0.8.0 (February 29. 2024)
+Features:
+* New access keys authorisation support using provider resource or environment variable
+
 ## v0.7.1 (February 07. 2024)
 Bug Fixes:
 * Fixed pg config to only use user custom config values in plan and not include default config values
