@@ -66,10 +66,27 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 				Iops:               basetypes.NewStringUnknown(),
 				Throughput:         basetypes.NewStringUnknown(),
 			},
-			AllowedIpRanges: &[]models.AllowedIpRange{
-				{CidrBlock: "127.0.0.1/32", Description: "test ip 1"},
-				{CidrBlock: "192.0.0.1/32", Description: "test ip 2"},
-			},
+
+			AllowedIpRanges: basetypes.NewSetValueMust(
+				dgAttrTypes["allowed_ip_ranges"].(types.SetType).ElemType,
+				[]attr.Value{
+					types.ObjectValueMust(
+						dgAttrTypes["allowed_ip_ranges"].(types.SetType).ElemType.(types.ObjectType).AttributeTypes(),
+						map[string]attr.Value{
+							"cidr_block":  types.StringPointerValue(utils.ToPointer("127.0.0.1/32")),
+							"description": types.StringPointerValue(utils.ToPointer("test ip 1")),
+						},
+					),
+					types.ObjectValueMust(
+						dgAttrTypes["allowed_ip_ranges"].(types.SetType).ElemType.(types.ObjectType).AttributeTypes(),
+						map[string]attr.Value{
+							"cidr_block":  types.StringPointerValue(utils.ToPointer("192.0.0.1/32")),
+							"description": types.StringPointerValue(utils.ToPointer("test ip 2")),
+						},
+					),
+				},
+			),
+
 			ClusterArchitecture: &terraform.ClusterArchitecture{
 				ClusterArchitectureId:   "pgd",
 				ClusterArchitectureName: basetypes.NewStringUnknown(),
@@ -120,12 +137,19 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	customState.GetAttribute(ctx, path.Root("data_groups"), tfAddedDgs)
 
 	updatedDgs := []terraform.DataGroup(defaultDgs)
-	updatedDgs[0].AllowedIpRanges = &[]models.AllowedIpRange{
-		{
-			CidrBlock:   "168.0.0.1/32",
-			Description: "updated",
+	updatedDgs[0].AllowedIpRanges = basetypes.NewSetValueMust(
+		dgAttrTypes["allowed_ip_ranges"].(types.SetType).ElemType,
+		[]attr.Value{
+			types.ObjectValueMust(
+				dgAttrTypes["allowed_ip_ranges"].(types.SetType).ElemType.(types.ObjectType).AttributeTypes(),
+				map[string]attr.Value{
+					"cidr_block":  types.StringPointerValue(utils.ToPointer("168.0.0.1/32")),
+					"description": types.StringPointerValue(utils.ToPointer("updated")),
+				},
+			),
 		},
-	}
+	)
+
 	updatedDgs[0].BackupRetentionPeriod = utils.ToPointer("5d")
 	updatedDgs[0].ClusterArchitecture = &terraform.ClusterArchitecture{
 		ClusterArchitectureId:   "pgd",

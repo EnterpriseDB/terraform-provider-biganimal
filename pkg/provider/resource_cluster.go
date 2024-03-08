@@ -48,9 +48,9 @@ type ClusterResourceModel struct {
 	ClusterId                  *string                            `tfsdk:"cluster_id"`
 	Phase                      *string                            `tfsdk:"phase"`
 	ClusterArchitecture        *ClusterArchitectureResourceModel  `tfsdk:"cluster_architecture"`
-	ConnectionUri              *string                            `tfsdk:"connection_uri"`
+	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
 	ClusterName                types.String                       `tfsdk:"cluster_name"`
-	RoConnectionUri            *string                            `tfsdk:"ro_connection_uri"`
+	RoConnectionUri            types.String                       `tfsdk:"ro_connection_uri"`
 	Storage                    *StorageResourceModel              `tfsdk:"storage"`
 	PgConfig                   []PgConfigResourceModel            `tfsdk:"pg_config"`
 	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
@@ -247,7 +247,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster connection URI.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
 			},
 			"cluster_name": schema.StringAttribute{
 				MarkdownDescription: "Name of the cluster.",
@@ -264,7 +264,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"ro_connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
 			},
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
@@ -721,8 +721,8 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 	}
 	tfClusterResource.ResizingPvc = StringSliceToList(apiCluster.ResizingPvc)
 	tfClusterResource.ReadOnlyConnections = types.BoolPointerValue(apiCluster.ReadOnlyConnections)
-	tfClusterResource.ConnectionUri = &connection.PgUri
-	tfClusterResource.RoConnectionUri = &connection.ReadOnlyPgUri
+	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	tfClusterResource.RoConnectionUri = types.StringPointerValue(&connection.ReadOnlyPgUri)
 	tfClusterResource.CspAuth = types.BoolPointerValue(apiCluster.CSPAuth)
 	tfClusterResource.LogsUrl = apiCluster.LogsUrl
 	tfClusterResource.MetricsUrl = apiCluster.MetricsUrl

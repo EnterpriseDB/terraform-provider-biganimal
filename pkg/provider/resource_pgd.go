@@ -32,6 +32,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
@@ -148,9 +149,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"connection_uri": schema.StringAttribute{
 							Description: "Data group connection URI.",
 							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the data group.",
@@ -635,9 +633,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 		storage := buildApiStorage(*v.Storage)
 
-		if v.AllowedIpRanges == nil {
-			v.AllowedIpRanges = &[]models.AllowedIpRange{}
-		}
 		if v.PgConfig == nil {
 			v.PgConfig = &[]models.KeyValue{}
 		}
@@ -659,7 +654,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		}
 
 		apiDGModel := pgdApi.DataGroup{
-			AllowedIpRanges:       v.AllowedIpRanges,
+			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
@@ -849,7 +844,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		reqDg := pgdApi.DataGroup{
 			GroupId:               groupId,
 			ClusterType:           utils.ToPointer("data_group"),
-			AllowedIpRanges:       v.AllowedIpRanges,
+			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			CspAuth:               v.CspAuth,
 			InstanceType:          v.InstanceType,
@@ -871,6 +866,8 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			}
 			reqDg.PgType = v.PgType
 			reqDg.PgVersion = v.PgVersion
+			reqDg.ServiceAccountIds = svAccIds
+			reqDg.PeAllowedPrincipalIds = principalIds
 		}
 
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, reqDg)
@@ -1116,7 +1113,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				}
 
 				// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
-				var newPgConfig []models.KeyValue
+				newPgConfig := []models.KeyValue{}
 				var tfPgConfig *[]models.KeyValue
 				for _, pgdTFResourceDG := range originalTFDgs {
 					if pgdTFResourceDG.Region.RegionId == apiDGModel.Region.RegionId {
@@ -1171,9 +1168,48 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					}
 				}
 
+				// allowed ip ranges
+				allwdIpRngsPathSteps := tftypes.NewAttributePathWithSteps([]tftypes.AttributePathStep{
+					tftypes.AttributeName("allowed_ip_ranges"),
+				})
+
+				allwdIpRngsAttr, _ := dgTFType.ElementType(ctx).ApplyTerraform5AttributePathStep(allwdIpRngsPathSteps.NextStep())
+				allwdIpRngsTFType, ok := allwdIpRngsAttr.(types.SetType)
+				if !ok {
+					diags.AddError("provider type assertion error", "cannot type assert allowed_ip_ranges response to set type")
+					return
+				}
+
+				allwdIpRngsElemTFType, ok := allwdIpRngsTFType.ElemType.(types.ObjectType)
+				if !ok {
+					diags.AddError("provider type assertion  error", "cannot type assert allowed_ip_ranges element response to object type")
+					return
+				}
+				allowedIpRanges := []attr.Value{}
+				if apiDGModel.AllowedIpRanges != nil && len(*apiDGModel.AllowedIpRanges) > 0 {
+					for _, v := range *apiDGModel.AllowedIpRanges {
+						v := v
+						ob, diag := types.ObjectValue(allwdIpRngsElemTFType.AttrTypes, map[string]attr.Value{
+							"cidr_block":  types.StringValue(v.CidrBlock),
+							"description": types.StringValue(v.Description),
+						})
+						if diag.HasError() {
+							diags.Append(diag...)
+							return
+						}
+						allowedIpRanges = append(allowedIpRanges, ob)
+					}
+				}
+
+				allwdIpRngsElemType := types.ObjectType{AttrTypes: allwdIpRngsElemTFType.AttrTypes}
+				allwdIpRngsSet := types.SetNull(allwdIpRngsElemType)
+				if len(allowedIpRanges) > 0 {
+					allwdIpRngsSet = types.SetValueMust(allwdIpRngsElemType, allowedIpRanges)
+				}
+
 				tfDGModel := terraform.DataGroup{
 					GroupId:               types.StringPointerValue(apiDGModel.GroupId),
-					AllowedIpRanges:       apiDGModel.AllowedIpRanges,
+					AllowedIpRanges:       allwdIpRngsSet,
 					BackupRetentionPeriod: apiDGModel.BackupRetentionPeriod,
 					ClusterArchitecture:   clusterArch,
 					ClusterName:           types.StringPointerValue(apiDGModel.ClusterName),
@@ -1185,6 +1221,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					InstanceType:          apiDGModel.InstanceType,
 					LogsUrl:               types.StringPointerValue(apiDGModel.LogsUrl),
 					MetricsUrl:            types.StringPointerValue(apiDGModel.MetricsUrl),
+					PgConfig:              &newPgConfig,
 					PgType:                apiDGModel.PgType,
 					PgVersion:             apiDGModel.PgVersion,
 					Phase:                 types.StringPointerValue(apiDGModel.Phase),
@@ -1196,9 +1233,6 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:     apiDGModel.MaintenanceWindow,
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
-				}
-				if len(newPgConfig) > 0 {
-					tfDGModel.PgConfig = &newPgConfig
 				}
 
 				asPgdTFResource.DataGroups = append(asPgdTFResource.DataGroups, tfDGModel)
@@ -1392,7 +1426,7 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
 	if strings.Contains(*dg.Provider.CloudProviderId, "bah") {
-		if !dg.PeAllowedPrincipalIds.IsNull() {
+		if !dg.PeAllowedPrincipalIds.IsNull() && !dg.PeAllowedPrincipalIds.IsUnknown() && len(dg.PeAllowedPrincipalIds.Elements()) > 0 {
 			elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 			if elemDiag.HasError() {
 				diags.Append(elemDiag...)
@@ -1404,10 +1438,16 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 				diags.AddError("pgd get pe allowed principal ids error", err.Error())
 				return nil, nil
 			}
-			principalIds = utils.ToPointer(pids.Data)
+
+			setOfPrincipalIds := []attr.Value{}
+			for _, v := range pids.Data {
+				setOfPrincipalIds = append(setOfPrincipalIds, basetypes.NewStringValue(v))
+			}
+
+			tfPrincipalIds := basetypes.NewSetValueMust(basetypes.StringType{}, setOfPrincipalIds)
 
 			// if it doesn't have any existing service account ids then use config
-			if principalIds != nil && len(*principalIds) == 0 {
+			if !tfPrincipalIds.IsNull() && !tfPrincipalIds.IsUnknown() && len(tfPrincipalIds.Elements()) > 0 {
 				elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
 				if elemDiag.HasError() {
 					diags.Append(elemDiag...)
@@ -1417,7 +1457,7 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 		}
 
 		if strings.Contains(*dg.Provider.CloudProviderId, "bah:gcp") {
-			if !dg.ServiceAccountIds.IsNull() {
+			if !dg.ServiceAccountIds.IsNull() && !dg.ServiceAccountIds.IsUnknown() && len(dg.ServiceAccountIds.Elements()) > 0 {
 				elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 				if elemDiag.HasError() {
 					diags.Append(elemDiag...)
@@ -1429,10 +1469,16 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 					diags.AddError("pgd get service account ids error", err.Error())
 					return nil, nil
 				}
-				svAccIds = utils.ToPointer(sids.Data)
+
+				setOfSvAccIds := []attr.Value{}
+				for _, v := range sids.Data {
+					setOfSvAccIds = append(setOfSvAccIds, basetypes.NewStringValue(v))
+				}
+
+				tfSvAccIds := basetypes.NewSetValueMust(basetypes.StringType{}, setOfSvAccIds)
 
 				// if it doesn't have any existing service account ids then use config
-				if svAccIds != nil && len(*svAccIds) == 0 {
+				if !tfSvAccIds.IsNull() && !tfSvAccIds.IsUnknown() && len(tfSvAccIds.Elements()) > 0 {
 					elemDiag := dg.ServiceAccountIds.ElementsAs(ctx, &svAccIds, false)
 					if elemDiag.HasError() {
 						diags.Append(elemDiag...)
@@ -1443,6 +1489,19 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 		}
 	}
 	return
+}
+
+func buildApiAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
+	apiAllowedIpRanges := &[]models.AllowedIpRange{}
+
+	for _, v := range tfAllowedIpRanges.Elements() {
+		*apiAllowedIpRanges = append(*apiAllowedIpRanges, models.AllowedIpRange{
+			CidrBlock:   v.(types.Object).Attributes()["cidr_block"].(types.String).ValueString(),
+			Description: v.(types.Object).Attributes()["description"].(types.String).ValueString(),
+		})
+	}
+
+	return apiAllowedIpRanges
 }
 
 func buildApiStorage(tfStorage terraform.Storage) *models.Storage {
