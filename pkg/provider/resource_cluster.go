@@ -72,6 +72,7 @@ type ClusterResourceModel struct {
 	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
 	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
 	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
+	Pause                      types.Bool                         `tfsdk:"pause"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -255,7 +256,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"phase": schema.StringAttribute{
 				MarkdownDescription: "Current phase of the cluster.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				PlanModifiers: []planmodifier.String{
+					plan_modifier.CustomPhaseForUnknown(),
+				},
 			},
 
 			"ro_connection_uri": schema.StringAttribute{
@@ -451,6 +454,14 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
+			"pause": schema.BoolAttribute{
+				MarkdownDescription: "Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. " +
+					"Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. " +
+					"While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. " +
+					"Pausing a high availability cluster shuts down all cluster nodes",
+				Optional:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
 }
@@ -495,6 +506,23 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	if config.Pause.ValueBool() {
+		_, err = c.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
+			}
+			return
+		}
+
+		if err := c.ensureClusterIsPaused(ctx, config, timeout); err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
+			}
+			return
+		}
+	}
+
 	if err := c.read(ctx, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
@@ -520,20 +548,59 @@ func (c *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	if state.Phase == nil || *state.Phase != models.PHASE_HEALTHY {
-		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
-		return
-	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan ClusterResourceModel
+
+	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
+	resp.Diagnostics.Append(diagnostics...)
+
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	var state ClusterResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// cluster = pause,   tf pause = true, it will error and say you will need to set pause = false to update
+	// cluster = pause,   tf pause = false, it will resume then update
+	// cluster = healthy, tf pause = true, it will update then pause
+	// cluster = healthy, tf pause = false, it will update
+	if *state.Phase != models.PHASE_HEALTHY && *state.Phase != models.PHASE_PAUSED {
+		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
+		return
+	}
+
+	if *state.Phase == models.PHASE_PAUSED {
+		if plan.Pause.ValueBool() {
+			resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
+			return
+		}
+
+		if !plan.Pause.ValueBool() {
+			_, err := c.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
+			if err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
+				}
+				return
+			}
+
+			if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+				}
+				return
+			}
+		}
 	}
 
 	clusterModel, err := c.makeClusterForUpdate(ctx, plan)
@@ -556,14 +623,28 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// this is possibly a bug in the API
 	time.Sleep(20 * time.Second)
 
-	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
-
-	resp.Diagnostics.Append(diagnostics...)
 	if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
 		return
+	}
+
+	if plan.Pause.ValueBool() {
+		_, err = c.client.ClusterPause(ctx, plan.ProjectId, *plan.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
+			}
+			return
+		}
+
+		if err := c.ensureClusterIsPaused(ctx, plan, timeout); err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
+			}
+			return
+		}
 	}
 
 	if err := c.read(ctx, &plan); err != nil {
@@ -763,6 +844,23 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 
 			if !resp.IsHealthy() {
 				return retry.RetryableError(errors.New("cluster not yet ready"))
+			}
+			return nil
+		})
+}
+
+func (c *clusterResource) ensureClusterIsPaused(ctx context.Context, cluster ClusterResourceModel, timeout time.Duration) error {
+	return retry.RetryContext(
+		ctx,
+		timeout,
+		func() *retry.RetryError {
+			resp, err := c.client.Read(ctx, cluster.ProjectId, *cluster.ClusterId)
+			if err != nil {
+				return retry.NonRetryableError(err)
+			}
+
+			if *resp.Phase != models.PHASE_PAUSED {
+				return retry.RetryableError(errors.New("cluster not yet paused"))
 			}
 			return nil
 		})

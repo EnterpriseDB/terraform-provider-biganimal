@@ -9,6 +9,7 @@ import (
 const (
 	CONDITION_DEPLOYED = "biganimal.com/deployed"
 	PHASE_HEALTHY      = "Cluster in healthy state"
+	PHASE_PAUSED       = "Cluster has been paused"
 )
 
 func NewCluster(d *schema.ResourceData) (*Cluster, error) {

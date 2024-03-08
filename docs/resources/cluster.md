@@ -41,6 +41,7 @@ variable "project_id" {
 resource "biganimal_cluster" "single_node_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
+  pause        = false
 
   allowed_ip_ranges {
     cidr_block  = "127.0.0.1/32"
@@ -153,6 +154,7 @@ variable "project_id" {
 resource "biganimal_cluster" "ha_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
+  pause        = false
 
   allowed_ip_ranges {
     cidr_block  = "127.0.0.1/32"
@@ -259,6 +261,7 @@ output "faraway_replica_ids" {
 - `cluster_architecture` (Block, Optional) Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details. (see [below for nested schema](#nestedblock--cluster_architecture))
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
+- `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `pg_bouncer` (Attributes) Pg bouncer. (see [below for nested schema](#nestedatt--pg_bouncer))
 - `pg_config` (Block Set) Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details. (see [below for nested schema](#nestedblock--pg_config))
