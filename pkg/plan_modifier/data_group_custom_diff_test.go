@@ -105,7 +105,6 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			ServiceAccountIds:     basetypes.NewSetUnknown(dgAttrTypes["service_account_ids"].(types.SetType).ElemType),
 			PeAllowedPrincipalIds: basetypes.NewSetUnknown(dgAttrTypes["pe_allowed_principal_ids"].(types.SetType).ElemType),
 			PgConfig:              &[]models.KeyValue{},
-			Conditions:            basetypes.NewSetUnknown(dgAttrTypes["conditions"].(types.SetType).ElemType),
 			ResizingPvc:           basetypes.NewSetUnknown(dgAttrTypes["resizing_pvc"].(types.SetType).ElemType),
 		},
 	}

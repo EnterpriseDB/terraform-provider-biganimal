@@ -264,22 +264,6 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 								},
 							},
 						},
-						"conditions": schema.SetNestedAttribute{
-							Description: "Conditions.",
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"condition_status": schema.StringAttribute{
-										Description: "Condition status",
-										Computed:    true,
-									},
-									"type": schema.StringAttribute{
-										Description: "Type",
-										Computed:    true,
-									},
-								},
-							},
-						},
 						"service_account_ids": schema.SetAttribute{
 							Description: "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
 							Computed:    true,

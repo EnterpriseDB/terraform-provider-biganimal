@@ -13,7 +13,10 @@ import (
 	pgdApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/api"
 )
 
-type PGDClient struct{ API }
+type PGDClient struct {
+	API
+	CommonCluster
+}
 
 var clusterClient = ClusterClient{}
 
@@ -23,7 +26,7 @@ func NewPGDClient(api API) *PGDClient {
 	}
 
 	api.HTTPClient = httpClient
-	c := PGDClient{API: api}
+	c := PGDClient{API: api, CommonCluster: CommonCluster{API: api}}
 	clusterClient = ClusterClient{API: api}
 	return &c
 }

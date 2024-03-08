@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -116,7 +117,6 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 				pDg.ClusterArchitecture.WitnessNodes = sDg.ClusterArchitecture.WitnessNodes
 				pDg.ClusterName = sDg.ClusterName
 				pDg.ClusterType = sDg.ClusterType
-				pDg.Conditions = sDg.Conditions
 				pDg.Connection = sDg.Connection
 				pDg.CreatedAt = sDg.CreatedAt
 				pDg.GroupId = sDg.GroupId
@@ -309,8 +309,8 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			if !reflect.DeepEqual(pDg.Provider, foundStateDg.Provider) {
 				resp.Diagnostics.AddError("Cloud provider cannot be changed",
 					fmt.Sprintf("Cloud provider cannot be changed. Cloud provider changed from expected value: %v to %v in config for data group with region %v",
-						*foundStateDg.Provider,
-						*pDg.Provider,
+						utils.PrintJson(*foundStateDg.Provider),
+						utils.PrintJson(*pDg.Provider),
 						foundStateDg.Region.RegionId))
 				return
 			}
@@ -326,8 +326,8 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			// maintenance window
 			if !reflect.DeepEqual(pDg.MaintenanceWindow, foundStateDg.MaintenanceWindow) {
 				resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v for data group with region %v",
-					*foundStateDg.MaintenanceWindow,
-					*pDg.MaintenanceWindow,
+					utils.PrintJson(*foundStateDg.MaintenanceWindow),
+					utils.PrintJson(*pDg.MaintenanceWindow),
 					foundStateDg.Region.RegionId))
 			}
 
