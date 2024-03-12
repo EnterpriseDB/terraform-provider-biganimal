@@ -343,6 +343,9 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"maintenance_window": schema.SingleNestedAttribute{
 							Description: "Custom maintenance window.",
 							Required:    true,
+							PlanModifiers: []planmodifier.Object{
+								plan_modifier.MaintenanceWindowForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",
