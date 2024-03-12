@@ -334,6 +334,9 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"maintenance_window": schema.SingleNestedAttribute{
 							Description: "Custom maintenance window.",
 							Required:    true,
+							PlanModifiers: []planmodifier.Object{
+								plan_modifier.MaintenanceWindowForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
 								"is_enabled": schema.BoolAttribute{
 									Description: "Is maintenance window enabled.",
@@ -749,7 +752,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		timeout-time.Minute,
 		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config),
 	)
-
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
 			return
@@ -961,7 +963,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		timeout-time.Minute,
 		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan),
 	)
-
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
 			return
