@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -51,8 +50,7 @@ func (c ClusterClient) GetTags(ctx context.Context) ([]api.TagResponse, error) {
 		Data []api.TagResponse `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("api/v3/tags")
-	body, err := c.doRequest(ctx, http.MethodGet, url, nil)
+	body, err := c.doRequest(ctx, http.MethodGet, "tags", nil)
 	if err != nil {
 		return response.Data, err
 	}
