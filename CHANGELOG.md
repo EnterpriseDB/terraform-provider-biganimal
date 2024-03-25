@@ -1,3 +1,10 @@
+## v0.9.0 (March 27. 2024)
+Features:
+* Added support to pause and resume a cluster for `biganimal_pgd` and `biganimal_cluster` resources
+
+Bug Fixes:
+* Fixed maintenance window plan inconsistent with response
+
 ## v0.8.1 (February 29. 2024)
 Features:
 * Updated access key requirements documentation
