@@ -24,14 +24,14 @@ func NewTagClient(api API) *TagClient {
 	return &tc
 }
 
-func (tc TagClient) Create(ctx context.Context, tag api.TagRequest) (*string, error) {
+func (tc TagClient) Create(ctx context.Context, tagReq api.TagRequest) (*string, error) {
 	response := struct {
 		Data struct {
 			TagId string `json:"tagId"`
 		} `json:"data"`
 	}{}
 
-	b, err := json.Marshal(tag)
+	b, err := json.Marshal(tagReq)
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +45,12 @@ func (tc TagClient) Create(ctx context.Context, tag api.TagRequest) (*string, er
 	return &response.Data.TagId, err
 }
 
-func (c ClusterClient) GetTags(ctx context.Context) ([]api.TagResponse, error) {
+func (tr TagClient) List(ctx context.Context) ([]api.TagResponse, error) {
 	response := struct {
 		Data []api.TagResponse `json:"data"`
 	}{}
 
-	body, err := c.doRequest(ctx, http.MethodGet, "tags", nil)
+	body, err := tr.doRequest(ctx, http.MethodGet, "tags", nil)
 	if err != nil {
 		return response.Data, err
 	}
