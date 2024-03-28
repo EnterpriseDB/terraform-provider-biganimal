@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -24,14 +25,14 @@ func NewTagClient(api API) *TagClient {
 	return &tc
 }
 
-func (tc TagClient) Create(ctx context.Context, tag api.TagRequest) (*string, error) {
+func (tc TagClient) Create(ctx context.Context, tagReq api.TagRequest) (*string, error) {
 	response := struct {
 		Data struct {
 			TagId string `json:"tagId"`
 		} `json:"data"`
 	}{}
 
-	b, err := json.Marshal(tag)
+	b, err := json.Marshal(tagReq)
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +46,53 @@ func (tc TagClient) Create(ctx context.Context, tag api.TagRequest) (*string, er
 	return &response.Data.TagId, err
 }
 
-func (c ClusterClient) GetTags(ctx context.Context) ([]api.TagResponse, error) {
+func (tc TagClient) Get(ctx context.Context, tagId string) (api.TagResponse, error) {
+	response := struct {
+		Data api.TagResponse `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("tags/%s", tagId)
+
+	body, err := tc.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return response.Data, err
+	}
+
+	err = json.Unmarshal(body, &response)
+
+	return response.Data, err
+}
+
+func (tc TagClient) Update(ctx context.Context, tagId string, tagReq api.TagRequest) (*string, error) {
+	response := struct {
+		Data struct {
+			TagId string `json:"tagId"`
+		} `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("tags/%s", tagId)
+
+	b, err := json.Marshal(tagReq)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := tc.doRequest(ctx, http.MethodPut, url, bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(body, &response)
+
+	return &response.Data.TagId, err
+}
+
+func (tc TagClient) List(ctx context.Context) ([]api.TagResponse, error) {
 	response := struct {
 		Data []api.TagResponse `json:"data"`
 	}{}
 
-	body, err := c.doRequest(ctx, http.MethodGet, "tags", nil)
+	body, err := tc.doRequest(ctx, http.MethodGet, "tags", nil)
 	if err != nil {
 		return response.Data, err
 	}
