@@ -45,7 +45,7 @@ func (tr *tagResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (tf *tagResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The PGD cluster data source describes a BigAnimal cluster. The data source requires your PGD cluster name.",
+		MarkdownDescription: "Tags will enable users to categorize and organize resources across types and improve the efficiency of resource retrieval",
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
 				timeouts.Opts{Create: true, Delete: true, Update: true}),
