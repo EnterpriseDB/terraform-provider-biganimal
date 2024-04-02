@@ -168,6 +168,20 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (tr *tagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state TagResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := tr.client.Delete(ctx, state.TagId.ValueString())
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error deleting tag", err.Error())
+		}
+		return
+	}
 }
 
 func (tr *tagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
