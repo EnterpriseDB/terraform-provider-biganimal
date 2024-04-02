@@ -6,6 +6,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -170,6 +171,7 @@ func (tr *tagResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 }
 
 func (tr *tagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tag_id"), req.ID)...)
 }
 
 func NewTagResource() resource.Resource {
