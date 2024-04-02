@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -45,12 +46,29 @@ func (tc TagClient) Create(ctx context.Context, tagReq api.TagRequest) (*string,
 	return &response.Data.TagId, err
 }
 
-func (tr TagClient) List(ctx context.Context) ([]api.TagResponse, error) {
+func (tc TagClient) Get(ctx context.Context, tagId string) (api.TagResponse, error) {
+	response := struct {
+		Data api.TagResponse `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("tags/%s", tagId)
+
+	body, err := tc.doRequest(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return response.Data, err
+	}
+
+	err = json.Unmarshal(body, &response)
+
+	return response.Data, err
+}
+
+func (tc TagClient) List(ctx context.Context) ([]api.TagResponse, error) {
 	response := struct {
 		Data []api.TagResponse `json:"data"`
 	}{}
 
-	body, err := tr.doRequest(ctx, http.MethodGet, "tags", nil)
+	body, err := tc.doRequest(ctx, http.MethodGet, "tags", nil)
 	if err != nil {
 		return response.Data, err
 	}
