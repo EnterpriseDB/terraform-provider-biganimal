@@ -88,7 +88,7 @@ func (tr *tagResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	tagId, err := tr.client.Create(ctx, commonApi.TagRequest{
+	tagId, err := tr.client.Create(ctx, commonApi.Tag{
 		Color:   config.Color.ValueStringPointer(),
 		TagName: config.TagName.ValueString(),
 	})
@@ -145,7 +145,7 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err := tr.client.Update(ctx, plan.TagId.ValueString(), commonApi.TagRequest{
+	_, err := tr.client.Update(ctx, plan.TagId.ValueString(), commonApi.Tag{
 		Color:   plan.Color.ValueStringPointer(),
 		TagName: plan.TagName.ValueString(),
 	})

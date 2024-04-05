@@ -176,6 +176,7 @@ type Cluster struct {
 	SuperuserAccess            *bool                        `json:"superuserAccess,omitempty"`
 	Extensions                 *[]ClusterExtension          `json:"extensions,omitempty"`
 	PgBouncer                  *PgBouncer                   `json:"pgBouncer,omitempty"`
+	Tags                       []commonApi.Tag              `json:"tags,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
