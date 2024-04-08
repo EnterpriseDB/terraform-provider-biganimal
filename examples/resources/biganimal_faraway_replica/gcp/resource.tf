@@ -42,7 +42,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   }
 
   backup_retention_period = "6d"
-  csp_auth                = true
+  csp_auth                = false
   instance_type           = "gcp:e2-highcpu-4"
 
   // only following pg_config parameters are configurable for faraway replica
@@ -59,27 +59,19 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     value = "64"
   }
 
-  pg_config {
-    name  = "max_prepared_transactions"
-    value = "0"
-  }
-
-  pg_config {
-    name  = "max_wal_senders"
-    value = "10"
-  }
-
-  pg_config {
-    name  = "max_worker_processes"
-    value = "32"
-  }
-
-
   storage {
     volume_type       = "pd-ssd"
     volume_properties = "pd-ssd"
-    size              = "10 Gi"
+    size              = "4 Gi"
   }
   private_networking = false
   region             = "us-east1"
+
+  #tags {
+  #  tag_name  = "test-tag-name-1"
+  #  color = "blue"
+  #}
+  #tags {
+  #  tag_name  = "test-tag-name-2"
+  #}
 }

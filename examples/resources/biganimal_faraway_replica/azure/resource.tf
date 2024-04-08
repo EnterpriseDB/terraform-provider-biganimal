@@ -45,7 +45,6 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   csp_auth                = false
   instance_type           = "azure:Standard_D2s_v3"
 
-
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
   // it is highly recommended setting these values to be equal to or greater than the source cluster's.
@@ -59,25 +58,20 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     name  = "max_locks_per_transaction"
     value = "64"
   }
-  pg_config {
-    name  = "max_prepared_transactions"
-    value = "0"
-  }
-  pg_config {
-    name  = "max_wal_senders"
-    value = "10"
-  }
-  pg_config {
-    name  = "max_worker_processes"
-    value = "32"
-  }
 
   storage {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
     size              = "4 Gi"
   }
-
   private_networking = false
   region             = "australiaeast"
+
+  #tags {
+  #  tag_name  = "test-tag-name-1"
+  #  color = "blue"
+  #}
+  #tags {
+  #  tag_name  = "test-tag-name-2"
+  #}
 }

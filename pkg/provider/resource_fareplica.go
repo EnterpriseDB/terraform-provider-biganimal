@@ -215,6 +215,31 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 					},
 				},
 			},
+			"tags": {
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"tag_id": {
+							Description: "Tag ID",
+							Type:        schema.TypeString,
+							Computed:    true,
+						},
+						"tag_name": {
+							Description: "Tag name",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+						"color": {
+							Description: "Tag color",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -288,7 +313,7 @@ func (c *FAReplicaResource) read(ctx context.Context, d *schema.ResourceData, me
 	utils.SetOrPanic(d, "deleted_at", cluster.DeletedAt)                          // Computed
 	utils.SetOrPanic(d, "expired_at", cluster.ExpiredAt)                          // Computed
 	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)                      // Required
-	//utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt) // Computed
+	// utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt) // Computed
 	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)           // Required
 	utils.SetOrPanic(d, "logs_url", cluster.LogsUrl)                     // Computed
 	utils.SetOrPanic(d, "metrics_url", cluster.MetricsUrl)               // Computed

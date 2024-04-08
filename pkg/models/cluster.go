@@ -63,6 +63,15 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		return nil, err
 	}
 
+	tagKey := d.Get("tags")
+	tags := []commonApi.Tag{}
+	if tagKey != nil {
+		tags, err = utils.StructFromProps[[]commonApi.Tag](tagKey.(*schema.Set).List())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cluster := &Cluster{
 		ReplicaSourceClusterId: SourceId,
 		ClusterType:            ClusterType,
@@ -101,6 +110,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		},
 		ReadOnlyConnections: clusterRoConn,
 		Storage:             &storage,
+		Tags:                tags,
 	}
 
 	return cluster, nil
