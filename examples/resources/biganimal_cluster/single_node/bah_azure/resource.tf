@@ -100,6 +100,16 @@ resource "biganimal_cluster" "single_node_cluster" {
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
   # ]
+
+  #tags = [
+  #  {
+  #     tag_name  = "test-tag-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "test-tag-2"
+  #  },
+  #]
 }
 
 output "password" {
