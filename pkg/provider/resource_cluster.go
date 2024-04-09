@@ -490,7 +490,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
+					plan_modifier.CustomAssignTags(),
 				},
 			},
 		},
