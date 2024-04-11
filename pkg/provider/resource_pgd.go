@@ -97,6 +97,36 @@ func PgdSchema(ctx context.Context) schema.Schema {
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"tag_name": schema.StringAttribute{
+							Required: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"color": schema.StringAttribute{
+							Optional: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					plan_modifier.CustomAssignTags(),
+				},
+			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
 				Required:    true,
@@ -595,6 +625,7 @@ type PGD struct {
 	Password      *string                  `tfsdk:"password"`
 	Timeouts      timeouts.Value           `tfsdk:"timeouts"`
 	Pause         types.Bool               `tfsdk:"pause"`
+	Tags          []commonTerraform.Tag    `tfsdk:"tags"`
 	DataGroups    []terraform.DataGroup    `tfsdk:"data_groups"`
 	WitnessGroups []terraform.WitnessGroup `tfsdk:"witness_groups"`
 }
@@ -613,6 +644,8 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		ClusterType: utils.ToPointer("cluster"),
 		Password:    config.Password,
 	}
+
+	clusterReqBody.Tags = buildAPIReqAssignTags(config.Tags)
 
 	clusterReqBody.Groups = &[]any{}
 
@@ -812,6 +845,8 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ClusterId = clusterResp.ClusterId
 	state.ClusterName = clusterResp.ClusterName
 
+	buildTFRsrcAssignTagsAs(&state.Tags, &clusterResp.Tags)
+
 	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &state)
 	if resp.Diagnostics.HasError() {
 		return
@@ -897,6 +932,8 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		ClusterType: utils.ToPointer("cluster"),
 		Password:    plan.Password,
 	}
+
+	clusterReqBody.Tags = buildAPIReqAssignTags(plan.Tags)
 
 	clusterReqBody.Groups = &[]any{}
 
@@ -1140,6 +1177,8 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 		if !ready {
 			return retry.RetryableError(errors.New("instance not yet ready"))
 		}
+
+		buildTFRsrcAssignTagsAs(&outPgdTfResource.Tags, &pgdResp.Tags)
 
 		return nil
 	}

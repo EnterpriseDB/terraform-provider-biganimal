@@ -32,6 +32,15 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   pause        = false
+  #tags = [
+  #  {
+  #     tag_name  = "test-tag-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "test-tag-2"
+  #  },
+  #]
   data_groups = [
     {
       allowed_ip_ranges = [
