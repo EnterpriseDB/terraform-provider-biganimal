@@ -46,15 +46,30 @@ func (m assignTagsModifier) PlanModifySet(ctx context.Context, req planmodifier.
 
 	// This is for anything else ie update with tags set in config.
 
-	// merge plan with state in newPlan
-	for _, v := range state.Elements() {
-		newPlan = append(newPlan, v)
-	}
+	// merge plan into newPlan (plan is from config) and merge state in newPlan (state is from read)
+	newPlan = state.Elements()
 
-	// merge plan with state in newPlan
-	for _, v := range plan.Elements() {
-		newPlan = append(newPlan, v)
+	for _, planTag := range plan.Elements() {
+		existing := false
+		for _, newPlanElem := range newPlan {
+			if planTag.Equal(newPlanElem) {
+				existing = true
+				continue
+			}
+		}
+		if !existing {
+			newPlan = append(newPlan, planTag)
+		}
 	}
 
 	resp.PlanValue = basetypes.NewSetValueMust(req.ConfigValue.ElementType(ctx), newPlan)
+}
+
+func ContainsTag(s []attr.Value, e attr.Value) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

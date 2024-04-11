@@ -870,14 +870,7 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 		}
 	}
 
-	tfClusterResource.Tags = []commonTerraform.Tag{}
-	for _, v := range apiCluster.Tags {
-		tfClusterResource.Tags = append(tfClusterResource.Tags, commonTerraform.Tag{
-			TagId:   types.StringValue(v.TagId),
-			TagName: types.StringValue(v.TagName),
-			Color:   basetypes.NewStringPointerValue(v.Color),
-		})
-	}
+	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, &apiCluster.Tags)
 
 	return nil
 }
@@ -1055,15 +1048,7 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 		}
 	}
 
-	tags := []commonApi.Tag{}
-	for _, tag := range clusterResource.Tags {
-		tags = append(tags, commonApi.Tag{
-			Color:   tag.Color.ValueStringPointer(),
-			TagId:   tag.TagId.ValueString(),
-			TagName: tag.TagName.ValueString(),
-		})
-	}
-	cluster.Tags = tags
+	cluster.Tags = buildAPIReqAssignTags(clusterResource.Tags)
 
 	return cluster
 }
@@ -1105,4 +1090,27 @@ func StringSliceToSet(items *[]string) types.Set {
 	}
 
 	return types.SetValueMust(types.StringType, eles)
+}
+
+func buildTFRsrcAssignTagsAs(tfRsrcTags *[]commonTerraform.Tag, apiRespTags *[]commonApi.Tag) {
+	*tfRsrcTags = []commonTerraform.Tag{}
+	for _, v := range *apiRespTags {
+		*tfRsrcTags = append(*tfRsrcTags, commonTerraform.Tag{
+			TagId:   types.StringValue(v.TagId),
+			TagName: types.StringValue(v.TagName),
+			Color:   basetypes.NewStringPointerValue(v.Color),
+		})
+	}
+}
+
+func buildAPIReqAssignTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
+	tags := []commonApi.Tag{}
+	for _, tag := range tfRsrcTags {
+		tags = append(tags, commonApi.Tag{
+			Color:   tag.Color.ValueStringPointer(),
+			TagId:   tag.TagId.ValueString(),
+			TagName: tag.TagName.ValueString(),
+		})
+	}
+	return tags
 }
