@@ -845,7 +845,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ClusterId = clusterResp.ClusterId
 	state.ClusterName = clusterResp.ClusterName
 
-	buildTFRsrcAssignTagsAs(&state.Tags, &clusterResp.Tags)
+	buildTFRsrcAssignTagsAs(&state.Tags, clusterResp.Tags)
 
 	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &state)
 	if resp.Diagnostics.HasError() {
@@ -1178,7 +1178,7 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 			return retry.RetryableError(errors.New("instance not yet ready"))
 		}
 
-		buildTFRsrcAssignTagsAs(&outPgdTfResource.Tags, &pgdResp.Tags)
+		buildTFRsrcAssignTagsAs(&outPgdTfResource.Tags, pgdResp.Tags)
 
 		return nil
 	}

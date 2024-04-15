@@ -6,6 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -94,6 +97,36 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					},
 				},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"tag_name": schema.StringAttribute{
+							Required: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"color": schema.StringAttribute{
+							Optional: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					plan_modifier.CustomAssignTags(),
+				},
+			},
 		},
 	}
 }
@@ -113,12 +146,13 @@ type cloudProvider struct {
 }
 
 type Project struct {
-	ID             *string         `tfsdk:"id"`
-	ProjectID      *string         `tfsdk:"project_id"`
-	ProjectName    *string         `tfsdk:"project_name"`
-	UserCount      *int            `tfsdk:"user_count"`
-	ClusterCount   *int            `tfsdk:"cluster_count"`
-	CloudProviders []cloudProvider `tfsdk:"cloud_providers"`
+	ID             *string               `tfsdk:"id"`
+	ProjectID      *string               `tfsdk:"project_id"`
+	ProjectName    *string               `tfsdk:"project_name"`
+	UserCount      *int                  `tfsdk:"user_count"`
+	ClusterCount   *int                  `tfsdk:"cluster_count"`
+	CloudProviders []cloudProvider       `tfsdk:"cloud_providers"`
+	Tags           []commonTerraform.Tag `tfsdk:"tags"`
 }
 
 // Create creates the resource and sets the initial Terraform state.
@@ -130,7 +164,12 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	projectId, err := p.client.Create(ctx, *config.ProjectName)
+	projectReqModel := models.Project{
+		ProjectName: *config.ProjectName,
+		Tags:        buildAPIReqAssignTags(config.Tags),
+	}
+
+	projectId, err := p.client.Create(ctx, projectReqModel)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating project", "Could not create project, unexpected error: "+err.Error())
 		return
@@ -153,6 +192,8 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 			CloudProviderName: provider.CloudProviderName,
 		})
 	}
+
+	buildTFRsrcAssignTagsAs(&config.Tags, project.Tags)
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -188,6 +229,8 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 		})
 	}
 
+	buildTFRsrcAssignTagsAs(&state.Tags, project.Tags)
+
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -204,11 +247,18 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	_, err := p.client.Update(ctx, *plan.ProjectID, *plan.ProjectName)
+	projectReqModel := models.Project{
+		ProjectName: *plan.ProjectName,
+		Tags:        buildAPIReqAssignTags(plan.Tags),
+	}
+
+	_, err := p.client.Update(ctx, *plan.ProjectID, projectReqModel)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
 		return
 	}
+
+	buildTFRsrcAssignTagsAs(&plan.Tags, projectReqModel.Tags)
 
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
