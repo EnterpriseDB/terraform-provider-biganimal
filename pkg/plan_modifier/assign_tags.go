@@ -30,8 +30,6 @@ func (m assignTagsModifier) PlanModifySet(ctx context.Context, req planmodifier.
 	state := req.StateValue
 	plan := resp.PlanValue
 
-	newPlan := []attr.Value{}
-
 	// This is on creation.
 	// Do nothing if there is no state value.
 	if req.StateValue.IsNull() {
@@ -47,7 +45,7 @@ func (m assignTagsModifier) PlanModifySet(ctx context.Context, req planmodifier.
 	// This is for anything else ie update with tags set in config.
 
 	// merge plan into newPlan (plan is from config) and merge state in newPlan (state is from read)
-	newPlan = state.Elements()
+	newPlan := state.Elements()
 
 	for _, planTag := range plan.Elements() {
 		existing := false
