@@ -8,7 +8,6 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -124,7 +123,7 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					},
 				},
 				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
