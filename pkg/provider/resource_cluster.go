@@ -73,6 +73,7 @@ type ClusterResourceModel struct {
 	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
 	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
+	Tags                       []commonTerraform.Tag              `tfsdk:"tags"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -462,6 +463,36 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"tag_name": schema.StringAttribute{
+							Required: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"color": schema.StringAttribute{
+							Optional: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
 }
@@ -829,6 +860,25 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 		}
 	}
 
+	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
+	if allowedIpRanges := apiCluster.AllowedIpRanges; allowedIpRanges != nil {
+		for _, ipRange := range *allowedIpRanges {
+			tfClusterResource.AllowedIpRanges = append(tfClusterResource.AllowedIpRanges, AllowedIpRangesResourceModel{
+				CidrBlock:   ipRange.CidrBlock,
+				Description: types.StringValue(ipRange.Description),
+			})
+		}
+	}
+
+	tfClusterResource.Tags = []commonTerraform.Tag{}
+	for _, v := range apiCluster.Tags {
+		tfClusterResource.Tags = append(tfClusterResource.Tags, commonTerraform.Tag{
+			TagId:   types.StringValue(v.TagId),
+			TagName: types.StringValue(v.TagName),
+			Color:   basetypes.NewStringPointerValue(v.Color),
+		})
+	}
+
 	return nil
 }
 
@@ -1004,6 +1054,16 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 			cluster.PgBouncer.Settings = &[]models.PgBouncerSettings{}
 		}
 	}
+
+	tags := []commonApi.Tag{}
+	for _, tag := range clusterResource.Tags {
+		tags = append(tags, commonApi.Tag{
+			Color:   tag.Color.ValueStringPointer(),
+			TagId:   tag.TagId.ValueString(),
+			TagName: tag.TagName.ValueString(),
+		})
+	}
+	cluster.Tags = tags
 
 	return cluster
 }
