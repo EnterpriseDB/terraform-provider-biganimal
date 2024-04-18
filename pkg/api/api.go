@@ -55,6 +55,11 @@ func (api *API) CloudProviderClient() *CloudProviderClient {
 	return c
 }
 
+func (api *API) TagClient() *TagClient {
+	c := NewTagClient(*api)
+	return c
+}
+
 func BuildAPI(meta any) *API {
 	api, ok := meta.(*API)
 	if !ok {
