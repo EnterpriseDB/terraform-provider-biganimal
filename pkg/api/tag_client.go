@@ -101,3 +101,14 @@ func (tc TagClient) List(ctx context.Context) ([]api.TagResponse, error) {
 
 	return response.Data, err
 }
+
+func (tc TagClient) Delete(ctx context.Context, tagId string) error {
+	url := fmt.Sprintf("tags/%s", tagId)
+
+	_, err := tc.doRequest(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
