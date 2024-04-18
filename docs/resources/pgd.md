@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -110,7 +110,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -279,7 +279,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -382,7 +382,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -557,7 +557,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -657,7 +657,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -826,7 +826,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -929,7 +929,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1104,7 +1104,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1204,7 +1204,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1373,7 +1373,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1480,7 +1480,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "0.9.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1669,7 +1669,7 @@ output "password" {
 ### Optional
 
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
-- `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy
+- `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. Pausing a Postgres Distributed(PGD) cluster shuts down all cluster nodes
 - `project_id` (String) BigAnimal Project ID.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
