@@ -105,6 +105,10 @@ output "pgvector" {
   value = coalesce(data.biganimal_cluster.this.pgvector, false)
 }
 
+output "post_gis" {
+  value = coalesce(data.biganimal_cluster.this.post_gis, false)
+}
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
