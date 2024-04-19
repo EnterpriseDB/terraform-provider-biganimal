@@ -98,72 +98,15 @@ func (tr *tagResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	config.ID = types.StringPointerValue(tagId)
 	config.TagId = types.StringPointerValue(tagId)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
 func (tr *tagResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state TagResourceModel
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	err := tr.read(ctx, &state)
-	if err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error reading tag", err.Error())
-		}
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
-}
-
-func (tr *tagResource) read(ctx context.Context, resource *TagResourceModel) error {
-	tagResp, err := tr.client.Get(ctx, resource.TagId.ValueString())
-	if err != nil {
-		return err
-	}
-
-	resource.ID = types.StringValue(tagResp.TagId)
-	resource.TagId = types.StringValue(tagResp.TagId)
-	resource.TagName = types.StringValue(tagResp.TagName)
-	resource.Color = types.StringPointerValue(tagResp.Color)
-	return nil
 }
 
 func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan TagResourceModel
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	_, err := tr.client.Update(ctx, plan.TagId.ValueString(), commonApi.TagRequest{
-		Color:   plan.Color.ValueStringPointer(),
-		TagName: plan.TagName.ValueString(),
-	})
-	if err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error updating tag", err.Error())
-		}
-		return
-	}
-
-	err = tr.read(ctx, &plan)
-	if err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error reading tag", err.Error())
-		}
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (tr *tagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

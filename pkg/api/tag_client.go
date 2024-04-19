@@ -63,30 +63,6 @@ func (tc TagClient) Get(ctx context.Context, tagId string) (api.TagResponse, err
 	return response.Data, err
 }
 
-func (tc TagClient) Update(ctx context.Context, tagId string, tagReq api.TagRequest) (*string, error) {
-	response := struct {
-		Data struct {
-			TagId string `json:"tagId"`
-		} `json:"data"`
-	}{}
-
-	url := fmt.Sprintf("tags/%s", tagId)
-
-	b, err := json.Marshal(tagReq)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := tc.doRequest(ctx, http.MethodPut, url, bytes.NewBuffer(b))
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(body, &response)
-
-	return &response.Data.TagId, err
-}
-
 func (tc TagClient) List(ctx context.Context) ([]api.TagResponse, error) {
 	response := struct {
 		Data []api.TagResponse `json:"data"`
