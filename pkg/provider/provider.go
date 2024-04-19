@@ -203,6 +203,5 @@ func (b bigAnimalProvider) Resources(ctx context.Context) []func() resource.Reso
 		NewPgdResource,
 		NewRegionResource,
 		NewClusterResource,
-		NewTagResource,
 	}
 }
