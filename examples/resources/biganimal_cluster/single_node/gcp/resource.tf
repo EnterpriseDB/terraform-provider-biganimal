@@ -81,6 +81,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   region                = "us-east1"
   superuser_access      = true
   pgvector              = false
+  post_gis              = false
 
   pg_bouncer = {
     is_enabled = false

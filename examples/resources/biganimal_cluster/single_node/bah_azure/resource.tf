@@ -80,6 +80,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   read_only_connections = false
   region                = "eastus2"
   pgvector              = false
+  post_gis              = false
 
   pg_bouncer = {
     is_enabled = false

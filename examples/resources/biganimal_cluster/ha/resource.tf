@@ -80,6 +80,7 @@ resource "biganimal_cluster" "ha_cluster" {
   region                = "us-east-1"
   superuser_access      = true
   pgvector              = false
+  post_gis              = false
 
   pg_bouncer = {
     is_enabled = false
