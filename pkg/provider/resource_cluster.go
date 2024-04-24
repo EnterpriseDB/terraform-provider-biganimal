@@ -71,6 +71,7 @@ type ClusterResourceModel struct {
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
 	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
+	PostGIS                    types.Bool                         `tfsdk:"post_gis"`
 	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
 
@@ -416,6 +417,12 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"post_gis": schema.BoolAttribute{
+				MarkdownDescription: "Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
 			"pg_bouncer": schema.SingleNestedAttribute{
 				MarkdownDescription: "Pg bouncer.",
 				Optional:            true,
@@ -738,6 +745,10 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 				tfClusterResource.Pgvector = types.BoolValue(true)
 				break
 			}
+			if v.Enabled && v.ExtensionId == "postgis" {
+				tfClusterResource.PostGIS = types.BoolValue(true)
+				break
+			}
 		}
 	}
 
@@ -952,6 +963,10 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 	cluster.Extensions = &[]models.ClusterExtension{}
 	if clusterResource.Pgvector.ValueBool() {
 		*cluster.Extensions = append(*cluster.Extensions, models.ClusterExtension{Enabled: true, ExtensionId: "pgvector"})
+	}
+
+	if clusterResource.PostGIS.ValueBool() {
+		*cluster.Extensions = append(*cluster.Extensions, models.ClusterExtension{Enabled: true, ExtensionId: "postgis"})
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}

@@ -340,6 +340,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
 				Computed:            true,
 			},
+			"post_gis": schema.BoolAttribute{
+				MarkdownDescription: "Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.",
+				Computed:            true,
+			},
 			"pg_bouncer": schema.SingleNestedAttribute{
 				MarkdownDescription: "Pg bouncer.",
 				Optional:            true,
