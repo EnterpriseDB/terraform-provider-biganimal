@@ -110,6 +110,10 @@ output "pgvector" {
   value = coalesce(data.biganimal_cluster.this.pgvector, false)
 }
 
+output "post_gis" {
+  value = coalesce(data.biganimal_cluster.this.post_gis, false)
+}
+
 output "faraway_replica_ids" {
   value = data.biganimal_cluster.this.faraway_replica_ids
 }
@@ -164,6 +168,7 @@ output "service_account_ids" {
 - `pg_version` (String) Postgres version.
 - `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `phase` (String) Current phase of the cluster.
+- `post_gis` (Boolean) Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `region` (String) Region to deploy the cluster.

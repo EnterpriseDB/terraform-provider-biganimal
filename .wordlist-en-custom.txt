@@ -37,6 +37,8 @@ pgextended
 pgBouncer
 pgvector
 postgres
+PostGIS
+postGIS
 ssd
 terraform
 ultradisk
