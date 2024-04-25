@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -25,10 +26,35 @@ var (
 )
 
 type BeaconAnalyticsResourceModel struct {
-	ID      types.String `tfsdk:"id"`
-	TagId   types.String `tfsdk:"tag_id"`
-	TagName types.String `tfsdk:"tag_name"`
-	Color   types.String `tfsdk:"color"`
+	ID                         types.String                       `tfsdk:"id"`
+	CspAuth                    types.Bool                         `tfsdk:"csp_auth"`
+	Region                     types.String                       `tfsdk:"region"`
+	InstanceType               types.String                       `tfsdk:"instance_type"`
+	ResizingPvc                types.List                         `tfsdk:"resizing_pvc"`
+	MetricsUrl                 *string                            `tfsdk:"metrics_url"`
+	ClusterId                  *string                            `tfsdk:"cluster_id"`
+	Phase                      *string                            `tfsdk:"phase"`
+	ClusterArchitecture        *ClusterArchitectureResourceModel  `tfsdk:"cluster_architecture"`
+	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
+	ClusterName                types.String                       `tfsdk:"cluster_name"`
+	PgConfig                   []PgConfigResourceModel            `tfsdk:"pg_config"`
+	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
+	ProjectId                  string                             `tfsdk:"project_id"`
+	LogsUrl                    *string                            `tfsdk:"logs_url"`
+	BackupRetentionPeriod      types.String                       `tfsdk:"backup_retention_period"`
+	ClusterType                *string                            `tfsdk:"cluster_type"`
+	CloudProvider              types.String                       `tfsdk:"cloud_provider"`
+	PgType                     types.String                       `tfsdk:"pg_type"`
+	Password                   types.String                       `tfsdk:"password"`
+	PgVersion                  types.String                       `tfsdk:"pg_version"`
+	PrivateNetworking          types.Bool                         `tfsdk:"private_networking"`
+	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
+	CreatedAt                  types.String                       `tfsdk:"created_at"`
+	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
+	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
+	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
+	Pause                      types.Bool                         `tfsdk:"pause"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -37,19 +63,19 @@ type beaconAnalyticsResource struct {
 	client *api.BeaconAnalyticsClient
 }
 
-func (tr *beaconAnalyticsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (bar *beaconAnalyticsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	tr.client = req.ProviderData.(*api.API).BeaconAnalyticsClient()
+	bar.client = req.ProviderData.(*api.API).BeaconAnalyticsClient()
 }
 
-func (tr *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (bar *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_beacon_analytics"
 }
 
-func (tf *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The beacon analystics cluster resource is used to manage BigAnimal beacon analystics clusters.",
 		// using Blocks for backward compatible
@@ -266,19 +292,19 @@ func (tf *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sche
 	}
 }
 
-func (tr *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 }
 
-func (c *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (bar *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
-func (c *beaconAnalyticsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
-func (tr *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (tr *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (bar *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 }
 
 func NewBeaconAnalyticsResource() resource.Resource {
