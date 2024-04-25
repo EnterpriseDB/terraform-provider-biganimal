@@ -63,19 +63,19 @@ type beaconAnalyticsResource struct {
 	client *api.BeaconAnalyticsClient
 }
 
-func (tr *beaconAnalyticsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (bar *beaconAnalyticsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	tr.client = req.ProviderData.(*api.API).BeaconAnalyticsClient()
+	bar.client = req.ProviderData.(*api.API).BeaconAnalyticsClient()
 }
 
-func (tr *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (bar *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_beacon_analytics"
 }
 
-func (tf *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "The beacon analystics cluster resource is used to manage BigAnimal beacon analystics clusters.",
 		// using Blocks for backward compatible
@@ -292,19 +292,19 @@ func (tf *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sche
 	}
 }
 
-func (tr *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 }
 
-func (c *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (bar *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
-func (c *beaconAnalyticsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
-func (tr *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (tr *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (bar *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 }
 
 func NewBeaconAnalyticsResource() resource.Resource {
