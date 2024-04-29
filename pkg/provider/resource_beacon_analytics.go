@@ -2,10 +2,16 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -34,10 +40,8 @@ type BeaconAnalyticsResourceModel struct {
 	MetricsUrl                 *string                            `tfsdk:"metrics_url"`
 	ClusterId                  *string                            `tfsdk:"cluster_id"`
 	Phase                      *string                            `tfsdk:"phase"`
-	ClusterArchitecture        *ClusterArchitectureResourceModel  `tfsdk:"cluster_architecture"`
 	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
 	ClusterName                types.String                       `tfsdk:"cluster_name"`
-	PgConfig                   []PgConfigResourceModel            `tfsdk:"pg_config"`
 	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
 	ProjectId                  string                             `tfsdk:"project_id"`
 	LogsUrl                    *string                            `tfsdk:"logs_url"`
@@ -53,14 +57,21 @@ type BeaconAnalyticsResourceModel struct {
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
-	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
+func (bar BeaconAnalyticsResourceModel) getProjectId() string {
+	return bar.ProjectId
+}
+
+func (bar BeaconAnalyticsResourceModel) getClusterId() string {
+	return *bar.ClusterId
+}
+
 type beaconAnalyticsResource struct {
-	client *api.BeaconAnalyticsClient
+	client *api.ClusterClient
 }
 
 func (bar *beaconAnalyticsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -68,11 +79,11 @@ func (bar *beaconAnalyticsResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	bar.client = req.ProviderData.(*api.API).BeaconAnalyticsClient()
+	bar.client = req.ProviderData.(*api.API).ClusterClient()
 }
 
 func (bar *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_beacon_analytics"
+	resp.TypeName = req.ProviderTypeName + "_beacon_analytics_cluster"
 }
 
 func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -96,28 +107,6 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 							MarkdownDescription: "CIDR block description.",
 							Optional:            true,
 						},
-					},
-				},
-			},
-			"cluster_architecture": schema.SingleNestedBlock{
-				MarkdownDescription: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
-				Attributes: map[string]schema.Attribute{
-					"nodes": schema.Int64Attribute{
-						MarkdownDescription: "Node count.",
-						Required:            true,
-					},
-					"id": schema.StringAttribute{
-						MarkdownDescription: "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
-						Required:            true,
-						Validators: []validator.String{
-							stringvalidator.OneOf("single", "ha"),
-						},
-					},
-					"name": schema.StringAttribute{
-						MarkdownDescription: "Name.",
-						Optional:            true,
-						Computed:            true,
-						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 				},
 			},
@@ -293,6 +282,220 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 }
 
 func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	// Retrieve values from plan
+	var config BeaconAnalyticsResourceModel
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	clusterModel, err := bar.generateGenericBeaconClusterModel(ctx, bar.client, config)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error creating cluster", err.Error())
+		}
+		return
+	}
+
+	clusterId, err := bar.client.Create(ctx, config.ProjectId, clusterModel)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
+		}
+		return
+	}
+
+	config.ClusterId = &clusterId
+
+	timeout, diagnostics := config.Timeouts.Create(ctx, time.Minute*60)
+	resp.Diagnostics.Append(diagnostics...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := ensureClusterIsHealthy(ctx, bar.client, config, timeout); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+		}
+		return
+	}
+
+	if config.Pause.ValueBool() {
+		_, err = bar.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
+			}
+			return
+		}
+
+		if err := ensureClusterIsPaused(ctx, bar.client, config, timeout); err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
+			}
+			return
+		}
+	}
+
+	if err := bar.read(ctx, &config); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
+}
+
+func (bar *beaconAnalyticsResource) generateGenericBeaconClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource BeaconAnalyticsResourceModel) (models.Cluster, error) {
+	cluster := models.Cluster{
+		ClusterType:           utils.ToPointer("analytical"),
+		ClusterName:           clusterResource.ClusterName.ValueStringPointer(),
+		Password:              clusterResource.Password.ValueStringPointer(),
+		Provider:              &models.Provider{CloudProviderId: clusterResource.CloudProvider.ValueString()},
+		Region:                &models.Region{Id: clusterResource.Region.ValueString()},
+		InstanceType:          &models.InstanceType{InstanceTypeId: clusterResource.InstanceType.ValueString()},
+		PgType:                &models.PgType{PgTypeId: clusterResource.PgType.ValueString()},
+		PgVersion:             &models.PgVersion{PgVersionId: clusterResource.PgVersion.ValueString()},
+		CSPAuth:               clusterResource.CspAuth.ValueBoolPointer(),
+		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
+		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
+	}
+
+	allowedIpRanges := []models.AllowedIpRange{}
+	for _, ipRange := range clusterResource.AllowedIpRanges {
+		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
+			CidrBlock:   ipRange.CidrBlock,
+			Description: ipRange.Description.ValueString(),
+		})
+	}
+	cluster.AllowedIpRanges = &allowedIpRanges
+
+	if clusterResource.MaintenanceWindow != nil {
+		cluster.MaintenanceWindow = &commonApi.MaintenanceWindow{
+			IsEnabled: clusterResource.MaintenanceWindow.IsEnabled,
+			StartTime: clusterResource.MaintenanceWindow.StartTime.ValueStringPointer(),
+		}
+
+		if !clusterResource.MaintenanceWindow.StartDay.IsNull() && !clusterResource.MaintenanceWindow.StartDay.IsUnknown() {
+			cluster.MaintenanceWindow.StartDay = utils.ToPointer(float64(*clusterResource.MaintenanceWindow.StartDay.ValueInt64Pointer()))
+		}
+	}
+
+	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
+		clusterRscCSP := clusterResource.CloudProvider
+		clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
+		clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
+
+		// If there is an existing Principal Account Id for that Region, use that one.
+		pids, err := client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
+		if err != nil {
+			return models.Cluster{}, err
+		}
+		cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
+
+		// If there is no existing value, user should provide one
+		if cluster.PeAllowedPrincipalIds != nil && len(*cluster.PeAllowedPrincipalIds) == 0 {
+			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+			// while encoding JSON objects
+			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+			plist := []string{}
+			for _, peId := range clusterRscPrincipalIds.Elements() {
+				plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
+			}
+
+			cluster.PeAllowedPrincipalIds = utils.ToPointer(plist)
+		}
+
+		if clusterRscCSP.ValueString() == "bah:gcp" {
+			// If there is an existing Service Account Id for that Region, use that one.
+			sids, _ := client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
+			cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
+
+			// If there is no existing value, user should provide one
+			if cluster.ServiceAccountIds != nil && len(*cluster.ServiceAccountIds) == 0 {
+				// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+				// while encoding JSON objects.
+				// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+				slist := []string{}
+				for _, saId := range clusterRscSvcAcntIds.Elements() {
+					slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
+				}
+
+				cluster.ServiceAccountIds = utils.ToPointer(slist)
+			}
+		}
+	}
+
+	return cluster, nil
+}
+
+func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource *BeaconAnalyticsResourceModel) error {
+	apiCluster, err := bar.client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+	if err != nil {
+		return err
+	}
+
+	connection, err := bar.client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+	if err != nil {
+		return err
+	}
+
+	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
+	tfClusterResource.ClusterId = apiCluster.ClusterId
+	tfClusterResource.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
+	tfClusterResource.ClusterType = apiCluster.ClusterType
+	tfClusterResource.Phase = apiCluster.Phase
+	tfClusterResource.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
+	tfClusterResource.Region = types.StringValue(apiCluster.Region.Id)
+	tfClusterResource.InstanceType = types.StringValue(apiCluster.InstanceType.InstanceTypeId)
+	tfClusterResource.ResizingPvc = StringSliceToList(apiCluster.ResizingPvc)
+	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	tfClusterResource.CspAuth = types.BoolPointerValue(apiCluster.CSPAuth)
+	tfClusterResource.LogsUrl = apiCluster.LogsUrl
+	tfClusterResource.MetricsUrl = apiCluster.MetricsUrl
+	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
+	tfClusterResource.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
+	tfClusterResource.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
+	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
+
+	if apiCluster.FirstRecoverabilityPointAt != nil {
+		firstPointAt := apiCluster.FirstRecoverabilityPointAt.String()
+		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
+	}
+
+	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
+	if allowedIpRanges := apiCluster.AllowedIpRanges; allowedIpRanges != nil {
+		for _, ipRange := range *allowedIpRanges {
+			tfClusterResource.AllowedIpRanges = append(tfClusterResource.AllowedIpRanges, AllowedIpRangesResourceModel{
+				CidrBlock:   ipRange.CidrBlock,
+				Description: types.StringValue(ipRange.Description),
+			})
+		}
+	}
+
+	if pt := apiCluster.CreatedAt; pt != nil {
+		tfClusterResource.CreatedAt = types.StringValue(pt.String())
+	}
+
+	if apiCluster.MaintenanceWindow != nil {
+		tfClusterResource.MaintenanceWindow = &commonTerraform.MaintenanceWindow{
+			IsEnabled: apiCluster.MaintenanceWindow.IsEnabled,
+			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*apiCluster.MaintenanceWindow.StartDay))),
+			StartTime: types.StringPointerValue(apiCluster.MaintenanceWindow.StartTime),
+		}
+	}
+
+	if apiCluster.PeAllowedPrincipalIds != nil {
+		tfClusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&apiCluster.PeAllowedPrincipalIds))
+	}
+
+	if apiCluster.ServiceAccountIds != nil {
+		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
+	}
+
+	return nil
 }
 
 func (bar *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
