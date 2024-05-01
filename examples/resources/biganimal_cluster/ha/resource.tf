@@ -96,6 +96,16 @@ resource "biganimal_cluster" "ha_cluster" {
     #    },
     #  ]
   }
+
+  #tags = [
+  #  {
+  #     tag_name  = "ex-tag-name-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "ex-tag-name-2"
+  #  },
+  #]
 }
 
 output "password" {
