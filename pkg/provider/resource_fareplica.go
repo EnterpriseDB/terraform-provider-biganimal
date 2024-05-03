@@ -215,6 +215,16 @@ func (c *FAReplicaResource) Schema() *schema.Resource {
 					},
 				},
 			},
+			"pgvector": {
+				Description: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
+				Computed:    true,
+				Type:        schema.TypeBool,
+			},
+			"post_gis": {
+				Description: "Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.",
+				Computed:    true,
+				Type:        schema.TypeBool,
+			},
 		},
 	}
 }
@@ -288,7 +298,7 @@ func (c *FAReplicaResource) read(ctx context.Context, d *schema.ResourceData, me
 	utils.SetOrPanic(d, "deleted_at", cluster.DeletedAt)                          // Computed
 	utils.SetOrPanic(d, "expired_at", cluster.ExpiredAt)                          // Computed
 	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)                      // Required
-	//utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt) // Computed
+	// utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt) // Computed
 	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)           // Required
 	utils.SetOrPanic(d, "logs_url", cluster.LogsUrl)                     // Computed
 	utils.SetOrPanic(d, "metrics_url", cluster.MetricsUrl)               // Computed
@@ -302,6 +312,17 @@ func (c *FAReplicaResource) read(ctx context.Context, d *schema.ResourceData, me
 	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc) // Computed
 	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)     // Computed
 	utils.SetOrPanic(d, "connection_uri", connection.PgUri)  // Computed
+
+	if *cluster.Extensions != nil {
+		for _, v := range *cluster.Extensions {
+			if v.Enabled && v.ExtensionId == "pgvector" {
+				utils.SetOrPanic(d, "pgvector", true) // Computed
+			}
+			if v.Enabled && v.ExtensionId == "postgis" {
+				utils.SetOrPanic(d, "post_gis", true) // Computed
+			}
+		}
+	}
 
 	d.SetId(*cluster.ClusterId)
 	return nil
