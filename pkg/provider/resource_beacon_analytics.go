@@ -499,9 +499,127 @@ func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource 
 }
 
 func (bar *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state BeaconAnalyticsResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := bar.read(ctx, &state); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan BeaconAnalyticsResourceModel
+
+	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
+	resp.Diagnostics.Append(diagnostics...)
+
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state ClusterResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// cluster = pause,   tf pause = true, it will error and say you will need to set pause = false to update
+	// cluster = pause,   tf pause = false, it will resume then update
+	// cluster = healthy, tf pause = true, it will update then pause
+	// cluster = healthy, tf pause = false, it will update
+	if *state.Phase != models.PHASE_HEALTHY && *state.Phase != models.PHASE_PAUSED {
+		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
+		return
+	}
+
+	if *state.Phase == models.PHASE_PAUSED {
+		if plan.Pause.ValueBool() {
+			resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
+			return
+		}
+
+		if !plan.Pause.ValueBool() {
+			_, err := bar.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
+			if err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
+				}
+				return
+			}
+
+			if err := ensureClusterIsHealthy(ctx, bar.client, plan, timeout); err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+				}
+				return
+			}
+		}
+	}
+
+	clusterModel, err := bar.generateGenericBeaconClusterModel(ctx, bar.client.ClusterClient(), plan)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating cluster", err.Error())
+		}
+		return
+	}
+
+	_, err = bar.client.Update(ctx, &clusterModel, plan.ProjectId, *plan.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating cluster API request", err.Error())
+		}
+		return
+	}
+
+	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
+	// this is possibly a bug in the API
+	time.Sleep(20 * time.Second)
+
+	if err := ensureClusterIsHealthy(ctx, bar.client, plan, timeout); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+		}
+		return
+	}
+
+	if plan.Pause.ValueBool() {
+		_, err = bar.client.ClusterPause(ctx, plan.ProjectId, *plan.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
+			}
+			return
+		}
+
+		if err := ensureClusterIsPaused(ctx, bar.client, plan, timeout); err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
+			}
+			return
+		}
+	}
+
+	if err := bar.read(ctx, &plan); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
