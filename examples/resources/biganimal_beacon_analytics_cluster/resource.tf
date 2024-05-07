@@ -30,10 +30,10 @@ variable "project_id" {
 resource "biganimal_beacon_analytics_cluster" "beacon_analytics_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
-  pause = false
+  pause        = false
 
   backup_retention_period = "30d"
-  csp_auth = false
+  csp_auth                = false
 
   instance_type = "aws:m6id.12xlarge"
   password      = resource.random_password.password.result
@@ -44,15 +44,14 @@ resource "biganimal_beacon_analytics_cluster" "beacon_analytics_cluster" {
     start_time = "00:00"
   }
 
-  pg_type               = "epas"
-  pg_version            = "16"
-  private_networking    = false
-  cloud_provider        = "bah:aws"
-  region                = "ap-south-1"
+  pg_type            = "epas"
+  pg_version         = "16"
+  private_networking = false
+  cloud_provider     = "bah:aws"
+  region             = "ap-south-1"
 }
 
 output "password" {
   sensitive = true
   value     = resource.biganimal_beacon_analytics_cluster.beacon_analytics_cluster.password
 }
-
