@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,15 +16,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var (
@@ -42,6 +47,7 @@ type BeaconAnalyticsResourceModel struct {
 	Phase                      *string                            `tfsdk:"phase"`
 	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
 	ClusterName                types.String                       `tfsdk:"cluster_name"`
+	Storage                    basetypes.ObjectValue              `tfsdk:"storage"`
 	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
 	ProjectId                  string                             `tfsdk:"project_id"`
 	LogsUrl                    *string                            `tfsdk:"logs_url"`
@@ -94,22 +100,6 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 			"timeouts": timeouts.Block(ctx,
 				timeouts.Opts{Create: true, Delete: true, Update: true},
 			),
-			"allowed_ip_ranges": schema.SetNestedBlock{
-				MarkdownDescription: "Allowed IP ranges.",
-				PlanModifiers:       []planmodifier.Set{plan_modifier.CustomAllowedIps()},
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							MarkdownDescription: "CIDR block.",
-							Required:            true,
-						},
-						"description": schema.StringAttribute{
-							MarkdownDescription: "CIDR block description.",
-							Optional:            true,
-						},
-					},
-				},
-			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -117,6 +107,67 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"allowed_ip_ranges": schema.SetNestedAttribute{
+				Description: "Allowed IP ranges.",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"cidr_block": schema.StringAttribute{
+							Description: "CIDR block",
+							Required:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: "Description of CIDR block",
+							Required:    true,
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"storage": schema.SingleNestedAttribute{
+				Description: "Storage.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"iops": schema.StringAttribute{
+						Description: "IOPS for the selected volume.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"size": schema.StringAttribute{
+						Description: "Size of the volume.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"throughput": schema.StringAttribute{
+						Description: "Throughput.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"volume_properties": schema.StringAttribute{
+						Description: "Volume properties.",
+						Required:    true,
+					},
+					"volume_type": schema.StringAttribute{
+						Description: "Volume type.",
+						Required:    true,
+					},
 				},
 			},
 			"cluster_id": schema.StringAttribute{
@@ -363,6 +414,27 @@ func (bar *beaconAnalyticsResource) generateGenericBeaconClusterModel(ctx contex
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 	}
 
+	storageOb := StorageResourceModel{}
+	diag := clusterResource.Storage.As(ctx, &storageOb, basetypes.ObjectAsOptions{})
+	if diag.HasError() {
+		return models.Cluster{}, errors.New("storage mapping as error")
+	}
+
+	cluster.Storage = &models.Storage{
+		VolumePropertiesId: storageOb.VolumeProperties.ValueStringPointer(),
+		VolumeTypeId:       storageOb.VolumeType.ValueStringPointer(),
+		Iops:               storageOb.Iops.ValueStringPointer(),
+		Size:               storageOb.Size.ValueStringPointer(),
+		Throughput:         storageOb.Throughput.ValueStringPointer(),
+	}
+
+	cluster.ClusterId = nil
+	cluster.PgType = nil
+	cluster.PgVersion = nil
+	cluster.Provider = nil
+	cluster.Region = nil
+	cluster.PgConfig = &[]models.KeyValue{}
+
 	allowedIpRanges := []models.AllowedIpRange{}
 	for _, ipRange := range clusterResource.AllowedIpRanges {
 		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
@@ -460,6 +532,17 @@ func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource 
 	tfClusterResource.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
 
+	tfClusterResource.Storage = basetypes.NewObjectValueMust(
+		tfClusterResource.Storage.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"volume_type":       basetypes.NewStringValue(*apiCluster.Storage.VolumeTypeId),
+			"volume_properties": basetypes.NewStringValue(*apiCluster.Storage.VolumePropertiesId),
+			"size":              basetypes.NewStringValue(*apiCluster.Storage.Size),
+			"iops":              basetypes.NewStringValue(*apiCluster.Storage.Iops),
+			"throughput":        basetypes.NewStringValue(*apiCluster.Storage.Throughput),
+		},
+	)
+
 	if apiCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := apiCluster.FirstRecoverabilityPointAt.String()
 		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
@@ -528,7 +611,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	var state ClusterResourceModel
+	var state BeaconAnalyticsResourceModel
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -626,6 +709,17 @@ func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.Del
 }
 
 func (bar *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.Split(req.ID, "/")
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
 func NewBeaconAnalyticsResource() resource.Resource {
