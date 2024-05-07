@@ -32,6 +32,17 @@ resource "biganimal_beacon_analytics_cluster" "beacon_analytics_cluster" {
   project_id   = var.project_id
   pause        = false
 
+  allowed_ip_ranges = [
+    {
+      cidr_block  = "127.0.0.1/32"
+      description = "localhost"
+    },
+    {
+      cidr_block  = "192.168.0.1/32"
+      description = "description!"
+    },
+  ]
+
   backup_retention_period = "30d"
   csp_auth                = false
 
