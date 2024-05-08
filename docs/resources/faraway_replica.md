@@ -245,7 +245,9 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 - `id` (String) The ID of this resource.
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
+- `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `phase` (String) Current phase of the cluster.
+- `post_gis` (Boolean) Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.
 - `resizing_pvc` (List of String) Resizing PVC.
 
 <a id="nestedblock--storage"></a>
