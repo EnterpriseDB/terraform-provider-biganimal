@@ -4,7 +4,7 @@ import (
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 )
 
-type BeaconAnalyticsCluster struct {
+type analyticsCluster struct {
 	ClusterType                *string                      `json:"clusterType,omitempty"`
 	AllowedIpRanges            *[]AllowedIpRange            `json:"allowedIpRanges,omitempty"`
 	BackupRetentionPeriod      *string                      `json:"backupRetentionPeriod,omitempty"`
