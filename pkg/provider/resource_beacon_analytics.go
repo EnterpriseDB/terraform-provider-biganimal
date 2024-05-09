@@ -706,6 +706,20 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 }
 
 func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state BeaconAnalyticsResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := bar.client.Delete(ctx, state.ProjectId, *state.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error deleting cluster", err.Error())
+		}
+		return
+	}
 }
 
 func (bar *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
