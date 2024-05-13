@@ -146,7 +146,9 @@ output "storage" {
 - `pg_config` (Set of Object) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `pg_type` (String) Postgres type.
 - `pg_version` (String) Postgres version.
+- `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
 - `phase` (String) Current phase of the cluster.
+- `post_gis` (Boolean) Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.
 - `private_networking` (Boolean) Is private networking enabled.
 - `region` (String) Region to deploy the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.

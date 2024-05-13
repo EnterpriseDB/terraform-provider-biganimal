@@ -1,3 +1,8 @@
+## v0.10.0 (May 13. 2024)
+Features:
+* PostGIS support for `biganimal_cluster` resources
+* PostGIS and Pgvector support for `biganimal_faraway_replica` resources
+
 ## v0.9.0 (March 27. 2024)
 Features:
 * Added support to pause and resume a cluster for `biganimal_pgd` and `biganimal_cluster` resources
