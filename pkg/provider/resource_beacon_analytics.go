@@ -42,7 +42,6 @@ type BeaconAnalyticsResourceModel struct {
 	ProjectId                  string                             `tfsdk:"project_id"`
 	LogsUrl                    *string                            `tfsdk:"logs_url"`
 	BackupRetentionPeriod      types.String                       `tfsdk:"backup_retention_period"`
-	ClusterType                *string                            `tfsdk:"cluster_type"`
 	CloudProvider              types.String                       `tfsdk:"cloud_provider"`
 	PgType                     types.String                       `tfsdk:"pg_type"`
 	Password                   types.String                       `tfsdk:"password"`
@@ -171,11 +170,6 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 					BackupRetentionPeriodValidator(),
 				},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
-			"cluster_type": schema.StringAttribute{
-				MarkdownDescription: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
-				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
 				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
