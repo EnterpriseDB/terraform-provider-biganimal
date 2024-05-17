@@ -94,7 +94,7 @@ func (r *analyticsClusterResource) Metadata(ctx context.Context, req resource.Me
 
 func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The analystics cluster resource is used to manage BigAnimal analystics clusters.",
+		MarkdownDescription: "The analytics cluster resource is used to manage BigAnimal analytics clusters.",
 		// using Blocks for backward compatible
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
