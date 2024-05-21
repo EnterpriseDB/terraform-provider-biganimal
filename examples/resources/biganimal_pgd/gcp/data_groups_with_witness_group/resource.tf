@@ -76,7 +76,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       region = {
         region_id = "us-east1"
@@ -130,7 +130,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       region = {
         region_id = "europe-west1"
@@ -148,7 +148,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "asia-south1"
       }
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       maintenance_window = {
         is_enabled = true

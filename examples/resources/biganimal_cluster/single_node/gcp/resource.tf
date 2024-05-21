@@ -76,7 +76,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
-  cloud_provider        = "gcp"
+  cloud_provider        = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
   read_only_connections = false
   region                = "us-east1"
   superuser_access      = true

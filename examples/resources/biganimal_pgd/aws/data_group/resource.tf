@@ -76,7 +76,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       region = {
         region_id = "eu-central-1"
