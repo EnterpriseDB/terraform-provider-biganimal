@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
+func Test_customDataGroupDiffModifier_PlanModifyList(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -45,7 +45,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 	dgTfValue, _ := pgdSchema.Attributes["data_groups"].GetType().ValueType(ctx).ToTerraformValue(ctx)
 	dgType := pgdSchema.Attributes["data_groups"].GetType()
 
-	dgAttrTypes := dgType.(types.SetType).ElemType.(types.ObjectType).AttributeTypes()
+	dgAttrTypes := dgType.(types.ListType).ElemType.(types.ObjectType).AttributeTypes()
 
 	rawRootValue := map[string]tftypes.Value{
 		"data_groups": dgTfValue,
@@ -116,7 +116,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		return
 	}
 
-	tfDefaultDgs := new(types.Set)
+	tfDefaultDgs := new(types.List)
 	customState.GetAttribute(ctx, path.Root("data_groups"), tfDefaultDgs)
 
 	addedDgs := []terraform.DataGroup(defaultDgs)
@@ -132,7 +132,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		return
 	}
 
-	tfAddedDgs := new(types.Set)
+	tfAddedDgs := new(types.List)
 	customState.GetAttribute(ctx, path.Root("data_groups"), tfAddedDgs)
 
 	updatedDgs := []terraform.DataGroup(defaultDgs)
@@ -164,13 +164,13 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		return
 	}
 
-	tfUpdatedDgs := new(types.Set)
+	tfUpdatedDgs := new(types.List)
 	customState.GetAttribute(ctx, path.Root("data_groups"), tfUpdatedDgs)
 
 	type args struct {
 		ctx  context.Context
-		req  planmodifier.SetRequest
-		resp *planmodifier.SetResponse
+		req  planmodifier.ListRequest
+		resp *planmodifier.ListResponse
 	}
 	tests := []struct {
 		name                   string
@@ -184,11 +184,11 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			name: "Add dg expect success",
 			args: args{
 				ctx: ctx,
-				req: planmodifier.SetRequest{
+				req: planmodifier.ListRequest{
 					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
 					StateValue: *tfDefaultDgs,
 				},
-				resp: &planmodifier.SetResponse{
+				resp: &planmodifier.ListResponse{
 					PlanValue: *tfAddedDgs,
 				},
 			},
@@ -200,11 +200,11 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			name: "Remove dg expect success",
 			args: args{
 				ctx: ctx,
-				req: planmodifier.SetRequest{
+				req: planmodifier.ListRequest{
 					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
 					StateValue: *tfAddedDgs,
 				},
-				resp: &planmodifier.SetResponse{
+				resp: &planmodifier.ListResponse{
 					PlanValue: *tfDefaultDgs,
 				},
 			},
@@ -216,11 +216,11 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 			name: "Update object expect success",
 			args: args{
 				ctx: ctx,
-				req: planmodifier.SetRequest{
+				req: planmodifier.ListRequest{
 					Plan:       tfsdk.Plan{Schema: dgSchema, Raw: tftypes.NewValue(rawRootType.TerraformType(ctx), rawRootValue)},
 					StateValue: *tfDefaultDgs,
 				},
-				resp: &planmodifier.SetResponse{
+				resp: &planmodifier.ListResponse{
 					PlanValue: *tfUpdatedDgs,
 				},
 			},
@@ -238,7 +238,7 @@ func Test_customDataGroupDiffModifier_PlanModifySet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tt.m.PlanModifySet(tt.args.ctx, tt.args.req, tt.args.resp)
+			tt.m.PlanModifyList(tt.args.ctx, tt.args.req, tt.args.resp)
 
 			if tt.args.resp.Diagnostics.WarningsCount() != tt.expectedWarningsCount {
 				t.Fatalf("expected warning count: %v, got: %v", tt.expectedWarningsCount, tt.args.resp.Diagnostics.WarningsCount())

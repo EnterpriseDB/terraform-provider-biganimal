@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func CustomDataGroupDiffConfig() planmodifier.Set {
+func CustomDataGroupDiffConfig() planmodifier.List {
 	return CustomDataGroupDiffModifier{}
 }
 
@@ -31,8 +31,8 @@ func (m CustomDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifySet implements the plan modification logic.
-func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+// PlanModifyList implements the plan modification logic.
+func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if req.StateValue.IsNull() {
 		// private networking case when doing create
 		var planDgsObs []terraform.DataGroup
@@ -73,7 +73,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			return
 		}
 
-		tfDgsMap := new(types.Set)
+		tfDgsMap := new(types.List)
 		mapState.GetAttribute(ctx, path.Root("data_groups"), tfDgsMap)
 
 		resp.PlanValue = *tfDgsMap
@@ -202,7 +202,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		return
 	}
 
-	tfDgsMap := new(types.Set)
+	tfDgsMap := new(types.List)
 	mapState.GetAttribute(ctx, path.Root("data_groups"), tfDgsMap)
 
 	resp.PlanValue = *tfDgsMap

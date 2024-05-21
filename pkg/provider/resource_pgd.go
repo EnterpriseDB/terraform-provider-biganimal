@@ -97,10 +97,10 @@ func PgdSchema(ctx context.Context) schema.Schema {
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
-			"data_groups": schema.SetNestedAttribute{
+			"data_groups": schema.ListNestedAttribute{
 				Description: "Cluster data groups.",
 				Required:    true,
-				PlanModifiers: []planmodifier.Set{
+				PlanModifiers: []planmodifier.List{
 					plan_modifier.CustomDataGroupDiffConfig(),
 				},
 				NestedObject: schema.NestedAttributeObject{
@@ -1150,20 +1150,38 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 	outPgdTFResource.DataGroups = []terraform.DataGroup{}
 	outPgdTFResource.WitnessGroups = []terraform.WitnessGroup{}
 
-	for _, v := range *clusterResp.Groups {
+	sortedByStateAPIGroups := []interface{}{}
+	for _, tfDg := range originalTFDgs {
+		for k, v := range *clusterResp.Groups {
+			switch apiGroupResp := v.(type) {
+			case map[string]interface{}:
+				if apiGroupResp["clusterType"] == "data_group" {
+					apiDGModel := pgdApi.DataGroup{}
+					if err := utils.CopyObjectJson(apiGroupResp, &apiDGModel); err != nil {
+						diags.AddError("unable to copy data group", err.Error())
+						return
+					}
+
+					if apiDGModel.Region.RegionId == tfDg.Region.RegionId {
+						sortedByStateAPIGroups = append(sortedByStateAPIGroups, (*clusterResp.Groups)[k])
+					}
+				}
+			}
+		}
+	}
+
+	for _, v := range sortedByStateAPIGroups {
 		switch apiGroupResp := v.(type) {
 		case map[string]interface{}:
 			if apiGroupResp["clusterType"] == "data_group" {
 				apiDGModel := pgdApi.DataGroup{}
 
 				if err := utils.CopyObjectJson(apiGroupResp, &apiDGModel); err != nil {
-					if err != nil {
-						diags.AddError("unable to copy data group", err.Error())
-						return
-					}
+					diags.AddError("unable to copy data group", err.Error())
+					return
 				}
 
-				dgTFType := new(types.Set)
+				dgTFType := new(types.List)
 				state.GetAttribute(ctx, path.Root("data_groups"), dgTFType)
 
 				// cluster arch
