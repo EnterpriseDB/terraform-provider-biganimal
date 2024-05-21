@@ -76,7 +76,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
-  cloud_provider        = "aws"
+  cloud_provider        = "aws" // use "bah:aws" for BigAnimal's cloud account AWS
   read_only_connections = false
   region                = "us-east-1"
   superuser_access      = true

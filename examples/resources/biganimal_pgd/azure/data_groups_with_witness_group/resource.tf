@@ -76,7 +76,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "azure" // use "bah:azure" for BigAnimal's cloud account Azure
       }
       region = {
         region_id = "northeurope"
@@ -130,7 +130,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "azure" // use "bah:azure" for BigAnimal's cloud account Azure
       }
       region = {
         region_id = "eastus"
@@ -148,7 +148,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "canadacentral"
       }
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "azure" // use "bah:azure" for BigAnimal's cloud account Azure
       }
       maintenance_window = {
         is_enabled = true

@@ -76,7 +76,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "gcp" // use "bah:gcp" for BigAnimal's cloud account Google Cloud provider
       }
       region = {
         region_id = "us-east1"
