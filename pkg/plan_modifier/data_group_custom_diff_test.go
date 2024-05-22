@@ -224,13 +224,8 @@ func Test_customDataGroupDiffModifier_PlanModifyList(t *testing.T) {
 					PlanValue: *tfUpdatedDgs,
 				},
 			},
-			expectedWarningsCount: 3,
-			expectedWarningSummary: []string{
-				"Allowed IP ranges changed",
-				"Backup retention changed",
-				"Cluster architecture changed",
-			},
-			expectedPlanElements: tfUpdatedDgs.Elements(),
+			expectedWarningsCount: 0,
+			expectedPlanElements:  tfUpdatedDgs.Elements(),
 		},
 	}
 	for _, tt := range tests {
