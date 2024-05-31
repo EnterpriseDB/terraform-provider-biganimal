@@ -172,11 +172,11 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
+				Description: "Cloud provider. For example, \"aws\" or \"bah:aws\".",
 				Required:    true,
 			},
 			"pg_type": schema.StringAttribute{
-				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
+				MarkdownDescription: "Postgres type. For example, \"epas\" or \"pgextended\".",
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOf("epas", "pgextended", "postgres"),
@@ -188,7 +188,7 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"pg_version": schema.StringAttribute{
-				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
+				MarkdownDescription: "Postgres version. For example 16",
 				Required:            true,
 			},
 			"private_networking": schema.BoolAttribute{
@@ -224,7 +224,7 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"csp_auth": schema.BoolAttribute{
-				MarkdownDescription: "Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.",
+				MarkdownDescription: "Is authentication handled by the cloud service provider.",
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
