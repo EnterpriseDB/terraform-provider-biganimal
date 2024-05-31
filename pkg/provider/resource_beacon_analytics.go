@@ -52,7 +52,6 @@ type analyticsClusterResourceModel struct {
 	ProjectId                  string                             `tfsdk:"project_id"`
 	LogsUrl                    *string                            `tfsdk:"logs_url"`
 	BackupRetentionPeriod      types.String                       `tfsdk:"backup_retention_period"`
-	ClusterType                *string                            `tfsdk:"cluster_type"`
 	CloudProvider              types.String                       `tfsdk:"cloud_provider"`
 	PgType                     types.String                       `tfsdk:"pg_type"`
 	Password                   types.String                       `tfsdk:"password"`
@@ -212,17 +211,12 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				},
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
-			"cluster_type": schema.StringAttribute{
-				MarkdownDescription: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
-				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
+				Description: "Cloud provider. For example, \"aws\" or \"bah:aws\".",
 				Required:    true,
 			},
 			"pg_type": schema.StringAttribute{
-				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
+				MarkdownDescription: "Postgres type. For example, \"epas\" or \"pgextended\".",
 				Required:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOf("epas", "pgextended", "postgres"),
@@ -234,7 +228,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"pg_version": schema.StringAttribute{
-				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
+				MarkdownDescription: "Postgres version. For example 16",
 				Required:            true,
 			},
 			"private_networking": schema.BoolAttribute{
@@ -270,7 +264,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"csp_auth": schema.BoolAttribute{
-				MarkdownDescription: "Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.",
+				MarkdownDescription: "Is authentication handled by the cloud service provider.",
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
@@ -349,6 +343,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
+	// consume cluster create with analytics request
 	clusterId, err := r.client.Create(ctx, config.ProjectId, clusterModel)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -365,6 +360,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
+	// keep retrying until cluster is healthy
 	if err := ensureClusterIsHealthy(ctx, r.client, config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
@@ -381,6 +377,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 			return
 		}
 
+		// keep retrying until cluster is paused
 		if err := ensureClusterIsPaused(ctx, r.client, config, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
@@ -389,6 +386,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 		}
 	}
 
+	// after cluster is in the correct state (healthy/paused) then get the cluster and save into state
 	if err := r.read(ctx, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
@@ -517,7 +515,6 @@ func (r *analyticsClusterResource) read(ctx context.Context, tfClusterResource *
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
 	tfClusterResource.ClusterId = apiCluster.ClusterId
 	tfClusterResource.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
-	tfClusterResource.ClusterType = apiCluster.ClusterType
 	tfClusterResource.Phase = apiCluster.Phase
 	tfClusterResource.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
 	tfClusterResource.Region = types.StringValue(apiCluster.Region.Id)
