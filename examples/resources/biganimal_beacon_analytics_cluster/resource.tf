@@ -27,7 +27,7 @@ variable "project_id" {
   description = "BigAnimal Project ID"
 }
 
-resource "biganimal_beacon_analytics_cluster" "beacon_analytics_cluster" {
+resource "biganimal_analytics_cluster" "analytics_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
   pause        = false
@@ -64,5 +64,5 @@ resource "biganimal_beacon_analytics_cluster" "beacon_analytics_cluster" {
 
 output "password" {
   sensitive = true
-  value     = resource.biganimal_beacon_analytics_cluster.beacon_analytics_cluster.password
+  value     = resource.biganimal_analytics_cluster.analytics_cluster.password
 }

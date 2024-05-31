@@ -32,11 +32,11 @@ import (
 )
 
 var (
-	_ resource.Resource              = &beaconAnalyticsResource{}
-	_ resource.ResourceWithConfigure = &beaconAnalyticsResource{}
+	_ resource.Resource              = &analyticsClusterResource{}
+	_ resource.ResourceWithConfigure = &analyticsClusterResource{}
 )
 
-type BeaconAnalyticsResourceModel struct {
+type analyticsClusterResourceModel struct {
 	ID                         types.String                       `tfsdk:"id"`
 	CspAuth                    types.Bool                         `tfsdk:"csp_auth"`
 	Region                     types.String                       `tfsdk:"region"`
@@ -68,33 +68,33 @@ type BeaconAnalyticsResourceModel struct {
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
-func (bar BeaconAnalyticsResourceModel) getProjectId() string {
-	return bar.ProjectId
+func (r analyticsClusterResourceModel) getProjectId() string {
+	return r.ProjectId
 }
 
-func (bar BeaconAnalyticsResourceModel) getClusterId() string {
-	return *bar.ClusterId
+func (r analyticsClusterResourceModel) getClusterId() string {
+	return *r.ClusterId
 }
 
-type beaconAnalyticsResource struct {
+type analyticsClusterResource struct {
 	client *api.ClusterClient
 }
 
-func (bar *beaconAnalyticsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *analyticsClusterResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	bar.client = req.ProviderData.(*api.API).ClusterClient()
+	r.client = req.ProviderData.(*api.API).ClusterClient()
 }
 
-func (bar *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_beacon_analytics_cluster"
+func (r *analyticsClusterResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_analytics_cluster"
 }
 
-func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The beacon analystics cluster resource is used to manage BigAnimal beacon analystics clusters.",
+		MarkdownDescription: "The analytics cluster resource is used to manage BigAnimal analytics clusters.",
 		// using Blocks for backward compatible
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
@@ -332,16 +332,16 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 	}
 }
 
-func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *analyticsClusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
-	var config BeaconAnalyticsResourceModel
+	var config analyticsClusterResourceModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	clusterModel, err := bar.generateGenericBeaconClusterModel(ctx, bar.client, config)
+	clusterModel, err := r.generateGenericAnalyticsClusterModel(ctx, r.client, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
@@ -349,7 +349,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	clusterId, err := bar.client.Create(ctx, config.ProjectId, clusterModel)
+	clusterId, err := r.client.Create(ctx, config.ProjectId, clusterModel)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
@@ -365,7 +365,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	if err := ensureClusterIsHealthy(ctx, bar.client, config, timeout); err != nil {
+	if err := ensureClusterIsHealthy(ctx, r.client, config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
@@ -373,7 +373,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	if config.Pause.ValueBool() {
-		_, err = bar.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
+		_, err = r.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
@@ -381,7 +381,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 			return
 		}
 
-		if err := ensureClusterIsPaused(ctx, bar.client, config, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, r.client, config, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -389,7 +389,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		}
 	}
 
-	if err := bar.read(ctx, &config); err != nil {
+	if err := r.read(ctx, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -399,7 +399,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
-func (bar *beaconAnalyticsResource) generateGenericBeaconClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource BeaconAnalyticsResourceModel) (models.Cluster, error) {
+func (r *analyticsClusterResource) generateGenericAnalyticsClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterType:           utils.ToPointer("analytical"),
 		ClusterName:           clusterResource.ClusterName.ValueStringPointer(),
@@ -503,13 +503,13 @@ func (bar *beaconAnalyticsResource) generateGenericBeaconClusterModel(ctx contex
 	return cluster, nil
 }
 
-func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource *BeaconAnalyticsResourceModel) error {
-	apiCluster, err := bar.client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+func (r *analyticsClusterResource) read(ctx context.Context, tfClusterResource *analyticsClusterResourceModel) error {
+	apiCluster, err := r.client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
 
-	connection, err := bar.client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+	connection, err := r.client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -581,15 +581,15 @@ func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource 
 	return nil
 }
 
-func (bar *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state BeaconAnalyticsResourceModel
+func (r *analyticsClusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state analyticsClusterResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if err := bar.read(ctx, &state); err != nil {
+	if err := r.read(ctx, &state); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -599,8 +599,8 @@ func (bar *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan BeaconAnalyticsResourceModel
+func (r *analyticsClusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan analyticsClusterResourceModel
 
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
 	resp.Diagnostics.Append(diagnostics...)
@@ -611,7 +611,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	var state BeaconAnalyticsResourceModel
+	var state analyticsClusterResourceModel
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -634,7 +634,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 		}
 
 		if !plan.Pause.ValueBool() {
-			_, err := bar.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
+			_, err := r.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
 			if err != nil {
 				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 					resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
@@ -642,7 +642,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 				return
 			}
 
-			if err := ensureClusterIsHealthy(ctx, bar.client, plan, timeout); err != nil {
+			if err := ensureClusterIsHealthy(ctx, r.client, plan, timeout); err != nil {
 				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 				}
@@ -651,7 +651,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 		}
 	}
 
-	clusterModel, err := bar.generateGenericBeaconClusterModel(ctx, bar.client.ClusterClient(), plan)
+	clusterModel, err := r.generateGenericAnalyticsClusterModel(ctx, r.client.ClusterClient(), plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
@@ -659,7 +659,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	_, err = bar.client.Update(ctx, &clusterModel, plan.ProjectId, *plan.ClusterId)
+	_, err = r.client.Update(ctx, &clusterModel, plan.ProjectId, *plan.ClusterId)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster API request", err.Error())
@@ -671,7 +671,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 	// this is possibly a bug in the API
 	time.Sleep(20 * time.Second)
 
-	if err := ensureClusterIsHealthy(ctx, bar.client, plan, timeout); err != nil {
+	if err := ensureClusterIsHealthy(ctx, r.client, plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
@@ -679,7 +679,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	if plan.Pause.ValueBool() {
-		_, err = bar.client.ClusterPause(ctx, plan.ProjectId, *plan.ClusterId)
+		_, err = r.client.ClusterPause(ctx, plan.ProjectId, *plan.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
@@ -687,7 +687,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 			return
 		}
 
-		if err := ensureClusterIsPaused(ctx, bar.client, plan, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, r.client, plan, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -695,7 +695,7 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 		}
 	}
 
-	if err := bar.read(ctx, &plan); err != nil {
+	if err := r.read(ctx, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -705,15 +705,15 @@ func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.Upd
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state BeaconAnalyticsResourceModel
+func (r *analyticsClusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state analyticsClusterResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := bar.client.Delete(ctx, state.ProjectId, *state.ClusterId)
+	err := r.client.Delete(ctx, state.ProjectId, *state.ClusterId)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error deleting cluster", err.Error())
@@ -722,7 +722,7 @@ func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.Del
 	}
 }
 
-func (bar *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *analyticsClusterResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, "/")
 	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
@@ -736,6 +736,6 @@ func (bar *beaconAnalyticsResource) ImportState(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
-func NewBeaconAnalyticsResource() resource.Resource {
-	return &beaconAnalyticsResource{}
+func NewAnalyticsClusterResource() resource.Resource {
+	return &analyticsClusterResource{}
 }
