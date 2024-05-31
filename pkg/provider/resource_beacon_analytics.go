@@ -276,7 +276,7 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 }
 
 func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// Retrieve values from plan
+	// Retrieve values from config
 	var config BeaconAnalyticsResourceModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -284,6 +284,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	// generate analytics request to create cluster
 	clusterModel, err := bar.generateGenericBeaconClusterModel(ctx, bar.client, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -292,6 +293,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	// consume cluster create with analytics request
 	clusterId, err := bar.client.Create(ctx, config.ProjectId, clusterModel)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -308,6 +310,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	// keep retrying until cluster is healthy
 	if err := ensureClusterIsHealthy(ctx, bar.client, config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
@@ -324,6 +327,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 			return
 		}
 
+		// keep retrying until cluster is paused
 		if err := ensureClusterIsPaused(ctx, bar.client, config, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
@@ -332,6 +336,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		}
 	}
 
+	// after cluster is in the correct state (healthy/paused) then get the cluster and save into state
 	if err := bar.read(ctx, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
