@@ -76,7 +76,7 @@ func (bar *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.M
 
 func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The beacon analystics cluster resource is used to manage BigAnimal beacon analystics clusters.",
+		MarkdownDescription: "The beacon analytics cluster resource is used to manage BigAnimal beacon analytics clusters.",
 		// using Blocks for backward compatible
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
