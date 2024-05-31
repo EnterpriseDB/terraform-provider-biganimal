@@ -121,7 +121,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 						},
 						"description": schema.StringAttribute{
 							Description: "Description of CIDR block",
-							Required:    true,
+							Optional:    true,
 						},
 					},
 				},
