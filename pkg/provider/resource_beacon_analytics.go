@@ -439,7 +439,6 @@ func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource 
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
 	tfClusterResource.ClusterId = apiCluster.ClusterId
 	tfClusterResource.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
-	tfClusterResource.ClusterType = apiCluster.ClusterType
 	tfClusterResource.Phase = apiCluster.Phase
 	tfClusterResource.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
 	tfClusterResource.Region = types.StringValue(apiCluster.Region.Id)
