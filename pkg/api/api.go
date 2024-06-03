@@ -57,11 +57,6 @@ func (api *API) CloudProviderClient() *CloudProviderClient {
 	return c
 }
 
-func (api *API) BeaconAnalyticsClient() *BeaconAnalyticsClient {
-	c := NewBeaconAnalyticsClient(*api)
-	return c
-}
-
 func BuildAPI(meta any) *API {
 	api, ok := meta.(*API)
 	if !ok {
