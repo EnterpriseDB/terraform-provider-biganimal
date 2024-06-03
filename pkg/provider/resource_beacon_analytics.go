@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,23 +16,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var (
-	_ resource.Resource              = &beaconAnalyticsResource{}
-	_ resource.ResourceWithConfigure = &beaconAnalyticsResource{}
+	_ resource.Resource              = &analyticsClusterResource{}
+	_ resource.ResourceWithConfigure = &analyticsClusterResource{}
 )
 
-type BeaconAnalyticsResourceModel struct {
+type analyticsClusterResourceModel struct {
 	ID                         types.String                       `tfsdk:"id"`
 	CspAuth                    types.Bool                         `tfsdk:"csp_auth"`
 	Region                     types.String                       `tfsdk:"region"`
@@ -42,6 +47,7 @@ type BeaconAnalyticsResourceModel struct {
 	Phase                      *string                            `tfsdk:"phase"`
 	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
 	ClusterName                types.String                       `tfsdk:"cluster_name"`
+	Storage                    basetypes.ObjectValue              `tfsdk:"storage"`
 	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
 	ProjectId                  string                             `tfsdk:"project_id"`
 	LogsUrl                    *string                            `tfsdk:"logs_url"`
@@ -61,54 +67,38 @@ type BeaconAnalyticsResourceModel struct {
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
-func (bar BeaconAnalyticsResourceModel) getProjectId() string {
-	return bar.ProjectId
+func (r analyticsClusterResourceModel) getProjectId() string {
+	return r.ProjectId
 }
 
-func (bar BeaconAnalyticsResourceModel) getClusterId() string {
-	return *bar.ClusterId
+func (r analyticsClusterResourceModel) getClusterId() string {
+	return *r.ClusterId
 }
 
-type beaconAnalyticsResource struct {
+type analyticsClusterResource struct {
 	client *api.ClusterClient
 }
 
-func (bar *beaconAnalyticsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *analyticsClusterResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	bar.client = req.ProviderData.(*api.API).ClusterClient()
+	r.client = req.ProviderData.(*api.API).ClusterClient()
 }
 
-func (bar *beaconAnalyticsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_beacon_analytics_cluster"
+func (r *analyticsClusterResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_analytics_cluster"
 }
 
-func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The beacon analytics cluster resource is used to manage BigAnimal beacon analytics clusters.",
+		MarkdownDescription: "The analytics cluster resource is used to manage BigAnimal analytics clusters.",
 		// using Blocks for backward compatible
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
 				timeouts.Opts{Create: true, Delete: true, Update: true},
 			),
-			"allowed_ip_ranges": schema.SetNestedBlock{
-				MarkdownDescription: "Allowed IP ranges.",
-				PlanModifiers:       []planmodifier.Set{plan_modifier.CustomAllowedIps()},
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							MarkdownDescription: "CIDR block.",
-							Required:            true,
-						},
-						"description": schema.StringAttribute{
-							MarkdownDescription: "CIDR block description.",
-							Optional:            true,
-						},
-					},
-				},
-			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -116,6 +106,67 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"allowed_ip_ranges": schema.SetNestedAttribute{
+				Description: "Allowed IP ranges.",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"cidr_block": schema.StringAttribute{
+							Description: "CIDR block",
+							Required:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: "Description of CIDR block",
+							Optional:    true,
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"storage": schema.SingleNestedAttribute{
+				Description: "Storage.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"iops": schema.StringAttribute{
+						Description: "IOPS for the selected volume.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"size": schema.StringAttribute{
+						Description: "Size of the volume.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"throughput": schema.StringAttribute{
+						Description: "Throughput.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"volume_properties": schema.StringAttribute{
+						Description: "Volume properties.",
+						Required:    true,
+					},
+					"volume_type": schema.StringAttribute{
+						Description: "Volume type.",
+						Required:    true,
+					},
 				},
 			},
 			"cluster_id": schema.StringAttribute{
@@ -275,17 +326,16 @@ func (bar *beaconAnalyticsResource) Schema(ctx context.Context, req resource.Sch
 	}
 }
 
-func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// Retrieve values from config
-	var config BeaconAnalyticsResourceModel
+func (r *analyticsClusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	// Retrieve values from plan
+	var config analyticsClusterResourceModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// generate analytics request to create cluster
-	clusterModel, err := bar.generateGenericBeaconClusterModel(ctx, bar.client, config)
+	clusterModel, err := r.generateGenericAnalyticsClusterModel(ctx, r.client, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
@@ -294,7 +344,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// consume cluster create with analytics request
-	clusterId, err := bar.client.Create(ctx, config.ProjectId, clusterModel)
+	clusterId, err := r.client.Create(ctx, config.ProjectId, clusterModel)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
@@ -311,7 +361,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// keep retrying until cluster is healthy
-	if err := ensureClusterIsHealthy(ctx, bar.client, config, timeout); err != nil {
+	if err := ensureClusterIsHealthy(ctx, r.client, config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
@@ -319,7 +369,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	if config.Pause.ValueBool() {
-		_, err = bar.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
+		_, err = r.client.ClusterPause(ctx, config.ProjectId, *config.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
@@ -328,7 +378,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 		}
 
 		// keep retrying until cluster is paused
-		if err := ensureClusterIsPaused(ctx, bar.client, config, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, r.client, config, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -337,7 +387,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// after cluster is in the correct state (healthy/paused) then get the cluster and save into state
-	if err := bar.read(ctx, &config); err != nil {
+	if err := r.read(ctx, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -347,7 +397,7 @@ func (bar *beaconAnalyticsResource) Create(ctx context.Context, req resource.Cre
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
-func (bar *beaconAnalyticsResource) generateGenericBeaconClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource BeaconAnalyticsResourceModel) (models.Cluster, error) {
+func (r *analyticsClusterResource) generateGenericAnalyticsClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterType:           utils.ToPointer("analytical"),
 		ClusterName:           clusterResource.ClusterName.ValueStringPointer(),
@@ -361,6 +411,27 @@ func (bar *beaconAnalyticsResource) generateGenericBeaconClusterModel(ctx contex
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 	}
+
+	storageOb := StorageResourceModel{}
+	diag := clusterResource.Storage.As(ctx, &storageOb, basetypes.ObjectAsOptions{})
+	if diag.HasError() {
+		return models.Cluster{}, errors.New("storage mapping as error")
+	}
+
+	cluster.Storage = &models.Storage{
+		VolumePropertiesId: storageOb.VolumeProperties.ValueStringPointer(),
+		VolumeTypeId:       storageOb.VolumeType.ValueStringPointer(),
+		Iops:               storageOb.Iops.ValueStringPointer(),
+		Size:               storageOb.Size.ValueStringPointer(),
+		Throughput:         storageOb.Throughput.ValueStringPointer(),
+	}
+
+	cluster.ClusterId = nil
+	cluster.PgType = nil
+	cluster.PgVersion = nil
+	cluster.Provider = nil
+	cluster.Region = nil
+	cluster.PgConfig = &[]models.KeyValue{}
 
 	allowedIpRanges := []models.AllowedIpRange{}
 	for _, ipRange := range clusterResource.AllowedIpRanges {
@@ -430,13 +501,13 @@ func (bar *beaconAnalyticsResource) generateGenericBeaconClusterModel(ctx contex
 	return cluster, nil
 }
 
-func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource *BeaconAnalyticsResourceModel) error {
-	apiCluster, err := bar.client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+func (r *analyticsClusterResource) read(ctx context.Context, tfClusterResource *analyticsClusterResourceModel) error {
+	apiCluster, err := r.client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
 
-	connection, err := bar.client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+	connection, err := r.client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -457,6 +528,17 @@ func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource 
 	tfClusterResource.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
+
+	tfClusterResource.Storage = basetypes.NewObjectValueMust(
+		tfClusterResource.Storage.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"volume_type":       basetypes.NewStringValue(*apiCluster.Storage.VolumeTypeId),
+			"volume_properties": basetypes.NewStringValue(*apiCluster.Storage.VolumePropertiesId),
+			"size":              basetypes.NewStringValue(*apiCluster.Storage.Size),
+			"iops":              basetypes.NewStringValue(*apiCluster.Storage.Iops),
+			"throughput":        basetypes.NewStringValue(*apiCluster.Storage.Throughput),
+		},
+	)
 
 	if apiCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := apiCluster.FirstRecoverabilityPointAt.String()
@@ -496,18 +578,161 @@ func (bar *beaconAnalyticsResource) read(ctx context.Context, tfClusterResource 
 	return nil
 }
 
-func (bar *beaconAnalyticsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *analyticsClusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state analyticsClusterResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := r.read(ctx, &state); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (bar *beaconAnalyticsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *analyticsClusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan analyticsClusterResourceModel
+
+	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
+	resp.Diagnostics.Append(diagnostics...)
+
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state analyticsClusterResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// cluster = pause,   tf pause = true, it will error and say you will need to set pause = false to update
+	// cluster = pause,   tf pause = false, it will resume then update
+	// cluster = healthy, tf pause = true, it will update then pause
+	// cluster = healthy, tf pause = false, it will update
+	if *state.Phase != models.PHASE_HEALTHY && *state.Phase != models.PHASE_PAUSED {
+		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
+		return
+	}
+
+	if *state.Phase == models.PHASE_PAUSED {
+		if plan.Pause.ValueBool() {
+			resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
+			return
+		}
+
+		if !plan.Pause.ValueBool() {
+			_, err := r.client.ClusterResume(ctx, plan.ProjectId, *plan.ClusterId)
+			if err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error resuming cluster API request", err.Error())
+				}
+				return
+			}
+
+			if err := ensureClusterIsHealthy(ctx, r.client, plan, timeout); err != nil {
+				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+				}
+				return
+			}
+		}
+	}
+
+	clusterModel, err := r.generateGenericAnalyticsClusterModel(ctx, r.client.ClusterClient(), plan)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating cluster", err.Error())
+		}
+		return
+	}
+
+	_, err = r.client.Update(ctx, &clusterModel, plan.ProjectId, *plan.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating cluster API request", err.Error())
+		}
+		return
+	}
+
+	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
+	// this is possibly a bug in the API
+	time.Sleep(20 * time.Second)
+
+	if err := ensureClusterIsHealthy(ctx, r.client, plan, timeout); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+		}
+		return
+	}
+
+	if plan.Pause.ValueBool() {
+		_, err = r.client.ClusterPause(ctx, plan.ProjectId, *plan.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error pausing cluster API request", err.Error())
+			}
+			return
+		}
+
+		if err := ensureClusterIsPaused(ctx, r.client, plan, timeout); err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
+			}
+			return
+		}
+	}
+
+	if err := r.read(ctx, &plan); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading cluster", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (bar *beaconAnalyticsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *analyticsClusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state analyticsClusterResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.Delete(ctx, state.ProjectId, *state.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error deleting cluster", err.Error())
+		}
+		return
+	}
 }
 
-func (bar *beaconAnalyticsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *analyticsClusterResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.Split(req.ID, "/")
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
-func NewBeaconAnalyticsResource() resource.Resource {
-	return &beaconAnalyticsResource{}
+func NewAnalyticsClusterResource() resource.Resource {
+	return &analyticsClusterResource{}
 }
