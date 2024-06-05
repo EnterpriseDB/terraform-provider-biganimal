@@ -70,4 +70,3 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   private_networking = false
   region             = "us-east-1"
 }
-

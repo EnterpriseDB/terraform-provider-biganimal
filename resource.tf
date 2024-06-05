@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.10.0"
+      version = "0.8.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -11,25 +11,10 @@ terraform {
   }
 }
 
-variable "cluster_name" {
-  type        = string
-  description = "The name of the faraway replica cluster."
-}
-
-variable "source_cluster_id" {
-  type        = string
-  description = "BigAnimal source cluster ID"
-}
-
-variable "project_id" {
-  type        = string
-  description = "BigAnimal Project ID"
-}
-
 resource "biganimal_faraway_replica" "faraway_replica" {
-  cluster_name      = var.cluster_name
-  project_id        = var.project_id
-  source_cluster_id = var.source_cluster_id
+  cluster_name      = "wai-far"
+  project_id        = "prj_QjA3eosXYUuMrba1"
+  source_cluster_id = "p-pp7rqagzhr"
 
   allowed_ip_ranges = [
     {
@@ -44,7 +29,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 
   backup_retention_period = "8d"
   csp_auth                = false
-  instance_type           = "azure:Standard_D2s_v3"
+  instance_type           = "aws:c6i.large"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -61,12 +46,12 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     }
   ]
 
-  storage {
-    volume_type       = "azurepremiumstorage"
-    volume_properties = "P1"
-    size              = "4 Gi"
+  storage = {
+    iops              = "3000"
+    volume_type       = "gp3"
+    volume_properties = "gp3"
+    size              = "32 Gi"
   }
-
   private_networking = false
-  region             = "australiaeast"
+  region             = "us-east-1"
 }
