@@ -47,12 +47,8 @@ type FAReplicaResourceModel struct {
 	PrivateNetworking      types.Bool                     `tfsdk:"private_networking"`
 	AllowedIpRanges        []AllowedIpRangesResourceModel `tfsdk:"allowed_ip_ranges"`
 	CreatedAt              types.String                   `tfsdk:"created_at"`
-	ExpiredAt              types.String                   `tfsdk:"expired_at"`
-	DeletedAt              types.String                   `tfsdk:"deleted_at"`
 	ServiceAccountIds      types.Set                      `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds  types.Set                      `tfsdk:"pe_allowed_principal_ids"`
-	Pgvector               types.Bool                     `tfsdk:"pgvector"`
-	PostGIS                types.Bool                     `tfsdk:"post_gis"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -129,20 +125,6 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"created_at": schema.StringAttribute{
 				Description: "Cluster creation time.",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"deleted_at": schema.StringAttribute{
-				Description: "Cluster deletion time.",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"expired_at": schema.StringAttribute{
-				Description: "Cluster expiry time.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -417,7 +399,7 @@ func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateReque
 
 	if err := r.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+			resp.Diagnostics.AddError("Error waiting faraway replica to be ready ", err.Error())
 		}
 		return
 	}
@@ -469,18 +451,6 @@ func (r *FAReplicaResource) read(ctx context.Context, fAReplicaResourceModel *FA
 	fAReplicaResourceModel.MetricsUrl = apiCluster.MetricsUrl
 	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
 	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
-	if apiCluster.Extensions != nil {
-		for _, v := range *apiCluster.Extensions {
-			if v.Enabled && v.ExtensionId == "pgvector" {
-				fAReplicaResourceModel.Pgvector = types.BoolValue(true)
-				break
-			}
-			if v.Enabled && v.ExtensionId == "postgis" {
-				fAReplicaResourceModel.PostGIS = types.BoolValue(true)
-				break
-			}
-		}
-	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
@@ -513,6 +483,14 @@ func (r *FAReplicaResource) read(ctx context.Context, fAReplicaResourceModel *FA
 
 	if pt := apiCluster.CreatedAt; pt != nil {
 		fAReplicaResourceModel.CreatedAt = types.StringValue(pt.String())
+	}
+
+	if apiCluster.PeAllowedPrincipalIds != nil {
+		fAReplicaResourceModel.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&apiCluster.PeAllowedPrincipalIds))
+	}
+
+	if apiCluster.ServiceAccountIds != nil {
+		fAReplicaResourceModel.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
 	}
 
 	return nil
@@ -635,12 +613,7 @@ func (r *FAReplicaResource) makeFaReplicaForUpdate(ctx context.Context, fAReplic
 	if err != nil {
 		return nil, err
 	}
-	fAReplicaModel.ClusterId = nil
-	fAReplicaModel.PgType = nil
-	fAReplicaModel.PgVersion = nil
-	fAReplicaModel.Provider = nil
 	fAReplicaModel.Region = nil
 	fAReplicaModel.ReplicaSourceClusterId = nil
-	fAReplicaModel.BackupRetentionPeriod = nil
 	return &fAReplicaModel, nil
 }
