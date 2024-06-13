@@ -869,62 +869,56 @@ func (c *clusterResource) ensureClusterIsPaused(ctx context.Context, cluster Clu
 }
 
 func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResource ClusterResourceModel) (models.Cluster, error) {
-	cluster := generateGenericClusterModel(clusterResource)
-	// add BAH Code
-	if strings.Contains(clusterResource.CloudProvider.ValueString(), "bah") {
-		return c.addBAHFields(ctx, cluster, clusterResource)
-	} else {
-		return cluster, nil
-	}
-}
-
-func (c *clusterResource) addBAHFields(ctx context.Context, cluster models.Cluster, clusterResource ClusterResourceModel) (models.Cluster, error) {
-	clusterRscCSP := clusterResource.CloudProvider
-	clusterRscPrincipalIds := clusterResource.PeAllowedPrincipalIds
-	clusterRscSvcAcntIds := clusterResource.ServiceAccountIds
-
-	// If there is an existing Principal Account Id for that Region, use that one.
-	pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResource.ProjectId, clusterRscCSP.ValueString(), clusterResource.Region.ValueString())
+	clusterModel, err := c.generateGenericClusterModel(ctx, clusterResource)
 	if err != nil {
 		return models.Cluster{}, err
 	}
-	cluster.PeAllowedPrincipalIds = utils.ToPointer(pids.Data)
+	return clusterModel, nil
+}
+
+func (c *clusterResource) buildRequestBah(ctx context.Context, clusterResourceModel ClusterResourceModel) (svAccIds, principalIds *[]string, err error) {
+	// If there is an existing Principal Account Id for that Region, use that one.
+	pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
+	if err != nil {
+		return nil, nil, err
+	}
+	principalIds = utils.ToPointer(pids.Data)
 
 	// If there is no existing value, user should provide one
-	if cluster.PeAllowedPrincipalIds != nil && len(*cluster.PeAllowedPrincipalIds) == 0 {
+	if principalIds != nil && len(*principalIds) == 0 {
 		// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
 		// while encoding JSON objects
 		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
 		plist := []string{}
-		for _, peId := range clusterRscPrincipalIds.Elements() {
-			plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
+		for _, peId := range clusterResourceModel.PeAllowedPrincipalIds.Elements() {
+			plist = append(plist, peId.(basetypes.StringValue).ValueString())
 		}
 
-		cluster.PeAllowedPrincipalIds = utils.ToPointer(plist)
+		principalIds = utils.ToPointer(plist)
 	}
 
-	if clusterRscCSP.ValueString() == "bah:gcp" {
+	if clusterResourceModel.CloudProvider.ValueString() == "bah:gcp" {
 		// If there is an existing Service Account Id for that Region, use that one.
-		sids, _ := c.client.GetServiceAccountIds(ctx, clusterResource.ProjectId, clusterResource.CloudProvider.ValueString(), clusterResource.Region.ValueString())
-		cluster.ServiceAccountIds = utils.ToPointer(sids.Data)
+		sids, _ := c.client.GetServiceAccountIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
+		svAccIds = utils.ToPointer(sids.Data)
 
 		// If there is no existing value, user should provide one
-		if cluster.ServiceAccountIds != nil && len(*cluster.ServiceAccountIds) == 0 {
+		if svAccIds != nil && len(*svAccIds) == 0 {
 			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
 			// while encoding JSON objects.
 			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
 			slist := []string{}
-			for _, saId := range clusterRscSvcAcntIds.Elements() {
-				slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
+			for _, saId := range clusterResourceModel.ServiceAccountIds.Elements() {
+				slist = append(slist, saId.(basetypes.StringValue).ValueString())
 			}
 
-			cluster.ServiceAccountIds = utils.ToPointer(slist)
+			svAccIds = utils.ToPointer(slist)
 		}
 	}
-	return cluster, nil
+	return
 }
 
-func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cluster {
+func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clusterResource ClusterResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterName: clusterResource.ClusterName.ValueStringPointer(),
 		Password:    clusterResource.Password.ValueStringPointer(),
@@ -1011,7 +1005,15 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 		}
 	}
 
-	return cluster
+	svAccIds, principalIds, err := c.buildRequestBah(ctx, clusterResource)
+	if err != nil {
+		return models.Cluster{}, err
+	}
+
+	cluster.ServiceAccountIds = svAccIds
+	cluster.PeAllowedPrincipalIds = principalIds
+
+	return cluster, nil
 }
 
 func (c *clusterResource) makeClusterForUpdate(ctx context.Context, clusterResource ClusterResourceModel) (*models.Cluster, error) {
