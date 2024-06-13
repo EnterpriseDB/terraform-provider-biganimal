@@ -86,6 +86,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 6
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: 123456789012
+      # ]
     }
   ]
 }

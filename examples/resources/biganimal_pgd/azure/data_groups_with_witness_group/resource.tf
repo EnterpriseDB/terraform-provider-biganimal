@@ -86,6 +86,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+      # ]
     },
     {
       allowed_ip_ranges = [
@@ -140,6 +143,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 2
         start_time = "15:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+      # ]
     }
   ]
   witness_groups = [
