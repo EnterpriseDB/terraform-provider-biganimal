@@ -60,6 +60,12 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
   private_networking = false
   cloud_provider     = "bah:aws"
   region             = "ap-south-1"
+  # pe_allowed_principal_ids = [
+  #   <example_value> # AWS example: "123456789012", Azure example: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A", GCP example: "development-data-123456"
+  # ]
+  # service_account_ids = [
+  #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+  # ]
 }
 
 output "password" {
