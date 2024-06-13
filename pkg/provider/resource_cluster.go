@@ -113,17 +113,17 @@ type PgBouncerSettingsModel struct {
 	Value     string `tfsdk:"value"`
 }
 
-func (c ClusterResourceModel) getProjectId() string {
+func (c ClusterResourceModel) projectId() string {
 	return c.ProjectId
 }
 
-func (c ClusterResourceModel) getClusterId() string {
+func (c ClusterResourceModel) clusterId() string {
 	return *c.ClusterId
 }
 
 type retryClusterResourceModel interface {
-	getProjectId() string
-	getClusterId() string
+	projectId() string
+	clusterId() string
 }
 
 type clusterResource struct {
@@ -860,7 +860,7 @@ func ensureClusterIsHealthy(ctx context.Context, client *api.ClusterClient, clus
 		ctx,
 		timeout,
 		func() *retry.RetryError {
-			resp, err := client.Read(ctx, cluster.getProjectId(), cluster.getClusterId())
+			resp, err := client.Read(ctx, cluster.projectId(), cluster.clusterId())
 			if err != nil {
 				return retry.NonRetryableError(err)
 			}
@@ -877,7 +877,7 @@ func ensureClusterIsPaused(ctx context.Context, client *api.ClusterClient, clust
 		ctx,
 		timeout,
 		func() *retry.RetryError {
-			resp, err := client.Read(ctx, cluster.getProjectId(), cluster.getClusterId())
+			resp, err := client.Read(ctx, cluster.projectId(), cluster.clusterId())
 			if err != nil {
 				return retry.NonRetryableError(err)
 			}

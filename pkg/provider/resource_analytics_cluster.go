@@ -67,11 +67,11 @@ type analyticsClusterResourceModel struct {
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
-func (r analyticsClusterResourceModel) getProjectId() string {
+func (r analyticsClusterResourceModel) projectId() string {
 	return r.ProjectId
 }
 
-func (r analyticsClusterResourceModel) getClusterId() string {
+func (r analyticsClusterResourceModel) clusterId() string {
 	return *r.ClusterId
 }
 
@@ -104,9 +104,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Resource ID of the cluster.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"allowed_ip_ranges": schema.SetNestedAttribute{
 				Description: "Allowed IP ranges.",
@@ -124,40 +122,30 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 						},
 					},
 				},
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 			"storage": schema.SingleNestedAttribute{
-				Description: "Storage.",
-				Computed:    true,
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
-				},
+				Description:   "Storage.",
+				Computed:      true,
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"iops": schema.StringAttribute{
-						Description: "IOPS for the selected volume.",
-						Optional:    true,
-						Computed:    true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
+						Description:   "IOPS for the selected volume.",
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"size": schema.StringAttribute{
-						Description: "Size of the volume.",
-						Optional:    true,
-						Computed:    true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
+						Description:   "Size of the volume.",
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"throughput": schema.StringAttribute{
-						Description: "Throughput.",
-						Optional:    true,
-						Computed:    true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
+						Description:   "Throughput.",
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"volume_properties": schema.StringAttribute{
 						Description: "Volume properties.",
@@ -186,16 +174,12 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 			"phase": schema.StringAttribute{
 				MarkdownDescription: "Current phase of the cluster.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					plan_modifier.CustomPhaseForUnknown(),
-				},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPhaseForUnknown()},
 			},
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
 				Required:            true,
-				Validators: []validator.String{
-					ProjectIdValidator(),
-				},
+				Validators:          []validator.String{ProjectIdValidator()},
 			},
 			"logs_url": schema.StringAttribute{
 				MarkdownDescription: "The URL to find the logs of this cluster.",
@@ -206,10 +190,8 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				MarkdownDescription: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
 				Optional:            true,
 				Computed:            true,
-				Validators: []validator.String{
-					BackupRetentionPeriodValidator(),
-				},
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Validators:          []validator.String{BackupRetentionPeriodValidator()},
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
 				Description: "Cloud provider. For example, \"aws\" or \"bah:aws\".",
@@ -218,9 +200,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\" or \"pgextended\".",
 				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("epas", "pgextended", "postgres"),
-				},
+				Validators:          []validator.String{stringvalidator.OneOf("epas", "pgextended", "postgres")},
 			},
 			"first_recoverability_point_at": schema.StringAttribute{
 				MarkdownDescription: "Earliest backup recover time.",
@@ -273,9 +253,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				MarkdownDescription: "Custom maintenance window.",
 				Optional:            true,
 				Computed:            true,
-				PlanModifiers: []planmodifier.Object{
-					plan_modifier.MaintenanceWindowForUnknown(),
-				},
+				PlanModifiers:       []planmodifier.Object{plan_modifier.MaintenanceWindowForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"is_enabled": schema.BoolAttribute{
 						MarkdownDescription: "Is maintenance window enabled.",
@@ -285,17 +263,13 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
 						Optional:            true,
 						Computed:            true,
-						Validators: []validator.Int64{
-							int64validator.Between(0, 6),
-						},
+						Validators:          []validator.Int64{int64validator.Between(0, 6)},
 					},
 					"start_time": schema.StringAttribute{
 						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
 						Optional:            true,
 						Computed:            true,
-						Validators: []validator.String{
-							startTimeValidator(),
-						},
+						Validators:          []validator.String{startTimeValidator()},
 					},
 				},
 			},
@@ -335,7 +309,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	clusterModel, err := r.generateGenericAnalyticsClusterModel(ctx, r.client, config)
+	clusterModel, err := generateGenericAnalyticsClusterModel(ctx, r.client, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
@@ -387,7 +361,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// after cluster is in the correct state (healthy/paused) then get the cluster and save into state
-	if err := r.read(ctx, &config); err != nil {
+	if err := read(ctx, r.client, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -397,7 +371,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
-func (r *analyticsClusterResource) generateGenericAnalyticsClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
+func generateGenericAnalyticsClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterType:           utils.ToPointer("analytical"),
 		ClusterName:           clusterResource.ClusterName.ValueStringPointer(),
@@ -501,13 +475,13 @@ func (r *analyticsClusterResource) generateGenericAnalyticsClusterModel(ctx cont
 	return cluster, nil
 }
 
-func (r *analyticsClusterResource) read(ctx context.Context, tfClusterResource *analyticsClusterResourceModel) error {
-	apiCluster, err := r.client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+func read(ctx context.Context, client *api.ClusterClient, tfClusterResource *analyticsClusterResourceModel) error {
+	apiCluster, err := client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
 
-	connection, err := r.client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+	connection, err := client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -586,7 +560,7 @@ func (r *analyticsClusterResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	if err := r.read(ctx, &state); err != nil {
+	if err := read(ctx, r.client, &state); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -648,7 +622,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 		}
 	}
 
-	clusterModel, err := r.generateGenericAnalyticsClusterModel(ctx, r.client.ClusterClient(), plan)
+	clusterModel, err := generateGenericAnalyticsClusterModel(ctx, r.client.ClusterClient(), plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
@@ -692,7 +666,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 		}
 	}
 
-	if err := r.read(ctx, &plan); err != nil {
+	if err := read(ctx, r.client, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
