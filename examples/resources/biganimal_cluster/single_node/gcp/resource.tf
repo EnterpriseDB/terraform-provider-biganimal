@@ -100,6 +100,14 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "development-data-123456"
+  # ]
+
+  # service_account_ids = [
+  #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+  # ]
 }
 
 output "password" {

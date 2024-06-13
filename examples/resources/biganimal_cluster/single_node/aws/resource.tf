@@ -100,6 +100,10 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: 123456789012
+  # ]
 }
 
 output "password" {
