@@ -86,6 +86,13 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 6
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "development-data-123456"
+      # ]
+
+      # service_account_ids = [
+      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+      # ]
     },
     {
       allowed_ip_ranges = [
@@ -140,6 +147,13 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 5
         start_time = "12:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "development-data-123456"
+      # ]
+
+      # service_account_ids = [
+      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+      # ]
     }
   ]
   witness_groups = [
