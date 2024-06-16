@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -16,19 +15,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var (
@@ -47,7 +43,6 @@ type analyticsClusterResourceModel struct {
 	Phase                      *string                            `tfsdk:"phase"`
 	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
 	ClusterName                types.String                       `tfsdk:"cluster_name"`
-	Storage                    basetypes.ObjectValue              `tfsdk:"storage"`
 	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
 	ProjectId                  string                             `tfsdk:"project_id"`
 	LogsUrl                    *string                            `tfsdk:"logs_url"`
@@ -123,39 +118,6 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 					},
 				},
 				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
-			},
-			"storage": schema.SingleNestedAttribute{
-				Description:   "Storage.",
-				Computed:      true,
-				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
-				Attributes: map[string]schema.Attribute{
-					"iops": schema.StringAttribute{
-						Description:   "IOPS for the selected volume.",
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-					},
-					"size": schema.StringAttribute{
-						Description:   "Size of the volume.",
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-					},
-					"throughput": schema.StringAttribute{
-						Description:   "Throughput.",
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-					},
-					"volume_properties": schema.StringAttribute{
-						Description: "Volume properties.",
-						Required:    true,
-					},
-					"volume_type": schema.StringAttribute{
-						Description: "Volume type.",
-						Required:    true,
-					},
-				},
 			},
 			"cluster_id": schema.StringAttribute{
 				MarkdownDescription: "Cluster ID.",
@@ -386,26 +348,8 @@ func generateGenericAnalyticsClusterModel(ctx context.Context, client *api.Clust
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 	}
 
-	storageOb := StorageResourceModel{}
-	diag := clusterResource.Storage.As(ctx, &storageOb, basetypes.ObjectAsOptions{})
-	if diag.HasError() {
-		return models.Cluster{}, errors.New("storage mapping as error")
-	}
-
-	cluster.Storage = &models.Storage{
-		VolumePropertiesId: storageOb.VolumeProperties.ValueStringPointer(),
-		VolumeTypeId:       storageOb.VolumeType.ValueStringPointer(),
-		Iops:               storageOb.Iops.ValueStringPointer(),
-		Size:               storageOb.Size.ValueStringPointer(),
-		Throughput:         storageOb.Throughput.ValueStringPointer(),
-	}
-
 	cluster.ClusterId = nil
-	cluster.PgType = nil
-	cluster.PgVersion = nil
-	cluster.Provider = nil
-	cluster.Region = nil
-	cluster.PgConfig = &[]models.KeyValue{}
+	cluster.PgConfig = nil
 
 	allowedIpRanges := []models.AllowedIpRange{}
 	for _, ipRange := range clusterResource.AllowedIpRanges {
@@ -502,17 +446,6 @@ func read(ctx context.Context, client *api.ClusterClient, tfClusterResource *ana
 	tfClusterResource.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
-
-	tfClusterResource.Storage = basetypes.NewObjectValueMust(
-		tfClusterResource.Storage.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"volume_type":       basetypes.NewStringValue(*apiCluster.Storage.VolumeTypeId),
-			"volume_properties": basetypes.NewStringValue(*apiCluster.Storage.VolumePropertiesId),
-			"size":              basetypes.NewStringValue(*apiCluster.Storage.Size),
-			"iops":              basetypes.NewStringValue(*apiCluster.Storage.Iops),
-			"throughput":        basetypes.NewStringValue(*apiCluster.Storage.Throughput),
-		},
-	)
 
 	if apiCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := apiCluster.FirstRecoverabilityPointAt.String()
