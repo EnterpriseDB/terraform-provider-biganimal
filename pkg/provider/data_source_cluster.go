@@ -3,12 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	terraformCommon "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -50,7 +48,6 @@ type clusterDatasourceModel struct {
 	ClusterName                types.String                        `tfsdk:"cluster_name"`
 	FarawayReplicaIds          []string                            `tfsdk:"faraway_replica_ids"`
 	LogsUrl                    types.String                        `tfsdk:"logs_url"`
-	MostRecent                 types.Bool                          `tfsdk:"most_recent"`
 	ClusterId                  types.String                        `tfsdk:"cluster_id"`
 	PgConfig                   []PgConfigDatasourceModel           `tfsdk:"pg_config"`
 	ExpiredAt                  types.String                        `tfsdk:"expired_at"`
@@ -76,6 +73,10 @@ type clusterDatasourceModel struct {
 	ServiceAccountIds          types.Set                           `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                           `tfsdk:"pe_allowed_principal_ids"`
 	SuperuserAccess            types.Bool                          `tfsdk:"superuser_access"`
+	Pgvector                   types.Bool                          `tfsdk:"pgvector"`
+	PostGIS                    types.Bool                          `tfsdk:"post_gis"`
+	PgBouncer                  *PgBouncerModel                     `tfsdk:"pg_bouncer"`
+	Pause                      types.Bool                          `tfsdk:"pause"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -107,28 +108,16 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
 				Required:            true,
-				Validators: []validator.String{
-					ProjectIdValidator(),
-				},
+				Validators:          []validator.String{ProjectIdValidator()},
 			},
-
 			"cluster_name": schema.StringAttribute{
 				MarkdownDescription: "Name of the cluster.",
-				Required:            true,
-				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile(`^\S+$`), "Cluster name should not be an empty string"),
-				},
+				Computed:            true,
 			},
-			"most_recent": schema.BoolAttribute{
-				MarkdownDescription: "Show the most recent cluster when there are multiple clusters with the same name.",
-				Optional:            true,
-			},
-
 			"id": schema.StringAttribute{
 				Description: "Datasource ID.",
 				Computed:    true,
 			},
-
 			"allowed_ip_ranges": schema.SetNestedAttribute{
 				MarkdownDescription: "Allowed IP ranges.",
 				Optional:            true,
@@ -145,7 +134,6 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					},
 				},
 			},
-
 			"backup_retention_period": schema.StringAttribute{
 				MarkdownDescription: "Backup retention period.",
 				Computed:            true,
@@ -170,7 +158,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 			"cluster_id": schema.StringAttribute{
 				MarkdownDescription: "Cluster ID.",
-				Computed:            true,
+				Required:            true,
 			},
 			"pg_config": schema.SetNestedAttribute{
 				MarkdownDescription: "Database configuration parameters.",
@@ -394,7 +382,7 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	tflog.Debug(ctx, "read cluster data source")
 
-	cluster, err := c.client.ReadByName(ctx, data.ProjectId.ValueString(), data.ClusterName.ValueString(), data.MostRecent.ValueBool())
+	responseCluster, err := c.client.Read(ctx, data.ProjectId.ValueString(), data.ClusterId.ValueString())
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
@@ -411,48 +399,48 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.ProjectId.ValueString(), data.ClusterId.ValueString()))
-	data.ClusterId = types.StringPointerValue(cluster.ClusterId)
-	data.ClusterName = types.StringPointerValue(cluster.ClusterName)
-	data.ClusterType = types.StringPointerValue(cluster.ClusterType)
-	data.Phase = types.StringPointerValue(cluster.Phase)
-	data.CloudProvider = types.StringValue(cluster.Provider.CloudProviderId)
+	data.ClusterId = types.StringPointerValue(responseCluster.ClusterId)
+	data.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
+	data.ClusterType = types.StringPointerValue(responseCluster.ClusterType)
+	data.Phase = types.StringPointerValue(responseCluster.Phase)
+	data.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	data.ClusterArchitecture = &ClusterArchitectureDatasourceModel{
-		Id:    types.StringValue(cluster.ClusterArchitecture.ClusterArchitectureId),
-		Nodes: types.Int64Value(int64(cluster.ClusterArchitecture.Nodes)),
-		Name:  types.StringValue(cluster.ClusterArchitecture.ClusterArchitectureName),
+		Id:    types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureId),
+		Nodes: types.Int64Value(int64(responseCluster.ClusterArchitecture.Nodes)),
+		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
 	}
-	data.Region = types.StringValue(cluster.Region.Id)
-	data.InstanceType = types.StringValue(cluster.InstanceType.InstanceTypeId)
+	data.Region = types.StringValue(responseCluster.Region.Id)
+	data.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
 	data.Storage = &StorageDatasourceModel{
-		VolumeType:       types.StringPointerValue(cluster.Storage.VolumeTypeId),
-		VolumeProperties: types.StringPointerValue(cluster.Storage.VolumePropertiesId),
-		Size:             types.StringPointerValue(cluster.Storage.Size),
-		Iops:             types.StringPointerValue(cluster.Storage.Iops),
-		Throughput:       types.StringPointerValue(cluster.Storage.Throughput),
+		VolumeType:       types.StringPointerValue(responseCluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(responseCluster.Storage.VolumePropertiesId),
+		Size:             types.StringPointerValue(responseCluster.Storage.Size),
+		Iops:             types.StringPointerValue(responseCluster.Storage.Iops),
+		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
-	data.ResizingPvc = cluster.ResizingPvc
-	data.ReadOnlyConnections = types.BoolPointerValue(cluster.ReadOnlyConnections)
+	data.ResizingPvc = responseCluster.ResizingPvc
+	data.ReadOnlyConnections = types.BoolPointerValue(responseCluster.ReadOnlyConnections)
 	data.ConnectionUri = types.StringValue(connection.PgUri)
 	data.RoConnectionUri = types.StringValue(connection.ReadOnlyPgUri)
-	data.CspAuth = types.BoolPointerValue(cluster.CSPAuth)
-	data.LogsUrl = types.StringPointerValue(cluster.LogsUrl)
-	data.MetricsUrl = types.StringPointerValue(cluster.MetricsUrl)
-	data.BackupRetentionPeriod = types.StringPointerValue(cluster.BackupRetentionPeriod)
-	data.PgVersion = types.StringValue(cluster.PgVersion.PgVersionId)
-	data.PgType = types.StringValue(cluster.PgType.PgTypeId)
-	data.PrivateNetworking = types.BoolPointerValue(cluster.PrivateNetworking)
-	data.SuperuserAccess = types.BoolPointerValue(cluster.SuperuserAccess)
+	data.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	data.LogsUrl = types.StringPointerValue(responseCluster.LogsUrl)
+	data.MetricsUrl = types.StringPointerValue(responseCluster.MetricsUrl)
+	data.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	data.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
+	data.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
+	data.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
+	data.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 
-	if cluster.FarawayReplicaIds != nil {
-		data.FarawayReplicaIds = *cluster.FarawayReplicaIds
+	if responseCluster.FarawayReplicaIds != nil {
+		data.FarawayReplicaIds = *responseCluster.FarawayReplicaIds
 	}
 
-	if cluster.FirstRecoverabilityPointAt != nil {
-		data.FirstRecoverabilityPointAt = types.StringValue(cluster.FirstRecoverabilityPointAt.String())
+	if responseCluster.FirstRecoverabilityPointAt != nil {
+		data.FirstRecoverabilityPointAt = types.StringValue(responseCluster.FirstRecoverabilityPointAt.String())
 	}
 
 	data.PgConfig = []PgConfigDatasourceModel{}
-	if configs := cluster.PgConfig; configs != nil {
+	if configs := responseCluster.PgConfig; configs != nil {
 		for _, kv := range *configs {
 			data.PgConfig = append(data.PgConfig, PgConfigDatasourceModel{
 				Name:  types.StringValue(kv.Name),
@@ -462,7 +450,7 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	data.AllowedIpRanges = []AllowedIpRangesDatasourceModel{}
-	if allowedIpRanges := cluster.AllowedIpRanges; allowedIpRanges != nil {
+	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
 			data.AllowedIpRanges = append(data.AllowedIpRanges, AllowedIpRangesDatasourceModel{
 				CidrBlock:   types.StringValue(ipRange.CidrBlock),
@@ -471,37 +459,64 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 	}
 
-	if pt := cluster.CreatedAt; pt != nil {
+	if pt := responseCluster.CreatedAt; pt != nil {
 		data.CreatedAt = types.StringValue(pt.String())
 	}
 
 	data.ExpiredAt = types.StringNull()
-	if pt := cluster.ExpiredAt; pt != nil {
+	if pt := responseCluster.ExpiredAt; pt != nil {
 		data.ExpiredAt = types.StringValue(pt.String())
 	}
 
 	data.DeletedAt = types.StringNull()
-	if pt := cluster.DeletedAt; pt != nil {
+	if pt := responseCluster.DeletedAt; pt != nil {
 		data.DeletedAt = types.StringValue(pt.String())
 	}
 
-	if cluster.ServiceAccountIds != nil {
+	if responseCluster.ServiceAccountIds != nil {
 		serviceAccountIds := []attr.Value{}
 
-		for _, v := range *cluster.ServiceAccountIds {
+		for _, v := range *responseCluster.ServiceAccountIds {
 			serviceAccountIds = append(serviceAccountIds, types.StringValue(v))
 		}
 
 		data.ServiceAccountIds = types.SetValueMust(types.StringType, serviceAccountIds)
 	}
 
-	if cluster.PeAllowedPrincipalIds != nil {
+	if responseCluster.PeAllowedPrincipalIds != nil {
 		peAllowedPrincipalIds := []attr.Value{}
-		for _, v := range *cluster.PeAllowedPrincipalIds {
+		for _, v := range *responseCluster.PeAllowedPrincipalIds {
 			peAllowedPrincipalIds = append(peAllowedPrincipalIds, types.StringValue(v))
 		}
 
 		data.PeAllowedPrincipalIds = types.SetValueMust(types.StringType, peAllowedPrincipalIds)
+	}
+
+	newPgConfig := []PgConfigDatasourceModel{}
+	if configs := responseCluster.PgConfig; configs != nil {
+		for _, apiConfig := range *configs {
+			newPgConfig = append(newPgConfig, PgConfigDatasourceModel{
+				Name:  types.StringValue(apiConfig.Name),
+				Value: types.StringValue(apiConfig.Value),
+			})
+		}
+	}
+
+	if len(newPgConfig) > 0 {
+		data.PgConfig = newPgConfig
+	}
+
+	if responseCluster.Extensions != nil {
+		for _, v := range *responseCluster.Extensions {
+			if v.Enabled && v.ExtensionId == "pgvector" {
+				data.Pgvector = types.BoolValue(true)
+				break
+			}
+			if v.Enabled && v.ExtensionId == "postgis" {
+				data.PostGIS = types.BoolValue(true)
+				break
+			}
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

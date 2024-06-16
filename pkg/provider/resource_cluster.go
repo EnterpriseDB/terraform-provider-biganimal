@@ -521,7 +521,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 	}
 
-	if err := c.read(ctx, &config); err != nil {
+	if err := readCluster(ctx, c.client, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -539,7 +539,7 @@ func (c *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	if err := c.read(ctx, &state); err != nil {
+	if err := readCluster(ctx, c.client, &state); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -645,7 +645,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 	}
 
-	if err := c.read(ctx, &plan); err != nil {
+	if err := readCluster(ctx, c.client, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -686,52 +686,52 @@ func (c *clusterResource) ImportState(ctx context.Context, req resource.ImportSt
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
-func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterResourceModel) error {
-	apiCluster, err := c.client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResource *ClusterResourceModel) error {
+	responseCluster, err := client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
 
-	connection, err := c.client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+	connection, err := client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
 
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
-	tfClusterResource.ClusterId = apiCluster.ClusterId
-	tfClusterResource.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
-	tfClusterResource.ClusterType = apiCluster.ClusterType
-	tfClusterResource.Phase = apiCluster.Phase
-	tfClusterResource.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
+	tfClusterResource.ClusterId = responseCluster.ClusterId
+	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
+	tfClusterResource.ClusterType = responseCluster.ClusterType
+	tfClusterResource.Phase = responseCluster.Phase
+	tfClusterResource.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	tfClusterResource.ClusterArchitecture = &ClusterArchitectureResourceModel{
-		Id:    apiCluster.ClusterArchitecture.ClusterArchitectureId,
-		Nodes: apiCluster.ClusterArchitecture.Nodes,
-		Name:  types.StringValue(apiCluster.ClusterArchitecture.ClusterArchitectureName),
+		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
+		Nodes: responseCluster.ClusterArchitecture.Nodes,
+		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
 	}
-	tfClusterResource.Region = types.StringValue(apiCluster.Region.Id)
-	tfClusterResource.InstanceType = types.StringValue(apiCluster.InstanceType.InstanceTypeId)
+	tfClusterResource.Region = types.StringValue(responseCluster.Region.Id)
+	tfClusterResource.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
 	tfClusterResource.Storage = &StorageResourceModel{
-		VolumeType:       types.StringPointerValue(apiCluster.Storage.VolumeTypeId),
-		VolumeProperties: types.StringPointerValue(apiCluster.Storage.VolumePropertiesId),
-		Size:             types.StringPointerValue(apiCluster.Storage.Size),
-		Iops:             types.StringPointerValue(apiCluster.Storage.Iops),
-		Throughput:       types.StringPointerValue(apiCluster.Storage.Throughput),
+		VolumeType:       types.StringPointerValue(responseCluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(responseCluster.Storage.VolumePropertiesId),
+		Size:             types.StringPointerValue(responseCluster.Storage.Size),
+		Iops:             types.StringPointerValue(responseCluster.Storage.Iops),
+		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
-	tfClusterResource.ResizingPvc = StringSliceToList(apiCluster.ResizingPvc)
-	tfClusterResource.ReadOnlyConnections = types.BoolPointerValue(apiCluster.ReadOnlyConnections)
+	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
+	tfClusterResource.ReadOnlyConnections = types.BoolPointerValue(responseCluster.ReadOnlyConnections)
 	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
 	tfClusterResource.RoConnectionUri = types.StringPointerValue(&connection.ReadOnlyPgUri)
-	tfClusterResource.CspAuth = types.BoolPointerValue(apiCluster.CSPAuth)
-	tfClusterResource.LogsUrl = apiCluster.LogsUrl
-	tfClusterResource.MetricsUrl = apiCluster.MetricsUrl
-	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
-	tfClusterResource.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
-	tfClusterResource.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
-	tfClusterResource.FarawayReplicaIds = StringSliceToSet(apiCluster.FarawayReplicaIds)
-	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
-	tfClusterResource.SuperuserAccess = types.BoolPointerValue(apiCluster.SuperuserAccess)
-	if apiCluster.Extensions != nil {
-		for _, v := range *apiCluster.Extensions {
+	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	tfClusterResource.LogsUrl = responseCluster.LogsUrl
+	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
+	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
+	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
+	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
+	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
+	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
+	if responseCluster.Extensions != nil {
+		for _, v := range *responseCluster.Extensions {
 			if v.Enabled && v.ExtensionId == "pgvector" {
 				tfClusterResource.Pgvector = types.BoolValue(true)
 				break
@@ -743,14 +743,14 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 		}
 	}
 
-	if apiCluster.FirstRecoverabilityPointAt != nil {
-		firstPointAt := apiCluster.FirstRecoverabilityPointAt.String()
+	if responseCluster.FirstRecoverabilityPointAt != nil {
+		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
 		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
 	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
-	if configs := apiCluster.PgConfig; configs != nil {
+	if configs := responseCluster.PgConfig; configs != nil {
 		for _, tfCRPgConfig := range tfClusterResource.PgConfig {
 			for _, apiConfig := range *configs {
 				if tfCRPgConfig.Name == apiConfig.Name {
@@ -768,7 +768,7 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 	}
 
 	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := apiCluster.AllowedIpRanges; allowedIpRanges != nil {
+	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
 			tfClusterResource.AllowedIpRanges = append(tfClusterResource.AllowedIpRanges, AllowedIpRangesResourceModel{
 				CidrBlock:   ipRange.CidrBlock,
@@ -777,30 +777,30 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 		}
 	}
 
-	if pt := apiCluster.CreatedAt; pt != nil {
+	if pt := responseCluster.CreatedAt; pt != nil {
 		tfClusterResource.CreatedAt = types.StringValue(pt.String())
 	}
 
-	if apiCluster.MaintenanceWindow != nil {
+	if responseCluster.MaintenanceWindow != nil {
 		tfClusterResource.MaintenanceWindow = &commonTerraform.MaintenanceWindow{
-			IsEnabled: apiCluster.MaintenanceWindow.IsEnabled,
-			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*apiCluster.MaintenanceWindow.StartDay))),
-			StartTime: types.StringPointerValue(apiCluster.MaintenanceWindow.StartTime),
+			IsEnabled: responseCluster.MaintenanceWindow.IsEnabled,
+			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*responseCluster.MaintenanceWindow.StartDay))),
+			StartTime: types.StringPointerValue(responseCluster.MaintenanceWindow.StartTime),
 		}
 	}
 
-	if apiCluster.PeAllowedPrincipalIds != nil {
-		tfClusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&apiCluster.PeAllowedPrincipalIds))
+	if responseCluster.PeAllowedPrincipalIds != nil {
+		tfClusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&responseCluster.PeAllowedPrincipalIds))
 	}
 
-	if apiCluster.ServiceAccountIds != nil {
-		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
+	if responseCluster.ServiceAccountIds != nil {
+		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
 	}
 
-	if apiCluster.PgBouncer != nil {
+	if responseCluster.PgBouncer != nil {
 		tfClusterResource.PgBouncer = &PgBouncerModel{}
 		*tfClusterResource.PgBouncer = PgBouncerModel{
-			IsEnabled: apiCluster.PgBouncer.IsEnabled,
+			IsEnabled: responseCluster.PgBouncer.IsEnabled,
 		}
 
 		settingsElemType := map[string]attr.Type{"name": types.StringType, "operation": types.StringType, "value": types.StringType}
@@ -810,16 +810,16 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 			"value":     basetypes.NewStringValue(""),
 		})
 
-		if !apiCluster.PgBouncer.IsEnabled {
+		if !responseCluster.PgBouncer.IsEnabled {
 			tfClusterResource.PgBouncer.Settings = basetypes.NewSetNull(elem.Type(ctx))
-		} else if apiCluster.PgBouncer.IsEnabled &&
-			apiCluster.PgBouncer.Settings != nil &&
-			len(*apiCluster.PgBouncer.Settings) == 0 {
+		} else if responseCluster.PgBouncer.IsEnabled &&
+			responseCluster.PgBouncer.Settings != nil &&
+			len(*responseCluster.PgBouncer.Settings) == 0 {
 			tfClusterResource.PgBouncer.Settings = basetypes.NewSetNull(elem.Type(ctx))
-		} else if apiCluster.PgBouncer.Settings != nil && len(*apiCluster.PgBouncer.Settings) > 0 {
+		} else if responseCluster.PgBouncer.Settings != nil && len(*responseCluster.PgBouncer.Settings) > 0 {
 			settings := []attr.Value{}
 
-			for _, v := range *apiCluster.PgBouncer.Settings {
+			for _, v := range *responseCluster.PgBouncer.Settings {
 				object := basetypes.NewObjectValueMust(settingsElemType, map[string]attr.Value{
 					"name":      basetypes.NewStringValue(*v.Name),
 					"operation": basetypes.NewStringValue(*v.Operation),
