@@ -10,7 +10,7 @@ variable "project_id" {
 
 data "biganimal_analytics_cluster" "this" {
   cluster_id = var.cluster_id
-  project_id   = var.project_id
+  project_id = var.project_id
 }
 
 output "backup_retention_period" {
@@ -67,10 +67,6 @@ output "region" {
 
 output "resizing_pvc" {
   value = data.biganimal_analytics_cluster.this.resizing_pvc
-}
-
-output "storage" {
-  value = data.biganimal_analytics_cluster.this.storage
 }
 
 output "pe_allowed_principal_ids" {

@@ -68,35 +68,6 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 					},
 				},
 			},
-			"storage": schema.SingleNestedAttribute{
-				Description: "Storage.",
-				Computed:    true,
-				Attributes: map[string]schema.Attribute{
-					"iops": schema.StringAttribute{
-						Description: "IOPS for the selected volume.",
-						Optional:    true,
-						Computed:    true,
-					},
-					"size": schema.StringAttribute{
-						Description: "Size of the volume.",
-						Optional:    true,
-						Computed:    true,
-					},
-					"throughput": schema.StringAttribute{
-						Description: "Throughput.",
-						Optional:    true,
-						Computed:    true,
-					},
-					"volume_properties": schema.StringAttribute{
-						Description: "Volume properties.",
-						Required:    true,
-					},
-					"volume_type": schema.StringAttribute{
-						Description: "Volume type.",
-						Required:    true,
-					},
-				},
-			},
 			"cluster_id": schema.StringAttribute{
 				MarkdownDescription: "Cluster ID.",
 				Required:            true,
@@ -116,9 +87,7 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
 				Required:            true,
-				Validators: []validator.String{
-					ProjectIdValidator(),
-				},
+				Validators:          []validator.String{ProjectIdValidator()},
 			},
 			"logs_url": schema.StringAttribute{
 				MarkdownDescription: "The URL to find the logs of this cluster.",
@@ -128,9 +97,7 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 				MarkdownDescription: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
 				Optional:            true,
 				Computed:            true,
-				Validators: []validator.String{
-					BackupRetentionPeriodValidator(),
-				},
+				Validators:          []validator.String{BackupRetentionPeriodValidator()},
 			},
 			"cloud_provider": schema.StringAttribute{
 				Description: "Cloud provider. For example, \"aws\" or \"bah:aws\".",
@@ -139,9 +106,7 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\" or \"pgextended\".",
 				Computed:            true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("epas", "pgextended", "postgres"),
-				},
+				Validators:          []validator.String{stringvalidator.OneOf("epas", "pgextended", "postgres")},
 			},
 			"first_recoverability_point_at": schema.StringAttribute{
 				MarkdownDescription: "Earliest backup recover time.",
@@ -153,7 +118,7 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 			},
 			"private_networking": schema.BoolAttribute{
 				MarkdownDescription: "Is private networking enabled.",
-				Optional:            true,
+				Computed:            true,
 			},
 			"password": schema.StringAttribute{
 				MarkdownDescription: "Password for the user edb_admin. It must be 12 characters or more.",
@@ -189,7 +154,6 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 				MarkdownDescription: "Custom maintenance window.",
 				Optional:            true,
 				Computed:            true,
-
 				Attributes: map[string]schema.Attribute{
 					"is_enabled": schema.BoolAttribute{
 						MarkdownDescription: "Is maintenance window enabled.",
@@ -199,17 +163,13 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 						MarkdownDescription: "The day of week, 0 represents Sunday, 1 is Monday, and so on.",
 						Optional:            true,
 						Computed:            true,
-						Validators: []validator.Int64{
-							int64validator.Between(0, 6),
-						},
+						Validators:          []validator.Int64{int64validator.Between(0, 6)},
 					},
 					"start_time": schema.StringAttribute{
 						MarkdownDescription: "Start time. \"hh:mm\", for example: \"23:59\".",
 						Optional:            true,
 						Computed:            true,
-						Validators: []validator.String{
-							startTimeValidator(),
-						},
+						Validators:          []validator.String{startTimeValidator()},
 					},
 				},
 			},
@@ -252,7 +212,7 @@ func (r *analyticsClusterDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, data.analyticsClusterResourceModel)...)
 }
 
 func NewAnalyticsClusterDataSource() datasource.DataSource {
