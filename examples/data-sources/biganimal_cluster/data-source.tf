@@ -33,14 +33,6 @@ output "csp_auth" {
   value = coalesce(data.biganimal_cluster.this.csp_auth, false)
 }
 
-output "deleted_at" {
-  value = data.biganimal_cluster.this.deleted_at
-}
-
-output "expired_at" {
-  value = data.biganimal_cluster.this.expired_at
-}
-
 output "instance_type" {
   value = data.biganimal_cluster.this.instance_type
 }
