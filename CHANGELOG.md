@@ -1,3 +1,5 @@
+## v0.11.0 ()
+
 ## v0.10.0 (May 13. 2024)
 Features:
 * PostGIS support for `biganimal_cluster` resources
