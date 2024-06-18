@@ -333,6 +333,21 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
+func generateAnalyticsClusterModelUpdate(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
+	cluster, err := generateGenericAnalyticsClusterModel(ctx, client, clusterResource)
+	if err != nil {
+		return models.Cluster{}, err
+	}
+
+	cluster.ClusterId = nil
+	cluster.PgType = nil
+	cluster.PgVersion = nil
+	cluster.Provider = nil
+	cluster.Region = nil
+
+	return cluster, nil
+}
+
 func generateGenericAnalyticsClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterType:           utils.ToPointer("analytical"),
@@ -555,7 +570,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 		}
 	}
 
-	clusterModel, err := generateGenericAnalyticsClusterModel(ctx, r.client.ClusterClient(), plan)
+	clusterModel, err := generateAnalyticsClusterModelUpdate(ctx, r.client.ClusterClient(), plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
