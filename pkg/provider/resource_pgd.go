@@ -1151,8 +1151,30 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 	outPgdTFResource.DataGroups = []terraform.DataGroup{}
 	outPgdTFResource.WitnessGroups = []terraform.WitnessGroup{}
 
-	sortedByStateAPIGroups := []interface{}{}
-	for _, tfDg := range originalTFDgs {
+	sortedByStateRespGroups := []interface{}{}
+
+	// if originalTFDgs is not nil then we need to sort the groups by state as terraform has to compare in order
+	if originalTFDgs != nil {
+		for _, tfDg := range originalTFDgs {
+			for k, v := range *clusterResp.Groups {
+				switch apiGroupResp := v.(type) {
+				case map[string]interface{}:
+					if apiGroupResp["clusterType"] == "data_group" {
+						apiDgModel := pgdApi.DataGroup{}
+						if err := utils.CopyObjectJson(apiGroupResp, &apiDgModel); err != nil {
+							diags.AddError("unable to copy data group", err.Error())
+							return
+						}
+
+						if apiDgModel.Region.RegionId == tfDg.Region.RegionId {
+							sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
+						}
+					}
+				}
+			}
+		}
+	} else {
+		// originalTFDgs may be nil if importing resource as state will be nil so just add them in the order they are in the response
 		for k, v := range *clusterResp.Groups {
 			switch apiGroupResp := v.(type) {
 			case map[string]interface{}:
@@ -1162,16 +1184,32 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 						diags.AddError("unable to copy data group", err.Error())
 						return
 					}
-
-					if apiDgModel.Region.RegionId == tfDg.Region.RegionId {
-						sortedByStateAPIGroups = append(sortedByStateAPIGroups, (*clusterResp.Groups)[k])
-					}
+					sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
 				}
 			}
 		}
 	}
 
-	for _, tfWg := range originalTFWgs {
+	if originalTFWgs != nil {
+		for _, tfWg := range originalTFWgs {
+			for k, v := range *clusterResp.Groups {
+				switch apiGroupResp := v.(type) {
+				case map[string]interface{}:
+					if apiGroupResp["clusterType"] == "witness_group" {
+						apiWgModel := pgdApi.WitnessGroup{}
+						if err := utils.CopyObjectJson(apiGroupResp, &apiWgModel); err != nil {
+							diags.AddError("unable to copy witness group", err.Error())
+							return
+						}
+
+						if apiWgModel.Region.RegionId == tfWg.Region.RegionId.ValueString() {
+							sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
+						}
+					}
+				}
+			}
+		}
+	} else {
 		for k, v := range *clusterResp.Groups {
 			switch apiGroupResp := v.(type) {
 			case map[string]interface{}:
@@ -1181,16 +1219,13 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 						diags.AddError("unable to copy witness group", err.Error())
 						return
 					}
-
-					if apiWgModel.Region.RegionId == tfWg.Region.RegionId.ValueString() {
-						sortedByStateAPIGroups = append(sortedByStateAPIGroups, (*clusterResp.Groups)[k])
-					}
+					sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
 				}
 			}
 		}
 	}
 
-	for _, v := range sortedByStateAPIGroups {
+	for _, v := range sortedByStateRespGroups {
 		switch apiGroupResp := v.(type) {
 		case map[string]interface{}:
 			if apiGroupResp["clusterType"] == "data_group" {
