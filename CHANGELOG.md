@@ -1,4 +1,7 @@
 ## v0.11.0 ()
+Features:
+* New Resource to manage Analytical clusters: `biganimal_analytics_cluster`
+* New Data Source: `biganimal_analytics_cluster`
 
 ## v0.10.0 (May 13. 2024)
 Features:
