@@ -628,6 +628,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 
 func (r *analyticsClusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state analyticsClusterResourceModel
+
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
