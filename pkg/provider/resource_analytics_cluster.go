@@ -271,7 +271,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	clusterModel, err := generateGenericAnalyticsClusterModel(ctx, r.client, config)
+	clusterModel, err := generateAnalyticsClusterModelCreate(ctx, r.client, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
@@ -333,8 +333,9 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
+// uses generateAnalyticsClusterModelCreate but just comments out some fields that are not needed for update
 func generateAnalyticsClusterModelUpdate(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
-	cluster, err := generateGenericAnalyticsClusterModel(ctx, client, clusterResource)
+	cluster, err := generateAnalyticsClusterModelCreate(ctx, client, clusterResource)
 	if err != nil {
 		return models.Cluster{}, err
 	}
@@ -348,7 +349,8 @@ func generateAnalyticsClusterModelUpdate(ctx context.Context, client *api.Cluste
 	return cluster, nil
 }
 
-func generateGenericAnalyticsClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
+// used for create operation
+func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterType:           utils.ToPointer("analytical"),
 		ClusterName:           clusterResource.ClusterName.ValueStringPointer(),
