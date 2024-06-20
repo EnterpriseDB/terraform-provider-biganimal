@@ -271,7 +271,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	clusterModel, err := generateGenericAnalyticsClusterModel(ctx, r.client, config)
+	clusterModel, err := generateAnalyticsClusterModelCreate(ctx, r.client, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error creating cluster", err.Error())
@@ -333,7 +333,24 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
-func generateGenericAnalyticsClusterModel(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
+// uses generateAnalyticsClusterModelCreate but just comments out some fields that are not needed for update
+func generateAnalyticsClusterModelUpdate(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
+	cluster, err := generateAnalyticsClusterModelCreate(ctx, client, clusterResource)
+	if err != nil {
+		return models.Cluster{}, err
+	}
+
+	cluster.ClusterId = nil
+	cluster.PgType = nil
+	cluster.PgVersion = nil
+	cluster.Provider = nil
+	cluster.Region = nil
+
+	return cluster, nil
+}
+
+// used for create operation
+func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.ClusterClient, clusterResource analyticsClusterResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterType:           utils.ToPointer("analytical"),
 		ClusterName:           clusterResource.ClusterName.ValueStringPointer(),
@@ -555,7 +572,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 		}
 	}
 
-	clusterModel, err := generateGenericAnalyticsClusterModel(ctx, r.client.ClusterClient(), plan)
+	clusterModel, err := generateAnalyticsClusterModelUpdate(ctx, r.client.ClusterClient(), plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating cluster", err.Error())
