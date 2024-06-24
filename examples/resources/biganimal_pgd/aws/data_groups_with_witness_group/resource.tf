@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.10.0"
+      version = "0.11.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -86,6 +86,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: 123456789012
+      # ]
     },
     {
       allowed_ip_ranges = [
@@ -140,6 +143,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 2
         start_time = "15:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: 123456789012
+      # ]
     }
   ]
   witness_groups = [
