@@ -43,7 +43,7 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 	defaultWgObject := basetypes.NewObjectValueMust(defaultWgAttrTypes, defaultWgAttr)
 	defaultWgObjects := []attr.Value{}
 	defaultWgObjects = append(defaultWgObjects, defaultWgObject)
-	defaultWgSet := basetypes.NewSetValueMust(defaultWgObject.Type(ctx), defaultWgObjects)
+	defaultWgSet := basetypes.NewListValueMust(defaultWgObject.Type(ctx), defaultWgObjects)
 
 	addGroupObject := map[string]attr.Value{
 		"region": basetypes.NewObjectValueMust(
@@ -66,8 +66,8 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 
 	type args struct {
 		ctx  context.Context
-		req  planmodifier.SetRequest
-		resp *planmodifier.SetResponse
+		req  planmodifier.ListRequest
+		resp *planmodifier.ListResponse
 	}
 
 	tests := []struct {
@@ -81,11 +81,11 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 		{
 			name: "Add wg expected success",
 			args: args{
-				req: planmodifier.SetRequest{
+				req: planmodifier.ListRequest{
 					StateValue: defaultWgSet,
 				},
-				resp: &planmodifier.SetResponse{
-					PlanValue: basetypes.NewSetValueMust(defaultWgObject.Type(ctx),
+				resp: &planmodifier.ListResponse{
+					PlanValue: basetypes.NewListValueMust(defaultWgObject.Type(ctx),
 						append(defaultWgObjects, basetypes.NewObjectValueMust(defaultWgAttrTypes,
 							addGroupObject,
 						)),
@@ -101,11 +101,11 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 		{
 			name: "Create new wg expected success",
 			args: args{
-				req: planmodifier.SetRequest{
-					StateValue: basetypes.NewSetNull(defaultWgObject.Type(ctx)),
+				req: planmodifier.ListRequest{
+					StateValue: basetypes.NewListNull(defaultWgObject.Type(ctx)),
 				},
-				resp: &planmodifier.SetResponse{
-					PlanValue: basetypes.NewSetValueMust(defaultWgObject.Type(ctx), defaultWgObjects),
+				resp: &planmodifier.ListResponse{
+					PlanValue: basetypes.NewListValueMust(defaultWgObject.Type(ctx), defaultWgObjects),
 				},
 			},
 			expectedPlanElements: defaultWgObjects,
@@ -113,12 +113,12 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 		{
 			name: "Use state for unknown expected success",
 			args: args{
-				req: planmodifier.SetRequest{
-					StateValue: basetypes.NewSetValueMust(defaultWgObject.Type(ctx), defaultWgObjects),
-					PlanValue:  basetypes.NewSetUnknown(defaultWgObject.Type(ctx)),
+				req: planmodifier.ListRequest{
+					StateValue: basetypes.NewListValueMust(defaultWgObject.Type(ctx), defaultWgObjects),
+					PlanValue:  basetypes.NewListUnknown(defaultWgObject.Type(ctx)),
 				},
-				resp: &planmodifier.SetResponse{
-					PlanValue: basetypes.NewSetUnknown(defaultWgObject.Type(ctx)),
+				resp: &planmodifier.ListResponse{
+					PlanValue: basetypes.NewListUnknown(defaultWgObject.Type(ctx)),
 				},
 			},
 			expectedPlanElements: defaultWgObjects,
@@ -129,7 +129,7 @@ func Test_customWitnessGroupDiffModifier_PlanModifySet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tt.m.PlanModifySet(tt.args.ctx, tt.args.req, tt.args.resp)
+			tt.m.PlanModifyList(tt.args.ctx, tt.args.req, tt.args.resp)
 
 			if tt.args.resp.Diagnostics.WarningsCount() != tt.expectedWarningsCount {
 				t.Fatalf("expected warning count: %v, got: %v", tt.expectedWarningsCount, tt.args.resp.Diagnostics.WarningsCount())

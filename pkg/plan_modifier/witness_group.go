@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func CustomWitnessGroupDiffConfig() planmodifier.Set {
+func CustomWitnessGroupDiffConfig() planmodifier.List {
 	return CustomWitnessGroupDiffModifier{}
 }
 
@@ -26,8 +26,8 @@ func (m CustomWitnessGroupDiffModifier) MarkdownDescription(_ context.Context) s
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifySet implements the plan modification logic.
-func (m CustomWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+// PlanModifyList implements the plan modification logic.
+func (m CustomWitnessGroupDiffModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if req.StateValue.IsNull() {
 		return
 	}
@@ -112,7 +112,7 @@ func (m CustomWitnessGroupDiffModifier) PlanModifySet(ctx context.Context, req p
 	// 	}
 	// }
 	if len(newPlan) != 0 {
-		resp.PlanValue = basetypes.NewSetValueMust(newPlan[0].Type(ctx), newPlan)
+		resp.PlanValue = basetypes.NewListValueMust(newPlan[0].Type(ctx), newPlan)
 	} else {
 		// Do nothing if there is a known planned value.
 		if !req.PlanValue.IsUnknown() {
