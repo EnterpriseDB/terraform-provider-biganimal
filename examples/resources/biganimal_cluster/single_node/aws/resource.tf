@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.10.0"
+      version = "0.11.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -76,7 +76,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
-  cloud_provider        = "aws"
+  cloud_provider        = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
   read_only_connections = false
   region                = "us-east-1"
   superuser_access      = true
@@ -98,6 +98,10 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: 123456789012
+  # ]
 }
 
 output "password" {

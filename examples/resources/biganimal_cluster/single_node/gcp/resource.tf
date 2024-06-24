@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.10.0"
+      version = "0.11.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -76,7 +76,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
-  cloud_provider        = "gcp"
+  cloud_provider        = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
   read_only_connections = false
   region                = "us-east1"
   superuser_access      = true
@@ -98,6 +98,14 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "development-data-123456"
+  # ]
+
+  # service_account_ids = [
+  #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+  # ]
 }
 
 output "password" {

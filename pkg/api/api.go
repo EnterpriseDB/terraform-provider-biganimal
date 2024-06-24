@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const clientTimeoutSeconds = 60
+
 type API struct {
 	BaseURL    string
 	Token      string
