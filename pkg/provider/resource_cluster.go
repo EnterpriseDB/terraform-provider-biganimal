@@ -21,8 +21,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -150,113 +150,104 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"timeouts": timeouts.Block(ctx,
 				timeouts.Opts{Create: true, Delete: true, Update: true},
 			),
-
-			"storage": schema.SingleNestedBlock{
-				MarkdownDescription: "Storage.",
-				PlanModifiers:       []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
-				Attributes: map[string]schema.Attribute{
-					"volume_properties": schema.StringAttribute{
-						MarkdownDescription: "Volume properties in accordance with the selected volume type.",
-						Required:            true,
-					},
-					"volume_type": schema.StringAttribute{
-						MarkdownDescription: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", org s \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
-						Required:            true,
-					},
-					"size": schema.StringAttribute{
-						MarkdownDescription: "Size of the volume. It can be set to different values depending on your volume type and properties.",
-						Required:            true,
-					},
-					"iops": schema.StringAttribute{
-						MarkdownDescription: "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
-						Optional:            true,
-						Computed:            true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-					},
-					"throughput": schema.StringAttribute{
-						MarkdownDescription: "Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.",
-						Optional:            true,
-						Computed:            true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-					},
-				},
-			},
-			"allowed_ip_ranges": schema.SetNestedBlock{
-				MarkdownDescription: "Allowed IP ranges.",
-				PlanModifiers:       []planmodifier.Set{plan_modifier.CustomAllowedIps()},
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							MarkdownDescription: "CIDR block.",
-							Required:            true,
-						},
-						"description": schema.StringAttribute{
-							MarkdownDescription: "CIDR block description.",
-							Optional:            true,
-						},
-					},
-				},
-			},
-
-			"pg_config": schema.SetNestedBlock{
-				MarkdownDescription: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							MarkdownDescription: "GUC name.",
-							Required:            true,
-						},
-						"value": schema.StringAttribute{
-							MarkdownDescription: "GUC value.",
-							Required:            true,
-						},
-					},
-				},
-			},
-
-			"cluster_architecture": schema.SingleNestedBlock{
-				MarkdownDescription: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
-				Attributes: map[string]schema.Attribute{
-					"nodes": schema.Int64Attribute{
-						MarkdownDescription: "Node count.",
-						Required:            true,
-					},
-					"id": schema.StringAttribute{
-						MarkdownDescription: "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
-						Required:            true,
-						Validators: []validator.String{
-							stringvalidator.OneOf("single", "ha"),
-						},
-					},
-					"name": schema.StringAttribute{
-						MarkdownDescription: "Name.",
-						Optional:            true,
-						Computed:            true,
-						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-					},
-				},
-			},
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Resource ID of the cluster.",
+				MarkdownDescription: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
-
 			"cluster_id": schema.StringAttribute{
 				MarkdownDescription: "Cluster ID.",
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"cluster_architecture": schema.SingleNestedAttribute{
+				Description: "Cluster architecture.",
+				Required:    true,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:   "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
+						Required:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"name": schema.StringAttribute{
+						Description:   "Name.",
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"nodes": schema.Float64Attribute{
+						Description:   "Node count.",
+						Required:      true,
+						PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()},
+					},
+				},
+			},
+			"allowed_ip_ranges": schema.SetNestedAttribute{
+				Description: "Allowed IP ranges.",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"cidr_block": schema.StringAttribute{
+							Description: "CIDR block",
+							Required:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: "Description of CIDR block",
+							Optional:    true,
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+			"pg_config": schema.SetNestedAttribute{
+				Description: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "GUC name.",
+							Required:    true,
+						},
+						"value": schema.StringAttribute{
+							Description: "GUC value.",
+							Required:    true,
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+			"storage": schema.SingleNestedAttribute{
+				Description: "Storage.",
+				Required:    true,
+				Attributes: map[string]schema.Attribute{
+					"iops": schema.StringAttribute{
+						Description:   "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"size": schema.StringAttribute{
+						Description:   "Size of the volume. It can be set to different values depending on your volume type and properties.",
+						Required:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"throughput": schema.StringAttribute{
+						Description:   "Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.",
+						Optional:      true,
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"volume_properties": schema.StringAttribute{
+						Description: "Volume properties in accordance with the selected volume type.",
+						Required:    true,
+					},
+					"volume_type": schema.StringAttribute{
+						Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", org s \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
+						Required:    true,
+					},
+				},
 			},
 			"connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster connection URI.",

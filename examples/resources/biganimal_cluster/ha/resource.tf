@@ -32,35 +32,37 @@ resource "biganimal_cluster" "ha_cluster" {
   project_id   = var.project_id
   pause        = false
 
-  allowed_ip_ranges {
-    cidr_block  = "127.0.0.1/32"
-    description = "localhost"
-  }
-
-  allowed_ip_ranges {
-    cidr_block  = "192.168.0.1/32"
-    description = "description!"
-  }
+  allowed_ip_ranges = [
+    {
+      cidr_block  = "127.0.0.1/32"
+      description = "localhost"
+    },
+    {
+      cidr_block  = "192.168.0.1/32"
+      description = "description!"
+    }
+  ]
 
   backup_retention_period = "6d"
-  cluster_architecture {
+  cluster_architecture = {
     id    = "ha"
     nodes = 3
   }
 
   instance_type = "aws:c5.large"
   password      = resource.random_password.password.result
-  pg_config {
-    name  = "application_name"
-    value = "created through terraform"
-  }
+  pg_config = [
+    {
+      name  = "application_name"
+      value = "created through terraform"
+    },
+    {
+      name  = "array_nulls"
+      value = "off"
+    }
+  ]
 
-  pg_config {
-    name  = "array_nulls"
-    value = "off"
-  }
-
-  storage {
+  storage = {
     volume_type       = "gp3"
     volume_properties = "gp3"
     size              = "4 Gi"
@@ -75,7 +77,7 @@ resource "biganimal_cluster" "ha_cluster" {
   pg_type               = "epas"
   pg_version            = "15"
   private_networking    = false
-  cloud_provider        = "aws"
+  cloud_provider        = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
   read_only_connections = true
   region                = "us-east-1"
   superuser_access      = true
