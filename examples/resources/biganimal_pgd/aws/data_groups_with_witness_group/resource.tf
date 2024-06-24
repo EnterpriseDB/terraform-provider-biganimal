@@ -76,7 +76,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       region = {
         region_id = "eu-west-1"
@@ -86,6 +86,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: 123456789012
+      # ]
     },
     {
       allowed_ip_ranges = [
@@ -130,7 +133,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       region = {
         region_id = "eu-west-2"
@@ -140,6 +143,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 2
         start_time = "15:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: 123456789012
+      # ]
     }
   ]
   witness_groups = [
@@ -148,7 +154,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "us-east-1"
       }
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       maintenance_window = {
         is_enabled = true
