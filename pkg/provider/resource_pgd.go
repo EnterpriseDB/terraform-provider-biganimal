@@ -619,7 +619,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	for _, v := range config.DataGroups {
 		v := v
 
-		storage := buildApiStorage(*v.Storage)
+		storage := buildRequestStorage(*v.Storage)
 
 		if v.PgConfig == nil {
 			v.PgConfig = &[]models.KeyValue{}
@@ -636,13 +636,13 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			Nodes:                   v.ClusterArchitecture.Nodes,
 		}
 
-		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, config.ProjectId, v)
+		svAccIds, principalIds := buildRequestBah(ctx, p.client, &resp.Diagnostics, config.ProjectId, v)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
 		apiDGModel := pgdApi.DataGroup{
-			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
+			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
@@ -901,14 +901,14 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	clusterReqBody.Groups = &[]any{}
 
 	for _, v := range plan.DataGroups {
-		storage := buildApiStorage(*v.Storage)
+		storage := buildRequestStorage(*v.Storage)
 
 		groupId := v.GroupId.ValueStringPointer()
 		if v.GroupId.IsUnknown() {
 			groupId = nil
 		}
 
-		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, plan.ProjectId, v)
+		svAccIds, principalIds := buildRequestBah(ctx, p.client, &resp.Diagnostics, plan.ProjectId, v)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -917,7 +917,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		reqDg := pgdApi.DataGroup{
 			GroupId:               groupId,
 			ClusterType:           utils.ToPointer("data_group"),
-			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
+			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			CspAuth:               v.CspAuth,
 			InstanceType:          v.InstanceType,
@@ -1485,7 +1485,7 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
 }
 
-func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
+func buildRequestBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
 	if strings.Contains(*dg.Provider.CloudProviderId, "bah") {
 		if !dg.PeAllowedPrincipalIds.IsNull() && !dg.PeAllowedPrincipalIds.IsUnknown() && len(dg.PeAllowedPrincipalIds.Elements()) > 0 {
 			elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
@@ -1552,7 +1552,7 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 	return
 }
 
-func buildApiAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
+func buildRequestAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
 	apiAllowedIpRanges := &[]models.AllowedIpRange{}
 
 	for _, v := range tfAllowedIpRanges.Elements() {
@@ -1565,7 +1565,7 @@ func buildApiAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.All
 	return apiAllowedIpRanges
 }
 
-func buildApiStorage(tfStorage terraform.Storage) *models.Storage {
+func buildRequestStorage(tfStorage terraform.Storage) *models.Storage {
 	var iops *string
 	var throughput *string
 

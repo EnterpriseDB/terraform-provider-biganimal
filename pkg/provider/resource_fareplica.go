@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -559,7 +560,7 @@ func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResour
 		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
 		plist := []string{}
 		for _, peId := range fAReplicaResourceModel.PeAllowedPrincipalIds.Elements() {
-			plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
+			plist = append(plist, peId.(basetypes.StringValue).ValueString())
 		}
 
 		principalIds = utils.ToPointer(plist)
@@ -577,7 +578,7 @@ func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResour
 			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
 			slist := []string{}
 			for _, saId := range fAReplicaResourceModel.ServiceAccountIds.Elements() {
-				slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
+				slist = append(slist, saId.(basetypes.StringValue).ValueString())
 			}
 
 			svAccIds = utils.ToPointer(slist)
