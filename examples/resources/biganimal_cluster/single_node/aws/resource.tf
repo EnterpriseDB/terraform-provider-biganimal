@@ -104,6 +104,10 @@ resource "biganimal_cluster" "single_node_cluster" {
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: 123456789012
   # ]
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }
 
 output "password" {
