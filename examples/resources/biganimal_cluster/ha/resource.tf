@@ -99,6 +99,10 @@ resource "biganimal_cluster" "ha_cluster" {
     #    },
     #  ]
   }
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }
 
 output "password" {

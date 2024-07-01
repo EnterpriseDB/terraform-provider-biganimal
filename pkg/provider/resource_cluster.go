@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -74,6 +75,7 @@ type ClusterResourceModel struct {
 	PostGIS                    types.Bool                         `tfsdk:"post_gis"`
 	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
+	TransparentDataEncryption  *TransparentDataEncryptionModel    `tfsdk:"transparent_data_encryption"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -111,6 +113,12 @@ type PgBouncerSettingsModel struct {
 	Name      string `tfsdk:"name"`
 	Operation string `tfsdk:"operation"`
 	Value     string `tfsdk:"value"`
+}
+
+type TransparentDataEncryptionModel struct {
+	KeyId   types.String `tfsdk:"key_id"`
+	KeyName types.String `tfsdk:"key_name"`
+	Status  types.String `tfsdk:"status"`
 }
 
 type clusterResource struct {
@@ -459,6 +467,34 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					"Pausing a high availability cluster shuts down all cluster nodes",
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
+			"transparent_data_encryption": schema.SingleNestedAttribute{
+				MarkdownDescription: "Transparent Data Encryption (TDE) key",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"key_id": schema.StringAttribute{
+						MarkdownDescription: "Transparent Data Encryption (TDE) key ID.",
+						Required:            true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"key_name": schema.StringAttribute{
+						MarkdownDescription: "Key name.",
+						Computed:            true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"status": schema.StringAttribute{
+						MarkdownDescription: "Status.",
+						Computed:            true,
+					},
+				},
 			},
 		},
 	}
@@ -831,6 +867,12 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		}
 	}
 
+	if responseCluster.EncryptionKey != nil {
+		tfClusterResource.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKey.KeyId)
+		tfClusterResource.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKey.KeyName)
+		tfClusterResource.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKey.Status)
+	}
+
 	return nil
 }
 
@@ -943,6 +985,9 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
+		EncryptionKey: &models.EncryptionKey{
+			KeyId: clusterResource.TransparentDataEncryption.KeyId.ValueString(),
+		},
 	}
 
 	cluster.Extensions = &[]models.ClusterExtension{}
