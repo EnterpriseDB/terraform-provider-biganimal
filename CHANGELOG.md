@@ -1,3 +1,8 @@
+## v0.11.0 (June 20. 2024)
+Features:
+* New Resource to manage Analytical clusters: `biganimal_analytics_cluster`
+* New Data Source: `biganimal_analytics_cluster`
+
 ## v0.10.0 (May 13. 2024)
 Features:
 * PostGIS support for `biganimal_cluster` resources

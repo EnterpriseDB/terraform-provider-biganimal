@@ -10,6 +10,7 @@ InstanceType
 MPL
 PGD
 Postgres
+analytics
 aws
 awsconnection
 azureconnection
