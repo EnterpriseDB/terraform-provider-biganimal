@@ -68,4 +68,11 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   }
   private_networking = false
   region             = "us-east1"
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "development-data-123456"
+  # ]
+
+  # service_account_ids = [
+  #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+  # ]
 }
