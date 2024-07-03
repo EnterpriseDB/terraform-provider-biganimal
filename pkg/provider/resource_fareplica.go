@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -30,27 +31,28 @@ type FAReplicaResource struct {
 }
 
 type FAReplicaResourceModel struct {
-	ID                     types.String                   `tfsdk:"id"`
-	CspAuth                types.Bool                     `tfsdk:"csp_auth"`
-	Region                 types.String                   `tfsdk:"region"`
-	InstanceType           types.String                   `tfsdk:"instance_type"`
-	ResizingPvc            types.List                     `tfsdk:"resizing_pvc"`
-	MetricsUrl             *string                        `tfsdk:"metrics_url"`
-	ClusterId              *string                        `tfsdk:"cluster_id"`
-	ReplicaSourceClusterId *string                        `tfsdk:"source_cluster_id"`
-	Phase                  *string                        `tfsdk:"phase"`
-	ConnectionUri          types.String                   `tfsdk:"connection_uri"`
-	ClusterName            types.String                   `tfsdk:"cluster_name"`
-	Storage                *StorageResourceModel          `tfsdk:"storage"`
-	PgConfig               []PgConfigResourceModel        `tfsdk:"pg_config"`
-	ProjectId              string                         `tfsdk:"project_id"`
-	LogsUrl                *string                        `tfsdk:"logs_url"`
-	BackupRetentionPeriod  types.String                   `tfsdk:"backup_retention_period"`
-	PrivateNetworking      types.Bool                     `tfsdk:"private_networking"`
-	AllowedIpRanges        []AllowedIpRangesResourceModel `tfsdk:"allowed_ip_ranges"`
-	CreatedAt              types.String                   `tfsdk:"created_at"`
-	ServiceAccountIds      types.Set                      `tfsdk:"service_account_ids"`
-	PeAllowedPrincipalIds  types.Set                      `tfsdk:"pe_allowed_principal_ids"`
+	ID                        types.String                    `tfsdk:"id"`
+	CspAuth                   types.Bool                      `tfsdk:"csp_auth"`
+	Region                    types.String                    `tfsdk:"region"`
+	InstanceType              types.String                    `tfsdk:"instance_type"`
+	ResizingPvc               types.List                      `tfsdk:"resizing_pvc"`
+	MetricsUrl                *string                         `tfsdk:"metrics_url"`
+	ClusterId                 *string                         `tfsdk:"cluster_id"`
+	ReplicaSourceClusterId    *string                         `tfsdk:"source_cluster_id"`
+	Phase                     *string                         `tfsdk:"phase"`
+	ConnectionUri             types.String                    `tfsdk:"connection_uri"`
+	ClusterName               types.String                    `tfsdk:"cluster_name"`
+	Storage                   *StorageResourceModel           `tfsdk:"storage"`
+	PgConfig                  []PgConfigResourceModel         `tfsdk:"pg_config"`
+	ProjectId                 string                          `tfsdk:"project_id"`
+	LogsUrl                   *string                         `tfsdk:"logs_url"`
+	BackupRetentionPeriod     types.String                    `tfsdk:"backup_retention_period"`
+	PrivateNetworking         types.Bool                      `tfsdk:"private_networking"`
+	AllowedIpRanges           []AllowedIpRangesResourceModel  `tfsdk:"allowed_ip_ranges"`
+	CreatedAt                 types.String                    `tfsdk:"created_at"`
+	ServiceAccountIds         types.Set                       `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds     types.Set                       `tfsdk:"pe_allowed_principal_ids"`
+	TransparentDataEncryption *TransparentDataEncryptionModel `tfsdk:"transparent_data_encryption"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -276,6 +278,34 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Computed:      true,
 				ElementType:   types.StringType,
 				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+			"transparent_data_encryption": schema.SingleNestedAttribute{
+				MarkdownDescription: "Transparent Data Encryption (TDE) key",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"key_id": schema.StringAttribute{
+						MarkdownDescription: "Transparent Data Encryption (TDE) key ID.",
+						Required:            true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"key_name": schema.StringAttribute{
+						MarkdownDescription: "Key name.",
+						Computed:            true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"status": schema.StringAttribute{
+						MarkdownDescription: "Status.",
+						Computed:            true,
+					},
+				},
 			},
 		},
 	}
@@ -520,6 +550,12 @@ func (r *FAReplicaResource) read(ctx context.Context, fAReplicaResourceModel *FA
 		fAReplicaResourceModel.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
 	}
 
+	if apiCluster.EncryptionKey != nil {
+		fAReplicaResourceModel.TransparentDataEncryption.KeyId = types.StringValue(apiCluster.EncryptionKey.KeyId)
+		fAReplicaResourceModel.TransparentDataEncryption.KeyName = types.StringValue(apiCluster.EncryptionKey.KeyName)
+		fAReplicaResourceModel.TransparentDataEncryption.Status = types.StringValue(apiCluster.EncryptionKey.Status)
+	}
+
 	return nil
 }
 
@@ -604,6 +640,9 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		CSPAuth:               fAReplicaResourceModel.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
+		EncryptionKey: &models.EncryptionKey{
+			KeyId: fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueString(),
+		},
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}

@@ -49,6 +49,10 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_version     = "15"
   cloud_provider = "azure"
   region         = "eastus"
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }
 
 output "password" {
@@ -99,4 +103,8 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 
   private_networking = false
   region             = "centralindia"
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }

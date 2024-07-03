@@ -71,4 +71,8 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: 123456789012
   # ]
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }
