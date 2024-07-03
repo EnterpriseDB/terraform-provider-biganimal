@@ -121,6 +121,19 @@ type TransparentDataEncryptionModel struct {
 	Status  types.String `tfsdk:"status"`
 }
 
+func (c ClusterResourceModel) projectId() string {
+	return c.ProjectId
+}
+
+func (c ClusterResourceModel) clusterId() string {
+	return *c.ClusterId
+}
+
+type retryClusterResourceModel interface {
+	projectId() string
+	clusterId() string
+}
+
 type clusterResource struct {
 	client *api.ClusterClient
 }
@@ -260,7 +273,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					plan_modifier.CustomPhaseForUnknown(),
 				},
 			},
-
 			"ro_connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Computed:            true,
@@ -533,7 +545,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	if err := c.ensureClusterIsHealthy(ctx, config, timeout); err != nil {
+	if err := ensureClusterIsHealthy(ctx, c.client, config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
@@ -549,7 +561,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 
-		if err := c.ensureClusterIsPaused(ctx, config, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, c.client, config, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -628,7 +640,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 				return
 			}
 
-			if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
+			if err := ensureClusterIsHealthy(ctx, c.client, plan, timeout); err != nil {
 				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 				}
@@ -657,7 +669,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// this is possibly a bug in the API
 	time.Sleep(20 * time.Second)
 
-	if err := c.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
+	if err := ensureClusterIsHealthy(ctx, c.client, plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
@@ -673,7 +685,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 			return
 		}
 
-		if err := c.ensureClusterIsPaused(ctx, plan, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, c.client, plan, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -876,12 +888,12 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	return nil
 }
 
-func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster ClusterResourceModel, timeout time.Duration) error {
+func ensureClusterIsHealthy(ctx context.Context, client *api.ClusterClient, cluster retryClusterResourceModel, timeout time.Duration) error {
 	return retry.RetryContext(
 		ctx,
 		timeout,
 		func() *retry.RetryError {
-			resp, err := c.client.Read(ctx, cluster.ProjectId, *cluster.ClusterId)
+			resp, err := client.Read(ctx, cluster.projectId(), cluster.clusterId())
 			if err != nil {
 				return retry.NonRetryableError(err)
 			}
@@ -893,12 +905,12 @@ func (c *clusterResource) ensureClusterIsHealthy(ctx context.Context, cluster Cl
 		})
 }
 
-func (c *clusterResource) ensureClusterIsPaused(ctx context.Context, cluster ClusterResourceModel, timeout time.Duration) error {
+func ensureClusterIsPaused(ctx context.Context, client *api.ClusterClient, cluster retryClusterResourceModel, timeout time.Duration) error {
 	return retry.RetryContext(
 		ctx,
 		timeout,
 		func() *retry.RetryError {
-			resp, err := c.client.Read(ctx, cluster.ProjectId, *cluster.ClusterId)
+			resp, err := client.Read(ctx, cluster.projectId(), cluster.clusterId())
 			if err != nil {
 				return retry.NonRetryableError(err)
 			}
