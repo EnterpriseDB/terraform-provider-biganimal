@@ -76,6 +76,7 @@ type ClusterResourceModel struct {
 	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
 	TransparentDataEncryption  *TransparentDataEncryptionModel    `tfsdk:"transparent_data_encryption"`
+	PgIdentity                 types.String                       `tfsdk:"pg_identity"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -508,6 +509,10 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
+			"pg_identity": schema.StringAttribute{
+				MarkdownDescription: "PG Identity.",
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -778,6 +783,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
+	tfClusterResource.PgIdentity = types.StringValue(*responseCluster.PgIdentity)
 	if responseCluster.Extensions != nil {
 		for _, v := range *responseCluster.Extensions {
 			if v.Enabled && v.ExtensionId == "pgvector" {
@@ -997,9 +1003,6 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
-		EncryptionKey: &models.EncryptionKey{
-			KeyId: clusterResource.TransparentDataEncryption.KeyId.ValueString(),
-		},
 	}
 
 	cluster.Extensions = &[]models.ClusterExtension{}
@@ -1069,6 +1072,12 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 
 	cluster.ServiceAccountIds = svAccIds
 	cluster.PeAllowedPrincipalIds = principalIds
+
+	if clusterResource.TransparentDataEncryption != nil {
+		cluster.EncryptionKey = &models.EncryptionKey{
+			KeyId: clusterResource.TransparentDataEncryption.KeyId.ValueString(),
+		}
+	}
 
 	return cluster, nil
 }
