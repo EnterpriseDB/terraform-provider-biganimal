@@ -53,6 +53,7 @@ type FAReplicaResourceModel struct {
 	ServiceAccountIds         types.Set                       `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds     types.Set                       `tfsdk:"pe_allowed_principal_ids"`
 	TransparentDataEncryption *TransparentDataEncryptionModel `tfsdk:"transparent_data_encryption"`
+	PgIdentity                types.String                    `tfsdk:"pg_identity"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -307,6 +308,10 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 					},
 				},
 			},
+			"pg_identity": schema.StringAttribute{
+				MarkdownDescription: "PG Identity.",
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -508,7 +513,7 @@ func (r *FAReplicaResource) read(ctx context.Context, fAReplicaResourceModel *FA
 	fAReplicaResourceModel.MetricsUrl = apiCluster.MetricsUrl
 	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
 	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
-
+	fAReplicaResourceModel.PgIdentity = types.StringValue(*apiCluster.PgIdentity)
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
 	if configs := apiCluster.PgConfig; configs != nil {
@@ -670,6 +675,12 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 
 	cluster.ServiceAccountIds = svAccIds
 	cluster.PeAllowedPrincipalIds = principalIds
+
+	if fAReplicaResourceModel.TransparentDataEncryption != nil {
+		cluster.EncryptionKey = &models.EncryptionKey{
+			KeyId: fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueString(),
+		}
+	}
 
 	return cluster, nil
 }
