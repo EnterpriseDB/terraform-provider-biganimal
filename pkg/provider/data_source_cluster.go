@@ -377,6 +377,11 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					},
 				},
 			},
+			"pg_identity": schema.StringAttribute{
+				MarkdownDescription: "PG Identity.",
+				Optional:            true,
+				Computed:            true,
+			},
 		},
 	}
 }
