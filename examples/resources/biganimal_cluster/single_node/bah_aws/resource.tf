@@ -72,14 +72,15 @@ resource "biganimal_cluster" "single_node_cluster" {
   #   <example_value>
   # ]
 
-  pg_type               = "epas"
-  pg_version            = "15"
-  private_networking    = false
-  cloud_provider        = "bah:aws"
-  read_only_connections = false
-  region                = "us-east-1"
-  pgvector              = false
-  post_gis              = false
+  pg_type                = "epas"
+  pg_version             = "15"
+  private_networking     = false
+  cloud_provider         = "bah:aws"
+  read_only_connections  = false
+  region                 = "us-east-1"
+  pgvector               = false
+  post_gis               = false
+  volume_snapshot_backup = false
 
   pg_bouncer = {
     is_enabled = false

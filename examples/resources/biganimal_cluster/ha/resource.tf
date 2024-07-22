@@ -72,15 +72,16 @@ resource "biganimal_cluster" "ha_cluster" {
     start_time = "03:00"
   }
 
-  pg_type               = "epas"
-  pg_version            = "15"
-  private_networking    = false
-  cloud_provider        = "aws"
-  read_only_connections = true
-  region                = "us-east-1"
-  superuser_access      = true
-  pgvector              = false
-  post_gis              = false
+  pg_type                = "epas"
+  pg_version             = "15"
+  private_networking     = false
+  cloud_provider         = "aws"
+  read_only_connections  = true
+  region                 = "us-east-1"
+  superuser_access       = true
+  pgvector               = false
+  post_gis               = false
+  volume_snapshot_backup = false
 
   pg_bouncer = {
     is_enabled = false

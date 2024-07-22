@@ -76,6 +76,7 @@ type clusterDatasourceModel struct {
 	ServiceAccountIds          types.Set                           `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                           `tfsdk:"pe_allowed_principal_ids"`
 	SuperuserAccess            types.Bool                          `tfsdk:"superuser_access"`
+	VolumeSnapshot             types.Bool                          `tfsdk:"volume_snapshot_backup"`
 }
 
 type AllowedIpRangesDatasourceModel struct {
@@ -379,6 +380,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy",
 				Optional:    true,
 			},
+			"volume_snapshot_backup": schema.BoolAttribute{
+				MarkdownDescription: "Volume snapshot.",
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -442,6 +447,7 @@ func (c *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.PgType = types.StringValue(cluster.PgType.PgTypeId)
 	data.PrivateNetworking = types.BoolPointerValue(cluster.PrivateNetworking)
 	data.SuperuserAccess = types.BoolPointerValue(cluster.SuperuserAccess)
+	data.VolumeSnapshot = types.BoolPointerValue(cluster.VolumeSnapshot)
 
 	if cluster.FarawayReplicaIds != nil {
 		data.FarawayReplicaIds = *cluster.FarawayReplicaIds

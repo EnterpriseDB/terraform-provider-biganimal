@@ -74,8 +74,8 @@ type ClusterResourceModel struct {
 	PostGIS                    types.Bool                         `tfsdk:"post_gis"`
 	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
-
-	Timeouts timeouts.Value `tfsdk:"timeouts"`
+	VolumeSnapshot             types.Bool                         `tfsdk:"volume_snapshot_backup"`
+	Timeouts                   timeouts.Value                     `tfsdk:"timeouts"`
 }
 
 type ClusterArchitectureResourceModel struct {
@@ -423,6 +423,12 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 			},
+			"volume_snapshot_backup": schema.BoolAttribute{
+				MarkdownDescription: "Enable to take a snapshot of the volume.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
 			"pgvector": schema.BoolAttribute{
 				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
 				Optional:            true,
@@ -751,6 +757,7 @@ func (c *clusterResource) read(ctx context.Context, tfClusterResource *ClusterRe
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(apiCluster.FarawayReplicaIds)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(apiCluster.SuperuserAccess)
+	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(apiCluster.VolumeSnapshot)
 	if apiCluster.Extensions != nil {
 		for _, v := range *apiCluster.Extensions {
 			if v.Enabled && v.ExtensionId == "pgvector" {
@@ -970,6 +977,7 @@ func generateGenericClusterModel(clusterResource ClusterResourceModel) models.Cl
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
+		VolumeSnapshot:        clusterResource.VolumeSnapshot.ValueBoolPointer(),
 	}
 
 	cluster.Extensions = &[]models.ClusterExtension{}
