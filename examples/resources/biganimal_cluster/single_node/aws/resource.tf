@@ -82,6 +82,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   superuser_access      = true
   pgvector              = false
   post_gis              = false
+  volume_snapshot_backup = false
 
   pg_bouncer = {
     is_enabled = false
