@@ -188,6 +188,7 @@ func (b bigAnimalProvider) DataSources(ctx context.Context) []func() datasource.
 	return []func() datasource.DataSource{
 		NewProjectsDataSource,
 		NewClusterDataSource,
+		NewFAReplicaDataSource,
 		NewPgdDataSource,
 		NewRegionsDataSource,
 		NewAnalyticsClusterDataSource,

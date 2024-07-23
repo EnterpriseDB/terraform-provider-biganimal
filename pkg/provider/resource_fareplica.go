@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
@@ -30,27 +31,32 @@ type FAReplicaResource struct {
 }
 
 type FAReplicaResourceModel struct {
-	ID                     types.String                   `tfsdk:"id"`
-	CspAuth                types.Bool                     `tfsdk:"csp_auth"`
-	Region                 types.String                   `tfsdk:"region"`
-	InstanceType           types.String                   `tfsdk:"instance_type"`
-	ResizingPvc            types.List                     `tfsdk:"resizing_pvc"`
-	MetricsUrl             *string                        `tfsdk:"metrics_url"`
-	ClusterId              *string                        `tfsdk:"cluster_id"`
-	ReplicaSourceClusterId *string                        `tfsdk:"source_cluster_id"`
-	Phase                  *string                        `tfsdk:"phase"`
-	ConnectionUri          types.String                   `tfsdk:"connection_uri"`
-	ClusterName            types.String                   `tfsdk:"cluster_name"`
-	Storage                *StorageResourceModel          `tfsdk:"storage"`
-	PgConfig               []PgConfigResourceModel        `tfsdk:"pg_config"`
-	ProjectId              string                         `tfsdk:"project_id"`
-	LogsUrl                *string                        `tfsdk:"logs_url"`
-	BackupRetentionPeriod  types.String                   `tfsdk:"backup_retention_period"`
-	PrivateNetworking      types.Bool                     `tfsdk:"private_networking"`
-	AllowedIpRanges        []AllowedIpRangesResourceModel `tfsdk:"allowed_ip_ranges"`
-	CreatedAt              types.String                   `tfsdk:"created_at"`
-	ServiceAccountIds      types.Set                      `tfsdk:"service_account_ids"`
-	PeAllowedPrincipalIds  types.Set                      `tfsdk:"pe_allowed_principal_ids"`
+	ID                     types.String                      `tfsdk:"id"`
+	CspAuth                types.Bool                        `tfsdk:"csp_auth"`
+	Region                 types.String                      `tfsdk:"region"`
+	InstanceType           types.String                      `tfsdk:"instance_type"`
+	ResizingPvc            types.List                        `tfsdk:"resizing_pvc"`
+	MetricsUrl             *string                           `tfsdk:"metrics_url"`
+	ClusterId              *string                           `tfsdk:"cluster_id"`
+	ReplicaSourceClusterId *string                           `tfsdk:"source_cluster_id"`
+	Phase                  *string                           `tfsdk:"phase"`
+	ConnectionUri          types.String                      `tfsdk:"connection_uri"`
+	ClusterName            types.String                      `tfsdk:"cluster_name"`
+	Storage                *StorageResourceModel             `tfsdk:"storage"`
+	PgConfig               []PgConfigResourceModel           `tfsdk:"pg_config"`
+	ProjectId              string                            `tfsdk:"project_id"`
+	LogsUrl                *string                           `tfsdk:"logs_url"`
+	BackupRetentionPeriod  types.String                      `tfsdk:"backup_retention_period"`
+	PrivateNetworking      types.Bool                        `tfsdk:"private_networking"`
+	AllowedIpRanges        []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
+	CreatedAt              types.String                      `tfsdk:"created_at"`
+	ServiceAccountIds      types.Set                         `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds  types.Set                         `tfsdk:"pe_allowed_principal_ids"`
+	ClusterArchitecture    *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
+	ClusterType            *string                           `tfsdk:"cluster_type"`
+	PgType                 types.String                      `tfsdk:"pg_type"`
+	PgVersion              types.String                      `tfsdk:"pg_version"`
+	CloudProvider          types.String                      `tfsdk:"cloud_provider"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -277,6 +283,44 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				ElementType:   types.StringType,
 				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
+			"cluster_type": schema.StringAttribute{
+				MarkdownDescription: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"cluster_architecture": schema.SingleNestedAttribute{
+				Description: "Cluster architecture.",
+				Computed:    true,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:   "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"name": schema.StringAttribute{
+						Description:   "Name.",
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"nodes": schema.Float64Attribute{
+						Description:   "Node count.",
+						Computed:      true,
+						PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()},
+					},
+				},
+			},
+			"pg_version": schema.StringAttribute{
+				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
+				Computed:            true,
+			},
+			"pg_type": schema.StringAttribute{
+				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
+				Computed:            true,
+			},
+			"cloud_provider": schema.StringAttribute{
+				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -332,7 +376,7 @@ func (r *FAReplicaResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	if err := r.read(ctx, &config); err != nil {
+	if err := readFAReplica(ctx, r.client, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -350,7 +394,7 @@ func (r *FAReplicaResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	if err := r.read(ctx, &state); err != nil {
+	if err := readFAReplica(ctx, r.client, &state); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading faraway-replica", err.Error())
 		}
@@ -406,7 +450,7 @@ func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	if err := r.read(ctx, &plan); err != nil {
+	if err := readFAReplica(ctx, r.client, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading faraway replica", err.Error())
 		}
@@ -447,13 +491,13 @@ func (r FAReplicaResource) ImportState(ctx context.Context, req resource.ImportS
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
-func (r *FAReplicaResource) read(ctx context.Context, fAReplicaResourceModel *FAReplicaResourceModel) error {
-	apiCluster, err := r.client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
+func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaResourceModel *FAReplicaResourceModel) error {
+	apiCluster, err := client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
 	if err != nil {
 		return err
 	}
 
-	connection, err := r.client.ConnectionString(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
+	connection, err := client.ConnectionString(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -478,6 +522,15 @@ func (r *FAReplicaResource) read(ctx context.Context, fAReplicaResourceModel *FA
 	fAReplicaResourceModel.MetricsUrl = apiCluster.MetricsUrl
 	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
 	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
+	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
+		Id:    apiCluster.ClusterArchitecture.ClusterArchitectureId,
+		Nodes: apiCluster.ClusterArchitecture.Nodes,
+		Name:  types.StringValue(apiCluster.ClusterArchitecture.ClusterArchitectureName),
+	}
+	fAReplicaResourceModel.ClusterType = apiCluster.ClusterType
+	fAReplicaResourceModel.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
+	fAReplicaResourceModel.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
+	fAReplicaResourceModel.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
