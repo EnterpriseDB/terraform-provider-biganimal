@@ -309,7 +309,7 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				},
 			},
 			"pg_identity": schema.StringAttribute{
-				MarkdownDescription: "PG Identity.",
+				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
 				Computed:            true,
 			},
 		},
@@ -513,7 +513,11 @@ func (r *FAReplicaResource) read(ctx context.Context, fAReplicaResourceModel *FA
 	fAReplicaResourceModel.MetricsUrl = apiCluster.MetricsUrl
 	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
 	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
-	fAReplicaResourceModel.PgIdentity = types.StringValue(*apiCluster.PgIdentity)
+
+	if apiCluster.PgIdentity != nil && *apiCluster.PgIdentity != "" {
+		fAReplicaResourceModel.PgIdentity = types.StringValue(*apiCluster.PgIdentity)
+	}
+
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
 	if configs := apiCluster.PgConfig; configs != nil {
@@ -645,9 +649,6 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		CSPAuth:               fAReplicaResourceModel.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
-		EncryptionKey: &models.EncryptionKey{
-			KeyId: fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueString(),
-		},
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}

@@ -76,8 +76,4 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
-
-  # transparent_data_encryption = {
-  #   key_id = <example_value>
-  # }
 }
