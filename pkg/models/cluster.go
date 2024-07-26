@@ -177,7 +177,7 @@ type Cluster struct {
 	Extensions                 *[]ClusterExtension          `json:"extensions,omitempty"`
 	PgBouncer                  *PgBouncer                   `json:"pgBouncer,omitempty"`
 	EncryptionKey              *EncryptionKey               `json:"encryptionKey,omitempty"`
-	PgIdentity                 *string                      `tfsdk:"pg_identity,omitempty"`
+	PgIdentity                 *string                      `json:"pgIdentity,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
