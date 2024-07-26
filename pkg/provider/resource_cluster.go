@@ -510,7 +510,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 			"pg_identity": schema.StringAttribute{
-				MarkdownDescription: "PG Identity.",
+				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
 				Computed:            true,
 			},
 		},
@@ -783,7 +783,11 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
-	tfClusterResource.PgIdentity = types.StringValue(*responseCluster.PgIdentity)
+
+	if responseCluster.EncryptionKey != nil {
+		tfClusterResource.PgIdentity = types.StringValue(*responseCluster.PgIdentity)
+	}
+
 	if responseCluster.Extensions != nil {
 		for _, v := range *responseCluster.Extensions {
 			if v.Enabled && v.ExtensionId == "pgvector" {

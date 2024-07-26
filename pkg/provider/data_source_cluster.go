@@ -378,7 +378,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				},
 			},
 			"pg_identity": schema.StringAttribute{
-				MarkdownDescription: "PG Identity.",
+				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
 				Optional:            true,
 				Computed:            true,
 			},
