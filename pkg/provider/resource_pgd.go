@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
@@ -735,7 +736,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_HEALTHY),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, constants.PHASE_HEALTHY),
 	)
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -759,7 +760,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		err = retry.RetryContext(
 			ctx,
 			timeout-time.Minute,
-			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_PAUSED),
+			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, constants.PHASE_PAUSED),
 		)
 		if err != nil {
 			if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -846,14 +847,14 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	// cluster != pause, tf pause = true, it will update then pause
 	// cluster != pause, tf pause = false, it will update
 	for _, v := range state.DataGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
+		if v.Phase.ValueString() != constants.PHASE_HEALTHY && v.Phase.ValueString() != constants.PHASE_PAUSED {
 			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 			return
 		}
 	}
 
 	for _, v := range state.WitnessGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
+		if v.Phase.ValueString() != constants.PHASE_HEALTHY && v.Phase.ValueString() != constants.PHASE_PAUSED {
 			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 			return
 		}
@@ -880,7 +881,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			err = retry.RetryContext(
 				ctx,
 				timeout-time.Minute,
-				p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
+				p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, constants.PHASE_HEALTHY),
 			)
 			if err != nil {
 				if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -1031,7 +1032,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, constants.PHASE_HEALTHY),
 	)
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -1053,7 +1054,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		err = retry.RetryContext(
 			ctx,
 			timeout-time.Minute,
-			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_PAUSED),
+			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, constants.PHASE_PAUSED),
 		)
 		if err != nil {
 			if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -1086,13 +1087,13 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, wgs []terraform.WitnessGroup) bool {
 	for _, v := range dgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_HEALTHY {
 			return false
 		}
 	}
 
 	for _, v := range wgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_HEALTHY {
 			return false
 		}
 	}
@@ -1102,13 +1103,13 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 
 func (p pgdResource) isPaused(ctx context.Context, dgs []terraform.DataGroup, wgs []terraform.WitnessGroup) bool {
 	for _, v := range dgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_PAUSED {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_PAUSED {
 			return false
 		}
 	}
 
 	for _, v := range wgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_HEALTHY {
 			return false
 		}
 	}
@@ -1131,9 +1132,9 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 		ready := false
 
 		switch expectedPhase {
-		case models.PHASE_HEALTHY:
+		case constants.PHASE_HEALTHY:
 			ready = p.isHealthy(ctx, outPgdTfResource.DataGroups, outPgdTfResource.WitnessGroups)
-		case models.PHASE_PAUSED:
+		case constants.PHASE_PAUSED:
 			ready = p.isPaused(ctx, outPgdTfResource.DataGroups, outPgdTfResource.WitnessGroups)
 		}
 
