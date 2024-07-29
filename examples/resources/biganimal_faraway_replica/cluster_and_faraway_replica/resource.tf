@@ -31,7 +31,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
 
-  cluster_architecture {
+  cluster_architecture = {
     id    = "single"
     nodes = 1
   }
@@ -39,7 +39,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   instance_type = "azure:Standard_D2s_v3"
   password      = resource.random_password.password.result
 
-  storage {
+  storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
     size              = "4 Gi"
@@ -91,7 +91,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     }
   ]
 
-  storage {
+  storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
     size              = "4 Gi"

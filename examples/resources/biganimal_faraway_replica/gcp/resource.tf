@@ -61,7 +61,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     }
   ]
 
-  storage {
+  storage = {
     volume_type       = "pd-ssd"
     volume_properties = "pd-ssd"
     size              = "10 Gi"

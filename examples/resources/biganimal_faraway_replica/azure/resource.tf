@@ -61,7 +61,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     }
   ]
 
-  storage {
+  storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
     size              = "4 Gi"

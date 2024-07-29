@@ -61,7 +61,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     }
   ]
 
-  storage {
+  storage = {
     volume_type       = "gp3"
     volume_properties = "gp3"
     size              = "4 Gi"
