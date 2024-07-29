@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -14,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func CustomDataGroupDiffConfig() planmodifier.Set {
+func CustomDataGroupDiffConfig() planmodifier.List {
 	return CustomDataGroupDiffModifier{}
 }
 
@@ -31,8 +30,8 @@ func (m CustomDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 	return "Once set, the value of this attribute in state will not change."
 }
 
-// PlanModifySet implements the plan modification logic.
-func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
+// PlanModifyList implements the plan modification logic.
+func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if req.StateValue.IsNull() {
 		// private networking case when doing create
 		var planDgsObs []terraform.DataGroup
@@ -73,7 +72,7 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 			return
 		}
 
-		tfDgsMap := new(types.Set)
+		tfDgsMap := new(types.List)
 		mapState.GetAttribute(ctx, path.Root("data_groups"), tfDgsMap)
 
 		resp.PlanValue = *tfDgsMap
@@ -202,142 +201,8 @@ func (m CustomDataGroupDiffModifier) PlanModifySet(ctx context.Context, req plan
 		return
 	}
 
-	tfDgsMap := new(types.Set)
+	tfDgsMap := new(types.List)
 	mapState.GetAttribute(ctx, path.Root("data_groups"), tfDgsMap)
 
 	resp.PlanValue = *tfDgsMap
-
-	for _, pDg := range newDgPlan {
-		if len(stateDgsObs) == 0 {
-			return
-		}
-		var foundStateDg *terraform.DataGroup
-		for _, sDg := range stateDgsObs {
-			if reflect.DeepEqual(sDg.Region, pDg.Region) {
-				foundStateDg = &sDg
-				break
-			}
-		}
-
-		// data group may not exist in state because user is adding a new group with a new region
-		if foundStateDg == nil {
-			continue
-		}
-
-		if foundStateDg != nil {
-
-			// allowed ips
-			if !reflect.DeepEqual(pDg.AllowedIpRanges, foundStateDg.AllowedIpRanges) {
-				resp.Diagnostics.AddWarning("Allowed IP ranges changed", fmt.Sprintf("Allowed IP ranges have changed from %v to %v for data group with region %v",
-					foundStateDg.AllowedIpRanges.String(),
-					pDg.AllowedIpRanges.String(),
-					foundStateDg.Region.RegionId))
-			}
-
-			// backup retention period
-			if !reflect.DeepEqual(pDg.BackupRetentionPeriod, foundStateDg.BackupRetentionPeriod) {
-				resp.Diagnostics.AddWarning("Backup retention changed", fmt.Sprintf("backup retention period has changed from %v to %v for data group with region %v",
-					*foundStateDg.BackupRetentionPeriod,
-					*pDg.BackupRetentionPeriod,
-					foundStateDg.Region.RegionId))
-			}
-
-			// cluster architecture
-			if pDg.ClusterArchitecture.ClusterArchitectureId != foundStateDg.ClusterArchitecture.ClusterArchitectureId ||
-				pDg.ClusterArchitecture.Nodes != foundStateDg.ClusterArchitecture.Nodes {
-				resp.Diagnostics.AddWarning("Cluster architecture changed", fmt.Sprintf("Cluster architecture changed from %v to %v for data group with region %v",
-					*foundStateDg.ClusterArchitecture,
-					*pDg.ClusterArchitecture,
-					foundStateDg.Region.RegionId))
-			}
-
-			// csp auth
-			if !reflect.DeepEqual(pDg.CspAuth, foundStateDg.CspAuth) {
-				resp.Diagnostics.AddWarning("CSP auth changed", fmt.Sprintf("CSP auth changed from %v to %v for data group with region %v",
-					*foundStateDg.CspAuth,
-					*pDg.CspAuth,
-					foundStateDg.Region.RegionId))
-			}
-
-			// instance type
-			if !reflect.DeepEqual(pDg.InstanceType, foundStateDg.InstanceType) {
-				resp.Diagnostics.AddWarning("Instance type changed", fmt.Sprintf("Instance type changed from %v to %v for data group with region %v",
-					*foundStateDg.InstanceType,
-					*pDg.InstanceType,
-					foundStateDg.Region.RegionId))
-			}
-
-			// storage
-			if pDg.Storage.VolumeTypeId != foundStateDg.Storage.VolumeTypeId ||
-				pDg.Storage.VolumePropertiesId != foundStateDg.Storage.VolumePropertiesId ||
-				pDg.Storage.Size != foundStateDg.Storage.Size {
-				resp.Diagnostics.AddWarning("Storage changed", fmt.Sprintf("Storage changed from %v to %v for data group with region %v",
-					*foundStateDg.Storage,
-					*pDg.Storage,
-					foundStateDg.Region.RegionId))
-			}
-
-			// pg type
-			if !reflect.DeepEqual(pDg.PgType, foundStateDg.PgType) {
-				resp.Diagnostics.AddError("PG type cannot be changed",
-					fmt.Sprintf("PG type cannot be changed. PG type changed from expected value %v to %v in config for data group with region %v",
-						*foundStateDg.PgType,
-						*pDg.PgType,
-						foundStateDg.Region.RegionId))
-				return
-			}
-
-			// pg version
-			if !reflect.DeepEqual(pDg.PgVersion, foundStateDg.PgVersion) {
-				resp.Diagnostics.AddError("PG version cannot be changed",
-					fmt.Sprintf("PG version cannot be changed. PG version changed from expected value %v to %v in config for data group with region %v",
-						*foundStateDg.PgVersion,
-						*pDg.PgVersion,
-						foundStateDg.Region.RegionId))
-				return
-			}
-
-			// networking
-			if !reflect.DeepEqual(pDg.PrivateNetworking, foundStateDg.PrivateNetworking) {
-				resp.Diagnostics.AddWarning("Private networking changed", fmt.Sprintf("Private networking changed from %v to %v for data group with region %v",
-					*foundStateDg.PrivateNetworking,
-					*pDg.PrivateNetworking,
-					foundStateDg.Region.RegionId))
-			}
-
-			// cloud provider
-			if !reflect.DeepEqual(pDg.Provider, foundStateDg.Provider) {
-				resp.Diagnostics.AddError("Cloud provider cannot be changed",
-					fmt.Sprintf("Cloud provider cannot be changed. Cloud provider changed from expected value: %v to %v in config for data group with region %v",
-						utils.PrintJson(*foundStateDg.Provider),
-						utils.PrintJson(*pDg.Provider),
-						foundStateDg.Region.RegionId))
-				return
-			}
-
-			// region
-			if !reflect.DeepEqual(pDg.Region, foundStateDg.Region) {
-				resp.Diagnostics.AddWarning("Region changed", fmt.Sprintf("Region changed from %v to %v for data group with region %v",
-					*foundStateDg.Region,
-					*pDg.Region,
-					foundStateDg.Region.RegionId))
-			}
-
-			// maintenance window
-			if !reflect.DeepEqual(pDg.MaintenanceWindow, foundStateDg.MaintenanceWindow) {
-				resp.Diagnostics.AddWarning("Maintenance window changed", fmt.Sprintf("Maintenance window changed from %v to %v for data group with region %v",
-					utils.PrintJson(*foundStateDg.MaintenanceWindow),
-					utils.PrintJson(*pDg.MaintenanceWindow),
-					foundStateDg.Region.RegionId))
-			}
-
-			// pg config
-			if !reflect.DeepEqual(pDg.PgConfig, foundStateDg.PgConfig) {
-				resp.Diagnostics.AddWarning("Pg config changed", fmt.Sprintf("Pg config changed from %v to %v for data group with region %v",
-					*foundStateDg.PgConfig,
-					*pDg.PgConfig,
-					foundStateDg.Region.RegionId))
-			}
-		}
-	}
 }
