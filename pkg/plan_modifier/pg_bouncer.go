@@ -28,29 +28,35 @@ func (m CustomPgBouncerModifier) MarkdownDescription(_ context.Context) string {
 
 // PlanModifyObject implements the plan modification logic.
 func (m CustomPgBouncerModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	reqPlanSettings := req.PlanValue.Attributes()["settings"].(basetypes.SetValue)
+	respPlanSettings := resp.PlanValue.Attributes()["settings"].(basetypes.SetValue)
+	reqStateSettings := req.StateValue.Attributes()["settings"].(basetypes.SetValue)
+	reqConfigSettings := req.ConfigValue.Attributes()["settings"].(basetypes.SetValue)
+	reqPlanIsEnabled := req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue)
+
 	if req.PlanValue.IsUnknown() {
 		resp.PlanValue = basetypes.NewObjectValueMust(
 			req.StateValue.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"is_enabled": basetypes.NewBoolValue(false),
-				"settings":   basetypes.NewSetNull(req.StateValue.AttributeTypes(ctx)["settings"].(types.SetType).ElemType),
+				"settings":   basetypes.NewSetNull(reqStateSettings.ElementType(ctx)),
 			},
 		)
 		return
 	}
 
 	// have plan settings combine with state settings if planned settings len > 0
-	if !req.PlanValue.IsNull() && len(req.PlanValue.Attributes()["settings"].(basetypes.SetValue).Elements()) > 0 {
-		if !req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue).ValueBool() {
+	if !req.PlanValue.IsNull() && len(reqPlanSettings.Elements()) > 0 {
+		if !reqPlanIsEnabled.ValueBool() {
 			if !req.PlanValue.Attributes()["settings"].(basetypes.SetValue).IsNull() {
 				resp.Diagnostics.AddError("if pg_bouncer.is_enabled = false then pg_bouncer.settings should be removed", "please remove pg_bouncer.settings if pg_bouncer.is_enabled = false")
 				return
 			}
-		} else if req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue).ValueBool() {
-			newPlanWithPrefilledPlannedSettings := resp.PlanValue.Attributes()["settings"].(basetypes.SetValue).Elements()
+		} else if reqPlanIsEnabled.ValueBool() {
+			newPlanWithPrefilledPlannedSettings := respPlanSettings.Elements()
 			stateSettings := []attr.Value{}
 			if len(req.StateValue.Attributes()) != 0 {
-				stateSettings = req.StateValue.Attributes()["settings"].(basetypes.SetValue).Elements()
+				stateSettings = reqStateSettings.Elements()
 			}
 
 			// combine state settings with plan settings
@@ -76,14 +82,18 @@ func (m CustomPgBouncerModifier) PlanModifyObject(ctx context.Context, req planm
 
 			return
 		}
+	} else if !req.PlanValue.IsNull() {
 		// if is_enabled = true and settings = []
-	} else if !req.PlanValue.IsNull() &&
-		req.PlanValue.Attributes()["is_enabled"].(basetypes.BoolValue).ValueBool() &&
-		!req.PlanValue.Attributes()["settings"].IsUnknown() &&
-		len(req.PlanValue.Attributes()["settings"].(basetypes.SetValue).Elements()) == 0 {
-		resp.Diagnostics.AddError("if pg_bouncer.is_enabled = true then pg_bouncer.settings cannot be []", "please remove pg_bouncer.settings or set pg_bouncer.settings")
+		if reqPlanIsEnabled.ValueBool() && !reqPlanSettings.IsUnknown() && len(reqPlanSettings.Elements()) == 0 {
+			resp.Diagnostics.AddError("if pg_bouncer.is_enabled = true then pg_bouncer.settings cannot be []", "please remove pg_bouncer.settings or set pg_bouncer.settings")
+			return
+		}
 
-		return
+		// if is_enabled = false and settings is null and state setting is null then use state value for unknown
+		if !reqPlanIsEnabled.ValueBool() && reqConfigSettings.IsNull() && reqStateSettings.IsNull() {
+			resp.PlanValue = req.StateValue
+			return
+		}
 	}
 
 	if !req.PlanValue.IsUnknown() {
