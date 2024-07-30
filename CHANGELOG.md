@@ -1,3 +1,7 @@
+## v0.11.1 (July 31. 2024)
+Bug Fixes:
+* Testing pg bouncer settings = null will always show changes on update
+
 ## v0.11.0 (June 20. 2024)
 Features:
 * New Resource to manage Analytical clusters: `biganimal_analytics_cluster`
