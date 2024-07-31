@@ -76,7 +76,6 @@ func (c *analyticsClusterResourceModel) setPhase(phase string) {
 }
 
 func (c *analyticsClusterResourceModel) setPgIdentity(pgIdentity string) {
-	return
 }
 
 func (c *analyticsClusterResourceModel) setCloudProvider(cloudProvider string) {
