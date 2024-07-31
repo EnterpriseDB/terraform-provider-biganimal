@@ -1,4 +1,4 @@
-## v0.11.1 (July 31. 2024)
+## v0.11.2 (July 31. 2024)
 Bug Fixes:
 * Testing pg bouncer settings = null will always show changes on update
 
