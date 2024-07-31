@@ -46,6 +46,7 @@ func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req
 	// this is update, if phase is waiting for tde key access then set to unknown
 	if !req.PlanValue.IsUnknown() {
 		if req.PlanValue.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+			resp.PlanValue = basetypes.NewStringUnknown()
 			return
 		}
 	}

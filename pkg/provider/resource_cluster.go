@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -652,7 +653,11 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// cluster = pause,   tf pause = false, it will resume then update
 	// cluster = healthy, tf pause = true, it will update then pause
 	// cluster = healthy, tf pause = false, it will update
-	if state.Phase.ValueString() != constants.PHASE_HEALTHY && state.Phase.ValueString() != constants.PHASE_PAUSED {
+	if !slices.Contains([]string{
+		constants.PHASE_HEALTHY,
+		constants.PHASE_PAUSED,
+		constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY,
+	}, state.Phase.ValueString()) {
 		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 		return
 	}
@@ -1138,6 +1143,7 @@ func (c *clusterResource) makeClusterForUpdate(ctx context.Context, clusterResou
 	cluster.PgVersion = nil
 	cluster.Provider = nil
 	cluster.Region = nil
+	cluster.EncryptionKeyId = nil
 	return &cluster, nil
 }
 
