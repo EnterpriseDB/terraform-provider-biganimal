@@ -171,8 +171,8 @@ type Cluster struct {
 	SuperuserAccess            *bool                        `json:"superuserAccess,omitempty"`
 	Extensions                 *[]ClusterExtension          `json:"extensions,omitempty"`
 	PgBouncer                  *PgBouncer                   `json:"pgBouncer,omitempty"`
-	EncryptionKeyId            *string                      `json:"keyId,omitempty"`
-	EncryptionKey              *EncryptionKey               `json:"encryptionKey,omitempty"`
+	EncryptionKeyIdReq         *string                      `json:"keyId,omitempty"`
+	EncryptionKeyResp          *EncryptionKey               `json:"encryptionKey,omitempty"`
 	PgIdentity                 *string                      `json:"pgIdentity,omitempty"`
 }
 

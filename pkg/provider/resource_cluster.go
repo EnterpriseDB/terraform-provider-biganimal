@@ -824,7 +824,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 
-	if responseCluster.EncryptionKey != nil {
+	if responseCluster.EncryptionKeyResp != nil {
 		tfClusterResource.PgIdentity = types.StringValue(*responseCluster.PgIdentity)
 		if !tfClusterResource.PgIdentity.IsNull() && tfClusterResource.PgIdentity.ValueString() != "" {
 			tfClusterResource.TransparentDataEncryptionAction = types.StringValue(TdeActionInfo(responseCluster.Provider.CloudProviderId))
@@ -932,10 +932,11 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		}
 	}
 
-	if responseCluster.EncryptionKey != nil {
-		tfClusterResource.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKey.KeyId)
-		tfClusterResource.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKey.KeyName)
-		tfClusterResource.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKey.Status)
+	if responseCluster.EncryptionKeyResp != nil {
+		tfClusterResource.TransparentDataEncryption = &TransparentDataEncryptionModel{}
+		tfClusterResource.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
+		tfClusterResource.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKeyResp.KeyName)
+		tfClusterResource.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
 	}
 
 	return nil
@@ -1127,7 +1128,7 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	cluster.PeAllowedPrincipalIds = principalIds
 
 	if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
-		cluster.EncryptionKeyId = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
+		cluster.EncryptionKeyIdReq = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
 	}
 
 	return cluster, nil
@@ -1143,7 +1144,7 @@ func (c *clusterResource) makeClusterForUpdate(ctx context.Context, clusterResou
 	cluster.PgVersion = nil
 	cluster.Provider = nil
 	cluster.Region = nil
-	cluster.EncryptionKeyId = nil
+	cluster.EncryptionKeyIdReq = nil
 	return &cluster, nil
 }
 
