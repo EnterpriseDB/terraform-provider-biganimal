@@ -38,4 +38,5 @@ const (
 	PHASE_HEALTHY                              = "Cluster in healthy state"
 	PHASE_PAUSED                               = "Cluster has been paused"
 	PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY = "Waiting for TDE key to get reachable"
+	TDE_STATUS                                 = "READY"
 )

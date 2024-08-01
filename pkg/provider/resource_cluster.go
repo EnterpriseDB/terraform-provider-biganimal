@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -56,7 +55,7 @@ type ClusterResourceModel struct {
 	RoConnectionUri                 types.String                       `tfsdk:"ro_connection_uri"`
 	Storage                         *StorageResourceModel              `tfsdk:"storage"`
 	PgConfig                        []PgConfigResourceModel            `tfsdk:"pg_config"`
-	FirstRecoverabilityPointAt      *string                            `tfsdk:"first_recoverability_point_at"`
+	FirstRecoverabilityPointAt      types.String                       `tfsdk:"first_recoverability_point_at"`
 	ProjectId                       string                             `tfsdk:"project_id"`
 	LogsUrl                         *string                            `tfsdk:"logs_url"`
 	BackupRetentionPeriod           types.String                       `tfsdk:"backup_retention_period"`
@@ -510,26 +509,26 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					"key_id": schema.StringAttribute{
 						MarkdownDescription: "Transparent Data Encryption (TDE) key ID.",
 						Required:            true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"key_name": schema.StringAttribute{
 						MarkdownDescription: "Key name.",
 						Computed:            true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"status": schema.StringAttribute{
 						MarkdownDescription: "Status.",
 						Computed:            true,
+						PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEStatus()},
 					},
 				},
 			},
 			"pg_identity": schema.StringAttribute{
 				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"transparent_data_encryption_action": schema.StringAttribute{
 				MarkdownDescription: "Transparent data encryption action.",
@@ -653,11 +652,9 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// cluster = pause,   tf pause = false, it will resume then update
 	// cluster = healthy, tf pause = true, it will update then pause
 	// cluster = healthy, tf pause = false, it will update
-	if !slices.Contains([]string{
-		constants.PHASE_HEALTHY,
-		constants.PHASE_PAUSED,
-		constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY,
-	}, state.Phase.ValueString()) {
+	if state.Phase.ValueString() != constants.PHASE_HEALTHY &&
+		state.Phase.ValueString() != constants.PHASE_PAUSED &&
+		state.Phase.ValueString() != constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
 		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 		return
 	}
@@ -823,9 +820,9 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
+	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 
-	if responseCluster.EncryptionKeyResp != nil {
-		tfClusterResource.PgIdentity = types.StringValue(*responseCluster.PgIdentity)
+	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
 		if !tfClusterResource.PgIdentity.IsNull() && tfClusterResource.PgIdentity.ValueString() != "" {
 			tfClusterResource.TransparentDataEncryptionAction = types.StringValue(TdeActionInfo(responseCluster.Provider.CloudProviderId))
 		}
@@ -833,20 +830,19 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 
 	if responseCluster.Extensions != nil {
 		for _, v := range *responseCluster.Extensions {
-			if v.Enabled && v.ExtensionId == "pgvector" {
-				tfClusterResource.Pgvector = types.BoolValue(true)
-				break
-			}
-			if v.Enabled && v.ExtensionId == "postgis" {
-				tfClusterResource.PostGIS = types.BoolValue(true)
-				break
+			switch v.ExtensionId {
+			case "pgvector":
+				tfClusterResource.Pgvector = types.BoolValue(v.Enabled)
+			case "postgis":
+				tfClusterResource.PostGIS = types.BoolValue(v.Enabled)
+			default:
 			}
 		}
 	}
 
 	if responseCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
-		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
+		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue(firstPointAt)
 	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
