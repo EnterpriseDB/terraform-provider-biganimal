@@ -51,7 +51,7 @@ func (m CustomTDEActionModifier) PlanModifyString(ctx context.Context, req planm
 	}
 
 	// transparent_data_encryption doesn't exist. tde action should be null
-	if !planObject["transparent_data_encryption"].IsKnown() {
+	if planObject["transparent_data_encryption"].IsNull() {
 		resp.PlanValue = basetypes.NewStringNull()
 		return
 	}

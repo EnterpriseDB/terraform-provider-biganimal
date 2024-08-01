@@ -443,13 +443,11 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"pgvector": schema.BoolAttribute{
 				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"post_gis": schema.BoolAttribute{
 				MarkdownDescription: "Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"pg_bouncer": schema.SingleNestedAttribute{
@@ -501,7 +499,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.UseStateForUnknown(),
 				},
@@ -1123,8 +1120,10 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	cluster.ServiceAccountIds = svAccIds
 	cluster.PeAllowedPrincipalIds = principalIds
 
-	if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
-		cluster.EncryptionKeyIdReq = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
+	if clusterResource.TransparentDataEncryption != nil {
+		if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
+			cluster.EncryptionKeyIdReq = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
+		}
 	}
 
 	return cluster, nil
