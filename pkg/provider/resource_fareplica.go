@@ -527,7 +527,7 @@ func (r FAReplicaResource) ImportState(ctx context.Context, req resource.ImportS
 }
 
 func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaResourceModel *FAReplicaResourceModel) error {
-	apiCluster, err := client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
+	responseCluster, err := client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -538,42 +538,42 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	}
 
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
-	fAReplicaResourceModel.ClusterId = apiCluster.ClusterId
-	fAReplicaResourceModel.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
-	fAReplicaResourceModel.Phase = apiCluster.Phase
-	fAReplicaResourceModel.Region = types.StringValue(apiCluster.Region.Id)
-	fAReplicaResourceModel.InstanceType = types.StringValue(apiCluster.InstanceType.InstanceTypeId)
+	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
+	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
+	fAReplicaResourceModel.Phase = responseCluster.Phase
+	fAReplicaResourceModel.Region = types.StringValue(responseCluster.Region.Id)
+	fAReplicaResourceModel.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
 	fAReplicaResourceModel.Storage = &StorageResourceModel{
-		VolumeType:       types.StringPointerValue(apiCluster.Storage.VolumeTypeId),
-		VolumeProperties: types.StringPointerValue(apiCluster.Storage.VolumePropertiesId),
-		Size:             types.StringPointerValue(apiCluster.Storage.Size),
-		Iops:             types.StringPointerValue(apiCluster.Storage.Iops),
-		Throughput:       types.StringPointerValue(apiCluster.Storage.Throughput),
+		VolumeType:       types.StringPointerValue(responseCluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(responseCluster.Storage.VolumePropertiesId),
+		Size:             types.StringPointerValue(responseCluster.Storage.Size),
+		Iops:             types.StringPointerValue(responseCluster.Storage.Iops),
+		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
-	fAReplicaResourceModel.ResizingPvc = StringSliceToList(apiCluster.ResizingPvc)
+	fAReplicaResourceModel.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
 	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&connection.PgUri)
-	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(apiCluster.CSPAuth)
-	fAReplicaResourceModel.LogsUrl = apiCluster.LogsUrl
-	fAReplicaResourceModel.MetricsUrl = apiCluster.MetricsUrl
-	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
-	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
+	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
+	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
+	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
-		Id:    apiCluster.ClusterArchitecture.ClusterArchitectureId,
-		Nodes: apiCluster.ClusterArchitecture.Nodes,
-		Name:  types.StringValue(apiCluster.ClusterArchitecture.ClusterArchitectureName),
+		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
+		Nodes: responseCluster.ClusterArchitecture.Nodes,
+		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
 	}
-	fAReplicaResourceModel.ClusterType = apiCluster.ClusterType
-	fAReplicaResourceModel.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
-	fAReplicaResourceModel.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
-	fAReplicaResourceModel.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
+	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
+	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
+	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
+	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 
-	if apiCluster.PgIdentity != nil && *apiCluster.PgIdentity != "" {
-		fAReplicaResourceModel.PgIdentity = types.StringValue(*apiCluster.PgIdentity)
+	if responseCluster.PgIdentity != nil && *responseCluster.PgIdentity != "" {
+		fAReplicaResourceModel.PgIdentity = types.StringValue(*responseCluster.PgIdentity)
 	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
-	if configs := apiCluster.PgConfig; configs != nil {
+	if configs := responseCluster.PgConfig; configs != nil {
 		for _, tfCRPgConfig := range fAReplicaResourceModel.PgConfig {
 			for _, apiConfig := range *configs {
 				if tfCRPgConfig.Name == apiConfig.Name {
@@ -591,7 +591,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	}
 
 	fAReplicaResourceModel.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := apiCluster.AllowedIpRanges; allowedIpRanges != nil {
+	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
 			fAReplicaResourceModel.AllowedIpRanges = append(fAReplicaResourceModel.AllowedIpRanges, AllowedIpRangesResourceModel{
 				CidrBlock:   ipRange.CidrBlock,
@@ -600,22 +600,22 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		}
 	}
 
-	if pt := apiCluster.CreatedAt; pt != nil {
+	if pt := responseCluster.CreatedAt; pt != nil {
 		fAReplicaResourceModel.CreatedAt = types.StringValue(pt.String())
 	}
 
-	if apiCluster.PeAllowedPrincipalIds != nil {
-		fAReplicaResourceModel.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&apiCluster.PeAllowedPrincipalIds))
+	if responseCluster.PeAllowedPrincipalIds != nil {
+		fAReplicaResourceModel.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&responseCluster.PeAllowedPrincipalIds))
 	}
 
-	if apiCluster.ServiceAccountIds != nil {
-		fAReplicaResourceModel.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
+	if responseCluster.ServiceAccountIds != nil {
+		fAReplicaResourceModel.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
 	}
 
-	if apiCluster.EncryptionKey != nil {
-		fAReplicaResourceModel.TransparentDataEncryption.KeyId = types.StringValue(apiCluster.EncryptionKey.KeyId)
-		fAReplicaResourceModel.TransparentDataEncryption.KeyName = types.StringValue(apiCluster.EncryptionKey.KeyName)
-		fAReplicaResourceModel.TransparentDataEncryption.Status = types.StringValue(apiCluster.EncryptionKey.Status)
+	if responseCluster.EncryptionKeyResp != nil {
+		fAReplicaResourceModel.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
+		fAReplicaResourceModel.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKeyResp.KeyName)
+		fAReplicaResourceModel.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
 	}
 
 	return nil
@@ -731,9 +731,7 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 	cluster.PeAllowedPrincipalIds = principalIds
 
 	if fAReplicaResourceModel.TransparentDataEncryption != nil {
-		cluster.EncryptionKey = &models.EncryptionKey{
-			KeyId: fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueString(),
-		}
+		cluster.EncryptionKeyIdReq = fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueStringPointer()
 	}
 
 	return cluster, nil
