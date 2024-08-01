@@ -43,17 +43,23 @@ func (m CustomTDEActionModifier) PlanModifyString(ctx context.Context, req planm
 		return
 	}
 
-	var tde map[string]tftypes.Value
-	err = planObject["transparent_data_encryption"].As(&tde)
-	if err != nil {
-		resp.Diagnostics.AddError("Mapping transparent data encryption in custom phase plan modifier error", err.Error())
-		return
-	}
-
 	var phase string
 	err = stateObject["phase"].As(&phase)
 	if err != nil {
 		resp.Diagnostics.AddError("Mapping phase in custom phase plan modifier error", err.Error())
+		return
+	}
+
+	// transparent_data_encryption doesn't exist. tde action should be null
+	if !planObject["transparent_data_encryption"].IsKnown() {
+		resp.PlanValue = basetypes.NewStringNull()
+		return
+	}
+
+	var tde map[string]tftypes.Value
+	err = planObject["transparent_data_encryption"].As(&tde)
+	if err != nil {
+		resp.Diagnostics.AddError("Mapping transparent data encryption in custom phase plan modifier error", err.Error())
 		return
 	}
 
