@@ -348,7 +348,6 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.UseStateForUnknown(),
 				},
