@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
@@ -23,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -38,42 +40,45 @@ var (
 )
 
 type ClusterResourceModel struct {
-	ID                         types.String                       `tfsdk:"id"`
-	CspAuth                    types.Bool                         `tfsdk:"csp_auth"`
-	Region                     types.String                       `tfsdk:"region"`
-	InstanceType               types.String                       `tfsdk:"instance_type"`
-	ReadOnlyConnections        types.Bool                         `tfsdk:"read_only_connections"`
-	ResizingPvc                types.List                         `tfsdk:"resizing_pvc"`
-	MetricsUrl                 *string                            `tfsdk:"metrics_url"`
-	ClusterId                  *string                            `tfsdk:"cluster_id"`
-	Phase                      *string                            `tfsdk:"phase"`
-	ClusterArchitecture        *ClusterArchitectureResourceModel  `tfsdk:"cluster_architecture"`
-	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
-	ClusterName                types.String                       `tfsdk:"cluster_name"`
-	RoConnectionUri            types.String                       `tfsdk:"ro_connection_uri"`
-	Storage                    *StorageResourceModel              `tfsdk:"storage"`
-	PgConfig                   []PgConfigResourceModel            `tfsdk:"pg_config"`
-	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
-	ProjectId                  string                             `tfsdk:"project_id"`
-	LogsUrl                    *string                            `tfsdk:"logs_url"`
-	BackupRetentionPeriod      types.String                       `tfsdk:"backup_retention_period"`
-	ClusterType                *string                            `tfsdk:"cluster_type"`
-	CloudProvider              types.String                       `tfsdk:"cloud_provider"`
-	PgType                     types.String                       `tfsdk:"pg_type"`
-	Password                   types.String                       `tfsdk:"password"`
-	FarawayReplicaIds          types.Set                          `tfsdk:"faraway_replica_ids"`
-	PgVersion                  types.String                       `tfsdk:"pg_version"`
-	PrivateNetworking          types.Bool                         `tfsdk:"private_networking"`
-	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
-	CreatedAt                  types.String                       `tfsdk:"created_at"`
-	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
-	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
-	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
-	SuperuserAccess            types.Bool                         `tfsdk:"superuser_access"`
-	Pgvector                   types.Bool                         `tfsdk:"pgvector"`
-	PostGIS                    types.Bool                         `tfsdk:"post_gis"`
-	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
-	Pause                      types.Bool                         `tfsdk:"pause"`
+	ID                              types.String                       `tfsdk:"id"`
+	CspAuth                         types.Bool                         `tfsdk:"csp_auth"`
+	Region                          types.String                       `tfsdk:"region"`
+	InstanceType                    types.String                       `tfsdk:"instance_type"`
+	ReadOnlyConnections             types.Bool                         `tfsdk:"read_only_connections"`
+	ResizingPvc                     types.List                         `tfsdk:"resizing_pvc"`
+	MetricsUrl                      *string                            `tfsdk:"metrics_url"`
+	ClusterId                       *string                            `tfsdk:"cluster_id"`
+	Phase                           types.String                       `tfsdk:"phase"`
+	ClusterArchitecture             *ClusterArchitectureResourceModel  `tfsdk:"cluster_architecture"`
+	ConnectionUri                   types.String                       `tfsdk:"connection_uri"`
+	ClusterName                     types.String                       `tfsdk:"cluster_name"`
+	RoConnectionUri                 types.String                       `tfsdk:"ro_connection_uri"`
+	Storage                         *StorageResourceModel              `tfsdk:"storage"`
+	PgConfig                        []PgConfigResourceModel            `tfsdk:"pg_config"`
+	FirstRecoverabilityPointAt      types.String                       `tfsdk:"first_recoverability_point_at"`
+	ProjectId                       string                             `tfsdk:"project_id"`
+	LogsUrl                         *string                            `tfsdk:"logs_url"`
+	BackupRetentionPeriod           types.String                       `tfsdk:"backup_retention_period"`
+	ClusterType                     *string                            `tfsdk:"cluster_type"`
+	CloudProvider                   types.String                       `tfsdk:"cloud_provider"`
+	PgType                          types.String                       `tfsdk:"pg_type"`
+	Password                        types.String                       `tfsdk:"password"`
+	FarawayReplicaIds               types.Set                          `tfsdk:"faraway_replica_ids"`
+	PgVersion                       types.String                       `tfsdk:"pg_version"`
+	PrivateNetworking               types.Bool                         `tfsdk:"private_networking"`
+	AllowedIpRanges                 []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
+	CreatedAt                       types.String                       `tfsdk:"created_at"`
+	MaintenanceWindow               *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
+	ServiceAccountIds               types.Set                          `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds           types.Set                          `tfsdk:"pe_allowed_principal_ids"`
+	SuperuserAccess                 types.Bool                         `tfsdk:"superuser_access"`
+	Pgvector                        types.Bool                         `tfsdk:"pgvector"`
+	PostGIS                         types.Bool                         `tfsdk:"post_gis"`
+	PgBouncer                       *PgBouncerModel                    `tfsdk:"pg_bouncer"`
+	Pause                           types.Bool                         `tfsdk:"pause"`
+	TransparentDataEncryption       *TransparentDataEncryptionModel    `tfsdk:"transparent_data_encryption"`
+	PgIdentity                      types.String                       `tfsdk:"pg_identity"`
+	TransparentDataEncryptionAction types.String                       `tfsdk:"transparent_data_encryption_action"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -113,6 +118,12 @@ type PgBouncerSettingsModel struct {
 	Value     string `tfsdk:"value"`
 }
 
+type TransparentDataEncryptionModel struct {
+	KeyId   types.String `tfsdk:"key_id"`
+	KeyName types.String `tfsdk:"key_name"`
+	Status  types.String `tfsdk:"status"`
+}
+
 func (c ClusterResourceModel) projectId() string {
 	return c.ProjectId
 }
@@ -121,9 +132,24 @@ func (c ClusterResourceModel) clusterId() string {
 	return *c.ClusterId
 }
 
+func (c *ClusterResourceModel) setPhase(phase string) {
+	c.Phase = types.StringValue(phase)
+}
+
+func (c *ClusterResourceModel) setPgIdentity(pgIdentity string) {
+	c.PgIdentity = types.StringValue(pgIdentity)
+}
+
+func (c *ClusterResourceModel) setCloudProvider(cloudProvider string) {
+	c.CloudProvider = types.StringValue(cloudProvider)
+}
+
 type retryClusterResourceModel interface {
 	projectId() string
 	clusterId() string
+	setPhase(string)
+	setPgIdentity(string)
+	setCloudProvider(string)
 }
 
 type clusterResource struct {
@@ -417,13 +443,11 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"pgvector": schema.BoolAttribute{
 				MarkdownDescription: "Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"post_gis": schema.BoolAttribute{
 				MarkdownDescription: "Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"pg_bouncer": schema.SingleNestedAttribute{
@@ -472,6 +496,42 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"transparent_data_encryption": schema.SingleNestedAttribute{
+				MarkdownDescription: "Transparent Data Encryption (TDE) key",
+				Optional:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"key_id": schema.StringAttribute{
+						MarkdownDescription: "Transparent Data Encryption (TDE) key ID.",
+						Required:            true,
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"key_name": schema.StringAttribute{
+						MarkdownDescription: "Key name.",
+						Computed:            true,
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"status": schema.StringAttribute{
+						MarkdownDescription: "Status.",
+						Computed:            true,
+						PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEStatus()},
+					},
+				},
+			},
+			"pg_identity": schema.StringAttribute{
+				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"transparent_data_encryption_action": schema.StringAttribute{
+				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEAction()},
+			},
 		},
 	}
 }
@@ -509,11 +569,16 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	if err := ensureClusterIsHealthy(ctx, c.client, config, timeout); err != nil {
+	if err := ensureClusterIsEndStateAs(ctx, c.client, &config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
+
 		return
+	}
+
+	if config.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(config.CloudProvider.ValueString()))
 	}
 
 	if config.Pause.ValueBool() {
@@ -525,7 +590,7 @@ func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 
-		if err := ensureClusterIsPaused(ctx, c.client, config, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, c.client, &config, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -584,12 +649,14 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// cluster = pause,   tf pause = false, it will resume then update
 	// cluster = healthy, tf pause = true, it will update then pause
 	// cluster = healthy, tf pause = false, it will update
-	if *state.Phase != models.PHASE_HEALTHY && *state.Phase != models.PHASE_PAUSED {
+	if state.Phase.ValueString() != constants.PHASE_HEALTHY &&
+		state.Phase.ValueString() != constants.PHASE_PAUSED &&
+		state.Phase.ValueString() != constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
 		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 		return
 	}
 
-	if *state.Phase == models.PHASE_PAUSED {
+	if state.Phase.ValueString() == constants.PHASE_PAUSED {
 		if plan.Pause.ValueBool() {
 			resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
 			return
@@ -604,11 +671,15 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 				return
 			}
 
-			if err := ensureClusterIsHealthy(ctx, c.client, plan, timeout); err != nil {
+			if err := ensureClusterIsEndStateAs(ctx, c.client, &plan, timeout); err != nil {
 				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 				}
 				return
+			}
+
+			if plan.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+				resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(plan.CloudProvider.ValueString()))
 			}
 		}
 	}
@@ -633,11 +704,15 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	// this is possibly a bug in the API
 	time.Sleep(20 * time.Second)
 
-	if err := ensureClusterIsHealthy(ctx, c.client, plan, timeout); err != nil {
+	if err := ensureClusterIsEndStateAs(ctx, c.client, &plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
 		return
+	}
+
+	if plan.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(plan.CloudProvider.ValueString()))
 	}
 
 	if plan.Pause.ValueBool() {
@@ -649,7 +724,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 			return
 		}
 
-		if err := ensureClusterIsPaused(ctx, c.client, plan, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, c.client, &plan, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -713,7 +788,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.ClusterId = responseCluster.ClusterId
 	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
 	tfClusterResource.ClusterType = responseCluster.ClusterType
-	tfClusterResource.Phase = responseCluster.Phase
+	tfClusterResource.Phase = types.StringPointerValue(responseCluster.Phase)
 	tfClusterResource.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	tfClusterResource.ClusterArchitecture = &ClusterArchitectureResourceModel{
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
@@ -742,22 +817,29 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
+	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
+
+	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
+		if !tfClusterResource.PgIdentity.IsNull() && tfClusterResource.PgIdentity.ValueString() != "" {
+			tfClusterResource.TransparentDataEncryptionAction = types.StringValue(TdeActionInfo(responseCluster.Provider.CloudProviderId))
+		}
+	}
+
 	if responseCluster.Extensions != nil {
 		for _, v := range *responseCluster.Extensions {
-			if v.Enabled && v.ExtensionId == "pgvector" {
-				tfClusterResource.Pgvector = types.BoolValue(true)
-				break
-			}
-			if v.Enabled && v.ExtensionId == "postgis" {
-				tfClusterResource.PostGIS = types.BoolValue(true)
-				break
+			switch v.ExtensionId {
+			case "pgvector":
+				tfClusterResource.Pgvector = types.BoolValue(v.Enabled)
+			case "postgis":
+				tfClusterResource.PostGIS = types.BoolValue(v.Enabled)
+			default:
 			}
 		}
 	}
 
 	if responseCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
-		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
+		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue(firstPointAt)
 	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
@@ -843,20 +925,33 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		}
 	}
 
+	if responseCluster.EncryptionKeyResp != nil {
+		tfClusterResource.TransparentDataEncryption = &TransparentDataEncryptionModel{}
+		tfClusterResource.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
+		tfClusterResource.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKeyResp.KeyName)
+		tfClusterResource.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
+	}
+
 	return nil
 }
 
-func ensureClusterIsHealthy(ctx context.Context, client *api.ClusterClient, cluster retryClusterResourceModel, timeout time.Duration) error {
+func ensureClusterIsEndStateAs(ctx context.Context, client *api.ClusterClient, outCluster retryClusterResourceModel, timeout time.Duration) error {
 	return retry.RetryContext(
 		ctx,
 		timeout,
 		func() *retry.RetryError {
-			resp, err := client.Read(ctx, cluster.projectId(), cluster.clusterId())
+			resp, err := client.Read(ctx, outCluster.projectId(), outCluster.clusterId())
 			if err != nil {
 				return retry.NonRetryableError(err)
 			}
 
-			if !resp.IsHealthy() {
+			outCluster.setPhase(*resp.Phase)
+			outCluster.setCloudProvider(resp.Provider.CloudProviderId)
+			// if waiting for access to encryption key and pgIdentity is not "", return non-retryable error
+			if *resp.Phase == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY && resp.PgIdentity != nil && *resp.PgIdentity != "" {
+				outCluster.setPgIdentity(*resp.PgIdentity)
+				return nil
+			} else if !resp.IsHealthy() {
 				return retry.RetryableError(errors.New("cluster not yet ready"))
 			}
 			return nil
@@ -873,7 +968,7 @@ func ensureClusterIsPaused(ctx context.Context, client *api.ClusterClient, clust
 				return retry.NonRetryableError(err)
 			}
 
-			if *resp.Phase != models.PHASE_PAUSED {
+			if *resp.Phase != constants.PHASE_PAUSED {
 				return retry.RetryableError(errors.New("cluster not yet paused"))
 			}
 			return nil
@@ -1025,6 +1120,12 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	cluster.ServiceAccountIds = svAccIds
 	cluster.PeAllowedPrincipalIds = principalIds
 
+	if clusterResource.TransparentDataEncryption != nil {
+		if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
+			cluster.EncryptionKeyIdReq = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
+		}
+	}
+
 	return cluster, nil
 }
 
@@ -1038,6 +1139,7 @@ func (c *clusterResource) makeClusterForUpdate(ctx context.Context, clusterResou
 	cluster.PgVersion = nil
 	cluster.Provider = nil
 	cluster.Region = nil
+	cluster.EncryptionKeyIdReq = nil
 	return &cluster, nil
 }
 

@@ -2,13 +2,14 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,13 +18,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 type FAReplicaResource struct {
@@ -31,34 +32,57 @@ type FAReplicaResource struct {
 }
 
 type FAReplicaResourceModel struct {
-	ID                     types.String                      `tfsdk:"id"`
-	CspAuth                types.Bool                        `tfsdk:"csp_auth"`
-	Region                 types.String                      `tfsdk:"region"`
-	InstanceType           types.String                      `tfsdk:"instance_type"`
-	ResizingPvc            types.List                        `tfsdk:"resizing_pvc"`
-	MetricsUrl             *string                           `tfsdk:"metrics_url"`
-	ClusterId              *string                           `tfsdk:"cluster_id"`
-	ReplicaSourceClusterId *string                           `tfsdk:"source_cluster_id"`
-	Phase                  *string                           `tfsdk:"phase"`
-	ConnectionUri          types.String                      `tfsdk:"connection_uri"`
-	ClusterName            types.String                      `tfsdk:"cluster_name"`
-	Storage                *StorageResourceModel             `tfsdk:"storage"`
-	PgConfig               []PgConfigResourceModel           `tfsdk:"pg_config"`
-	ProjectId              string                            `tfsdk:"project_id"`
-	LogsUrl                *string                           `tfsdk:"logs_url"`
-	BackupRetentionPeriod  types.String                      `tfsdk:"backup_retention_period"`
-	PrivateNetworking      types.Bool                        `tfsdk:"private_networking"`
-	AllowedIpRanges        []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
-	CreatedAt              types.String                      `tfsdk:"created_at"`
-	ServiceAccountIds      types.Set                         `tfsdk:"service_account_ids"`
-	PeAllowedPrincipalIds  types.Set                         `tfsdk:"pe_allowed_principal_ids"`
-	ClusterArchitecture    *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
-	ClusterType            *string                           `tfsdk:"cluster_type"`
-	PgType                 types.String                      `tfsdk:"pg_type"`
-	PgVersion              types.String                      `tfsdk:"pg_version"`
-	CloudProvider          types.String                      `tfsdk:"cloud_provider"`
+	ID                              types.String                      `tfsdk:"id"`
+	CspAuth                         types.Bool                        `tfsdk:"csp_auth"`
+	Region                          types.String                      `tfsdk:"region"`
+	InstanceType                    types.String                      `tfsdk:"instance_type"`
+	ResizingPvc                     types.List                        `tfsdk:"resizing_pvc"`
+	MetricsUrl                      *string                           `tfsdk:"metrics_url"`
+	ClusterId                       *string                           `tfsdk:"cluster_id"`
+	ReplicaSourceClusterId          *string                           `tfsdk:"source_cluster_id"`
+	Phase                           types.String                      `tfsdk:"phase"`
+	ConnectionUri                   types.String                      `tfsdk:"connection_uri"`
+	ClusterName                     types.String                      `tfsdk:"cluster_name"`
+	Storage                         *StorageResourceModel             `tfsdk:"storage"`
+	PgConfig                        []PgConfigResourceModel           `tfsdk:"pg_config"`
+	ProjectId                       string                            `tfsdk:"project_id"`
+	LogsUrl                         *string                           `tfsdk:"logs_url"`
+	BackupRetentionPeriod           types.String                      `tfsdk:"backup_retention_period"`
+	PrivateNetworking               types.Bool                        `tfsdk:"private_networking"`
+	AllowedIpRanges                 []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
+	CreatedAt                       types.String                      `tfsdk:"created_at"`
+	ServiceAccountIds               types.Set                         `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds           types.Set                         `tfsdk:"pe_allowed_principal_ids"`
+	ClusterArchitecture             *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
+	ClusterType                     *string                           `tfsdk:"cluster_type"`
+	PgType                          types.String                      `tfsdk:"pg_type"`
+	PgVersion                       types.String                      `tfsdk:"pg_version"`
+	CloudProvider                   types.String                      `tfsdk:"cloud_provider"`
+	TransparentDataEncryption       *TransparentDataEncryptionModel   `tfsdk:"transparent_data_encryption"`
+	PgIdentity                      types.String                      `tfsdk:"pg_identity"`
+	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
+}
+
+func (c FAReplicaResourceModel) projectId() string {
+	return c.ProjectId
+}
+
+func (c FAReplicaResourceModel) clusterId() string {
+	return *c.ClusterId
+}
+
+func (c *FAReplicaResourceModel) setPhase(phase string) {
+	c.Phase = types.StringValue(phase)
+}
+
+func (c *FAReplicaResourceModel) setPgIdentity(pgIdentity string) {
+	c.PgIdentity = types.StringValue(pgIdentity)
+}
+
+func (c *FAReplicaResourceModel) setCloudProvider(cloudProvider string) {
+	c.CloudProvider = types.StringValue(cloudProvider)
 }
 
 func NewFAReplicaResource() resource.Resource {
@@ -321,6 +345,43 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
 				Computed:    true,
 			},
+			"transparent_data_encryption": schema.SingleNestedAttribute{
+				MarkdownDescription: "Transparent Data Encryption (TDE) key",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"key_id": schema.StringAttribute{
+						MarkdownDescription: "Transparent Data Encryption (TDE) key ID.",
+						Required:            true,
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"key_name": schema.StringAttribute{
+						MarkdownDescription: "Key name.",
+						Computed:            true,
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"status": schema.StringAttribute{
+						MarkdownDescription: "Status.",
+						Computed:            true,
+						PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEStatus()},
+					},
+				},
+			},
+			"pg_identity": schema.StringAttribute{
+				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"transparent_data_encryption_action": schema.StringAttribute{
+				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEAction()},
+			},
 		},
 	}
 }
@@ -369,18 +430,16 @@ func (r *FAReplicaResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	if err := r.ensureClusterIsHealthy(ctx, config, timeout); err != nil {
+	if err := ensureClusterIsEndStateAs(ctx, r.client, &config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
+
 		return
 	}
 
-	if err := readFAReplica(ctx, r.client, &config); err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error reading cluster", err.Error())
-		}
-		return
+	if config.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(config.CloudProvider.ValueString()))
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
@@ -443,11 +502,16 @@ func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateReque
 	// this is possibly a bug in the API
 	time.Sleep(20 * time.Second)
 
-	if err := r.ensureClusterIsHealthy(ctx, plan, timeout); err != nil {
+	if err := ensureClusterIsEndStateAs(ctx, r.client, &plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error waiting faraway replica to be ready ", err.Error())
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
+
 		return
+	}
+
+	if plan.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(plan.CloudProvider.ValueString()))
 	}
 
 	if err := readFAReplica(ctx, r.client, &plan); err != nil {
@@ -492,7 +556,7 @@ func (r FAReplicaResource) ImportState(ctx context.Context, req resource.ImportS
 }
 
 func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaResourceModel *FAReplicaResourceModel) error {
-	apiCluster, err := client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
+	responseCluster, err := client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -503,38 +567,38 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	}
 
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
-	fAReplicaResourceModel.ClusterId = apiCluster.ClusterId
-	fAReplicaResourceModel.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
-	fAReplicaResourceModel.Phase = apiCluster.Phase
-	fAReplicaResourceModel.Region = types.StringValue(apiCluster.Region.Id)
-	fAReplicaResourceModel.InstanceType = types.StringValue(apiCluster.InstanceType.InstanceTypeId)
+	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
+	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
+	fAReplicaResourceModel.Phase = types.StringPointerValue(responseCluster.Phase)
+	fAReplicaResourceModel.Region = types.StringValue(responseCluster.Region.Id)
+	fAReplicaResourceModel.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
 	fAReplicaResourceModel.Storage = &StorageResourceModel{
-		VolumeType:       types.StringPointerValue(apiCluster.Storage.VolumeTypeId),
-		VolumeProperties: types.StringPointerValue(apiCluster.Storage.VolumePropertiesId),
-		Size:             types.StringPointerValue(apiCluster.Storage.Size),
-		Iops:             types.StringPointerValue(apiCluster.Storage.Iops),
-		Throughput:       types.StringPointerValue(apiCluster.Storage.Throughput),
+		VolumeType:       types.StringPointerValue(responseCluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(responseCluster.Storage.VolumePropertiesId),
+		Size:             types.StringPointerValue(responseCluster.Storage.Size),
+		Iops:             types.StringPointerValue(responseCluster.Storage.Iops),
+		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
-	fAReplicaResourceModel.ResizingPvc = StringSliceToList(apiCluster.ResizingPvc)
+	fAReplicaResourceModel.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
 	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&connection.PgUri)
-	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(apiCluster.CSPAuth)
-	fAReplicaResourceModel.LogsUrl = apiCluster.LogsUrl
-	fAReplicaResourceModel.MetricsUrl = apiCluster.MetricsUrl
-	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
-	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
+	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
+	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
+	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
-		Id:    apiCluster.ClusterArchitecture.ClusterArchitectureId,
-		Nodes: apiCluster.ClusterArchitecture.Nodes,
-		Name:  types.StringValue(apiCluster.ClusterArchitecture.ClusterArchitectureName),
+		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
+		Nodes: responseCluster.ClusterArchitecture.Nodes,
+		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
 	}
-	fAReplicaResourceModel.ClusterType = apiCluster.ClusterType
-	fAReplicaResourceModel.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
-	fAReplicaResourceModel.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
-	fAReplicaResourceModel.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
+	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
+	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
+	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
+	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
-	if configs := apiCluster.PgConfig; configs != nil {
+	if configs := responseCluster.PgConfig; configs != nil {
 		for _, tfCRPgConfig := range fAReplicaResourceModel.PgConfig {
 			for _, apiConfig := range *configs {
 				if tfCRPgConfig.Name == apiConfig.Name {
@@ -552,7 +616,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	}
 
 	fAReplicaResourceModel.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := apiCluster.AllowedIpRanges; allowedIpRanges != nil {
+	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
 			fAReplicaResourceModel.AllowedIpRanges = append(fAReplicaResourceModel.AllowedIpRanges, AllowedIpRangesResourceModel{
 				CidrBlock:   ipRange.CidrBlock,
@@ -561,36 +625,33 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		}
 	}
 
-	if pt := apiCluster.CreatedAt; pt != nil {
+	if pt := responseCluster.CreatedAt; pt != nil {
 		fAReplicaResourceModel.CreatedAt = types.StringValue(pt.String())
 	}
 
-	if apiCluster.PeAllowedPrincipalIds != nil {
-		fAReplicaResourceModel.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&apiCluster.PeAllowedPrincipalIds))
+	if responseCluster.PeAllowedPrincipalIds != nil {
+		fAReplicaResourceModel.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&responseCluster.PeAllowedPrincipalIds))
 	}
 
-	if apiCluster.ServiceAccountIds != nil {
-		fAReplicaResourceModel.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
+	if responseCluster.ServiceAccountIds != nil {
+		fAReplicaResourceModel.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
+	}
+
+	fAReplicaResourceModel.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
+	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
+		if !fAReplicaResourceModel.PgIdentity.IsNull() && fAReplicaResourceModel.PgIdentity.ValueString() != "" {
+			fAReplicaResourceModel.TransparentDataEncryptionAction = types.StringValue(TdeActionInfo(responseCluster.Provider.CloudProviderId))
+		}
+	}
+
+	if responseCluster.EncryptionKeyResp != nil {
+		fAReplicaResourceModel.TransparentDataEncryption = &TransparentDataEncryptionModel{}
+		fAReplicaResourceModel.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
+		fAReplicaResourceModel.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKeyResp.KeyName)
+		fAReplicaResourceModel.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
 	}
 
 	return nil
-}
-
-func (r *FAReplicaResource) ensureClusterIsHealthy(ctx context.Context, cluster FAReplicaResourceModel, timeout time.Duration) error {
-	return retry.RetryContext(
-		ctx,
-		timeout,
-		func() *retry.RetryError {
-			resp, err := r.client.Read(ctx, cluster.ProjectId, *cluster.ClusterId)
-			if err != nil {
-				return retry.NonRetryableError(err)
-			}
-
-			if !resp.IsHealthy() {
-				return retry.RetryableError(errors.New("faraway-replica not yet ready"))
-			}
-			return nil
-		})
 }
 
 func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaResourceModel) (svAccIds, principalIds *[]string, err error) {
@@ -685,6 +746,12 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 	cluster.ServiceAccountIds = svAccIds
 	cluster.PeAllowedPrincipalIds = principalIds
 
+	if fAReplicaResourceModel.TransparentDataEncryption != nil {
+		if !fAReplicaResourceModel.TransparentDataEncryption.KeyId.IsNull() {
+			cluster.EncryptionKeyIdReq = fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueStringPointer()
+		}
+	}
+
 	return cluster, nil
 }
 
@@ -695,5 +762,6 @@ func (r *FAReplicaResource) makeFaReplicaForUpdate(ctx context.Context, fAReplic
 	}
 	fAReplicaModel.Region = nil
 	fAReplicaModel.ReplicaSourceClusterId = nil
+	fAReplicaModel.EncryptionKeyIdReq = nil
 	return &fAReplicaModel, nil
 }

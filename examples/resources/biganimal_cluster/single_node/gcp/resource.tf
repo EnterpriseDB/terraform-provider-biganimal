@@ -108,6 +108,10 @@ resource "biganimal_cluster" "single_node_cluster" {
   # service_account_ids = [
   #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
   # ]
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }
 
 output "password" {

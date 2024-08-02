@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
@@ -68,6 +69,17 @@ func (r analyticsClusterResourceModel) projectId() string {
 
 func (r analyticsClusterResourceModel) clusterId() string {
 	return *r.ClusterId
+}
+
+func (c *analyticsClusterResourceModel) setPhase(phase string) {
+	c.Phase = &phase
+}
+
+func (c *analyticsClusterResourceModel) setPgIdentity(pgIdentity string) {
+}
+
+func (c *analyticsClusterResourceModel) setCloudProvider(cloudProvider string) {
+	c.CloudProvider = types.StringValue(cloudProvider)
 }
 
 type analyticsClusterResource struct {
@@ -297,7 +309,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// keep retrying until cluster is healthy
-	if err := ensureClusterIsHealthy(ctx, r.client, config, timeout); err != nil {
+	if err := ensureClusterIsEndStateAs(ctx, r.client, &config, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
@@ -314,7 +326,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 		}
 
 		// keep retrying until cluster is paused
-		if err := ensureClusterIsPaused(ctx, r.client, config, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, r.client, &config, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
@@ -543,12 +555,12 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 	// cluster = pause,   tf pause = false, it will resume then update
 	// cluster = healthy, tf pause = true, it will update then pause
 	// cluster = healthy, tf pause = false, it will update
-	if *state.Phase != models.PHASE_HEALTHY && *state.Phase != models.PHASE_PAUSED {
+	if *state.Phase != constants.PHASE_HEALTHY && *state.Phase != constants.PHASE_PAUSED {
 		resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 		return
 	}
 
-	if *state.Phase == models.PHASE_PAUSED {
+	if *state.Phase == constants.PHASE_PAUSED {
 		if plan.Pause.ValueBool() {
 			resp.Diagnostics.AddError("Error cannot update paused cluster", "cannot update paused cluster, please set pause = false to resume cluster")
 			return
@@ -563,7 +575,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 				return
 			}
 
-			if err := ensureClusterIsHealthy(ctx, r.client, plan, timeout); err != nil {
+			if err := ensureClusterIsEndStateAs(ctx, r.client, &plan, timeout); err != nil {
 				if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 					resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 				}
@@ -592,7 +604,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 	// this is possibly a bug in the API
 	time.Sleep(20 * time.Second)
 
-	if err := ensureClusterIsHealthy(ctx, r.client, plan, timeout); err != nil {
+	if err := ensureClusterIsEndStateAs(ctx, r.client, &plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
 		}
@@ -608,7 +620,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 			return
 		}
 
-		if err := ensureClusterIsPaused(ctx, r.client, plan, timeout); err != nil {
+		if err := ensureClusterIsPaused(ctx, r.client, &plan, timeout); err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 				resp.Diagnostics.AddError("Error waiting for the cluster to pause", err.Error())
 			}
