@@ -75,15 +75,16 @@ resource "biganimal_cluster" "single_node_cluster" {
     start_time = "03:00"
   }
 
-  pg_type               = "epas"
-  pg_version            = "15"
-  private_networking    = false
-  cloud_provider        = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
-  read_only_connections = false
-  region                = "us-east-1"
-  superuser_access      = true
-  pgvector              = false
-  post_gis              = false
+  pg_type                = "epas"
+  pg_version             = "15"
+  private_networking     = false
+  cloud_provider         = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
+  read_only_connections  = false
+  region                 = "us-east-1"
+  superuser_access       = true
+  pgvector               = false
+  post_gis               = false
+  volume_snapshot_backup = false
 
   pg_bouncer = {
     is_enabled = false

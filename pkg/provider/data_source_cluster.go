@@ -382,6 +382,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Optional:            true,
 				Computed:            true,
 			},
+			"volume_snapshot_backup": schema.BoolAttribute{
+				MarkdownDescription: "Volume snapshot.",
+				Optional:            true,
+			},
 		},
 	}
 }

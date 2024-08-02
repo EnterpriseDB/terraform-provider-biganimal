@@ -94,6 +94,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   pgvector              = false
   post_gis              = false
 
+
   pg_bouncer = {
     is_enabled = false
     #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
@@ -275,6 +276,7 @@ output "faraway_replica_ids" {
 - `storage` (Block, Optional) Storage. (see [below for nested schema](#nestedblock--storage))
 - `superuser_access` (Boolean) Enable to grant superuser access to the edb_admin role.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `volume_snapshot_backup`(Boolean) Enable to take a snapshot of the volume.
 
 ### Read-Only
 

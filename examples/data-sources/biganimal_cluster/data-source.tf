@@ -112,3 +112,7 @@ output "pe_allowed_principal_ids" {
 output "service_account_ids" {
   value = data.biganimal_cluster.this.service_account_ids
 }
+
+output "volume_snapshot_backup" {
+  value = coalesce(data.biganimal_cluster.this.post_gis, false)
+}
