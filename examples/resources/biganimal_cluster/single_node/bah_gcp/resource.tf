@@ -66,14 +66,14 @@ resource "biganimal_cluster" "single_node_cluster" {
   #   <only_needed_for_bah:gcp_clusters>
   # ]
 
-  pg_type               = "epas"
-  pg_version            = "15"
-  private_networking    = true
-  cloud_provider        = "bah:gcp"
-  read_only_connections = false
-  region                = "europe-west1"
-  pgvector              = false
-  post_gis              = false
+  pg_type                = "epas"
+  pg_version             = "15"
+  private_networking     = true
+  cloud_provider         = "bah:gcp"
+  read_only_connections  = false
+  region                 = "europe-west1"
+  pgvector               = false
+  post_gis               = false
   volume_snapshot_backup = false
 
 

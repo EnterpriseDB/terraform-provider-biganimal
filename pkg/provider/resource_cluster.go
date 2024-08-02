@@ -74,8 +74,8 @@ type ClusterResourceModel struct {
 	PostGIS                    types.Bool                         `tfsdk:"post_gis"`
 	PgBouncer                  *PgBouncerModel                    `tfsdk:"pg_bouncer"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
-	Timeouts                   timeouts.Value                     `tfsdk:"timeouts"`
 	VolumeSnapshot             types.Bool                         `tfsdk:"volume_snapshot_backup"`
+	Timeouts                   timeouts.Value                     `tfsdk:"timeouts"`
 }
 
 type ClusterArchitectureResourceModel struct {
