@@ -444,7 +444,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"volume_snapshot_backup": schema.BoolAttribute{
 				MarkdownDescription: "Enable to take a snapshot of the volume.",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"pgvector": schema.BoolAttribute{
