@@ -76,7 +76,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       region = {
         region_id = "us-east1"
@@ -86,6 +86,13 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 6
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "development-data-123456"
+      # ]
+
+      # service_account_ids = [
+      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+      # ]
     }
   ]
 }

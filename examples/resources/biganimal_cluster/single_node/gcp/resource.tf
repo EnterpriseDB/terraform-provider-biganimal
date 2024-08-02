@@ -32,18 +32,19 @@ resource "biganimal_cluster" "single_node_cluster" {
   project_id   = var.project_id
   pause        = false
 
-  allowed_ip_ranges {
-    cidr_block  = "127.0.0.1/32"
-    description = "localhost"
-  }
-
-  allowed_ip_ranges {
-    cidr_block  = "192.168.0.1/32"
-    description = "description!"
-  }
+  allowed_ip_ranges = [
+    {
+      cidr_block  = "127.0.0.1/32"
+      description = "localhost"
+    },
+    {
+      cidr_block  = "192.168.0.1/32"
+      description = "description!"
+    }
+  ]
 
   backup_retention_period = "6d"
-  cluster_architecture {
+  cluster_architecture = {
     id    = "single"
     nodes = 1
   }
@@ -51,17 +52,18 @@ resource "biganimal_cluster" "single_node_cluster" {
 
   instance_type = "gcp:e2-highcpu-4"
   password      = resource.random_password.password.result
-  pg_config {
-    name  = "application_name"
-    value = "created through terraform"
-  }
+  pg_config = [
+    {
+      name  = "application_name"
+      value = "created through terraform"
+    },
+    {
+      name  = "array_nulls"
+      value = "off"
+    }
+  ]
 
-  pg_config {
-    name  = "array_nulls"
-    value = "off"
-  }
-
-  storage {
+  storage = {
     volume_type       = "pd-ssd"
     volume_properties = "pd-ssd"
     size              = "10 Gi"
@@ -76,7 +78,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   pg_type                = "epas"
   pg_version             = "15"
   private_networking     = false
-  cloud_provider         = "gcp"
+  cloud_provider         = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
   read_only_connections  = false
   region                 = "us-east1"
   superuser_access       = true
@@ -100,6 +102,18 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "development-data-123456"
+  # ]
+
+  # service_account_ids = [
+  #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+  # ]
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }
 
 output "password" {

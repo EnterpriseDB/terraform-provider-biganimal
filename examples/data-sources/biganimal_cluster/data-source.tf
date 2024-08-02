@@ -1,6 +1,6 @@
-variable "cluster_name" {
+variable "cluster_id" {
   type        = string
-  description = "The name of the cluster"
+  description = "The id of the cluster"
 }
 
 variable "project_id" {
@@ -9,8 +9,8 @@ variable "project_id" {
 }
 
 data "biganimal_cluster" "this" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
+  cluster_id = var.cluster_id
+  project_id = var.project_id
 }
 
 output "cluster_architecture" {
@@ -31,14 +31,6 @@ output "created_at" {
 
 output "csp_auth" {
   value = coalesce(data.biganimal_cluster.this.csp_auth, false)
-}
-
-output "deleted_at" {
-  value = data.biganimal_cluster.this.deleted_at
-}
-
-output "expired_at" {
-  value = data.biganimal_cluster.this.expired_at
 }
 
 output "instance_type" {
