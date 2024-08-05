@@ -33,6 +33,10 @@ output "data_groups" {
 output "witness_groups" {
   value = data.biganimal_pgd.this.witness_groups
 }
+
+output "ro_connection_uri" {
+  value = data.biganimal_cluster.this.ro_connection_uri
+}
 ```
 
 ## PGD Data Source Example
@@ -98,6 +102,7 @@ terraform {
 - `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `id` (String) The ID of this resource.
 - `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
+- `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
 
 <a id="nestedatt--data_groups"></a>
 ### Nested Schema for `data_groups`

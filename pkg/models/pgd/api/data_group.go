@@ -28,4 +28,5 @@ type DataGroup struct {
 	MaintenanceWindow     *models.MaintenanceWindow `json:"maintenanceWindow,omitempty"`
 	ServiceAccountIds     *[]string                 `json:"serviceAccountIds,omitempty"`
 	PeAllowedPrincipalIds *[]string                 `json:"peAllowedPrincipalIds,omitempty"`
+	RoConnectionUri       *string                   `json:"roConnectionUri,omitempty"`
 }

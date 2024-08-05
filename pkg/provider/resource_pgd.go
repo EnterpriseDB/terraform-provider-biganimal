@@ -331,6 +331,11 @@ func PgdSchema(ctx context.Context) schema.Schema {
 								},
 							},
 						},
+						"ro_connection_uri": schema.StringAttribute{
+							MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
+							Computed:            true,
+							PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
 							Required:    true,
@@ -1368,6 +1373,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:     apiDgModel.MaintenanceWindow,
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
+					RoConnectionUri:       types.StringPointerValue(apiDgModel.RoConnectionUri),
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)
