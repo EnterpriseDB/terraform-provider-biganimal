@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.11.0"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -74,13 +74,13 @@ resource "biganimal_cluster" "ha_cluster" {
     start_time = "03:00"
   }
 
-  pg_type                = "epas"
+  pg_type                = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version             = "15"
   private_networking     = false
   cloud_provider         = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
-  read_only_connections  = true
+  read_only_connections  = false
   region                 = "us-east-1"
-  superuser_access       = true
+  superuser_access       = false
   pgvector               = false
   post_gis               = false
   volume_snapshot_backup = false

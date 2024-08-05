@@ -118,78 +118,104 @@ output "storage" {
 
 ### Required
 
-- `cluster_id` (String) Faraway Replica Cluster ID.
-- `project_id` (String) BigAnimal Project ID.
+- `cluster_id` (String) Cluster ID.
 
 ### Optional
 
-- `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name.
+- `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--allowed_ip_ranges))
+- `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
+- `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
+- `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
+- `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
+- `private_networking` (Boolean) Is private networking enabled.
+- `project_id` (String) BigAnimal Project ID.
+- `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
 
 ### Read-Only
 
-- `allowed_ip_ranges` (Block Set) Allowed IP ranges. (see [below for nested schema](#nestedblock--allowed_ip_ranges))
-- `backup_retention_period` (String) Backup retention period.
-- `cloud_provider` (String) Cloud provider.
-- `cluster_architecture` (Block List) Cluster architecture. (see [below for nested schema](#nestedblock--cluster_architecture))
+- `cloud_provider` (String) Cloud provider. For example, "aws", "azure", "gcp" or "bah:aws", "bah:gcp".
+- `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--cluster_architecture))
 - `cluster_name` (String) Name of the faraway replica cluster.
-- `cluster_type` (String) Type of the Specified Cluster .
+- `cluster_type` (String) Type of the cluster. For example, "cluster" for biganimal_cluster resources, or "faraway_replica" for biganimal_faraway_replica resources.
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
-- `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
-- `deleted_at` (String) Cluster deletion time.
-- `expired_at` (String) Cluster expiry time.
-- `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) The ID of this resource.
-- `instance_type` (String) Instance type.
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
-- `pg_config` (Set of Object) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
-- `pg_type` (String) Postgres type.
-- `pg_version` (String) Postgres version.
-- `pgvector` (Boolean) Is pgvector extension enabled. Adds support for vector storage and vector similarity search to Postgres.
+- `pg_identity` (String) PG Identity required to grant key permissions to activate the cluster.
+- `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
+- `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
 - `phase` (String) Current phase of the cluster.
-- `post_gis` (Boolean) Is postGIS extension enabled. PostGIS extends the capabilities of the PostgreSQL relational database by adding support storing, indexing and querying geographic data.
-- `private_networking` (Boolean) Is private networking enabled.
-- `region` (String) Region to deploy the cluster.
+- `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `resizing_pvc` (List of String) Resizing PVC.
-- `source_cluster_id` (String) Source Cluster ID.
-- `storage` (List of Object) Storage. (see [below for nested schema](#nestedatt--storage))
+- `source_cluster_id` (String) Source cluster ID.
+- `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--storage))
+- `transparent_data_encryption_action` (String) Transparent data encryption action.
 
-<a id="nestedblock--allowed_ip_ranges"></a>
+<a id="nestedatt--allowed_ip_ranges"></a>
 ### Nested Schema for `allowed_ip_ranges`
 
-Read-Only:
+Required:
 
-- `cidr_block` (String) CIDR block.
-- `description` (String) CIDR block description.
-
-
-<a id="nestedblock--cluster_architecture"></a>
-### Nested Schema for `cluster_architecture`
-
-Read-Only:
-
-- `id` (String) Cluster architecture ID.
-- `name` (String) Name.
-- `nodes` (Number) Node count.
+- `cidr_block` (String) CIDR block
+- `description` (String) Description of CIDR block
 
 
 <a id="nestedatt--pg_config"></a>
 ### Nested Schema for `pg_config`
 
+Required:
+
+- `name` (String) GUC name.
+- `value` (String) GUC value.
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
+- `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
+
+<a id="nestedatt--transparent_data_encryption"></a>
+### Nested Schema for `transparent_data_encryption`
+
+Required:
+
+- `key_id` (String) Transparent Data Encryption (TDE) key ID.
+
 Read-Only:
 
-- `name` (String)
-- `value` (String)
+- `key_name` (String) Key name.
+- `status` (String) Status.
+
+
+<a id="nestedatt--cluster_architecture"></a>
+### Nested Schema for `cluster_architecture`
+
+Read-Only:
+
+- `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
+- `name` (String) Name.
+- `nodes` (Number) Node count.
 
 
 <a id="nestedatt--storage"></a>
 ### Nested Schema for `storage`
 
-Read-Only:
+Required:
 
-- `iops` (String)
-- `size` (String)
-- `throughput` (String)
-- `volume_properties` (String)
-- `volume_type` (String)
+- `volume_properties` (String) Volume properties.
+- `volume_type` (String) Volume type.
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume.
+- `size` (String) Size of the volume.
+- `throughput` (String) Throughput.

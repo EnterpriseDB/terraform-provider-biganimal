@@ -41,6 +41,7 @@ postgres
 PostGIS
 postGIS
 ssd
+TDE
 terraform
 ultradisk
 uri

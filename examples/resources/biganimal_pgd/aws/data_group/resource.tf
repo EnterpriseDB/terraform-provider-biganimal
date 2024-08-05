@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.11.0"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -69,7 +69,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
