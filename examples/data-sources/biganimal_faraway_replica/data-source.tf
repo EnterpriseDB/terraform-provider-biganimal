@@ -96,3 +96,7 @@ output "resizing_pvc" {
 output "storage" {
   value = data.biganimal_faraway_replica.this.storage
 }
+
+output "storage" {
+  value = data.biganimal_faraway_replica.this.volume_snapshot_backup
+}

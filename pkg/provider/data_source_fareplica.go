@@ -224,6 +224,36 @@ func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest
 				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
 				Computed:    true,
 			},
+			"volume_snapshot_backup": schema.BoolAttribute{
+				MarkdownDescription: "Enable to take a snapshot of the volume.",
+				Computed:            true,
+			},
+			"transparent_data_encryption": schema.SingleNestedAttribute{
+				MarkdownDescription: "Transparent Data Encryption (TDE) key",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"key_id": schema.StringAttribute{
+						MarkdownDescription: "Transparent Data Encryption (TDE) key ID.",
+						Required:            true,
+					},
+					"key_name": schema.StringAttribute{
+						MarkdownDescription: "Key name.",
+						Computed:            true,
+					},
+					"status": schema.StringAttribute{
+						MarkdownDescription: "Status.",
+						Computed:            true,
+					},
+				},
+			},
+			"pg_identity": schema.StringAttribute{
+				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
+				Computed:            true,
+			},
+			"transparent_data_encryption_action": schema.StringAttribute{
+				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
+			},
 		},
 	}
 }

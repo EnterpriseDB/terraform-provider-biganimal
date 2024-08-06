@@ -61,6 +61,7 @@ type FAReplicaResourceModel struct {
 	TransparentDataEncryption       *TransparentDataEncryptionModel   `tfsdk:"transparent_data_encryption"`
 	PgIdentity                      types.String                      `tfsdk:"pg_identity"`
 	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
+	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -381,6 +382,11 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEAction()},
 			},
+			"volume_snapshot_backup": schema.BoolAttribute{
+				MarkdownDescription: "Enable to take a snapshot of the volume.",
+				Optional:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
 }
@@ -594,6 +600,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
+	fAReplicaResourceModel.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
