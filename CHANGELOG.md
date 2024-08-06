@@ -1,8 +1,8 @@
-## v1.0.0 (August 05. 2024)
+## v1.0.0 (August 07. 2024)
 Features:
 * Transparent Data Encryption (TDE) is now supported in `biganimal_cluster` and `biganimal_faraway_replica` resources
-* Volume Snapshots are now supported in `biganimal_cluster` resources
-* (Breaking change) `biganimal_cluster` data source uses cluster ID instead of cluster name
+* Volume Snapshots are now supported in `biganimal_cluster` and `biganimal_faraway_replica` resources
+* (Breaking change) `biganimal_cluster` and `biganimal_faraway_replica` datasources now use cluster ID instead of cluster name
 
 Enhancements:
 * (Breaking change) data groups in `biganimal_pgd` resources now use lists instead of sets
