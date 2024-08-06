@@ -65,6 +65,8 @@ resource "biganimal_cluster" "single_node_cluster" {
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
+
+  volume_snapshot_backup = false
 }
 
 output "password" {
@@ -119,6 +121,8 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
+
+  volume_snapshot_backup = false
 }
 ```
 
@@ -145,6 +149,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
+- `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
 
 ### Read-Only
 

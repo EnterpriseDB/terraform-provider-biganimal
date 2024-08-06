@@ -53,6 +53,8 @@ resource "biganimal_cluster" "single_node_cluster" {
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
+
+  volume_snapshot_backup = false
 }
 
 output "password" {
@@ -107,4 +109,6 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
+
+  volume_snapshot_backup = false
 }
