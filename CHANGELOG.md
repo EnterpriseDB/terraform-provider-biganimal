@@ -1,3 +1,19 @@
+## v1.0.0 (August 07. 2024)
+Features:
+* Transparent Data Encryption (TDE) is now supported in `biganimal_cluster` and `biganimal_faraway_replica` resources
+* Volume Snapshots are now supported in `biganimal_cluster` and `biganimal_faraway_replica` resources
+* (Breaking change) `biganimal_cluster` and `biganimal_faraway_replica` datasources now use cluster ID instead of cluster name
+
+Enhancements:
+* (Breaking change) data groups in `biganimal_pgd` resources now use lists instead of sets
+* (Breaking change) blocks are migrated to terraform plugin framework attributes in `biganimal_cluster` resources
+* (Breaking change) `biganimal_faraway_replica` resources are migrated to terraform plugin framework attributes
+* Updated examples
+
+## v0.11.2 (July 31. 2024)
+Bug Fixes:
+* fixed pg bouncer settings = null will always show changes on update
+
 ## v0.11.0 (June 20. 2024)
 Features:
 * New Resource to manage Analytical clusters: `biganimal_analytics_cluster`

@@ -65,7 +65,7 @@ func (c *clusterDataSource) Configure(_ context.Context, req datasource.Configur
 
 func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The cluster resource is used to manage BigAnimal clusters. See [Creating a cluster](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/) for more details.",
+		MarkdownDescription: "The cluster data source describes a BigAnimal cluster. The data source requires your cluster ID.",
 		// using Blocks for backward compatible
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
@@ -74,7 +74,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
+				MarkdownDescription: "Data source ID.",
 				Computed:            true,
 			},
 			"cluster_id": schema.StringAttribute{
@@ -385,6 +385,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			"volume_snapshot_backup": schema.BoolAttribute{
 				MarkdownDescription: "Volume snapshot.",
 				Optional:            true,
+			},
+			"transparent_data_encryption_action": schema.StringAttribute{
+				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
 			},
 		},
 	}

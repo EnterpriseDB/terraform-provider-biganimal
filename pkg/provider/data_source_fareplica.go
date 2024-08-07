@@ -39,7 +39,7 @@ func (c *FAReplicaData) Configure(_ context.Context, req datasource.ConfigureReq
 
 func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The faraway replica resource is used to manage cluster faraway-replicas on different active regions in the cloud. See [Managing replicas](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_replicas/) for more details.",
+		MarkdownDescription: "The faraway replica cluster data source describes a BigAnimal faraway replica connected to the cluster. The data source requires faraway replica cluster ID.",
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
 				timeouts.Opts{Create: true, Delete: true, Update: true}),

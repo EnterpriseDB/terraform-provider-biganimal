@@ -180,7 +180,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Cluster architecture. See [Supported cluster types](https://www.enterprisedb.com/docs/biganimal/latest/overview/02_high_availability/) for details.",
+				MarkdownDescription: "Resource ID of the cluster.",
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
