@@ -31,4 +31,6 @@ type DataGroup struct {
 	MaintenanceWindow     *models.MaintenanceWindow `tfsdk:"maintenance_window"`
 	ServiceAccountIds     types.Set                 `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds types.Set                 `tfsdk:"pe_allowed_principal_ids"`
+	RoConnectionUri       types.String              `tfsdk:"ro_connection_uri"`
+	ReadOnlyConnections   *bool                     `tfsdk:"read_only_connections"`
 }
