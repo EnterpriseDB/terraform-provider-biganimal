@@ -203,5 +203,6 @@ func (b bigAnimalProvider) Resources(ctx context.Context) []func() resource.Reso
 		NewClusterResource,
 		NewFAReplicaResource,
 		NewAnalyticsClusterResource,
+		NewTagResource,
 	}
 }
