@@ -1,15 +1,10 @@
 package models
 
 import (
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-)
-
-const (
-	CONDITION_DEPLOYED = "biganimal.com/deployed"
-	PHASE_HEALTHY      = "Cluster in healthy state"
-	PHASE_PAUSED       = "Cluster has been paused"
 )
 
 func NewCluster(d *schema.ResourceData) (*Cluster, error) {
@@ -176,16 +171,20 @@ type Cluster struct {
 	SuperuserAccess            *bool                        `json:"superuserAccess,omitempty"`
 	Extensions                 *[]ClusterExtension          `json:"extensions,omitempty"`
 	PgBouncer                  *PgBouncer                   `json:"pgBouncer,omitempty"`
+	VolumeSnapshot             *bool                        `json:"volumeSnapshotBackup,omitempty"`
+	EncryptionKeyIdReq         *string                      `json:"keyId,omitempty"`
+	EncryptionKeyResp          *EncryptionKey               `json:"encryptionKey,omitempty"`
+	PgIdentity                 *string                      `json:"pgIdentity,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
 // as well as the correct 'healthy' phase.  '
 func (c Cluster) IsHealthy() bool {
-	if *c.Phase != PHASE_HEALTHY {
+	if *c.Phase != constants.PHASE_HEALTHY {
 		return false
 	}
 	for _, cond := range c.Conditions {
-		if *cond.Type_ == CONDITION_DEPLOYED && *cond.ConditionStatus == "True" {
+		if *cond.Type_ == constants.CONDITION_DEPLOYED && *cond.ConditionStatus == "True" {
 			return true
 		}
 	}
