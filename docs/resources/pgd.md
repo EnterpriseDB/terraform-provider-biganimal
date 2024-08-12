@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -77,14 +77,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
       }
       region = {
         region_id = "northeurope"
@@ -94,6 +94,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+      # ]
     },
   ]
 }
@@ -110,7 +113,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -177,286 +180,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
-      }
-      region = {
-        region_id = "northeurope"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 1
-        start_time = "13:00"
-      }
-    },
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "azure:Standard_D2s_v3"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "azurepremiumstorage"
-        volume_properties = "P2"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "azure"
-      }
-      region = {
-        region_id = "eastus"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 2
-        start_time = "15:00"
-      }
-    }
-  ]
-  witness_groups = [
-    {
-      region = {
-        region_id = "canadacentral"
-      }
-      cloud_provider = {
-        cloud_provider_id = "azure"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 3
-        start_time = "03:00"
-      }
-    }
-  ]
-}
-
-output "password" {
-  sensitive = true
-  value     = resource.biganimal_pgd.pgd_cluster.password
-}
-```
-
-## PGD Azure BigAnimal's cloud account One Data Group Example
-```terraform
-terraform {
-  required_providers {
-    biganimal = {
-      source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.6.0"
-    }
-  }
-}
-
-resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster."
-}
-
-variable "project_id" {
-  type        = string
-  description = "BigAnimal Project ID"
-}
-
-resource "biganimal_pgd" "pgd_cluster" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  password     = resource.random_password.password.result
-  pause        = false
-  data_groups = [
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "azure:Standard_D2s_v3"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "azurepremiumstorage"
-        volume_properties = "P2"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "bah:azure"
-      }
-      region = {
-        region_id = "northeurope"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 1
-        start_time = "13:00"
-      }
-      # pe_allowed_principal_ids = [
-      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
-      # ]
-    },
-  ]
-}
-
-output "password" {
-  sensitive = true
-  value     = resource.biganimal_pgd.pgd_cluster.password
-}
-```
-
-## PGD Azure BigAnimal's cloud account Two Data Groups with One Witness Group Example
-```terraform
-terraform {
-  required_providers {
-    biganimal = {
-      source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.6.0"
-    }
-  }
-}
-
-resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster."
-}
-
-variable "project_id" {
-  type        = string
-  description = "BigAnimal Project ID"
-}
-
-resource "biganimal_pgd" "pgd_cluster" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  password     = resource.random_password.password.result
-  pause        = false
-  data_groups = [
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "azure:Standard_D2s_v3"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "azurepremiumstorage"
-        volume_properties = "P2"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "bah:azure"
+        cloud_provider_id = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
       }
       region = {
         region_id = "northeurope"
@@ -506,14 +237,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "bah:azure"
+        cloud_provider_id = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
       }
       region = {
         region_id = "eastus"
@@ -534,7 +265,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "canadacentral"
       }
       cloud_provider = {
-        cloud_provider_id = "bah:azure"
+        cloud_provider_id = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
       }
       maintenance_window = {
         is_enabled = true
@@ -557,7 +288,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -624,14 +355,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       region = {
         region_id = "eu-central-1"
@@ -641,6 +372,9 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 6
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: 123456789012
+      # ]
     }
   ]
 }
@@ -657,7 +391,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -724,286 +458,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "aws"
-      }
-      region = {
-        region_id = "eu-west-1"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 1
-        start_time = "13:00"
-      }
-    },
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "aws:m5.large"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "gp3"
-        volume_properties = "gp3"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "aws"
-      }
-      region = {
-        region_id = "eu-west-2"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 2
-        start_time = "15:00"
-      }
-    }
-  ]
-  witness_groups = [
-    {
-      region = {
-        region_id = "us-east-1"
-      }
-      cloud_provider = {
-        cloud_provider_id = "aws"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 3
-        start_time = "03:00"
-      }
-    }
-  ]
-}
-
-output "password" {
-  sensitive = true
-  value     = resource.biganimal_pgd.pgd_cluster.password
-}
-```
-
-## PGD AWS BigAnimal's cloud account One Data Group Example
-```terraform
-terraform {
-  required_providers {
-    biganimal = {
-      source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.6.0"
-    }
-  }
-}
-
-resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster."
-}
-
-variable "project_id" {
-  type        = string
-  description = "BigAnimal Project ID"
-}
-
-resource "biganimal_pgd" "pgd_cluster" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  password     = resource.random_password.password.result
-  pause        = false
-  data_groups = [
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "aws:m5.large"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "gp3"
-        volume_properties = "gp3"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "bah:aws"
-      }
-      region = {
-        region_id = "eu-central-1"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 6
-        start_time = "13:00"
-      }
-      # pe_allowed_principal_ids = [
-      #   <example_value> # ex: 123456789012
-      # ]
-    }
-  ]
-}
-
-output "password" {
-  sensitive = true
-  value     = resource.biganimal_pgd.pgd_cluster.password
-}
-```
-
-## PGD AWS BigAnimal's cloud account Two Data Groups with One Witness Group Example
-```terraform
-terraform {
-  required_providers {
-    biganimal = {
-      source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.6.0"
-    }
-  }
-}
-
-resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster."
-}
-
-variable "project_id" {
-  type        = string
-  description = "BigAnimal Project ID"
-}
-
-resource "biganimal_pgd" "pgd_cluster" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  password     = resource.random_password.password.result
-  pause        = false
-  data_groups = [
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "aws:m5.large"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "gp3"
-        volume_properties = "gp3"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "bah:aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       region = {
         region_id = "eu-west-1"
@@ -1053,14 +515,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "bah:aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       region = {
         region_id = "eu-west-2"
@@ -1081,7 +543,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "us-east-1"
       }
       cloud_provider = {
-        cloud_provider_id = "bah:aws"
+        cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
       maintenance_window = {
         is_enabled = true
@@ -1104,7 +566,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1171,14 +633,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       region = {
         region_id = "us-east1"
@@ -1188,6 +650,13 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 6
         start_time = "13:00"
       }
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "development-data-123456"
+      # ]
+
+      # service_account_ids = [
+      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
+      # ]
     }
   ]
 }
@@ -1204,7 +673,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1271,290 +740,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "gcp"
-      }
-      region = {
-        region_id = "us-east1"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 6
-        start_time = "13:00"
-      }
-    },
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "gcp:e2-highcpu-4"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "pd-ssd"
-        volume_properties = "pd-ssd"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "gcp"
-      }
-      region = {
-        region_id = "europe-west1"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 5
-        start_time = "12:00"
-      }
-    }
-  ]
-  witness_groups = [
-    {
-      region = {
-        region_id = "asia-south1"
-      }
-      cloud_provider = {
-        cloud_provider_id = "gcp"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 3
-        start_time = "03:00"
-      }
-    }
-  ]
-}
-
-output "password" {
-  sensitive = true
-  value     = resource.biganimal_pgd.pgd_cluster.password
-}
-```
-
-## PGD GCP BigAnimal's cloud account One Data Group Example
-```terraform
-terraform {
-  required_providers {
-    biganimal = {
-      source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.6.0"
-    }
-  }
-}
-
-resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster."
-}
-
-variable "project_id" {
-  type        = string
-  description = "BigAnimal Project ID"
-}
-
-resource "biganimal_pgd" "pgd_cluster" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  password     = resource.random_password.password.result
-  pause        = false
-  data_groups = [
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "gcp:e2-highcpu-4"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "pd-ssd"
-        volume_properties = "pd-ssd"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "bah:gcp"
-      }
-      region = {
-        region_id = "us-east1"
-      }
-      maintenance_window = {
-        is_enabled = true
-        start_day  = 6
-        start_time = "13:00"
-      }
-      # pe_allowed_principal_ids = [
-      #   <example_value> # ex: "development-data-123456"
-      # ]
-
-      # service_account_ids = [
-      #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
-      # ]
-    }
-  ]
-}
-
-output "password" {
-  sensitive = true
-  value     = resource.biganimal_pgd.pgd_cluster.password
-}
-```
-
-## PGD GCP BigAnimal's cloud account Two Data Groups with One Witness Group Example
-```terraform
-terraform {
-  required_providers {
-    biganimal = {
-      source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.6.0"
-    }
-  }
-}
-
-resource "random_password" "password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster."
-}
-
-variable "project_id" {
-  type        = string
-  description = "BigAnimal Project ID"
-}
-
-resource "biganimal_pgd" "pgd_cluster" {
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  password     = resource.random_password.password.result
-  pause        = false
-  data_groups = [
-    {
-      allowed_ip_ranges = [
-        {
-          cidr_block  = "127.0.0.1/32"
-          description = "localhost"
-        },
-        {
-          cidr_block  = "192.168.0.1/32"
-          description = "description!"
-        },
-      ]
-      backup_retention_period = "6d"
-      cluster_architecture = {
-        cluster_architecture_id = "pgd"
-        nodes                   = 3
-      }
-      csp_auth = false
-      instance_type = {
-        instance_type_id = "gcp:e2-highcpu-4"
-      }
-      pg_config = [
-        {
-          name  = "application_name"
-          value = "created through terraform"
-        },
-        {
-          name  = "array_nulls"
-          value = "off"
-        },
-      ]
-      storage = {
-        volume_type       = "pd-ssd"
-        volume_properties = "pd-ssd"
-        size              = "32 Gi"
-      }
-      pg_type = {
-        pg_type_id = "epas"
-      }
-      pg_version = {
-        pg_version_id = "15"
-      }
-      private_networking = false
-      cloud_provider = {
-        cloud_provider_id = "bah:gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       region = {
         region_id = "us-east1"
@@ -1608,14 +801,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "bah:gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       region = {
         region_id = "europe-west1"
@@ -1640,7 +833,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         region_id = "asia-south1"
       }
       cloud_provider = {
-        cloud_provider_id = "bah:gcp"
+        cloud_provider_id = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
       }
       maintenance_window = {
         is_enabled = true
@@ -1663,16 +856,16 @@ output "password" {
 ### Required
 
 - `cluster_name` (String) cluster name
-- `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
+- `data_groups` (Attributes List) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `password` (String, Sensitive) Password for the user edb_admin. It must be 12 characters or more.
 
 ### Optional
 
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
-- `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy
+- `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. Pausing a Postgres Distributed(PGD) cluster shuts down all cluster nodes
 - `project_id` (String) BigAnimal Project ID.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
+- `witness_groups` (Attributes List) (see [below for nested schema](#nestedatt--witness_groups))
 
 ### Read-Only
 
