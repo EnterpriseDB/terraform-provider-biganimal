@@ -331,6 +331,11 @@ func PgdSchema(ctx context.Context) schema.Schema {
 								},
 							},
 						},
+						"ro_connection_uri": schema.StringAttribute{
+							MarkdownDescription: "Cluster read-only connection URI.",
+							Computed:            true,
+							PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
 							Required:    true,
@@ -375,6 +380,11 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							Computed:      true,
 							ElementType:   types.StringType,
 							PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+						},
+						"read_only_connections": schema.BoolAttribute{
+							Description: "Is read-only connections enabled.",
+							Optional:    true,
+							Computed:    true,
 						},
 					},
 				},
@@ -659,6 +669,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			Storage:               storage,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
+			ReadOnlyConnections:   v.ReadOnlyConnections,
 		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
@@ -1368,6 +1379,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:     apiDgModel.MaintenanceWindow,
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
+					RoConnectionUri:       types.StringPointerValue(apiDgModel.RoConnectionUri),
+					ReadOnlyConnections:   apiDgModel.ReadOnlyConnections,
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)

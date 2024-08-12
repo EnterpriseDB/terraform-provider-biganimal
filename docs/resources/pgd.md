@@ -907,6 +907,7 @@ Read-Only:
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the data group.
 - `resizing_pvc` (Set of String) Resizing PVC.
+- `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
 
 <a id="nestedatt--data_groups--cloud_provider"></a>
 ### Nested Schema for `data_groups.cloud_provider`
