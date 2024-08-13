@@ -110,7 +110,7 @@ resource "biganimal_cluster" "ha_cluster" {
   #     tag_name  = "test-tag-2"
   #  },
   #]
-  
+
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }

@@ -112,7 +112,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   #     tag_name  = "test-tag-2"
   #  },
   #]
-  
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
   # ]

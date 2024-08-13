@@ -78,7 +78,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   #     tag_name  = "test-tag-2"
   #  },
   #]
-  
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: 123456789012
   # ]
