@@ -10,6 +10,7 @@ InstanceType
 MPL
 PGD
 Postgres
+analytics
 aws
 awsconnection
 azureconnection
@@ -37,7 +38,10 @@ pgextended
 pgBouncer
 pgvector
 postgres
+PostGIS
+postGIS
 ssd
+TDE
 terraform
 ultradisk
 uri
