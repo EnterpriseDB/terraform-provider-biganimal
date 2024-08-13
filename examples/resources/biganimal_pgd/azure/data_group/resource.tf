@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.11.0"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -69,14 +69,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         size              = "32 Gi"
       }
       pg_type = {
-        pg_type_id = "epas"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
       pg_version = {
         pg_version_id = "15"
       }
       private_networking = false
       cloud_provider = {
-        cloud_provider_id = "azure"
+        cloud_provider_id = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
       }
       region = {
         region_id = "northeurope"
@@ -86,6 +86,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
+      read_only_connections = false
+
+      # pe_allowed_principal_ids = [
+      #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+      # ]
     },
   ]
 }

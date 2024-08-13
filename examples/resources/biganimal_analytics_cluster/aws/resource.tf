@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.11.0"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -55,7 +55,7 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
     start_time = "00:00"
   }
 
-  pg_type            = "epas"
+  pg_type            = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version         = "16"
   private_networking = false
   cloud_provider     = "bah:aws"

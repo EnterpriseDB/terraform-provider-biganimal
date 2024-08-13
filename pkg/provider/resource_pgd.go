@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
@@ -97,10 +98,10 @@ func PgdSchema(ctx context.Context) schema.Schema {
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
-			"data_groups": schema.SetNestedAttribute{
+			"data_groups": schema.ListNestedAttribute{
 				Description: "Cluster data groups.",
 				Required:    true,
-				PlanModifiers: []planmodifier.Set{
+				PlanModifiers: []planmodifier.List{
 					plan_modifier.CustomDataGroupDiffConfig(),
 				},
 				NestedObject: schema.NestedAttributeObject{
@@ -330,6 +331,11 @@ func PgdSchema(ctx context.Context) schema.Schema {
 								},
 							},
 						},
+						"ro_connection_uri": schema.StringAttribute{
+							MarkdownDescription: "Cluster read-only connection URI.",
+							Computed:            true,
+							PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
 							Required:    true,
@@ -375,13 +381,18 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							ElementType:   types.StringType,
 							PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 						},
+						"read_only_connections": schema.BoolAttribute{
+							Description: "Is read-only connections enabled.",
+							Optional:    true,
+							Computed:    true,
+						},
 					},
 				},
 			},
-			"witness_groups": schema.SetNestedAttribute{
+			"witness_groups": schema.ListNestedAttribute{
 				Optional: true,
 				Computed: true,
-				PlanModifiers: []planmodifier.Set{
+				PlanModifiers: []planmodifier.List{
 					plan_modifier.CustomWitnessGroupDiffConfig(),
 				},
 				NestedObject: schema.NestedAttributeObject{
@@ -619,7 +630,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	for _, v := range config.DataGroups {
 		v := v
 
-		storage := buildApiStorage(*v.Storage)
+		storage := buildRequestStorage(*v.Storage)
 
 		if v.PgConfig == nil {
 			v.PgConfig = &[]models.KeyValue{}
@@ -636,13 +647,13 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			Nodes:                   v.ClusterArchitecture.Nodes,
 		}
 
-		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, config.ProjectId, v)
+		svAccIds, principalIds := buildRequestBah(ctx, p.client, &resp.Diagnostics, config.ProjectId, v)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
 		apiDGModel := pgdApi.DataGroup{
-			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
+			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
@@ -658,6 +669,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			Storage:               storage,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
+			ReadOnlyConnections:   v.ReadOnlyConnections,
 		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
@@ -675,7 +687,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 					CloudProviderId: utils.ToPointer(providerId),
 				},
 				Region: &pgdApi.Region{
-					RegionId: wg.Region.RegionId.String(),
+					RegionId: wg.Region.RegionId.ValueString(),
 				},
 			})
 			if err != nil {
@@ -735,7 +747,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_HEALTHY),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, constants.PHASE_HEALTHY),
 	)
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -759,7 +771,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		err = retry.RetryContext(
 			ctx,
 			timeout-time.Minute,
-			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, models.PHASE_PAUSED),
+			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &config, constants.PHASE_PAUSED),
 		)
 		if err != nil {
 			if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -846,14 +858,14 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	// cluster != pause, tf pause = true, it will update then pause
 	// cluster != pause, tf pause = false, it will update
 	for _, v := range state.DataGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
+		if v.Phase.ValueString() != constants.PHASE_HEALTHY && v.Phase.ValueString() != constants.PHASE_PAUSED {
 			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 			return
 		}
 	}
 
 	for _, v := range state.WitnessGroups {
-		if v.Phase.ValueString() != models.PHASE_HEALTHY && v.Phase.ValueString() != models.PHASE_PAUSED {
+		if v.Phase.ValueString() != constants.PHASE_HEALTHY && v.Phase.ValueString() != constants.PHASE_PAUSED {
 			resp.Diagnostics.AddError("Cluster not ready please wait", "Cluster not ready for update operation please wait")
 			return
 		}
@@ -880,7 +892,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			err = retry.RetryContext(
 				ctx,
 				timeout-time.Minute,
-				p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
+				p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, constants.PHASE_HEALTHY),
 			)
 			if err != nil {
 				if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -901,14 +913,14 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	clusterReqBody.Groups = &[]any{}
 
 	for _, v := range plan.DataGroups {
-		storage := buildApiStorage(*v.Storage)
+		storage := buildRequestStorage(*v.Storage)
 
 		groupId := v.GroupId.ValueStringPointer()
 		if v.GroupId.IsUnknown() {
 			groupId = nil
 		}
 
-		svAccIds, principalIds := buildApiBah(ctx, p.client, &resp.Diagnostics, plan.ProjectId, v)
+		svAccIds, principalIds := buildRequestBah(ctx, p.client, &resp.Diagnostics, plan.ProjectId, v)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -917,7 +929,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		reqDg := pgdApi.DataGroup{
 			GroupId:               groupId,
 			ClusterType:           utils.ToPointer("data_group"),
-			AllowedIpRanges:       buildApiAllowedIpRanges(v.AllowedIpRanges),
+			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			CspAuth:               v.CspAuth,
 			InstanceType:          v.InstanceType,
@@ -1031,7 +1043,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	err = retry.RetryContext(
 		ctx,
 		timeout-time.Minute,
-		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_HEALTHY),
+		p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, constants.PHASE_HEALTHY),
 	)
 	if err != nil {
 		if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -1053,7 +1065,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		err = retry.RetryContext(
 			ctx,
 			timeout-time.Minute,
-			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, models.PHASE_PAUSED),
+			p.retryFuncAs(ctx, &resp.Diagnostics, resp.State, &plan, constants.PHASE_PAUSED),
 		)
 		if err != nil {
 			if appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -1086,13 +1098,13 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, wgs []terraform.WitnessGroup) bool {
 	for _, v := range dgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_HEALTHY {
 			return false
 		}
 	}
 
 	for _, v := range wgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_HEALTHY {
 			return false
 		}
 	}
@@ -1102,13 +1114,13 @@ func (p pgdResource) isHealthy(ctx context.Context, dgs []terraform.DataGroup, w
 
 func (p pgdResource) isPaused(ctx context.Context, dgs []terraform.DataGroup, wgs []terraform.WitnessGroup) bool {
 	for _, v := range dgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_PAUSED {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_PAUSED {
 			return false
 		}
 	}
 
 	for _, v := range wgs {
-		if *v.Phase.ValueStringPointer() != models.PHASE_HEALTHY {
+		if *v.Phase.ValueStringPointer() != constants.PHASE_HEALTHY {
 			return false
 		}
 	}
@@ -1131,9 +1143,9 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 		ready := false
 
 		switch expectedPhase {
-		case models.PHASE_HEALTHY:
+		case constants.PHASE_HEALTHY:
 			ready = p.isHealthy(ctx, outPgdTfResource.DataGroups, outPgdTfResource.WitnessGroups)
-		case models.PHASE_PAUSED:
+		case constants.PHASE_PAUSED:
 			ready = p.isPaused(ctx, outPgdTfResource.DataGroups, outPgdTfResource.WitnessGroups)
 		}
 
@@ -1147,46 +1159,119 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 
 func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.State, clusterResp models.Cluster, outPgdTFResource *PGD) {
 	originalTFDgs := outPgdTFResource.DataGroups
+	originalTFWgs := outPgdTFResource.WitnessGroups
 	outPgdTFResource.DataGroups = []terraform.DataGroup{}
 	outPgdTFResource.WitnessGroups = []terraform.WitnessGroup{}
 
-	for _, v := range *clusterResp.Groups {
-		switch apiGroupResp := v.(type) {
-		case map[string]interface{}:
-			if apiGroupResp["clusterType"] == "data_group" {
-				apiDGModel := pgdApi.DataGroup{}
+	sortedByStateRespGroups := []interface{}{}
 
-				if err := utils.CopyObjectJson(apiGroupResp, &apiDGModel); err != nil {
-					if err != nil {
+	// if originalTFDgs is not nil then we need to sort the groups by state as terraform has to compare in order
+	if originalTFDgs != nil {
+		for _, tfDg := range originalTFDgs {
+			for k, v := range *clusterResp.Groups {
+				switch apiGroupResp := v.(type) {
+				case map[string]interface{}:
+					if apiGroupResp["clusterType"] == "data_group" {
+						apiDgModel := pgdApi.DataGroup{}
+						if err := utils.CopyObjectJson(apiGroupResp, &apiDgModel); err != nil {
+							diags.AddError("unable to copy data group", err.Error())
+							return
+						}
+
+						if apiDgModel.Region.RegionId == tfDg.Region.RegionId {
+							sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
+						}
+					}
+				}
+			}
+		}
+	} else {
+		// originalTFDgs may be nil if importing resource as state will be nil so just add them in the order they are in the response
+		for k, v := range *clusterResp.Groups {
+			switch apiGroupResp := v.(type) {
+			case map[string]interface{}:
+				if apiGroupResp["clusterType"] == "data_group" {
+					apiDgModel := pgdApi.DataGroup{}
+					if err := utils.CopyObjectJson(apiGroupResp, &apiDgModel); err != nil {
 						diags.AddError("unable to copy data group", err.Error())
 						return
 					}
+					sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
+				}
+			}
+		}
+	}
+
+	if originalTFWgs != nil {
+		for _, tfWg := range originalTFWgs {
+			for k, v := range *clusterResp.Groups {
+				switch apiGroupResp := v.(type) {
+				case map[string]interface{}:
+					if apiGroupResp["clusterType"] == "witness_group" {
+						apiWgModel := pgdApi.WitnessGroup{}
+						if err := utils.CopyObjectJson(apiGroupResp, &apiWgModel); err != nil {
+							diags.AddError("unable to copy witness group", err.Error())
+							return
+						}
+
+						if apiWgModel.Region.RegionId == tfWg.Region.RegionId.ValueString() {
+							sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
+						}
+					}
+				}
+			}
+		}
+	} else {
+		for k, v := range *clusterResp.Groups {
+			switch apiGroupResp := v.(type) {
+			case map[string]interface{}:
+				if apiGroupResp["clusterType"] == "witness_group" {
+					apiWgModel := pgdApi.WitnessGroup{}
+					if err := utils.CopyObjectJson(apiGroupResp, &apiWgModel); err != nil {
+						diags.AddError("unable to copy witness group", err.Error())
+						return
+					}
+					sortedByStateRespGroups = append(sortedByStateRespGroups, (*clusterResp.Groups)[k])
+				}
+			}
+		}
+	}
+
+	for _, v := range sortedByStateRespGroups {
+		switch apiGroupResp := v.(type) {
+		case map[string]interface{}:
+			if apiGroupResp["clusterType"] == "data_group" {
+				apiDgModel := pgdApi.DataGroup{}
+
+				if err := utils.CopyObjectJson(apiGroupResp, &apiDgModel); err != nil {
+					diags.AddError("unable to copy data group", err.Error())
+					return
 				}
 
-				dgTFType := new(types.Set)
+				dgTFType := new(types.List)
 				state.GetAttribute(ctx, path.Root("data_groups"), dgTFType)
 
 				// cluster arch
 				clusterArch := &terraform.ClusterArchitecture{
-					ClusterArchitectureId:   apiDGModel.ClusterArchitecture.ClusterArchitectureId,
-					ClusterArchitectureName: types.StringPointerValue(apiDGModel.ClusterArchitecture.ClusterArchitectureName),
-					Nodes:                   apiDGModel.ClusterArchitecture.Nodes,
-					WitnessNodes:            types.Int64Value(int64(*apiDGModel.ClusterArchitecture.WitnessNodes)),
+					ClusterArchitectureId:   apiDgModel.ClusterArchitecture.ClusterArchitectureId,
+					ClusterArchitectureName: types.StringPointerValue(apiDgModel.ClusterArchitecture.ClusterArchitectureName),
+					Nodes:                   apiDgModel.ClusterArchitecture.Nodes,
+					WitnessNodes:            types.Int64Value(int64(*apiDgModel.ClusterArchitecture.WitnessNodes)),
 				}
 
 				// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 				newPgConfig := []models.KeyValue{}
 				var tfPgConfig *[]models.KeyValue
 				for _, pgdTFResourceDG := range originalTFDgs {
-					if pgdTFResourceDG.Region.RegionId == apiDGModel.Region.RegionId {
+					if pgdTFResourceDG.Region.RegionId == apiDgModel.Region.RegionId {
 						tfPgConfig = pgdTFResourceDG.PgConfig
 						break
 					}
 				}
 
-				if tfPgConfig != nil && apiDGModel.PgConfig != nil {
+				if tfPgConfig != nil && apiDgModel.PgConfig != nil {
 					for _, tfPgConf := range *tfPgConfig {
-						for _, apiPgConf := range *apiDGModel.PgConfig {
+						for _, apiPgConf := range *apiDgModel.PgConfig {
 							if tfPgConf.Name == apiPgConf.Name {
 								newPgConfig = append(newPgConfig, models.KeyValue{Name: apiPgConf.Name, Value: apiPgConf.Value})
 							}
@@ -1196,8 +1281,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				// resizing pvc
 				resizingPvc := []attr.Value{}
-				if apiDGModel.ResizingPvc != nil && len(*apiDGModel.ResizingPvc) != 0 {
-					for _, v := range *apiDGModel.ResizingPvc {
+				if apiDgModel.ResizingPvc != nil && len(*apiDgModel.ResizingPvc) != 0 {
+					for _, v := range *apiDgModel.ResizingPvc {
 						v := v
 						resizingPvc = append(resizingPvc, types.StringPointerValue(&v))
 					}
@@ -1205,17 +1290,17 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				// storage
 				storage := &terraform.Storage{
-					Size:               types.StringPointerValue(apiDGModel.Storage.Size),
-					VolumePropertiesId: types.StringPointerValue(apiDGModel.Storage.VolumePropertiesId),
-					VolumeTypeId:       types.StringPointerValue(apiDGModel.Storage.VolumeTypeId),
-					Iops:               types.StringPointerValue(apiDGModel.Storage.Iops),
-					Throughput:         types.StringPointerValue(apiDGModel.Storage.Throughput),
+					Size:               types.StringPointerValue(apiDgModel.Storage.Size),
+					VolumePropertiesId: types.StringPointerValue(apiDgModel.Storage.VolumePropertiesId),
+					VolumeTypeId:       types.StringPointerValue(apiDgModel.Storage.VolumeTypeId),
+					Iops:               types.StringPointerValue(apiDgModel.Storage.Iops),
+					Throughput:         types.StringPointerValue(apiDgModel.Storage.Throughput),
 				}
 
 				// service account ids
 				serviceAccIds := []attr.Value{}
-				if apiDGModel.ServiceAccountIds != nil && len(*apiDGModel.ServiceAccountIds) != 0 {
-					for _, v := range *apiDGModel.ServiceAccountIds {
+				if apiDgModel.ServiceAccountIds != nil && len(*apiDgModel.ServiceAccountIds) != 0 {
+					for _, v := range *apiDgModel.ServiceAccountIds {
 						v := v
 						serviceAccIds = append(serviceAccIds, types.StringPointerValue(&v))
 					}
@@ -1223,8 +1308,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				// pe allowed principal ids account ids
 				principalIds := []attr.Value{}
-				if apiDGModel.PeAllowedPrincipalIds != nil && len(*apiDGModel.PeAllowedPrincipalIds) != 0 {
-					for _, v := range *apiDGModel.PeAllowedPrincipalIds {
+				if apiDgModel.PeAllowedPrincipalIds != nil && len(*apiDgModel.PeAllowedPrincipalIds) != 0 {
+					for _, v := range *apiDgModel.PeAllowedPrincipalIds {
 						v := v
 						principalIds = append(principalIds, types.StringPointerValue(&v))
 					}
@@ -1248,8 +1333,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					return
 				}
 				allowedIpRanges := []attr.Value{}
-				if apiDGModel.AllowedIpRanges != nil && len(*apiDGModel.AllowedIpRanges) > 0 {
-					for _, v := range *apiDGModel.AllowedIpRanges {
+				if apiDgModel.AllowedIpRanges != nil && len(*apiDgModel.AllowedIpRanges) > 0 {
+					for _, v := range *apiDgModel.AllowedIpRanges {
 						v := v
 						ob, diag := types.ObjectValue(allwdIpRngsElemTFType.AttrTypes, map[string]attr.Value{
 							"cidr_block":  types.StringValue(v.CidrBlock),
@@ -1270,30 +1355,32 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				}
 
 				tfDGModel := terraform.DataGroup{
-					GroupId:               types.StringPointerValue(apiDGModel.GroupId),
+					GroupId:               types.StringPointerValue(apiDgModel.GroupId),
 					AllowedIpRanges:       allwdIpRngsSet,
-					BackupRetentionPeriod: apiDGModel.BackupRetentionPeriod,
+					BackupRetentionPeriod: apiDgModel.BackupRetentionPeriod,
 					ClusterArchitecture:   clusterArch,
-					ClusterName:           types.StringPointerValue(apiDGModel.ClusterName),
-					ClusterType:           types.StringPointerValue(apiDGModel.ClusterType),
-					Connection:            types.StringPointerValue((*string)(apiDGModel.Connection)),
-					CreatedAt:             types.StringPointerValue((*string)(apiDGModel.CreatedAt)),
-					CspAuth:               apiDGModel.CspAuth,
-					InstanceType:          apiDGModel.InstanceType,
-					LogsUrl:               types.StringPointerValue(apiDGModel.LogsUrl),
-					MetricsUrl:            types.StringPointerValue(apiDGModel.MetricsUrl),
+					ClusterName:           types.StringPointerValue(apiDgModel.ClusterName),
+					ClusterType:           types.StringPointerValue(apiDgModel.ClusterType),
+					Connection:            types.StringPointerValue((*string)(apiDgModel.Connection)),
+					CreatedAt:             types.StringPointerValue((*string)(apiDgModel.CreatedAt)),
+					CspAuth:               apiDgModel.CspAuth,
+					InstanceType:          apiDgModel.InstanceType,
+					LogsUrl:               types.StringPointerValue(apiDgModel.LogsUrl),
+					MetricsUrl:            types.StringPointerValue(apiDgModel.MetricsUrl),
 					PgConfig:              &newPgConfig,
-					PgType:                apiDGModel.PgType,
-					PgVersion:             apiDGModel.PgVersion,
-					Phase:                 types.StringPointerValue(apiDGModel.Phase),
-					PrivateNetworking:     apiDGModel.PrivateNetworking,
-					Provider:              apiDGModel.Provider,
-					Region:                apiDGModel.Region,
+					PgType:                apiDgModel.PgType,
+					PgVersion:             apiDgModel.PgVersion,
+					Phase:                 types.StringPointerValue(apiDgModel.Phase),
+					PrivateNetworking:     apiDgModel.PrivateNetworking,
+					Provider:              apiDgModel.Provider,
+					Region:                apiDgModel.Region,
 					ResizingPvc:           types.SetValueMust(types.StringType, resizingPvc),
 					Storage:               storage,
-					MaintenanceWindow:     apiDGModel.MaintenanceWindow,
+					MaintenanceWindow:     apiDgModel.MaintenanceWindow,
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
+					RoConnectionUri:       types.StringPointerValue(apiDgModel.RoConnectionUri),
+					ReadOnlyConnections:   apiDgModel.ReadOnlyConnections,
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)
@@ -1309,7 +1396,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					}
 				}
 
-				wgTFType := new(types.Set)
+				wgTFType := new(types.List)
 				state.GetAttribute(ctx, path.Root("witness_groups"), wgTFType)
 
 				// cluster arch
@@ -1434,7 +1521,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					}
 				}
 
-				tfWGModel := terraform.WitnessGroup{
+				tfWgModel := terraform.WitnessGroup{
 					GroupId:             types.StringPointerValue(apiWGModel.GroupId),
 					ClusterArchitecture: clusterArch,
 					ClusterType:         types.StringPointerValue(apiWGModel.ClusterType),
@@ -1446,7 +1533,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:   mw,
 				}
 
-				outPgdTFResource.WitnessGroups = append(outPgdTFResource.WitnessGroups, tfWGModel)
+				outPgdTFResource.WitnessGroups = append(outPgdTFResource.WitnessGroups, tfWgModel)
 			}
 		}
 	}
@@ -1485,7 +1572,7 @@ func (p pgdResource) ImportState(ctx context.Context, req resource.ImportStateRe
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), utils.ToPointer(idParts[1]))...)
 }
 
-func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
+func buildRequestBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnostics, projectId string, dg terraform.DataGroup) (svAccIds, principalIds *[]string) {
 	if strings.Contains(*dg.Provider.CloudProviderId, "bah") {
 		if !dg.PeAllowedPrincipalIds.IsNull() && !dg.PeAllowedPrincipalIds.IsUnknown() && len(dg.PeAllowedPrincipalIds.Elements()) > 0 {
 			elemDiag := dg.PeAllowedPrincipalIds.ElementsAs(ctx, &principalIds, false)
@@ -1552,7 +1639,7 @@ func buildApiBah(ctx context.Context, client *api.PGDClient, diags *diag.Diagnos
 	return
 }
 
-func buildApiAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
+func buildRequestAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
 	apiAllowedIpRanges := &[]models.AllowedIpRange{}
 
 	for _, v := range tfAllowedIpRanges.Elements() {
@@ -1565,7 +1652,7 @@ func buildApiAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.All
 	return apiAllowedIpRanges
 }
 
-func buildApiStorage(tfStorage terraform.Storage) *models.Storage {
+func buildRequestStorage(tfStorage terraform.Storage) *models.Storage {
 	var iops *string
 	var throughput *string
 
