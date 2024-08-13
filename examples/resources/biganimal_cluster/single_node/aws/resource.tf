@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -32,36 +32,38 @@ resource "biganimal_cluster" "single_node_cluster" {
   project_id   = var.project_id
   pause        = false
 
-  allowed_ip_ranges {
-    cidr_block  = "127.0.0.1/32"
-    description = "localhost"
-  }
-
-  allowed_ip_ranges {
-    cidr_block  = "192.168.0.1/32"
-    description = "description!"
-  }
+  allowed_ip_ranges = [
+    {
+      cidr_block  = "127.0.0.1/32"
+      description = "localhost"
+    },
+    {
+      cidr_block  = "192.168.0.1/32"
+      description = "description!"
+    }
+  ]
 
   backup_retention_period = "6d"
-  cluster_architecture {
+  cluster_architecture = {
     id    = "single"
     nodes = 1
   }
-  csp_auth = true
+  csp_auth = false
 
   instance_type = "aws:m5.large"
   password      = resource.random_password.password.result
-  pg_config {
-    name  = "application_name"
-    value = "created through terraform"
-  }
+  pg_config = [
+    {
+      name  = "application_name"
+      value = "created through terraform"
+    },
+    {
+      name  = "array_nulls"
+      value = "off"
+    }
+  ]
 
-  pg_config {
-    name  = "array_nulls"
-    value = "off"
-  }
-
-  storage {
+  storage = {
     volume_type       = "gp3"
     volume_properties = "gp3"
     size              = "4 Gi"
@@ -73,14 +75,16 @@ resource "biganimal_cluster" "single_node_cluster" {
     start_time = "03:00"
   }
 
-  pg_type               = "epas"
-  pg_version            = "15"
-  private_networking    = false
-  cloud_provider        = "aws"
-  read_only_connections = false
-  region                = "us-east-1"
-  superuser_access      = true
-  pgvector              = false
+  pg_type                = "epas" #valid values ["epas", "pgextended", "postgres]"
+  pg_version             = "15"
+  private_networking     = false
+  cloud_provider         = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
+  read_only_connections  = false
+  region                 = "us-east-1"
+  superuser_access       = false
+  pgvector               = false
+  post_gis               = false
+  volume_snapshot_backup = false
 
   pg_bouncer = {
     is_enabled = false
@@ -97,6 +101,14 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: 123456789012
+  # ]
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
 }
 
 output "password" {

@@ -15,7 +15,7 @@ type ProjectClient struct{ API }
 
 func NewProjectClient(api API) *ProjectClient {
 	httpClient := http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: clientTimeoutSeconds * time.Second,
 	}
 
 	api.HTTPClient = httpClient
@@ -81,7 +81,6 @@ func (c ProjectClient) List(ctx context.Context, query string) ([]*models.Projec
 	err = json.Unmarshal(body, &response)
 
 	return response.Data, err
-
 }
 
 func (c ProjectClient) Update(ctx context.Context, projectId, projectName string) (string, error) {

@@ -19,7 +19,7 @@ type ClusterClient struct {
 
 func NewClusterClient(api API) *ClusterClient {
 	httpClient := http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: clientTimeoutSeconds * time.Second,
 	}
 
 	api.HTTPClient = httpClient
