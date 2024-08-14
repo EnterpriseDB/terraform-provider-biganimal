@@ -2,400 +2,802 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-type FAReplicaResource struct{}
+type FAReplicaResource struct {
+	client *api.ClusterClient
+}
 
-func NewFAReplicaResource() *FAReplicaResource {
+type FAReplicaResourceModel struct {
+	ID                              types.String                      `tfsdk:"id"`
+	CspAuth                         types.Bool                        `tfsdk:"csp_auth"`
+	Region                          types.String                      `tfsdk:"region"`
+	InstanceType                    types.String                      `tfsdk:"instance_type"`
+	ResizingPvc                     types.List                        `tfsdk:"resizing_pvc"`
+	MetricsUrl                      *string                           `tfsdk:"metrics_url"`
+	ClusterId                       *string                           `tfsdk:"cluster_id"`
+	ReplicaSourceClusterId          *string                           `tfsdk:"source_cluster_id"`
+	Phase                           types.String                      `tfsdk:"phase"`
+	ConnectionUri                   types.String                      `tfsdk:"connection_uri"`
+	ClusterName                     types.String                      `tfsdk:"cluster_name"`
+	Storage                         *StorageResourceModel             `tfsdk:"storage"`
+	PgConfig                        []PgConfigResourceModel           `tfsdk:"pg_config"`
+	ProjectId                       string                            `tfsdk:"project_id"`
+	LogsUrl                         *string                           `tfsdk:"logs_url"`
+	BackupRetentionPeriod           types.String                      `tfsdk:"backup_retention_period"`
+	PrivateNetworking               types.Bool                        `tfsdk:"private_networking"`
+	AllowedIpRanges                 []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
+	CreatedAt                       types.String                      `tfsdk:"created_at"`
+	ServiceAccountIds               types.Set                         `tfsdk:"service_account_ids"`
+	PeAllowedPrincipalIds           types.Set                         `tfsdk:"pe_allowed_principal_ids"`
+	ClusterArchitecture             *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
+	ClusterType                     *string                           `tfsdk:"cluster_type"`
+	PgType                          types.String                      `tfsdk:"pg_type"`
+	PgVersion                       types.String                      `tfsdk:"pg_version"`
+	CloudProvider                   types.String                      `tfsdk:"cloud_provider"`
+	TransparentDataEncryption       *TransparentDataEncryptionModel   `tfsdk:"transparent_data_encryption"`
+	PgIdentity                      types.String                      `tfsdk:"pg_identity"`
+	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
+	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
+
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
+}
+
+func (c FAReplicaResourceModel) projectId() string {
+	return c.ProjectId
+}
+
+func (c FAReplicaResourceModel) clusterId() string {
+	return *c.ClusterId
+}
+
+func (c *FAReplicaResourceModel) setPhase(phase string) {
+	c.Phase = types.StringValue(phase)
+}
+
+func (c *FAReplicaResourceModel) setPgIdentity(pgIdentity string) {
+	c.PgIdentity = types.StringValue(pgIdentity)
+}
+
+func (c *FAReplicaResourceModel) setCloudProvider(cloudProvider string) {
+	c.CloudProvider = types.StringValue(cloudProvider)
+}
+
+func NewFAReplicaResource() resource.Resource {
 	return &FAReplicaResource{}
 }
 
-func (c *FAReplicaResource) Schema() *schema.Resource {
-	return &schema.Resource{
-		Description: "The faraway replica resource is used to manage cluster faraway-replicas on different active regions in the cloud. See [Managing replicas](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_replicas/) for more details.",
-
-		CreateContext: c.Create,
-		ReadContext:   c.Read,
-		UpdateContext: c.Update,
-		DeleteContext: c.Delete,
-
-		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(45 * time.Minute),
+func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "The faraway replica resource is used to manage cluster faraway-replicas on different active regions in the cloud. See [Managing replicas](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_replicas/) for more details.",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx,
+				timeouts.Opts{Create: true, Delete: true, Update: true}),
 		},
-
-		Schema: map[string]*schema.Schema{
-			"allowed_ip_ranges": {
-				Description: "Allowed IP ranges.",
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"cidr_block": {
-							Description: "CIDR block.",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-						"description": {
-							Description: "CIDR block description.",
-							Type:        schema.TypeString,
-							Optional:    true,
-						},
-					},
-				},
-			},
-			"backup_retention_period": {
-				Description: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"csp_auth": {
-				Description: "Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-			},
-
-			"source_cluster_id": {
-				Description: "Source cluster ID.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-
-			"cluster_type": {
-				Description: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"cluster_name": {
-				Description: "Name of the faraway replica cluster.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"created_at": {
-				Description: "Cluster creation time.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"deleted_at": {
-				Description: "Cluster deletion time.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"expired_at": {
-				Description: "Cluster expiry time.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			//"first_recoverability_point_at": {
-			//	Description: "Earliest backup recover time.",
-			//	Type:        schema.TypeString,
-			//	Computed:    true,
-			//},
-			"instance_type": {
-				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"logs_url": {
-				Description: "The URL to find the logs of this cluster.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"metrics_url": {
-				Description: "The URL to find the metrics of this cluster.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"cluster_id": {
-				Description: "Cluster ID.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"connection_uri": {
-				Description: "Cluster connection URI.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"pg_config": {
-				Description: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Description: "GUC name.",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-						"value": {
-							Description: "GUC value.",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-					},
-				},
-			},
-			"phase": {
-				Description: "Current phase of the cluster.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"private_networking": {
-				Description: "Is private networking enabled.",
-				Type:        schema.TypeBool,
-				Optional:    true,
-			},
-			"project_id": {
-				Description:      "BigAnimal Project ID.",
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validateProjectId,
-			},
-			"region": {
-				Description: "Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"resizing_pvc": {
-				Description: "Resizing PVC.",
-				Type:        schema.TypeList,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"storage": {
-				Description: "Storage.",
-				Type:        schema.TypeList,
+			"allowed_ip_ranges": schema.SetNestedAttribute{
+				Description: "Allowed IP ranges.",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"cidr_block": schema.StringAttribute{
+							Description: "CIDR block",
+							Required:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: "Description of CIDR block",
+							Required:    true,
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"backup_retention_period": schema.StringAttribute{
+				Description: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
+				Optional:    true,
+				Validators: []validator.String{
+					BackupRetentionPeriodValidator(),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"csp_auth": schema.BoolAttribute{
+				Description: "Is authentication handled by the cloud service provider.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"source_cluster_id": schema.StringAttribute{
+				Description: "Source cluster ID.",
 				Required:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"iops": {
-							Description: "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
-							Type:        schema.TypeString,
-							Optional:    true,
-							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-								// iops is an optional field.
-								// If there is already a value set (old != "")
-								// and there is no new value (new == ""),
-								// we can suppress this Diff
-								return new == "" && old != ""
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+
+			"cluster_name": schema.StringAttribute{
+				Description: "Name of the faraway replica cluster.",
+				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"created_at": schema.StringAttribute{
+				Description: "Cluster creation time.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"instance_type": schema.StringAttribute{
+				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"logs_url": schema.StringAttribute{
+				Description: "The URL to find the logs of this cluster.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"metrics_url": schema.StringAttribute{
+				Description: "The URL to find the metrics of this cluster.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"cluster_id": schema.StringAttribute{
+				Description: "Cluster ID.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"connection_uri": schema.StringAttribute{
+				Description: "Cluster connection URI.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"pg_config": schema.SetNestedAttribute{
+				Description: "Database configuration parameters.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "GUC name.",
+							Required:    true,
+						},
+						"value": schema.StringAttribute{
+							Description: "GUC value.",
+							Required:    true,
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"phase": schema.StringAttribute{
+				Description: "Current phase of the cluster.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"private_networking": schema.BoolAttribute{
+				Description: "Is private networking enabled.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"project_id": schema.StringAttribute{
+				Description: "BigAnimal Project ID.",
+				Optional:    true,
+				Validators: []validator.String{
+					ProjectIdValidator(),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"region": schema.StringAttribute{
+				Description: "Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.",
+				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"resizing_pvc": schema.ListAttribute{
+				Description: "Resizing PVC.",
+				Computed:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"storage": schema.SingleNestedAttribute{
+				Description: "Storage.",
+				Required:    true,
+				Attributes: map[string]schema.Attribute{
+					"iops": schema.StringAttribute{
+						Description: "IOPS for the selected volume.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"size": schema.StringAttribute{
+						Description: "Size of the volume.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"throughput": schema.StringAttribute{
+						Description: "Throughput.",
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"volume_properties": schema.StringAttribute{
+						Description: "Volume properties.",
+						Required:    true,
+					},
+					"volume_type": schema.StringAttribute{
+						Description: "Volume type.",
+						Required:    true,
+					},
+				},
+			},
+			"service_account_ids": schema.SetAttribute{
+				Description:   "A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.",
+				Optional:      true,
+				Computed:      true,
+				ElementType:   types.StringType,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+			"pe_allowed_principal_ids": schema.SetAttribute{
+				Description:   "Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.",
+				Optional:      true,
+				Computed:      true,
+				ElementType:   types.StringType,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+			"cluster_type": schema.StringAttribute{
+				MarkdownDescription: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"cluster_architecture": schema.SingleNestedAttribute{
+				Description: "Cluster architecture.",
+				Computed:    true,
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:   "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"name": schema.StringAttribute{
+						Description:   "Name.",
+						Computed:      true,
+						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"nodes": schema.Float64Attribute{
+						Description:   "Node count.",
+						Computed:      true,
+						PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()},
+					},
+				},
+			},
+			"pg_version": schema.StringAttribute{
+				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
+				Computed:            true,
+			},
+			"pg_type": schema.StringAttribute{
+				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
+				Computed:            true,
+			},
+			"cloud_provider": schema.StringAttribute{
+				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
+				Computed:    true,
+			},
+			"transparent_data_encryption": schema.SingleNestedAttribute{
+				MarkdownDescription: "Transparent Data Encryption (TDE) key",
+				Optional:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"key_id": schema.StringAttribute{
+						MarkdownDescription: "Transparent Data Encryption (TDE) key ID.",
+						Required:            true,
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"key_name": schema.StringAttribute{
+						MarkdownDescription: "Key name.",
+						Computed:            true,
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"status": schema.StringAttribute{
+						MarkdownDescription: "Status.",
+						Computed:            true,
+						PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEStatus()},
+					},
+				},
+			},
+			"pg_identity": schema.StringAttribute{
+				MarkdownDescription: "PG Identity required to grant key permissions to activate the cluster.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"transparent_data_encryption_action": schema.StringAttribute{
+				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEAction()},
+			},
+			"volume_snapshot_backup": schema.BoolAttribute{
+				MarkdownDescription: "Enable to take a snapshot of the volume.",
+				Optional:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
 							},
 						},
-						"size": {
-							Description: "Size of the volume. It can be set to different values depending on your volume type and properties.",
-							Type:        schema.TypeString,
-							Optional:    true,
+						"tag_name": schema.StringAttribute{
+							Required: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
-						"throughput": {
-							Description: "Throughput is automatically calculated by BigAnimal based on the IOPS input.",
-							Type:        schema.TypeString,
-							Optional:    true,
-						},
-						"volume_properties": {
-							Description: "Volume properties in accordance with the selected volume type.",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-						"volume_type": {
-							Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
-							Type:        schema.TypeString,
-							Required:    true,
+						"color": schema.StringAttribute{
+							Optional: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 					},
 				},
-			},
-			"tags": {
-				Description: "Assign existing tags or create tags to assign to this resource",
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"tag_id": {
-							Description: "Tag ID",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
-						"tag_name": {
-							Description: "Tag name",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-						"color": {
-							Description: "Tag color",
-							Type:        schema.TypeString,
-							Optional:    true,
-						},
-					},
+				PlanModifiers: []planmodifier.Set{
+					plan_modifier.CustomAssignTags(),
 				},
 			},
 		},
 	}
 }
 
-func (c *FAReplicaResource) Create(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta).ClusterClient()
-
-	err := d.Set("cluster_type", "faraway_replica")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	cluster, err := models.NewClusterForCreate(d)
-	if err != nil {
-		return diag.FromErr(err)
+func (r *FAReplicaResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
 	}
 
-	projectId := d.Get("project_id").(string)
-
-	clusterId, err := client.Create(ctx, projectId, *cluster)
-	if err != nil {
-		return fromBigAnimalErr(err)
-	}
-
-	d.SetId(clusterId)
-
-	// retry until we get success
-	err = retry.RetryContext(
-		ctx,
-		d.Timeout(schema.TimeoutCreate)-time.Minute,
-		c.retryFunc(ctx, d, meta, clusterId))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diag.Diagnostics{}
+	r.client = req.ProviderData.(*api.API).ClusterClient()
 }
 
-func (c *FAReplicaResource) Read(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if err := c.read(ctx, d, meta); err != nil {
-		return fromBigAnimalErr(err)
-	}
-	return diag.Diagnostics{}
+func (r *FAReplicaResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_faraway_replica"
 }
 
-func (c *FAReplicaResource) read(ctx context.Context, d *schema.ResourceData, meta any) error {
-	client := api.BuildAPI(meta).ClusterClient()
-
-	clusterId := d.Id()
-	projectId := d.Get("project_id").(string)
-	cluster, err := client.Read(ctx, projectId, clusterId)
-
-	// return error if faraway-replica is promoted to a cluster
-	if *cluster.ClusterType != "faraway_replica" {
-		return fmt.Errorf("the specified cluster is no longer a 'faraway replica' and has likely been promoted to a standalone cluster. Please use the 'biganimal_cluster' data source to retrieve information about this cluster")
+func (r *FAReplicaResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var config FAReplicaResourceModel
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
+	clusterModel, err := r.generateGenericFAReplicaModel(ctx, config)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error generating faraway-replica create request", err.Error())
+		}
+		return
+	}
+
+	clusterId, err := r.client.Create(ctx, config.ProjectId, clusterModel)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
+		}
+		return
+	}
+
+	config.ClusterId = &clusterId
+
+	timeout, diagnostics := config.Timeouts.Create(ctx, time.Minute*60)
+	resp.Diagnostics.Append(diagnostics...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := ensureClusterIsEndStateAs(ctx, r.client, &config, timeout); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+		}
+
+		return
+	}
+
+	if config.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(config.CloudProvider.ValueString()))
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
+}
+
+func (r *FAReplicaResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state FAReplicaResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := readFAReplica(ctx, r.client, &state); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading faraway-replica", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+}
+
+func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan FAReplicaResourceModel
+
+	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
+	resp.Diagnostics.Append(diagnostics...)
+
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state FAReplicaResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	fAReplicaModel, err := r.makeFaReplicaForUpdate(ctx, plan)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating faraway replica", err.Error())
+		}
+		return
+	}
+
+	_, err = r.client.Update(ctx, fAReplicaModel, plan.ProjectId, *plan.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error updating faraway replica API request", err.Error())
+		}
+		return
+	}
+
+	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
+	// this is possibly a bug in the API
+	time.Sleep(20 * time.Second)
+
+	if err := ensureClusterIsEndStateAs(ctx, r.client, &plan, timeout); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
+		}
+
+		return
+	}
+
+	if plan.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(plan.CloudProvider.ValueString()))
+	}
+
+	if err := readFAReplica(ctx, r.client, &plan); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading faraway replica", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+}
+
+func (r *FAReplicaResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state FAReplicaResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.Delete(ctx, state.ProjectId, *state.ClusterId)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error deleting faraway replica", err.Error())
+		}
+		return
+	}
+}
+
+func (r FAReplicaResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.Split(req.ID, "/")
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: project_id/cluster_id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
+}
+
+func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaResourceModel *FAReplicaResourceModel) error {
+	responseCluster, err := client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
 	if err != nil {
 		return err
 	}
 
-	connection, err := client.ConnectionString(ctx, projectId, clusterId)
+	connection, err := client.ConnectionString(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
 	if err != nil {
 		return err
 	}
 
-	// set the outputs
-	utils.SetOrPanic(d, "cluster_type", "faraway_replica")
-	utils.SetOrPanic(d, "source_cluster_id", cluster.ReplicaSourceClusterId)      // Required
-	utils.SetOrPanic(d, "allowed_ip_ranges", cluster.AllowedIpRanges)             // optional
-	utils.SetOrPanic(d, "backup_retention_period", cluster.BackupRetentionPeriod) // optional
-	utils.SetOrPanic(d, "created_at", cluster.CreatedAt)                          // Computed
-	utils.SetOrPanic(d, "deleted_at", cluster.DeletedAt)                          // Computed
-	utils.SetOrPanic(d, "expired_at", cluster.ExpiredAt)                          // Computed
-	utils.SetOrPanic(d, "cluster_name", cluster.ClusterName)                      // Required
-	// utils.SetOrPanic(d, "first_recoverability_point_at", cluster.FirstRecoverabilityPointAt) // Computed
-	utils.SetOrPanic(d, "instance_type", cluster.InstanceType)           // Required
-	utils.SetOrPanic(d, "logs_url", cluster.LogsUrl)                     // Computed
-	utils.SetOrPanic(d, "metrics_url", cluster.MetricsUrl)               // Computed
-	utils.SetOrPanic(d, "pg_config", cluster.PgConfig)                   // Optional
-	utils.SetOrPanic(d, "phase", cluster.Phase)                          // Computed
-	utils.SetOrPanic(d, "private_networking", cluster.PrivateNetworking) // Optional
+	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
+	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
+	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
+	fAReplicaResourceModel.Phase = types.StringPointerValue(responseCluster.Phase)
+	fAReplicaResourceModel.Region = types.StringValue(responseCluster.Region.Id)
+	fAReplicaResourceModel.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
+	fAReplicaResourceModel.Storage = &StorageResourceModel{
+		VolumeType:       types.StringPointerValue(responseCluster.Storage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(responseCluster.Storage.VolumePropertiesId),
+		Size:             types.StringPointerValue(responseCluster.Storage.Size),
+		Iops:             types.StringPointerValue(responseCluster.Storage.Iops),
+		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
+	}
+	fAReplicaResourceModel.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
+	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
+	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
+	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
+	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
+		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
+		Nodes: responseCluster.ClusterArchitecture.Nodes,
+		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
+	}
+	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
+	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
+	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
+	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
+	fAReplicaResourceModel.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
 
-	utils.SetOrPanic(d, "csp_auth", cluster.CSPAuth)         // optional
-	utils.SetOrPanic(d, "region", cluster.Region)            // Required
-	utils.SetOrPanic(d, "storage", cluster.Storage)          // Required
-	utils.SetOrPanic(d, "resizing_pvc", cluster.ResizingPvc) // Computed
-	utils.SetOrPanic(d, "cluster_id", cluster.ClusterId)     // Computed
-	utils.SetOrPanic(d, "connection_uri", connection.PgUri)  // Computed
+	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
+	newPgConfig := []PgConfigResourceModel{}
+	if configs := responseCluster.PgConfig; configs != nil {
+		for _, tfCRPgConfig := range fAReplicaResourceModel.PgConfig {
+			for _, apiConfig := range *configs {
+				if tfCRPgConfig.Name == apiConfig.Name {
+					newPgConfig = append(newPgConfig, PgConfigResourceModel{
+						Name:  apiConfig.Name,
+						Value: apiConfig.Value,
+					})
+				}
+			}
+		}
+	}
 
-	d.SetId(*cluster.ClusterId)
+	if len(newPgConfig) > 0 {
+		fAReplicaResourceModel.PgConfig = newPgConfig
+	}
+
+	fAReplicaResourceModel.AllowedIpRanges = []AllowedIpRangesResourceModel{}
+	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
+		for _, ipRange := range *allowedIpRanges {
+			fAReplicaResourceModel.AllowedIpRanges = append(fAReplicaResourceModel.AllowedIpRanges, AllowedIpRangesResourceModel{
+				CidrBlock:   ipRange.CidrBlock,
+				Description: types.StringValue(ipRange.Description),
+			})
+		}
+	}
+
+	if pt := responseCluster.CreatedAt; pt != nil {
+		fAReplicaResourceModel.CreatedAt = types.StringValue(pt.String())
+	}
+
+	if responseCluster.PeAllowedPrincipalIds != nil {
+		fAReplicaResourceModel.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&responseCluster.PeAllowedPrincipalIds))
+	}
+
+	if responseCluster.ServiceAccountIds != nil {
+		fAReplicaResourceModel.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
+	}
+
+	fAReplicaResourceModel.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
+	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
+		if !fAReplicaResourceModel.PgIdentity.IsNull() && fAReplicaResourceModel.PgIdentity.ValueString() != "" {
+			fAReplicaResourceModel.TransparentDataEncryptionAction = types.StringValue(TdeActionInfo(responseCluster.Provider.CloudProviderId))
+		}
+	}
+
+	if responseCluster.EncryptionKeyResp != nil {
+		fAReplicaResourceModel.TransparentDataEncryption = &TransparentDataEncryptionModel{}
+		fAReplicaResourceModel.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
+		fAReplicaResourceModel.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKeyResp.KeyName)
+		fAReplicaResourceModel.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
+	}
+
 	return nil
 }
 
-func (c *FAReplicaResource) Update(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta).ClusterClient()
-	err := d.Set("cluster_type", "faraway_replica")
+func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaResourceModel) (svAccIds, principalIds *[]string, err error) {
+	sourceCluster, err := r.client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ReplicaSourceClusterId)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	// short circuit early for these types of changes
-	if d.HasChange("region") {
-		return diag.FromErr(errors.New("region is immutable"))
+		return nil, nil, err
 	}
 
-	if d.HasChange("backup_retention_period") {
-		return diag.FromErr(errors.New("backup retention period is immutable"))
+	// If there is an existing Principal Account Id for that Region, use that one.
+	pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
+	if err != nil {
+		return nil, nil, err
+	}
+	principalIds = utils.ToPointer(pids.Data)
+
+	// If there is no existing value, user should provide one
+	if principalIds != nil && len(*principalIds) == 0 {
+		// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+		// while encoding JSON objects
+		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+		plist := []string{}
+		for _, peId := range fAReplicaResourceModel.PeAllowedPrincipalIds.Elements() {
+			plist = append(plist, peId.(basetypes.StringValue).ValueString())
+		}
+
+		principalIds = utils.ToPointer(plist)
 	}
 
-	cluster, err := models.NewClusterForUpdate(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	if sourceCluster.Provider.CloudProviderId == "bah:gcp" {
+		// If there is an existing Service Account Id for that Region, use that one.
+		sids, _ := r.client.GetServiceAccountIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
+		svAccIds = utils.ToPointer(sids.Data)
 
-	clusterId := d.Id()
-	projectId := d.Get("project_id").(string)
-	_, err = client.Update(ctx, cluster, projectId, clusterId)
-	if err != nil {
-		return fromBigAnimalErr(err)
-	}
+		// If there is no existing value, user should provide one
+		if svAccIds != nil && len(*svAccIds) == 0 {
+			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+			// while encoding JSON objects.
+			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+			slist := []string{}
+			for _, saId := range fAReplicaResourceModel.ServiceAccountIds.Elements() {
+				slist = append(slist, saId.(basetypes.StringValue).ValueString())
+			}
 
-	// retry until we get success
-	err = retry.RetryContext(
-		ctx,
-		d.Timeout(schema.TimeoutUpdate)-time.Minute,
-		c.retryFunc(ctx, d, meta, clusterId))
-	if err != nil {
-		return diag.FromErr(err)
+			svAccIds = utils.ToPointer(slist)
+		}
 	}
-	return diag.Diagnostics{}
+	return
 }
 
-func (c *FAReplicaResource) Delete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client := api.BuildAPI(meta).ClusterClient()
-	clusterId := d.Id()
-	projectId := d.Get("project_id").(string)
-	if err := client.Delete(ctx, projectId, clusterId); err != nil {
-		return fromBigAnimalErr(err)
+func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, fAReplicaResourceModel FAReplicaResourceModel) (models.Cluster, error) {
+	cluster := models.Cluster{
+		ReplicaSourceClusterId: fAReplicaResourceModel.ReplicaSourceClusterId,
+		ClusterName:            fAReplicaResourceModel.ClusterName.ValueStringPointer(),
+		ClusterType:            utils.ToPointer("faraway_replica"),
+		Region:                 &models.Region{Id: fAReplicaResourceModel.Region.ValueString()},
+		Storage: &models.Storage{
+			VolumePropertiesId: fAReplicaResourceModel.Storage.VolumeProperties.ValueStringPointer(),
+			VolumeTypeId:       fAReplicaResourceModel.Storage.VolumeType.ValueStringPointer(),
+			Iops:               fAReplicaResourceModel.Storage.Iops.ValueStringPointer(),
+			Size:               fAReplicaResourceModel.Storage.Size.ValueStringPointer(),
+			Throughput:         fAReplicaResourceModel.Storage.Throughput.ValueStringPointer(),
+		},
+		InstanceType:          &models.InstanceType{InstanceTypeId: fAReplicaResourceModel.InstanceType.ValueString()},
+		CSPAuth:               fAReplicaResourceModel.CspAuth.ValueBoolPointer(),
+		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
+		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
 	}
-	return diag.Diagnostics{}
+
+	allowedIpRanges := []models.AllowedIpRange{}
+	for _, ipRange := range fAReplicaResourceModel.AllowedIpRanges {
+		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
+			CidrBlock:   ipRange.CidrBlock,
+			Description: ipRange.Description.ValueString(),
+		})
+	}
+	cluster.AllowedIpRanges = &allowedIpRanges
+
+	configs := []models.KeyValue{}
+	for _, model := range fAReplicaResourceModel.PgConfig {
+		configs = append(configs, models.KeyValue{
+			Name:  model.Name,
+			Value: model.Value,
+		})
+	}
+	cluster.PgConfig = &configs
+
+	svAccIds, principalIds, err := r.buildRequestBah(ctx, fAReplicaResourceModel)
+	if err != nil {
+		return models.Cluster{}, err
+	}
+
+	cluster.ServiceAccountIds = svAccIds
+	cluster.PeAllowedPrincipalIds = principalIds
+
+	if fAReplicaResourceModel.TransparentDataEncryption != nil {
+		if !fAReplicaResourceModel.TransparentDataEncryption.KeyId.IsNull() {
+			cluster.EncryptionKeyIdReq = fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueStringPointer()
+		}
+	}
+
+	return cluster, nil
 }
 
-func (c *FAReplicaResource) retryFunc(ctx context.Context, d *schema.ResourceData, meta any, clusterId string) retry.RetryFunc {
-	client := api.BuildAPI(meta).ClusterClient()
-	return func() *retry.RetryError {
-		projectId := d.Get("project_id").(string)
-		cluster, err := client.Read(ctx, projectId, clusterId)
-		if err != nil {
-			return retry.NonRetryableError(fmt.Errorf("error describing instance: %s", err))
-		}
-
-		if !cluster.IsHealthy() {
-			return retry.RetryableError(errors.New("instance not yet ready"))
-		}
-
-		if err := c.read(ctx, d, meta); err != nil {
-			return retry.NonRetryableError(err)
-		}
-		return nil
+func (r *FAReplicaResource) makeFaReplicaForUpdate(ctx context.Context, fAReplicaResourceModel FAReplicaResourceModel) (*models.Cluster, error) {
+	fAReplicaModel, err := r.generateGenericFAReplicaModel(ctx, fAReplicaResourceModel)
+	if err != nil {
+		return nil, err
 	}
+	fAReplicaModel.Region = nil
+	fAReplicaModel.ReplicaSourceClusterId = nil
+	fAReplicaModel.EncryptionKeyIdReq = nil
+	return &fAReplicaModel, nil
 }

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -31,17 +31,18 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   project_id        = var.project_id
   source_cluster_id = var.source_cluster_id
 
-  allowed_ip_ranges {
-    cidr_block  = "127.0.0.1/32"
-    description = "localhost"
-  }
+  allowed_ip_ranges = [
+    {
+      cidr_block  = "127.0.0.1/32"
+      description = "localhost"
+    },
+    {
+      cidr_block  = "192.168.0.1/32"
+      description = "description!"
+    },
+  ]
 
-  allowed_ip_ranges {
-    cidr_block  = "192.168.0.1/32"
-    description = "description!"
-  }
-
-  backup_retention_period = "6d"
+  backup_retention_period = "8d"
   csp_auth                = false
   instance_type           = "azure:Standard_D2s_v3"
 
@@ -49,17 +50,18 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
   // it is highly recommended setting these values to be equal to or greater than the source cluster's.
   // Please visit [this page](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_replicas/#modify-a-faraway-replica)for best practices.
-  pg_config {
-    name  = "max_connections"
-    value = "100"
-  }
+  pg_config = [
+    {
+      name  = "max_connections"
+      value = "100"
+    },
+    {
+      name  = "max_locks_per_transaction"
+      value = "64"
+    }
+  ]
 
-  pg_config {
-    name  = "max_locks_per_transaction"
-    value = "64"
-  }
-
-  storage {
+  storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
     size              = "4 Gi"
@@ -74,4 +76,14 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   #tags {
   #  tag_name  = "ex-tag-name-2"
   #}
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+  # ]
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
+
+  volume_snapshot_backup = false
 }

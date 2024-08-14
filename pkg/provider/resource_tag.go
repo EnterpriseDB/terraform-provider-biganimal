@@ -88,7 +88,7 @@ func (tr *tagResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	tagId, err := tr.client.Create(ctx, commonApi.Tag{
+	tagId, err := tr.client.Create(ctx, commonApi.TagRequest{
 		Color:   config.Color.ValueStringPointer(),
 		TagName: config.TagName.ValueString(),
 	})
@@ -113,7 +113,7 @@ func (tr *tagResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	err := tr.read(ctx, &state)
+	err := readTag(ctx, tr.client, &state)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading tag", err.Error())
@@ -124,8 +124,8 @@ func (tr *tagResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (tr *tagResource) read(ctx context.Context, resource *TagResourceModel) error {
-	tagResp, err := tr.client.Get(ctx, resource.TagId.ValueString())
+func readTag(ctx context.Context, client *api.TagClient, resource *TagResourceModel) error {
+	tagResp, err := client.Get(ctx, resource.TagId.ValueString())
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err := tr.client.Update(ctx, plan.TagId.ValueString(), commonApi.Tag{
+	_, err := tr.client.Update(ctx, plan.TagId.ValueString(), commonApi.TagRequest{
 		Color:   plan.Color.ValueStringPointer(),
 		TagName: plan.TagName.ValueString(),
 	})
@@ -156,7 +156,7 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	err = tr.read(ctx, &plan)
+	err = readTag(ctx, tr.client, &plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading tag", err.Error())

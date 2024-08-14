@@ -41,14 +41,6 @@ output "csp_auth" {
   value = coalesce(data.biganimal_faraway_replica.this.csp_auth, false)
 }
 
-output "deleted_at" {
-  value = data.biganimal_faraway_replica.this.deleted_at
-}
-
-output "expired_at" {
-  value = data.biganimal_faraway_replica.this.expired_at
-}
-
 output "instance_type" {
   value = data.biganimal_faraway_replica.this.instance_type
 }
@@ -95,4 +87,8 @@ output "resizing_pvc" {
 
 output "storage" {
   value = data.biganimal_faraway_replica.this.storage
+}
+
+output "volume_snapshot_backup" {
+  value = data.biganimal_faraway_replica.this.volume_snapshot_backup
 }
