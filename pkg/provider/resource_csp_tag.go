@@ -8,6 +8,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -30,7 +31,7 @@ type CSPTagResourceModel struct {
 	AddTags         []addTag     `tfsdk:"add_tags"`
 	DeleteTags      types.List   `tfsdk:"delete_tags"`
 	EditTags        []CSPTag     `tfsdk:"edit_tags"`
-	CSPTags         []CSPTag     `tfsdk:"csp_tags"`
+	CSPTags         types.List   `tfsdk:"csp_tags"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -72,25 +73,19 @@ func (tf *cSPTagResource) Schema(ctx context.Context, req resource.SchemaRequest
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"project_id": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Required:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider_id": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Required:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"add_tags": schema.ListNestedAttribute{
-				Optional: true,
+				Required: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"csp_tag_key": schema.StringAttribute{
@@ -104,13 +99,13 @@ func (tf *cSPTagResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 			},
 			"delete_tags": schema.ListAttribute{
-				Optional:      true,
+				Required:      true,
 				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 				ElementType:   types.StringType,
 			},
 			"edit_tags": schema.ListNestedAttribute{
 				Description: "",
-				Optional:    true,
+				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"csp_tag_id": schema.StringAttribute{
@@ -148,7 +143,6 @@ func (tf *cSPTagResource) Schema(ctx context.Context, req resource.SchemaRequest
 						},
 					},
 				},
-				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}
@@ -166,15 +160,18 @@ func (tr *cSPTagResource) Create(ctx context.Context, req resource.CreateRequest
 	cSPTagRequest.AddTags = []commonApi.AddTag{}
 	cSPTagRequest.DeleteTags = []string{}
 	cSPTagRequest.EditTags = []commonApi.EditTag{}
+
 	for _, addTag := range config.AddTags {
 		cSPTagRequest.AddTags = append(cSPTagRequest.AddTags, commonApi.AddTag{
 			CspTagKey:   addTag.CspTagKey.ValueString(),
 			CspTagValue: addTag.CspTagValue.ValueString(),
 		})
 	}
+
 	for _, deleteTag := range config.DeleteTags.Elements() {
 		cSPTagRequest.DeleteTags = append(cSPTagRequest.DeleteTags, deleteTag.(basetypes.StringValue).ValueString())
 	}
+
 	for _, editTag := range config.EditTags {
 		cSPTagRequest.EditTags = append(cSPTagRequest.EditTags, commonApi.EditTag{
 			CSPTagID:    editTag.CSPTagID.ValueString(),
@@ -222,46 +219,72 @@ func readCSPTag(ctx context.Context, client *api.CSPTagClient, resource *CSPTagR
 	}
 
 	resource.ID = types.StringValue(fmt.Sprintf("%s/%s", resource.ProjectID.ValueString(), resource.CloudProviderID.ValueString()))
-	resource.CSPTags = []CSPTag{}
+	cSPTagsElems := []attr.Value{}
 	for _, respCSPTag := range cSPTagResp.Data {
-		resource.CSPTags = append(resource.CSPTags, CSPTag{
-			CSPTagID:    types.StringValue(respCSPTag.CSPTagID),
-			CSPTagKey:   types.StringValue(respCSPTag.CSPTagKey),
-			CSPTagValue: types.StringValue(respCSPTag.CSPTagValue),
-			Status:      types.StringValue(respCSPTag.Status),
-		})
+		cSPTagsElems = append(
+			cSPTagsElems, types.ObjectValueMust(resource.CSPTags.ElementType(ctx).(types.ObjectType).AttributeTypes(),
+				map[string]attr.Value{
+					"csp_tag_id":    types.StringValue(respCSPTag.CSPTagID),
+					"csp_tag_key":   types.StringValue(respCSPTag.CSPTagKey),
+					"csp_tag_value": types.StringValue(respCSPTag.CSPTagValue),
+					"status":        types.StringValue(respCSPTag.Status),
+				},
+			))
 	}
+
+	resource.CSPTags = types.ListValueMust(resource.CSPTags.ElementType(ctx), cSPTagsElems)
 	return nil
 }
 
 func (tr *cSPTagResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// var plan CSPTagResourceModel
-	// diags := req.Plan.Get(ctx, &plan)
-	// resp.Diagnostics.Append(diags...)
-	// if resp.Diagnostics.HasError() {
-	// 	return
-	// }
+	var plan CSPTagResourceModel
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	// _, err := tr.client.Update(ctx, plan.TagId.ValueString(), commonApi.TagRequest{
-	// 	Color:   plan.Color.ValueStringPointer(),
-	// 	TagName: plan.TagName.ValueString(),
-	// })
-	// if err != nil {
-	// 	if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-	// 		resp.Diagnostics.AddError("Error updating tag", err.Error())
-	// 	}
-	// 	return
-	// }
+	cSPTagRequest := commonApi.CSPTagRequest{}
+	cSPTagRequest.AddTags = []commonApi.AddTag{}
+	cSPTagRequest.DeleteTags = []string{}
+	cSPTagRequest.EditTags = []commonApi.EditTag{}
+	for _, addTag := range plan.AddTags {
+		cSPTagRequest.AddTags = append(cSPTagRequest.AddTags, commonApi.AddTag{
+			CspTagKey:   addTag.CspTagKey.ValueString(),
+			CspTagValue: addTag.CspTagValue.ValueString(),
+		})
+	}
+	for _, deleteTag := range plan.DeleteTags.Elements() {
+		cSPTagRequest.DeleteTags = append(cSPTagRequest.DeleteTags, deleteTag.(basetypes.StringValue).ValueString())
+	}
+	for _, editTag := range plan.EditTags {
+		cSPTagRequest.EditTags = append(cSPTagRequest.EditTags, commonApi.EditTag{
+			CSPTagID:    editTag.CSPTagID.ValueString(),
+			CSPTagKey:   editTag.CSPTagKey.ValueString(),
+			CSPTagValue: editTag.CSPTagValue.ValueString(),
+			Status:      editTag.Status.ValueString(),
+		})
+	}
 
-	// err = readCSPTag(ctx, tr.client, &plan)
-	// if err != nil {
-	// 	if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-	// 		resp.Diagnostics.AddError("Error reading tag", err.Error())
-	// 	}
-	// 	return
-	// }
+	_, err := tr.client.Put(ctx, plan.ProjectID.ValueString(), plan.CloudProviderID.ValueString(), cSPTagRequest)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error creating tag", err.Error())
+		}
+		return
+	}
 
-	// resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	err = readCSPTag(ctx, tr.client, &plan)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading tag", err.Error())
+		}
+		return
+	}
+
+	plan.ID = types.StringValue(fmt.Sprintf("%s/%s", plan.ProjectID.ValueString(), plan.CloudProviderID.ValueString()))
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (tr *cSPTagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
