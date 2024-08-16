@@ -80,6 +80,7 @@ type ClusterResourceModel struct {
 	PgIdentity                      types.String                       `tfsdk:"pg_identity"`
 	TransparentDataEncryptionAction types.String                       `tfsdk:"transparent_data_encryption_action"`
 	VolumeSnapshot                  types.Bool                         `tfsdk:"volume_snapshot_backup"`
+	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -501,6 +502,36 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					"Pausing a high availability cluster shuts down all cluster nodes",
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"tag_name": schema.StringAttribute{
+							Required: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"color": schema.StringAttribute{
+							Optional: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",
@@ -932,6 +963,15 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		}
 	}
 
+	tfClusterResource.Tags = []commonTerraform.Tag{}
+	for _, v := range responseCluster.Tags {
+		tfClusterResource.Tags = append(tfClusterResource.Tags, commonTerraform.Tag{
+			TagId:   types.StringValue(v.TagId),
+			TagName: types.StringValue(v.TagName),
+			Color:   basetypes.NewStringPointerValue(v.Color),
+		})
+	}
+
 	if responseCluster.EncryptionKeyResp != nil {
 		tfClusterResource.TransparentDataEncryption = &TransparentDataEncryptionModel{}
 		tfClusterResource.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
@@ -1119,6 +1159,16 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 			cluster.PgBouncer.Settings = &[]models.PgBouncerSettings{}
 		}
 	}
+
+	tags := []commonApi.Tag{}
+	for _, tag := range clusterResource.Tags {
+		tags = append(tags, commonApi.Tag{
+			Color:   tag.Color.ValueStringPointer(),
+			TagId:   tag.TagId.ValueString(),
+			TagName: tag.TagName.ValueString(),
+		})
+	}
+	cluster.Tags = tags
 
 	svAccIds, principalIds, err := c.buildRequestBah(ctx, clusterResource)
 	if err != nil {
