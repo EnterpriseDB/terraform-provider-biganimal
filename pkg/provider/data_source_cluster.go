@@ -18,32 +18,8 @@ var (
 	_ datasource.DataSourceWithConfigure = &clusterDataSource{}
 )
 
-type PgConfigDatasourceModel struct {
-	Value types.String `tfsdk:"value"`
-	Name  types.String `tfsdk:"name"`
-}
-
-type StorageDatasourceModel struct {
-	Throughput       types.String `tfsdk:"throughput"`
-	VolumeProperties types.String `tfsdk:"volume_properties"`
-	VolumeType       types.String `tfsdk:"volume_type"`
-	Iops             types.String `tfsdk:"iops"`
-	Size             types.String `tfsdk:"size"`
-}
-
-type ClusterArchitectureDatasourceModel struct {
-	Nodes types.Int64  `tfsdk:"nodes"`
-	Id    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-}
-
 type clusterDatasourceModel struct {
 	ClusterResourceModel
-}
-
-type AllowedIpRangesDatasourceModel struct {
-	CidrBlock   types.String `tfsdk:"cidr_block"`
-	Description types.String `tfsdk:"description"`
 }
 
 type clusterDataSource struct {
