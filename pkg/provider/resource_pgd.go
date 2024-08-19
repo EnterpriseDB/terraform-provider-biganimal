@@ -125,7 +125,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
+					plan_modifier.CustomAssignTags(),
 				},
 			},
 			"data_groups": schema.ListNestedAttribute{
