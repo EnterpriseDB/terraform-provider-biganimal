@@ -15,7 +15,7 @@ type ProjectClient struct{ API }
 
 func NewProjectClient(api API) *ProjectClient {
 	httpClient := http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: clientTimeoutSeconds * time.Second,
 	}
 
 	api.HTTPClient = httpClient

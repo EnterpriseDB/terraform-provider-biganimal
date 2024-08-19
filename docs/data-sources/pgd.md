@@ -33,6 +33,10 @@ output "data_groups" {
 output "witness_groups" {
   value = data.biganimal_pgd.this.witness_groups
 }
+
+output "ro_connection_uri" {
+  value = data.biganimal_cluster.this.ro_connection_uri
+}
 ```
 
 ## PGD Data Source Example
@@ -74,7 +78,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "0.8.1"
+      version = "1.0.0"
     }
   }
 }
@@ -98,6 +102,7 @@ terraform {
 - `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `id` (String) The ID of this resource.
 - `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
+- `ro_connection_uri` (String) PGD Cluster read-only connection URI. Only available for high availability clusters.
 
 <a id="nestedatt--data_groups"></a>
 ### Nested Schema for `data_groups`
@@ -128,6 +133,7 @@ Read-Only:
 - `resizing_pvc` (Set of String) Resizing PVC.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--data_groups--storage))
+- `read_only_connections` (Boolean) Is Read-only Connections/workloads enabled.
 
 <a id="nestedatt--data_groups--allowed_ip_ranges"></a>
 ### Nested Schema for `data_groups.allowed_ip_ranges`

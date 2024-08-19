@@ -25,7 +25,7 @@ func NewTagClient(api API) *TagClient {
 	return &tc
 }
 
-func (tc TagClient) Create(ctx context.Context, tagReq api.Tag) (*string, error) {
+func (tc TagClient) Create(ctx context.Context, tagReq api.TagRequest) (*string, error) {
 	response := struct {
 		Data struct {
 			TagId string `json:"tagId"`
@@ -46,9 +46,9 @@ func (tc TagClient) Create(ctx context.Context, tagReq api.Tag) (*string, error)
 	return &response.Data.TagId, err
 }
 
-func (tc TagClient) Get(ctx context.Context, tagId string) (api.Tag, error) {
+func (tc TagClient) Get(ctx context.Context, tagId string) (api.TagResponse, error) {
 	response := struct {
-		Data api.Tag `json:"data"`
+		Data api.TagResponse `json:"data"`
 	}{}
 
 	url := fmt.Sprintf("tags/%s", tagId)
@@ -63,7 +63,7 @@ func (tc TagClient) Get(ctx context.Context, tagId string) (api.Tag, error) {
 	return response.Data, err
 }
 
-func (tc TagClient) Update(ctx context.Context, tagId string, tagReq api.Tag) (*string, error) {
+func (tc TagClient) Update(ctx context.Context, tagId string, tagReq api.TagRequest) (*string, error) {
 	response := struct {
 		Data struct {
 			TagId string `json:"tagId"`
@@ -87,9 +87,9 @@ func (tc TagClient) Update(ctx context.Context, tagId string, tagReq api.Tag) (*
 	return &response.Data.TagId, err
 }
 
-func (tc TagClient) List(ctx context.Context) ([]api.Tag, error) {
+func (tc TagClient) List(ctx context.Context) ([]api.TagResponse, error) {
 	response := struct {
-		Data []api.Tag `json:"data"`
+		Data []api.TagResponse `json:"data"`
 	}{}
 
 	body, err := tc.doRequest(ctx, http.MethodGet, "tags", nil)
@@ -100,4 +100,15 @@ func (tc TagClient) List(ctx context.Context) ([]api.Tag, error) {
 	err = json.Unmarshal(body, &response)
 
 	return response.Data, err
+}
+
+func (tc TagClient) Delete(ctx context.Context, tagId string) error {
+	url := fmt.Sprintf("tags/%s", tagId)
+
+	_, err := tc.doRequest(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

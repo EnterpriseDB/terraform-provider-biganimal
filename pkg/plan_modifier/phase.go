@@ -3,7 +3,7 @@ package plan_modifier
 import (
 	"context"
 
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -38,6 +38,19 @@ func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req
 		return
 	}
 
+	// this is a create, if no state it should be unknown
+	if req.StateValue.IsNull() {
+		return
+	}
+
+	// this is update, if phase is waiting for tde key access then set to unknown
+	if !req.PlanValue.IsUnknown() {
+		if req.PlanValue.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
+			resp.PlanValue = basetypes.NewStringUnknown()
+			return
+		}
+	}
+
 	var pause bool
 	err = planObject["pause"].As(&pause)
 	if err != nil {
@@ -46,8 +59,10 @@ func (m customPhaseForUnknownModifier) PlanModifyString(ctx context.Context, req
 	}
 
 	if pause {
-		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(models.PHASE_PAUSED))
+		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(constants.PHASE_PAUSED))
+		return
 	} else {
-		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(models.PHASE_HEALTHY))
+		resp.PlanValue = basetypes.NewStringPointerValue(utils.ToPointer(constants.PHASE_HEALTHY))
+		return
 	}
 }
