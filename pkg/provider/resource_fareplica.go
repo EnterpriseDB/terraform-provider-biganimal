@@ -9,6 +9,8 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -62,6 +64,7 @@ type FAReplicaResourceModel struct {
 	PgIdentity                      types.String                      `tfsdk:"pg_identity"`
 	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
 	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
+	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -318,8 +321,8 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Description:   "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
-						Computed:      true,
+						Description:   "Cluster architecture ID.",
+						Required:      true,
 						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"name": schema.StringAttribute{
@@ -329,10 +332,11 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 					},
 					"nodes": schema.Float64Attribute{
 						Description:   "Node count.",
-						Computed:      true,
+						Required:      true,
 						PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()},
 					},
 				},
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 			},
 			"pg_version": schema.StringAttribute{
 				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
@@ -687,6 +691,15 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		fAReplicaResourceModel.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
 	}
 
+	fAReplicaResourceModel.Tags = []commonTerraform.Tag{}
+	for _, v := range responseCluster.Tags {
+		fAReplicaResourceModel.Tags = append(fAReplicaResourceModel.Tags, commonTerraform.Tag{
+			TagId:   types.StringValue(v.TagId),
+			TagName: types.StringValue(v.TagName),
+			Color:   basetypes.NewStringPointerValue(v.Color),
+		})
+	}
+
 	return nil
 }
 
@@ -787,6 +800,16 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 			cluster.EncryptionKeyIdReq = fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueStringPointer()
 		}
 	}
+
+	tags := []commonApi.Tag{}
+	for _, tag := range fAReplicaResourceModel.Tags {
+		tags = append(tags, commonApi.Tag{
+			Color:   tag.Color.ValueStringPointer(),
+			TagId:   tag.TagId.ValueString(),
+			TagName: tag.TagName.ValueString(),
+		})
+	}
+	cluster.Tags = tags
 
 	return cluster, nil
 }

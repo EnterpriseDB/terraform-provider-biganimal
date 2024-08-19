@@ -1265,8 +1265,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 			switch apiGroupResp := v.(type) {
 			case map[string]interface{}:
 				if apiGroupResp["clusterType"] == "witness_group" {
-					apiWgModel := pgdApi.WitnessGroup{}
-					if err := utils.CopyObjectJson(apiGroupResp, &apiWgModel); err != nil {
+					apiRespWgModel := pgdApi.WitnessGroup{}
+					if err := utils.CopyObjectJson(apiGroupResp, &apiRespWgModel); err != nil {
 						diags.AddError("unable to copy witness group", err.Error())
 						return
 					}
@@ -1280,9 +1280,9 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 		switch apiGroupResp := v.(type) {
 		case map[string]interface{}:
 			if apiGroupResp["clusterType"] == "data_group" {
-				apiDgModel := pgdApi.DataGroup{}
+				apiRespDgModel := pgdApi.DataGroup{}
 
-				if err := utils.CopyObjectJson(apiGroupResp, &apiDgModel); err != nil {
+				if err := utils.CopyObjectJson(apiGroupResp, &apiRespDgModel); err != nil {
 					diags.AddError("unable to copy data group", err.Error())
 					return
 				}
@@ -1292,25 +1292,25 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				// cluster arch
 				clusterArch := &terraform.ClusterArchitecture{
-					ClusterArchitectureId:   apiDgModel.ClusterArchitecture.ClusterArchitectureId,
-					ClusterArchitectureName: types.StringPointerValue(apiDgModel.ClusterArchitecture.ClusterArchitectureName),
-					Nodes:                   apiDgModel.ClusterArchitecture.Nodes,
-					WitnessNodes:            types.Int64Value(int64(*apiDgModel.ClusterArchitecture.WitnessNodes)),
+					ClusterArchitectureId:   apiRespDgModel.ClusterArchitecture.ClusterArchitectureId,
+					ClusterArchitectureName: types.StringPointerValue(apiRespDgModel.ClusterArchitecture.ClusterArchitectureName),
+					Nodes:                   apiRespDgModel.ClusterArchitecture.Nodes,
+					WitnessNodes:            types.Int64Value(int64(*apiRespDgModel.ClusterArchitecture.WitnessNodes)),
 				}
 
 				// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 				newPgConfig := []models.KeyValue{}
 				var tfPgConfig *[]models.KeyValue
 				for _, pgdTFResourceDG := range originalTFDgs {
-					if pgdTFResourceDG.Region.RegionId == apiDgModel.Region.RegionId {
+					if pgdTFResourceDG.Region.RegionId == apiRespDgModel.Region.RegionId {
 						tfPgConfig = pgdTFResourceDG.PgConfig
 						break
 					}
 				}
 
-				if tfPgConfig != nil && apiDgModel.PgConfig != nil {
+				if tfPgConfig != nil && apiRespDgModel.PgConfig != nil {
 					for _, tfPgConf := range *tfPgConfig {
-						for _, apiPgConf := range *apiDgModel.PgConfig {
+						for _, apiPgConf := range *apiRespDgModel.PgConfig {
 							if tfPgConf.Name == apiPgConf.Name {
 								newPgConfig = append(newPgConfig, models.KeyValue{Name: apiPgConf.Name, Value: apiPgConf.Value})
 							}
@@ -1320,8 +1320,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				// resizing pvc
 				resizingPvc := []attr.Value{}
-				if apiDgModel.ResizingPvc != nil && len(*apiDgModel.ResizingPvc) != 0 {
-					for _, v := range *apiDgModel.ResizingPvc {
+				if apiRespDgModel.ResizingPvc != nil && len(*apiRespDgModel.ResizingPvc) != 0 {
+					for _, v := range *apiRespDgModel.ResizingPvc {
 						v := v
 						resizingPvc = append(resizingPvc, types.StringPointerValue(&v))
 					}
@@ -1329,17 +1329,17 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				// storage
 				storage := &terraform.Storage{
-					Size:               types.StringPointerValue(apiDgModel.Storage.Size),
-					VolumePropertiesId: types.StringPointerValue(apiDgModel.Storage.VolumePropertiesId),
-					VolumeTypeId:       types.StringPointerValue(apiDgModel.Storage.VolumeTypeId),
-					Iops:               types.StringPointerValue(apiDgModel.Storage.Iops),
-					Throughput:         types.StringPointerValue(apiDgModel.Storage.Throughput),
+					Size:               types.StringPointerValue(apiRespDgModel.Storage.Size),
+					VolumePropertiesId: types.StringPointerValue(apiRespDgModel.Storage.VolumePropertiesId),
+					VolumeTypeId:       types.StringPointerValue(apiRespDgModel.Storage.VolumeTypeId),
+					Iops:               types.StringPointerValue(apiRespDgModel.Storage.Iops),
+					Throughput:         types.StringPointerValue(apiRespDgModel.Storage.Throughput),
 				}
 
 				// service account ids
 				serviceAccIds := []attr.Value{}
-				if apiDgModel.ServiceAccountIds != nil && len(*apiDgModel.ServiceAccountIds) != 0 {
-					for _, v := range *apiDgModel.ServiceAccountIds {
+				if apiRespDgModel.ServiceAccountIds != nil && len(*apiRespDgModel.ServiceAccountIds) != 0 {
+					for _, v := range *apiRespDgModel.ServiceAccountIds {
 						v := v
 						serviceAccIds = append(serviceAccIds, types.StringPointerValue(&v))
 					}
@@ -1347,8 +1347,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 
 				// pe allowed principal ids account ids
 				principalIds := []attr.Value{}
-				if apiDgModel.PeAllowedPrincipalIds != nil && len(*apiDgModel.PeAllowedPrincipalIds) != 0 {
-					for _, v := range *apiDgModel.PeAllowedPrincipalIds {
+				if apiRespDgModel.PeAllowedPrincipalIds != nil && len(*apiRespDgModel.PeAllowedPrincipalIds) != 0 {
+					for _, v := range *apiRespDgModel.PeAllowedPrincipalIds {
 						v := v
 						principalIds = append(principalIds, types.StringPointerValue(&v))
 					}
@@ -1372,8 +1372,8 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					return
 				}
 				allowedIpRanges := []attr.Value{}
-				if apiDgModel.AllowedIpRanges != nil && len(*apiDgModel.AllowedIpRanges) > 0 {
-					for _, v := range *apiDgModel.AllowedIpRanges {
+				if apiRespDgModel.AllowedIpRanges != nil && len(*apiRespDgModel.AllowedIpRanges) > 0 {
+					for _, v := range *apiRespDgModel.AllowedIpRanges {
 						v := v
 						ob, diag := types.ObjectValue(allwdIpRngsElemTFType.AttrTypes, map[string]attr.Value{
 							"cidr_block":  types.StringValue(v.CidrBlock),
@@ -1394,32 +1394,32 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				}
 
 				tfDGModel := terraform.DataGroup{
-					GroupId:               types.StringPointerValue(apiDgModel.GroupId),
+					GroupId:               types.StringPointerValue(apiRespDgModel.GroupId),
 					AllowedIpRanges:       allwdIpRngsSet,
-					BackupRetentionPeriod: apiDgModel.BackupRetentionPeriod,
+					BackupRetentionPeriod: apiRespDgModel.BackupRetentionPeriod,
 					ClusterArchitecture:   clusterArch,
-					ClusterName:           types.StringPointerValue(apiDgModel.ClusterName),
-					ClusterType:           types.StringPointerValue(apiDgModel.ClusterType),
-					Connection:            types.StringPointerValue((*string)(apiDgModel.Connection)),
-					CreatedAt:             types.StringPointerValue((*string)(apiDgModel.CreatedAt)),
-					CspAuth:               apiDgModel.CspAuth,
-					InstanceType:          apiDgModel.InstanceType,
-					LogsUrl:               types.StringPointerValue(apiDgModel.LogsUrl),
-					MetricsUrl:            types.StringPointerValue(apiDgModel.MetricsUrl),
+					ClusterName:           types.StringPointerValue(apiRespDgModel.ClusterName),
+					ClusterType:           types.StringPointerValue(apiRespDgModel.ClusterType),
+					Connection:            types.StringPointerValue((*string)(apiRespDgModel.Connection)),
+					CreatedAt:             types.StringPointerValue((*string)(apiRespDgModel.CreatedAt)),
+					CspAuth:               apiRespDgModel.CspAuth,
+					InstanceType:          apiRespDgModel.InstanceType,
+					LogsUrl:               types.StringPointerValue(apiRespDgModel.LogsUrl),
+					MetricsUrl:            types.StringPointerValue(apiRespDgModel.MetricsUrl),
 					PgConfig:              &newPgConfig,
-					PgType:                apiDgModel.PgType,
-					PgVersion:             apiDgModel.PgVersion,
-					Phase:                 types.StringPointerValue(apiDgModel.Phase),
-					PrivateNetworking:     apiDgModel.PrivateNetworking,
-					Provider:              apiDgModel.Provider,
-					Region:                apiDgModel.Region,
+					PgType:                apiRespDgModel.PgType,
+					PgVersion:             apiRespDgModel.PgVersion,
+					Phase:                 types.StringPointerValue(apiRespDgModel.Phase),
+					PrivateNetworking:     apiRespDgModel.PrivateNetworking,
+					Provider:              apiRespDgModel.Provider,
+					Region:                apiRespDgModel.Region,
 					ResizingPvc:           types.SetValueMust(types.StringType, resizingPvc),
 					Storage:               storage,
-					MaintenanceWindow:     apiDgModel.MaintenanceWindow,
+					MaintenanceWindow:     apiRespDgModel.MaintenanceWindow,
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
-					RoConnectionUri:       types.StringPointerValue(apiDgModel.RoConnectionUri),
-					ReadOnlyConnections:   apiDgModel.ReadOnlyConnections,
+					RoConnectionUri:       types.StringPointerValue(apiRespDgModel.RoConnectionUri),
+					ReadOnlyConnections:   apiRespDgModel.ReadOnlyConnections,
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)

@@ -1153,6 +1153,16 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		}
 	}
 
+	tags := []commonApi.Tag{}
+	for _, tag := range clusterResource.Tags {
+		tags = append(tags, commonApi.Tag{
+			Color:   tag.Color.ValueStringPointer(),
+			TagId:   tag.TagId.ValueString(),
+			TagName: tag.TagName.ValueString(),
+		})
+	}
+	cluster.Tags = tags
+
 	svAccIds, principalIds, err := c.buildRequestBah(ctx, clusterResource)
 	if err != nil {
 		return models.Cluster{}, err

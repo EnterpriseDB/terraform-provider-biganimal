@@ -254,6 +254,23 @@ func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest
 				MarkdownDescription: "Transparent data encryption action.",
 				Computed:            true,
 			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+						},
+						"tag_name": schema.StringAttribute{
+							Required: true,
+						},
+						"color": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
