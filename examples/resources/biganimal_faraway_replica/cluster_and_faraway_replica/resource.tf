@@ -80,7 +80,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 
   backup_retention_period = "8d"
   csp_auth                = false
-  instance_type           = "aws:c6i.large"
+  instance_type           = "azure:Standard_D2s_v3"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -102,9 +102,18 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     volume_properties = "P1"
     size              = "4 Gi"
   }
-
   private_networking = false
   region             = "centralindia"
+
+  #tags = [
+  #  {
+  #     tag_name  = "test-tag-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "test-tag-2"
+  #  },
+  #]
 
   # transparent_data_encryption = {
   #   key_id = <example_value>

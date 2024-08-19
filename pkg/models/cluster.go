@@ -58,6 +58,15 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		return nil, err
 	}
 
+	tagKey := d.Get("tags")
+	tags := []commonApi.Tag{}
+	if tagKey != nil {
+		tags, err = utils.StructFromProps[[]commonApi.Tag](tagKey.(*schema.Set).List())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cluster := &Cluster{
 		ReplicaSourceClusterId: SourceId,
 		ClusterType:            ClusterType,
@@ -96,6 +105,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		},
 		ReadOnlyConnections: clusterRoConn,
 		Storage:             &storage,
+		Tags:                tags,
 	}
 
 	return cluster, nil
@@ -171,6 +181,7 @@ type Cluster struct {
 	SuperuserAccess            *bool                        `json:"superuserAccess,omitempty"`
 	Extensions                 *[]ClusterExtension          `json:"extensions,omitempty"`
 	PgBouncer                  *PgBouncer                   `json:"pgBouncer,omitempty"`
+	Tags                       []commonApi.Tag              `json:"tags,omitempty"`
 	VolumeSnapshot             *bool                        `json:"volumeSnapshotBackup,omitempty"`
 	EncryptionKeyIdReq         *string                      `json:"keyId,omitempty"`
 	EncryptionKeyResp          *EncryptionKey               `json:"encryptionKey,omitempty"`

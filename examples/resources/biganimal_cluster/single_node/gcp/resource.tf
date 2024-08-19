@@ -103,6 +103,16 @@ resource "biganimal_cluster" "single_node_cluster" {
     #  ]
   }
 
+  #tags = [
+  #  {
+  #     tag_name  = "test-tag-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "test-tag-2"
+  #  },
+  #]
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "development-data-123456"
   # ]

@@ -64,10 +64,21 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   storage = {
     volume_type       = "pd-ssd"
     volume_properties = "pd-ssd"
-    size              = "10 Gi"
+    size              = "4 Gi"
   }
   private_networking = false
   region             = "us-east1"
+
+  #tags = [
+  #  {
+  #     tag_name  = "test-tag-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "test-tag-2"
+  #  },
+  #]
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "development-data-123456"
   # ]

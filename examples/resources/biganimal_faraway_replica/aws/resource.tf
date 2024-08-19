@@ -67,7 +67,18 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     size              = "4 Gi"
   }
   private_networking = false
-  region             = "eu-west-2"
+  region             = "ap-south-1"
+
+  #tags = [
+  #  {
+  #     tag_name  = "test-tag-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "test-tag-2"
+  #  },
+  #]
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: 123456789012
   # ]

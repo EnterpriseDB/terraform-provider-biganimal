@@ -101,6 +101,16 @@ resource "biganimal_cluster" "ha_cluster" {
     #  ]
   }
 
+  #tags = [
+  #  {
+  #     tag_name  = "test-tag-1"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "test-tag-2"
+  #  },
+  #]
+
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
