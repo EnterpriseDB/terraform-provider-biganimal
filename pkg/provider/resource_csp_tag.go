@@ -188,7 +188,13 @@ func (tr *cSPTagResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	config.ID = types.StringValue(fmt.Sprintf("%s/%s", config.ProjectID.ValueString(), config.CloudProviderID.ValueString()))
+	err = readCSPTag(ctx, tr.client, &config)
+	if err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading tag", err.Error())
+		}
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
@@ -288,20 +294,11 @@ func (tr *cSPTagResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (tr *cSPTagResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// var state CSPTagResourceModel
-	// diags := req.State.Get(ctx, &state)
-	// resp.Diagnostics.Append(diags...)
-	// if resp.Diagnostics.HasError() {
-	// 	return
-	// }
-
-	// err := tr.client.Delete(ctx, state.TagId.ValueString())
-	// if err != nil {
-	// 	if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-	// 		resp.Diagnostics.AddError("Error deleting tag", err.Error())
-	// 	}
-	// 	return
-	// }
+	resp.Diagnostics.AddWarning(
+		"Delete operation is not supported for CSP Tag resource",
+		"Please delete csp tags using an update operation on the field 'delete_tags'",
+	)
+	return
 }
 
 func (tr *cSPTagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
