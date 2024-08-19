@@ -298,7 +298,6 @@ func (tr *cSPTagResource) Delete(ctx context.Context, req resource.DeleteRequest
 		"Delete operation is not supported for CSP Tag resource",
 		"Please delete csp tags using an update operation on the field 'delete_tags'",
 	)
-	return
 }
 
 func (tr *cSPTagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

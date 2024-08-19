@@ -8,8 +8,8 @@ terraform {
 }
 
 data "biganimal_csp_tag" "this" {
-  project_id = "ex-project-id"
-  cloud_provider_id = "ex-cloud-provider-id"
+  project_id        = "<ex-project-id>"        # ex: "prj_12345"
+  cloud_provider_id = "<ex-cloud-provider-id>" # ex: "aws"
 }
 
 output "csp_tags" {
