@@ -205,7 +205,7 @@ func (r *analyticsClusterDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	if err := read(ctx, r.client, &data.analyticsClusterResourceModel); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &data.analyticsClusterResourceModel); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
