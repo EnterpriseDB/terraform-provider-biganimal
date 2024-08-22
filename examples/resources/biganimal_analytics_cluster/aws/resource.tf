@@ -32,6 +32,16 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
   project_id   = var.project_id
   pause        = false
 
+  #tags = [
+  #  {
+  #     tag_name  = "wai-tag-3"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "wai-tag-4"
+  #  },
+  #]
+
   allowed_ip_ranges = [
     {
       cidr_block  = "127.0.0.1/32"
