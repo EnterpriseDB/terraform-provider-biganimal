@@ -15,7 +15,17 @@ variable "project_id" {
 resource "biganimal_region" "this" {
   cloud_provider = "aws"
   region_id      = "eu-west-1"
-  project_id     = var.project_id
+  project_id     = "prj_abc01234567"
+  
+  tags = [
+    {
+      tag_name  = "test"
+      color = "blue"
+    },
+    {
+      tag_name  = "<ex-tag-name-2>"
+    },
+  ]
 }
 
 output "region_status" {
