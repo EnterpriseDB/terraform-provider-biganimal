@@ -34,11 +34,11 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
 
   #tags = [
   #  {
-  #     tag_name  = "wai-tag-3"
+  #     tag_name  = "<ex-tag-name>"
   #     color = "blue"
   #  },
   #  {
-  #     tag_name  = "wai-tag-4"
+  #     tag_name  = "<ex-tag-name>"
   #  },
   #]
 
