@@ -91,7 +91,7 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Optional:    true,
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
+				Description: "show tags associated with this resource",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
