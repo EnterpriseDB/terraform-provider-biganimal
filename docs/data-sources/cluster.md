@@ -163,7 +163,7 @@ output "volume_snapshot_backup" {
 - `faraway_replica_ids` (Set of String)
 - `first_recoverability_point_at` (String) Earliest backup recover time.
 - `id` (String) Data source ID.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c6i.large" or "gcp:e2-highcpu-4".
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `password` (String) Password for the user edb_admin. It must be 12 characters or more.

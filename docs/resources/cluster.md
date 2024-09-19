@@ -61,7 +61,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   }
   csp_auth = false
 
-  instance_type = "aws:m5.large"
+  instance_type = "aws:m6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {
@@ -185,7 +185,7 @@ resource "biganimal_cluster" "ha_cluster" {
     nodes = 3
   }
 
-  instance_type = "aws:c5.large"
+  instance_type = "aws:c6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {
@@ -268,7 +268,7 @@ output "faraway_replica_ids" {
 - `cloud_provider` (String) Cloud provider. For example, "aws", "azure", "gcp" or "bah:aws", "bah:gcp".
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c6i.large" or "gcp:e2-highcpu-4".
 - `password` (String) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.

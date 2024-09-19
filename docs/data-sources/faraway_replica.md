@@ -138,7 +138,7 @@ output "volume_snapshot_backup" {
 - `connection_uri` (String) Cluster connection URI.
 - `created_at` (String) Cluster creation time.
 - `id` (String) The ID of this resource.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c6i.large" or "gcp:e2-highcpu-4".
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `pg_identity` (String) PG Identity required to grant key permissions to activate the cluster.

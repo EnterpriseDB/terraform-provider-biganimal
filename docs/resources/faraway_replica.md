@@ -132,7 +132,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 ### Required
 
 - `cluster_name` (String) Name of the faraway replica cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c6i.large" or "gcp:e2-highcpu-4".
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `source_cluster_id` (String) Source cluster ID.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--storage))
