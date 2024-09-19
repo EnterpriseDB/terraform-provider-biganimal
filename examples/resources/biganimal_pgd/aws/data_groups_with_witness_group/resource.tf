@@ -51,7 +51,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "aws:m5.large"
+        instance_type_id = "aws:m6i.large"
       }
       pg_config = [
         {
@@ -108,7 +108,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "aws:m5.large"
+        instance_type_id = "aws:m6i.large"
       }
       pg_config = [
         {
