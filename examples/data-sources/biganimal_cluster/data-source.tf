@@ -116,3 +116,7 @@ output "service_account_ids" {
 output "volume_snapshot_backup" {
   value = coalesce(data.biganimal_cluster.this.post_gis, false)
 }
+
+output "service_name" {
+  value = data.biganimal_cluster.this.service_name
+}
