@@ -36,13 +36,13 @@ func (m assignTagsModifier) PlanModifySet(ctx context.Context, req planmodifier.
 		return
 	}
 
-	// This is on update and tags are not set in config so just plan for state
+	// Below is everything else ie update with tags set in config.
+
+	// This is on update and tags are not set in config so just use state as plan
 	if req.PlanValue.IsUnknown() {
 		resp.PlanValue = basetypes.NewSetValueMust(req.ConfigValue.ElementType(ctx), state.Elements())
 		return
 	}
-
-	// This is for anything else ie update with tags set in config.
 
 	// merge plan into newPlan (plan is from config) and merge state in newPlan (state is from read)
 	newPlan := state.Elements()
