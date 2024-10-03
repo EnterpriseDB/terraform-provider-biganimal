@@ -19,7 +19,7 @@ The analytics cluster resource is used to manage BigAnimal analytics clusters.
 
 - `cloud_provider` (String) Cloud provider. For example, "aws" or "bah:aws".
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c6i.large" or "gcp:e2-highcpu-4".
 - `password` (String) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas" or "pgextended".
 - `pg_version` (String) Postgres version. For example 16

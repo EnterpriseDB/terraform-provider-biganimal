@@ -2,10 +2,6 @@
 
 Please make sure to read the [Contributing guideline](./CONTRIBUTING.md) first.
 
-## How to manage the BigAnimal Bearer Token?
-
-As described in the [Readme](./README.md#getting-an-api-token) file, you can use the `get-token.sh` script to fetch a Bearer Token.
-
 Another common practice is using the [Biganimal CLI](https://cli.biganimal.com/).
 
 ### Using BA CLI to help initializing Provider credentials
@@ -35,18 +31,17 @@ export_BA_env_vars () {
 		biganimal credential reset $cred_name
 	fi
 	biganimal cluster show -c $cred_name >&/dev/null
-	export BA_BEARER_TOKEN=$(biganimal credential show -o json| jq -r --arg CREDNAME "$cred_name" '.[]|select(.name==$CREDNAME).accessToken')
 	export BA_API_URI="https://"$(biganimal credential show -o json | jq -r --arg CREDNAME "$cred_name" '.[]|select(.name==$CREDNAME).address')/api/v3
 	export BA_CRED_NAME="$cred_name"
-	echo "$cred_name BA_BEARER_TOKEN and BA_API_URI are exported."
+	echo "$cred_name BA_API_URI is exported."
 	export TF_VAR_project_id="prj_$(ba_get_default_proj_id)"
 	echo "TF_VAR_project_id terraform variable is also exported. Value is $TF_VAR_project_id"
 }
 ```
-4. Now, you can use `export_BA_env_vars` command to manage your BA_BEARER_TOKEN and BA_API_URI environment variables, as well as TF_VAR_project_id terraform environment variable.
+4. Now, you can use `export_BA_env_vars` command to manage your BA_API_URI environment variable, as well as TF_VAR_project_id terraform environment variable.
 ```console
 $> export_BA_env_vars ba-user1
-ba-user1 BA_BEARER_TOKEN and BA_API_URI are exported.
+ba-user1 BA_API_URI is exported.
 TF_VAR_project_id terraform variable is also exported. Value is prj_0123456789abcdef
 ```
 5. If you would like to enable bash completion for the `export_BA_env_vars` command, you can add the following lines to your shellrc file:
