@@ -26,9 +26,11 @@ func (m assignTagsModifier) MarkdownDescription(_ context.Context) string {
 }
 
 // PlanModifySet implements the plan modification logic.
+// this modifier can merge state with config and return as plan(e.g. state is tags set in UI and config is tags set in terraform config)
 func (m assignTagsModifier) PlanModifySet(ctx context.Context, req planmodifier.SetRequest, resp *planmodifier.SetResponse) {
 	state := req.StateValue
 	plan := resp.PlanValue
+	config := req.ConfigValue
 
 	// This is on creation.
 	// Do nothing if there is no state value.
@@ -44,9 +46,20 @@ func (m assignTagsModifier) PlanModifySet(ctx context.Context, req planmodifier.
 		return
 	}
 
+	// check for tag duplicates in config
+	checkDupes := make(map[string]interface{})
+	for _, configTag := range config.Elements() {
+		tagName := configTag.(basetypes.ObjectValue).Attributes()["tag_name"].(basetypes.StringValue).ValueString()
+		checkDupes[tagName] = nil
+	}
+
+	// if checkDupes is not equal to plan.Elements() then there are duplicates
+	if len(checkDupes) != len(config.Elements()) {
+		resp.Diagnostics.AddError("Duplicate tag_name not allowed", "Please remove duplicate tag_name")
+	}
+
 	// merge plan into newPlan (plan is from config) and merge state in newPlan (state is from read)
 	newPlan := state.Elements()
-
 	for _, planTag := range plan.Elements() {
 		existing := false
 		for _, newPlanElem := range newPlan {
