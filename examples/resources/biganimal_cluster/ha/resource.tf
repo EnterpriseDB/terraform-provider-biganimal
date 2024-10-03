@@ -103,11 +103,11 @@ resource "biganimal_cluster" "ha_cluster" {
 
   #tags = [
   #  {
-  #     tag_name  = "test-tag-1"
+  #     tag_name  = "ex-tag-name-1"
   #     color = "blue"
   #  },
   #  {
-  #     tag_name  = "test-tag-2"
+  #     tag_name  = "ex-tag-name-2"
   #  },
   #]
 

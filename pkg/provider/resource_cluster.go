@@ -530,7 +530,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
+					plan_modifier.CustomAssignTags(),
 				},
 			},
 			"transparent_data_encryption": schema.SingleNestedAttribute{
@@ -963,14 +963,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		}
 	}
 
-	tfClusterResource.Tags = []commonTerraform.Tag{}
-	for _, v := range responseCluster.Tags {
-		tfClusterResource.Tags = append(tfClusterResource.Tags, commonTerraform.Tag{
-			TagId:   types.StringValue(v.TagId),
-			TagName: types.StringValue(v.TagName),
-			Color:   basetypes.NewStringPointerValue(v.Color),
-		})
-	}
+	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, &responseCluster.Tags)
 
 	if responseCluster.EncryptionKeyResp != nil {
 		tfClusterResource.TransparentDataEncryption = &TransparentDataEncryptionModel{}
@@ -1178,6 +1171,8 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	cluster.ServiceAccountIds = svAccIds
 	cluster.PeAllowedPrincipalIds = principalIds
 
+	cluster.Tags = buildAPIReqAssignTags(clusterResource.Tags)
+
 	if clusterResource.TransparentDataEncryption != nil {
 		if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
 			cluster.EncryptionKeyIdReq = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
@@ -1225,4 +1220,27 @@ func StringSliceToSet(items *[]string) types.Set {
 	}
 
 	return types.SetValueMust(types.StringType, eles)
+}
+
+func buildTFRsrcAssignTagsAs(tfRsrcTags *[]commonTerraform.Tag, apiRespTags *[]commonApi.Tag) {
+	*tfRsrcTags = []commonTerraform.Tag{}
+	for _, v := range *apiRespTags {
+		*tfRsrcTags = append(*tfRsrcTags, commonTerraform.Tag{
+			TagId:   types.StringValue(v.TagId),
+			TagName: types.StringValue(v.TagName),
+			Color:   basetypes.NewStringPointerValue(v.Color),
+		})
+	}
+}
+
+func buildAPIReqAssignTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
+	tags := []commonApi.Tag{}
+	for _, tag := range tfRsrcTags {
+		tags = append(tags, commonApi.Tag{
+			Color:   tag.Color.ValueStringPointer(),
+			TagId:   tag.TagId.ValueString(),
+			TagName: tag.TagName.ValueString(),
+		})
+	}
+	return tags
 }

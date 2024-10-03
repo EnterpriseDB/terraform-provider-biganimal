@@ -418,7 +418,7 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 					},
 				},
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
+					plan_modifier.CustomAssignTags(),
 				},
 			},
 		},
