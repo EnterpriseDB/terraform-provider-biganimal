@@ -50,7 +50,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   }
   csp_auth = false
 
-  instance_type = "aws:m5.large"
+  instance_type = "aws:m6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {

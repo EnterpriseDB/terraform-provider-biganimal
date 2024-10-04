@@ -36,7 +36,7 @@ func TestAccResourceCluster_basic(t *testing.T) {
 			{
 				Config: clusterResourceConfig(accClusterName, accProjectID, accProvider, accRegion),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "instance_type", "aws:m5.large"),
+					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "instance_type", "aws:m6i.large"),
 					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "storage.volume_type", "gp3"),
 					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "storage.size", "4 Gi"),
 					resource.TestCheckResourceAttr("biganimal_cluster.acctest_cluster", "pg_type", "epas"),
@@ -72,7 +72,7 @@ func clusterResourceConfig(cluster_name, projectID, provider, region string) str
   }
   csp_auth = false
 
-  instance_type = "aws:m5.large"
+  instance_type = "aws:m6i.large"
 
   storage {
     volume_type       = "gp3"
@@ -125,7 +125,7 @@ func clusterResourceConfigForUpdate(cluster_name, projectID, provider, region st
   }
   csp_auth = true
 
-  instance_type = "aws:m5.large"
+  instance_type = "aws:m6i.large"
 
   storage {
     volume_type       = "gp3"

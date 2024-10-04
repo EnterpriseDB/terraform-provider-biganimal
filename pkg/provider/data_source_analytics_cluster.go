@@ -133,7 +133,7 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 				Computed:            true,
 			},
 			"instance_type": schema.StringAttribute{
-				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Computed:            true,
 			},
 			"resizing_pvc": schema.ListAttribute{

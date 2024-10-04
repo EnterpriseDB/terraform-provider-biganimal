@@ -167,7 +167,7 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				},
 			},
 			"instance_type": schema.StringAttribute{
-				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

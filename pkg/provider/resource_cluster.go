@@ -367,7 +367,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Required:            true,
 			},
 			"instance_type": schema.StringAttribute{
-				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Required:            true,
 			},
 			"read_only_connections": schema.BoolAttribute{
@@ -964,6 +964,13 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	}
 
 	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
+
+	if responseCluster.EncryptionKeyResp != nil {
+		tfClusterResource.TransparentDataEncryption = &TransparentDataEncryptionModel{}
+		tfClusterResource.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
+		tfClusterResource.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKeyResp.KeyName)
+		tfClusterResource.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
+	}
 
 	return nil
 }

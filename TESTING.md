@@ -8,7 +8,7 @@ We're using [terraform-plugin-testing](https://github.com/hashicorp/terraform-pl
 
 For more information, please refer to the acceptance tests documentation.
 
-In order to run the acceptance tests, several environment variables should be present. `BA_API_URI` and `BA_BEARER_TOKEN` to communicate with the Biganimal API.
+In order to run the acceptance tests, several environment variables should be present. `BA_API_URI` to communicate with the Biganimal API.
 We also use the `BA_TF_ACC_VAR_<resource_type>_<variable_name>` environment variables to run the acceptance tests. Example variable names can be found in the [.env.example](.env.example) file.
 
 You can run the acceptance tests with the following command:
