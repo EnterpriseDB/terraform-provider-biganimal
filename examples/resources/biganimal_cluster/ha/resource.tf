@@ -49,7 +49,7 @@ resource "biganimal_cluster" "ha_cluster" {
     nodes = 3
   }
 
-  instance_type = "aws:c5.large"
+  instance_type = "aws:c6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {

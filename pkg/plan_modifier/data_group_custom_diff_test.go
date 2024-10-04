@@ -93,7 +93,7 @@ func Test_customDataGroupDiffModifier_PlanModifyList(t *testing.T) {
 				Nodes:                   3,
 				WitnessNodes:            basetypes.NewInt64Unknown(),
 			},
-			InstanceType: &api.InstanceType{InstanceTypeId: "aws:m5.large"},
+			InstanceType: &api.InstanceType{InstanceTypeId: "aws:m6i.large"},
 			PgType:       &api.PgType{PgTypeId: "epas"},
 			PgVersion:    &api.PgVersion{PgVersionId: "15"},
 			MaintenanceWindow: &models.MaintenanceWindow{
