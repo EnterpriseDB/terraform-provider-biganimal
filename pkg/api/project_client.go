@@ -23,14 +23,18 @@ func NewProjectClient(api API) *ProjectClient {
 	return &c
 }
 
-func (c ProjectClient) Create(ctx context.Context, projectName string) (string, error) {
+func (c ProjectClient) Create(ctx context.Context, model any) (string, error) {
 	response := struct {
 		Data struct {
 			ProjectId string `json:"projectId"`
 		} `json:"data"`
 	}{}
 
-	project := map[string]string{"projectName": projectName}
+	projectRs := model.(models.Project)
+	project := map[string]interface{}{
+		"projectName": projectRs.ProjectName,
+		"tags":        projectRs.Tags,
+	}
 
 	b, err := json.Marshal(project)
 	if err != nil {
@@ -83,14 +87,19 @@ func (c ProjectClient) List(ctx context.Context, query string) ([]*models.Projec
 	return response.Data, err
 }
 
-func (c ProjectClient) Update(ctx context.Context, projectId, projectName string) (string, error) {
+func (c ProjectClient) Update(ctx context.Context, projectId, model any) (string, error) {
 	response := struct {
 		Data struct {
 			ProjectId string `json:"projectId"`
 		} `json:"data"`
 	}{}
 
-	project := map[string]string{"projectName": projectName}
+	projectRs := model.(models.Project)
+	project := map[string]interface{}{
+		"projectName": projectRs.ProjectName,
+		"tags":        projectRs.Tags,
+	}
+
 	b, err := json.Marshal(project)
 	if err != nil {
 		return "", err

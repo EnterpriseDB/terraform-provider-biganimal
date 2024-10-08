@@ -59,6 +59,7 @@ type analyticsClusterResourceModel struct {
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
+	Tags                       []commonTerraform.Tag              `tfsdk:"tags"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -270,6 +271,36 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Assign existing tags or create tags to assign to this resource",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"tag_name": schema.StringAttribute{
+							Required: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"color": schema.StringAttribute{
+							Optional: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+					},
+				},
+				PlanModifiers: []planmodifier.Set{
+					plan_modifier.CustomAssignTags(),
+				},
+			},
 		},
 	}
 }
@@ -335,7 +366,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// after cluster is in the correct state (healthy/paused) then get the cluster and save into state
-	if err := read(ctx, r.client, &config); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -445,11 +476,13 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 		}
 	}
 
+	cluster.Tags = buildAPIReqAssignTags(clusterResource.Tags)
+
 	return cluster, nil
 }
 
-func read(ctx context.Context, client *api.ClusterClient, tfClusterResource *analyticsClusterResourceModel) error {
-	apiCluster, err := client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClusterResource *analyticsClusterResourceModel) error {
+	responseCluster, err := client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -460,29 +493,29 @@ func read(ctx context.Context, client *api.ClusterClient, tfClusterResource *ana
 	}
 
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
-	tfClusterResource.ClusterId = apiCluster.ClusterId
-	tfClusterResource.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
-	tfClusterResource.Phase = apiCluster.Phase
-	tfClusterResource.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
-	tfClusterResource.Region = types.StringValue(apiCluster.Region.Id)
-	tfClusterResource.InstanceType = types.StringValue(apiCluster.InstanceType.InstanceTypeId)
-	tfClusterResource.ResizingPvc = StringSliceToList(apiCluster.ResizingPvc)
+	tfClusterResource.ClusterId = responseCluster.ClusterId
+	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
+	tfClusterResource.Phase = responseCluster.Phase
+	tfClusterResource.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
+	tfClusterResource.Region = types.StringValue(responseCluster.Region.Id)
+	tfClusterResource.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
+	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
 	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
-	tfClusterResource.CspAuth = types.BoolPointerValue(apiCluster.CSPAuth)
-	tfClusterResource.LogsUrl = apiCluster.LogsUrl
-	tfClusterResource.MetricsUrl = apiCluster.MetricsUrl
-	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
-	tfClusterResource.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
-	tfClusterResource.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
-	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
+	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	tfClusterResource.LogsUrl = responseCluster.LogsUrl
+	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
+	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
+	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
+	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 
-	if apiCluster.FirstRecoverabilityPointAt != nil {
-		firstPointAt := apiCluster.FirstRecoverabilityPointAt.String()
+	if responseCluster.FirstRecoverabilityPointAt != nil {
+		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
 		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
 	}
 
 	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := apiCluster.AllowedIpRanges; allowedIpRanges != nil {
+	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
 			tfClusterResource.AllowedIpRanges = append(tfClusterResource.AllowedIpRanges, AllowedIpRangesResourceModel{
 				CidrBlock:   ipRange.CidrBlock,
@@ -491,25 +524,27 @@ func read(ctx context.Context, client *api.ClusterClient, tfClusterResource *ana
 		}
 	}
 
-	if pt := apiCluster.CreatedAt; pt != nil {
+	if pt := responseCluster.CreatedAt; pt != nil {
 		tfClusterResource.CreatedAt = types.StringValue(pt.String())
 	}
 
-	if apiCluster.MaintenanceWindow != nil {
+	if responseCluster.MaintenanceWindow != nil {
 		tfClusterResource.MaintenanceWindow = &commonTerraform.MaintenanceWindow{
-			IsEnabled: apiCluster.MaintenanceWindow.IsEnabled,
-			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*apiCluster.MaintenanceWindow.StartDay))),
-			StartTime: types.StringPointerValue(apiCluster.MaintenanceWindow.StartTime),
+			IsEnabled: responseCluster.MaintenanceWindow.IsEnabled,
+			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*responseCluster.MaintenanceWindow.StartDay))),
+			StartTime: types.StringPointerValue(responseCluster.MaintenanceWindow.StartTime),
 		}
 	}
 
-	if apiCluster.PeAllowedPrincipalIds != nil {
-		tfClusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&apiCluster.PeAllowedPrincipalIds))
+	if responseCluster.PeAllowedPrincipalIds != nil {
+		tfClusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&responseCluster.PeAllowedPrincipalIds))
 	}
 
-	if apiCluster.ServiceAccountIds != nil {
-		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
+	if responseCluster.ServiceAccountIds != nil {
+		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
 	}
+
+	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
 
 	return nil
 }
@@ -522,7 +557,7 @@ func (r *analyticsClusterResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	if err := read(ctx, r.client, &state); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &state); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -628,7 +663,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 		}
 	}
 
-	if err := read(ctx, r.client, &plan); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}

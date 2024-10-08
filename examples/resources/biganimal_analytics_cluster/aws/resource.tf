@@ -32,6 +32,16 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
   project_id   = var.project_id
   pause        = false
 
+  #tags = [
+  #  {
+  #     tag_name  = "ex-tag-name"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "ex-tag-name"
+  #  },
+  #]
+
   allowed_ip_ranges = [
     {
       cidr_block  = "127.0.0.1/32"
