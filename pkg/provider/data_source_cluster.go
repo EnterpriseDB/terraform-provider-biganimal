@@ -335,6 +335,24 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					"Pausing a high availability cluster shuts down all cluster nodes",
 				Optional: true,
 			},
+			"tags": schema.SetNestedAttribute{
+				Description: "Show existing tags associated with this resource",
+				Optional:    true,
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+						},
+						"tag_name": schema.StringAttribute{
+							Computed: true,
+						},
+						"color": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",
 				Optional:            true,
@@ -364,6 +382,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			},
 			"transparent_data_encryption_action": schema.StringAttribute{
 				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
+			},
+			"service_name": schema.StringAttribute{
+				MarkdownDescription: "Cluster connection service name.",
 				Computed:            true,
 			},
 		},

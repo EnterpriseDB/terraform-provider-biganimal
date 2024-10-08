@@ -81,6 +81,7 @@ type ClusterResourceModel struct {
 	TransparentDataEncryptionAction types.String                       `tfsdk:"transparent_data_encryption_action"`
 	VolumeSnapshot                  types.Bool                         `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
+	ServiceName                     types.String                       `tfsdk:"service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -569,6 +570,11 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{plan_modifier.CustomTDEAction()},
 			},
+			"service_name": schema.StringAttribute{
+				MarkdownDescription: "Cluster connection service name.",
+				Computed:            true,
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
 }
@@ -845,6 +851,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.ReadOnlyConnections = types.BoolPointerValue(responseCluster.ReadOnlyConnections)
 	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
 	tfClusterResource.RoConnectionUri = types.StringPointerValue(&connection.ReadOnlyPgUri)
+	tfClusterResource.ServiceName = types.StringPointerValue(&connection.ServiceName)
 	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
