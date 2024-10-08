@@ -62,6 +62,11 @@ func (api *API) TagClient() *TagClient {
 	return c
 }
 
+func (api *API) CSPTagClient() *CSPTagClient {
+	c := NewCSPTagClient(*api)
+	return c
+}
+
 func BuildAPI(meta any) *API {
 	api, ok := meta.(*API)
 	if !ok {

@@ -193,6 +193,7 @@ func (b bigAnimalProvider) DataSources(ctx context.Context) []func() datasource.
 		NewRegionsDataSource,
 		NewAnalyticsClusterDataSource,
 		NewTagDataSource,
+		NewCSPTagDataSource,
 	}
 }
 
@@ -205,5 +206,6 @@ func (b bigAnimalProvider) Resources(ctx context.Context) []func() resource.Reso
 		NewFAReplicaResource,
 		NewAnalyticsClusterResource,
 		NewTagResource,
+		NewCSPTagResource,
 	}
 }
