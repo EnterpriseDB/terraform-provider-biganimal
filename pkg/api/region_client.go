@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 )
 
 const (
@@ -68,7 +70,7 @@ func (c RegionClient) List(ctx context.Context, project_id, csp_id, query string
 	return response.Data, err
 }
 
-func (c RegionClient) Update(ctx context.Context, action, project_id, csp_id, region_id string) error {
+func (c RegionClient) Update(ctx context.Context, action, project_id, csp_id, region_id string, tags []commonApi.Tag) error {
 	url := fmt.Sprintf("projects/%s/cloud-providers/%s/regions/%s", project_id, csp_id, region_id)
 
 	switch action {
@@ -82,6 +84,19 @@ func (c RegionClient) Update(ctx context.Context, action, project_id, csp_id, re
 		return errors.New("unknown region action")
 	}
 
-	_, err := c.doRequest(ctx, http.MethodPost, url, nil)
+	regionPatchModel := map[string]interface{}{
+		"tags": tags,
+	}
+
+	b, err := json.Marshal(regionPatchModel)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
 	return err
 }
