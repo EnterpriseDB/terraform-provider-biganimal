@@ -360,7 +360,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Optional: true,
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
+				Description: "Show existing tags associated with this resource",
 				Optional:    true,
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
