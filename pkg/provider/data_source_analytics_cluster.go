@@ -193,6 +193,23 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 					"Pausing a high availability cluster shuts down all cluster nodes",
 				Optional: true,
 			},
+			"tags": schema.SetNestedAttribute{
+				Description: "show tags associated with this resource",
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag_id": schema.StringAttribute{
+							Computed: true,
+						},
+						"tag_name": schema.StringAttribute{
+							Computed: true,
+						},
+						"color": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -205,7 +222,7 @@ func (r *analyticsClusterDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	if err := read(ctx, r.client, &data.analyticsClusterResourceModel); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &data.analyticsClusterResourceModel); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
