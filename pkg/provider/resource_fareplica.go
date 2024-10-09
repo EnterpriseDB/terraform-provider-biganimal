@@ -411,6 +411,7 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 						},
 						"color": schema.StringAttribute{
 							Optional: true,
+							Computed: true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},
