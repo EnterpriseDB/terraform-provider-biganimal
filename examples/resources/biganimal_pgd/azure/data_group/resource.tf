@@ -34,11 +34,11 @@ resource "biganimal_pgd" "pgd_cluster" {
   pause        = false
   #tags = [
   #  {
-  #     tag_name  = "ex-tag-name-1"
+  #     tag_name  = "<ex_tag_name_1>"
   #     color = "blue"
   #  },
   #  {
-  #     tag_name  = "ex-tag-name-2"
+  #     tag_name  = "<ex_tag_name_2>"
   #  },
   #]
   data_groups = [
