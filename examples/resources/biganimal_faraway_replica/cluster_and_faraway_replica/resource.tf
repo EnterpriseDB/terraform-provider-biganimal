@@ -106,11 +106,11 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   region             = "centralindia"
 
   #tags {
-  #  tag_name  = "ex-tag-name-1"
+  #  tag_name  = "<ex_tag_name_1>"
   #  color = "blue"
   #}
   #tags {
-  #  tag_name  = "ex-tag-name-2"
+  #  tag_name  = "<ex_tag_name_2>"
   #}
 
   # transparent_data_encryption = {

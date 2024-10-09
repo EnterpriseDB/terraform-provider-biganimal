@@ -17,15 +17,15 @@ resource "biganimal_region" "this" {
   region_id      = "eu-west-1"
   project_id     = var.project_id
 
-  tags = [
-    {
-      tag_name = "test"
-      color    = "blue"
-    },
-    {
-      tag_name = "<ex-tag-name-2>"
-    },
-  ]
+  #  tags = [
+  #    {
+  #      tag_name = "<ex_tag_name_1>"
+  #      color    = "blue"
+  #    },
+  #    {
+  #      tag_name = "<ex_tag_name_2>"
+  #    },
+  #  ]
 }
 
 output "region_status" {

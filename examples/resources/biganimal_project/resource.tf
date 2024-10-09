@@ -19,11 +19,11 @@ resource "biganimal_project" "this" {
   project_name = format("TF %s", title(random_pet.project_name.id))
   #tags = [
   #  {
-  #     tag_name  = "ex-tag-name-1"
+  #     tag_name  = "<ex_tag_name_1>"
   #     color = "blue"
   #  },
   #  {
-  #     tag_name  = "ex-tag-name-2"
+  #     tag_name  = "<ex_tag_name_2>"
   #  },
   #]
 }
