@@ -118,6 +118,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						},
 						"color": schema.StringAttribute{
 							Optional: true,
+							Computed: true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},

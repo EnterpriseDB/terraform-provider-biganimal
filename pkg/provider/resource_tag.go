@@ -72,6 +72,7 @@ func (tf *tagResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"color": schema.StringAttribute{
 				Optional: true,
+				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

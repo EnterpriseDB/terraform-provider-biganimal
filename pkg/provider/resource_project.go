@@ -117,6 +117,7 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						},
 						"color": schema.StringAttribute{
 							Optional: true,
+							Computed: true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},

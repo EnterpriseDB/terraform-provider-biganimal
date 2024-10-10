@@ -120,3 +120,7 @@ output "volume_snapshot_backup" {
 output "service_name" {
   value = data.biganimal_cluster.this.service_name
 }
+
+output "tags" {
+  value = data.biganimal_cluster.this.tags
+}
