@@ -1,3 +1,10 @@
+## v1.1.0 (October 14. 2024)
+Features:
+
+Enhancements:
+
+Bug Fixes:
+
 ## v1.0.0 (August 07. 2024)
 Features:
 * Transparent Data Encryption (TDE) is now supported in `biganimal_cluster` and `biganimal_faraway_replica` resources

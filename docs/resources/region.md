@@ -9,7 +9,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "1.1.0"
     }
   }
 }
@@ -23,6 +23,16 @@ resource "biganimal_region" "this" {
   cloud_provider = "aws"
   region_id      = "eu-west-1"
   project_id     = var.project_id
+
+  #  tags = [
+  #    {
+  #      tag_name = "<ex_tag_name_1>"
+  #      color    = "blue"
+  #    },
+  #    {
+  #      tag_name = "<ex_tag_name_2>"
+  #    },
+  #  ]
 }
 
 output "region_status" {
@@ -50,6 +60,7 @@ output "region_continent" {
 ### Optional
 
 - `status` (String) Region status of the region. For example, "ACTIVE", "INACTIVE", or "SUSPENDED".
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
@@ -57,6 +68,22 @@ output "region_continent" {
 - `continent` (String) Continent that region belongs to. For example, "Asia", "Australia", or "Europe".
 - `id` (String) Resource ID of the region.
 - `name` (String) Region name of the region. For example, "Germany West Central" or "EU West 1".
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
+
+Read-Only:
+
+- `tag_id` (String)
+
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`

@@ -22,9 +22,6 @@ see [Getting started with the BigAnimal free trial.](https://www.enterprisedb.co
 ```terraform
 # Configure the BigAnimal Provider
 provider "biganimal" {
-  // ba_access_key: This can also be set as an environment variable. If it is set both here and
-  // in an environment variable then the access key set in the environment variable
-  // will take priority and be used
   ba_access_key = "<redacted>"
 }
 # Manage the resources
@@ -40,3 +37,5 @@ Credentials can be provided by using the `BA_ACCESS_KEY` environment variables.
 ### Optional
 
 - `ba_access_key` (String) BigAnimal Access Key
+- `ba_api_uri` (String) BigAnimal API URL
+- `ba_bearer_token` (String) BigAnimal Bearer Token

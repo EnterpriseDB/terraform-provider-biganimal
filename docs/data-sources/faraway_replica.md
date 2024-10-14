@@ -149,6 +149,7 @@ output "volume_snapshot_backup" {
 - `resizing_pvc` (List of String) Resizing PVC.
 - `source_cluster_id` (String) Source cluster ID.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--storage))
+- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 - `transparent_data_encryption_action` (String) Transparent data encryption action.
 - `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
 
@@ -216,3 +217,16 @@ Optional:
 - `iops` (String) IOPS for the selected volume.
 - `size` (String) Size of the volume.
 - `throughput` (String) Throughput.
+
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Read-Only:
+
+- `color` (String)
+- `tag_id` (String)

@@ -36,6 +36,7 @@ The analytics cluster resource is used to manage BigAnimal analytics clusters.
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `private_networking` (Boolean) Is private networking enabled.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
@@ -73,6 +74,22 @@ Optional:
 
 - `start_day` (Number) The day of week, 0 represents Sunday, 1 is Monday, and so on.
 - `start_time` (String) Start time. "hh:mm", for example: "23:59".
+
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
+
+Read-Only:
+
+- `tag_id` (String)
 
 
 <a id="nestedblock--timeouts"></a>

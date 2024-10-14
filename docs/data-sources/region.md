@@ -52,6 +52,7 @@ output "cloud_provider_id" {
 
 - `id` (String) Datasource ID.
 - `regions` (Attributes List) Region information. (see [below for nested schema](#nestedatt--regions))
+- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 
 <a id="nestedatt--regions"></a>
 ### Nested Schema for `regions`
@@ -62,3 +63,13 @@ Read-Only:
 - `name` (String) Region name of the region.
 - `region_id` (String) Region ID of the region.
 - `status` (String) Region status of the region.
+
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Read-Only:
+
+- `color` (String)
+- `tag_id` (String)
+- `tag_name` (String)
