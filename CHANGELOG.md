@@ -1,3 +1,18 @@
+## v1.1.0 (October 21. 2024)
+Features:
+* New Resource and Data Source to manage tags: `biganimal_tag`
+* New Resource and Data Source to manage csp tags: `biganimal_csp_tag`
+* Support to assign tags in `biganimal_cluster`, `biganimal_analytics_cluster`, `biganimal_faraway_replica`, `biganimal_pgd`, `biganimal_projects` and `biganimal_region` resources
+* Support for read-only connections in `biganimal_pgd` resources
+* Support service_name in `biganimal_cluster` resources
+
+Enhancements:
+* Updated authentication information in docs
+* Updated AWS examples to use series 6 instance types by default
+
+Bug Fixes:
+* Fixed cluster_architecture.name not computing when changing cluster_architecture.id in `biganimal_cluster` resources
+
 ## v1.0.0 (August 07. 2024)
 Features:
 * Transparent Data Encryption (TDE) is now supported in `biganimal_cluster` and `biganimal_faraway_replica` resources

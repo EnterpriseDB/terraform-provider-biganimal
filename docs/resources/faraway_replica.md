@@ -14,7 +14,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "1.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -92,7 +92,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 
   backup_retention_period = "8d"
   csp_auth                = false
-  instance_type           = "aws:c6i.large"
+  instance_type           = "azure:Standard_D2s_v3"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -114,9 +114,16 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     volume_properties = "P1"
     size              = "4 Gi"
   }
-
   private_networking = false
   region             = "centralindia"
+
+  #tags {
+  #  tag_name  = "<ex_tag_name_1>"
+  #  color = "blue"
+  #}
+  #tags {
+  #  tag_name  = "<ex_tag_name_2>"
+  #}
 
   # transparent_data_encryption = {
   #   key_id = <example_value>
@@ -147,6 +154,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 - `private_networking` (Boolean) Is private networking enabled.
 - `project_id` (String) BigAnimal Project ID.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
 - `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
@@ -202,6 +210,22 @@ Required:
 - `value` (String) GUC value.
 
 
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
+
+Read-Only:
+
+- `tag_id` (String)
+
+
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
@@ -228,8 +252,20 @@ Read-Only:
 <a id="nestedatt--cluster_architecture"></a>
 ### Nested Schema for `cluster_architecture`
 
+Required:
+
+- `id` (String) Cluster architecture ID.
+- `nodes` (Number) Node count.
+
 Read-Only:
 
-- `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `name` (String) Name.
-- `nodes` (Number) Node count.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# terraform import biganimal_faraway_replica.<resource_name> <project_id>/<cluster_id>
+terraform import biganimal_faraway_replica.faraway_replica prj_deadbeef01234567/p-abcd123456
+```

@@ -13,7 +13,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "1.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -113,6 +113,16 @@ resource "biganimal_cluster" "single_node_cluster" {
     #  ]
   }
 
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: 123456789012
   # ]
@@ -138,7 +148,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "1.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -237,6 +247,16 @@ resource "biganimal_cluster" "ha_cluster" {
     #  ]
   }
 
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
@@ -292,6 +312,7 @@ output "faraway_replica_ids" {
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `superuser_access` (Boolean) Enable to grant superuser access to the edb_admin role.
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
 - `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
@@ -311,6 +332,7 @@ output "faraway_replica_ids" {
 - `phase` (String) Current phase of the cluster.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
+- `service_name` (String) Cluster connection service name.
 - `transparent_data_encryption_action` (String) Transparent data encryption action.
 
 <a id="nestedatt--cluster_architecture"></a>
@@ -395,6 +417,22 @@ Required:
 
 - `name` (String) GUC name.
 - `value` (String) GUC value.
+
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
+
+Read-Only:
+
+- `tag_id` (String)
 
 
 <a id="nestedblock--timeouts"></a>

@@ -20,7 +20,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "1.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -35,6 +35,15 @@ resource "random_pet" "project_name" {
 
 resource "biganimal_project" "this" {
   project_name = format("TF %s", title(random_pet.project_name.id))
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 }
 
 output "project_name" {
@@ -57,6 +66,10 @@ output "project" {
 
 - `project_name` (String) Project Name of the project.
 
+### Optional
+
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
+
 ### Read-Only
 
 - `cloud_providers` (Attributes Set) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--cloud_providers))
@@ -64,6 +77,22 @@ output "project" {
 - `id` (String) Resource ID of the project.
 - `project_id` (String, Deprecated) Project ID of the project.
 - `user_count` (Number) User Count of the project.
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
+
+Read-Only:
+
+- `tag_id` (String)
+
 
 <a id="nestedatt--cloud_providers"></a>
 ### Nested Schema for `cloud_providers`
