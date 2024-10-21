@@ -265,4 +265,7 @@ Read-Only:
 
 Import is supported using the following syntax:
 
-{{codefile "shell" "/Users/amol.vyavahare/Documents/projects/terraform-provider-biganimal/examples/resources/biganimal_faraway_replica/import.sh"}}
+```shell
+# terraform import biganimal_faraway_replica.<resource_name> <project_id>/<cluster_id>
+terraform import biganimal_faraway_replica.faraway_replica prj_deadbeef01234567/p-abcd123456
+```
