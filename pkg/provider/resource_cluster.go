@@ -201,9 +201,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"name": schema.StringAttribute{
-						Description:   "Name.",
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						Description: "Name.",
+						Computed:    true,
 					},
 					"nodes": schema.Float64Attribute{
 						Description:   "Node count.",
