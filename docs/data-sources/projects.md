@@ -54,10 +54,12 @@ Required:
 Optional:
 
 - `cloud_providers` (Attributes Set) Enabled Cloud Providers. (see [below for nested schema](#nestedatt--projects--cloud_providers))
+- `tags` (Attributes Set) Show existing tags associated with this resource (see [below for nested schema](#nestedatt--projects--tags))
 
 Read-Only:
 
 - `cluster_count` (Number) User Count of the project.
+- `id` (String) Resource ID of the project.
 - `project_id` (String) Project ID of the project.
 - `user_count` (Number) User Count of the project.
 
@@ -68,3 +70,13 @@ Read-Only:
 
 - `cloud_provider_id` (String) Cloud Provider ID.
 - `cloud_provider_name` (String) Cloud Provider Name.
+
+
+<a id="nestedatt--projects--tags"></a>
+### Nested Schema for `projects.tags`
+
+Read-Only:
+
+- `color` (String)
+- `tag_id` (String)
+- `tag_name` (String)

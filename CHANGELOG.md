@@ -1,3 +1,9 @@
+## v1.1.1 (October 29. 2024)
+Bug Fixes:
+* Fixed Data Source `biganimal_cluster` cloud_provider not working with your cloud account
+* Fixed Data Source `biganimal_projects` conversion error
+* Fixed Data Source `biganimal_region` conversion error
+
 ## v1.1.0 (October 21. 2024)
 Features:
 * New Resource and Data Source to manage tags: `biganimal_tag`
