@@ -1031,42 +1031,44 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 }
 
 func (c *clusterResource) buildRequestBah(ctx context.Context, clusterResourceModel ClusterResourceModel) (svAccIds, principalIds *[]string, err error) {
-	// If there is an existing Principal Account Id for that Region, use that one.
-	pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
-	if err != nil {
-		return nil, nil, err
-	}
-	principalIds = utils.ToPointer(pids.Data)
-
-	// If there is no existing value, user should provide one
-	if principalIds != nil && len(*principalIds) == 0 {
-		// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
-		// while encoding JSON objects
-		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
-		plist := []string{}
-		for _, peId := range clusterResourceModel.PeAllowedPrincipalIds.Elements() {
-			plist = append(plist, peId.(basetypes.StringValue).ValueString())
+	if strings.Contains(clusterResourceModel.CloudProvider.ValueString(), "bah") {
+		// If there is an existing Principal Account Id for that Region, use that one.
+		pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
+		if err != nil {
+			return nil, nil, err
 		}
-
-		principalIds = utils.ToPointer(plist)
-	}
-
-	if clusterResourceModel.CloudProvider.ValueString() == "bah:gcp" {
-		// If there is an existing Service Account Id for that Region, use that one.
-		sids, _ := c.client.GetServiceAccountIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
-		svAccIds = utils.ToPointer(sids.Data)
+		principalIds = utils.ToPointer(pids.Data)
 
 		// If there is no existing value, user should provide one
-		if svAccIds != nil && len(*svAccIds) == 0 {
+		if principalIds != nil && len(*principalIds) == 0 {
 			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
-			// while encoding JSON objects.
+			// while encoding JSON objects
 			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
-			slist := []string{}
-			for _, saId := range clusterResourceModel.ServiceAccountIds.Elements() {
-				slist = append(slist, saId.(basetypes.StringValue).ValueString())
+			plist := []string{}
+			for _, peId := range clusterResourceModel.PeAllowedPrincipalIds.Elements() {
+				plist = append(plist, peId.(basetypes.StringValue).ValueString())
 			}
 
-			svAccIds = utils.ToPointer(slist)
+			principalIds = utils.ToPointer(plist)
+		}
+
+		if clusterResourceModel.CloudProvider.ValueString() == "bah:gcp" {
+			// If there is an existing Service Account Id for that Region, use that one.
+			sids, _ := c.client.GetServiceAccountIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
+			svAccIds = utils.ToPointer(sids.Data)
+
+			// If there is no existing value, user should provide one
+			if svAccIds != nil && len(*svAccIds) == 0 {
+				// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+				// while encoding JSON objects.
+				// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+				slist := []string{}
+				for _, saId := range clusterResourceModel.ServiceAccountIds.Elements() {
+					slist = append(slist, saId.(basetypes.StringValue).ValueString())
+				}
+
+				svAccIds = utils.ToPointer(slist)
+			}
 		}
 	}
 	return
