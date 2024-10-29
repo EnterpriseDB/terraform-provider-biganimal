@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -24,7 +25,6 @@ type projectsDataSource struct {
 
 func (p projectsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_projects"
-
 }
 
 // Configure adds the provider configured client to the data source.
@@ -37,9 +37,9 @@ func (p *projectsDataSource) Configure(_ context.Context, req datasource.Configu
 }
 
 type projectsDataSourceData struct {
-	ID       *string           `tfsdk:"id"`
-	Query    *string           `tfsdk:"query"`
-	Projects []*models.Project `tfsdk:"projects"`
+	ID       *string    `tfsdk:"id"`
+	Query    *string    `tfsdk:"query"`
+	Projects []*Project `tfsdk:"projects"`
 }
 
 func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -55,6 +55,10 @@ func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							MarkdownDescription: "Resource ID of the project.",
+							Computed:            true,
+						},
 						"project_id": schema.StringAttribute{
 							Description: "Project ID of the project.",
 							Computed:    true,
@@ -84,6 +88,24 @@ func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 									"cloud_provider_name": schema.StringAttribute{
 										Description: "Cloud Provider Name.",
 										Computed:    true,
+									},
+								},
+							},
+						},
+						"tags": schema.SetNestedAttribute{
+							Description: "Show existing tags associated with this resource",
+							Optional:    true,
+							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"tag_id": schema.StringAttribute{
+										Computed: true,
+									},
+									"tag_name": schema.StringAttribute{
+										Computed: true,
+									},
+									"color": schema.StringAttribute{
+										Computed: true,
 									},
 								},
 							},
@@ -118,12 +140,41 @@ func (p projectsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	data.Projects = list
+	for _, project := range list {
+		appendProj := &Project{
+			ID:           &project.ProjectId,
+			ProjectID:    &project.ProjectId,
+			ProjectName:  &project.ProjectName,
+			UserCount:    &project.UserCount,
+			ClusterCount: &project.ClusterCount,
+		}
+
+		cloudProviders := []cloudProvider{}
+		for _, cp := range project.CloudProviders {
+			cloudProviders = append(cloudProviders, cloudProvider{
+				CloudProviderId:   cp.CloudProviderId,
+				CloudProviderName: cp.CloudProviderName,
+			})
+		}
+		appendProj.CloudProviders = cloudProviders
+
+		tags := []commonTerraform.Tag{}
+		for _, tag := range project.Tags {
+			tags = append(tags, commonTerraform.Tag{
+				TagId:   types.StringValue(tag.TagId),
+				TagName: types.StringValue(tag.TagName),
+				Color:   types.StringPointerValue(tag.Color),
+			})
+		}
+		appendProj.Tags = tags
+
+		data.Projects = append(data.Projects, appendProj)
+	}
+
 	resourceID := strconv.FormatInt(time.Now().Unix(), 10)
 	data.ID = &resourceID
 	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
-
 }
 
 func NewProjectsDataSource() datasource.DataSource {
