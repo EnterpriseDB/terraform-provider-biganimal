@@ -7,7 +7,7 @@ type Region struct {
 	Name      string          `json:"regionName,omitempty" tfsdk:"name"`
 	Status    string          `json:"status,omitempty" tfsdk:"status"`
 	Continent string          `json:"continent,omitempty" tfsdk:"continent"`
-	Tags      []commonApi.Tag `json:"tags,omitempty"`
+	Tags      []commonApi.Tag `json:"tags,omitempty" tfsdk:"tags"`
 }
 
 func (r Region) String() string {
