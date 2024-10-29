@@ -67,6 +67,23 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Description: "Continent that region belongs to.",
 							Computed:    true,
 						},
+						"tags": schema.SetNestedAttribute{
+							Description: "show tags associated with this resource",
+							Computed:    true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"tag_id": schema.StringAttribute{
+										Computed: true,
+									},
+									"tag_name": schema.StringAttribute{
+										Computed: true,
+									},
+									"color": schema.StringAttribute{
+										Computed: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -89,23 +106,6 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			"region_id": schema.StringAttribute{
 				Description: "Unique region ID. For example, \"germanywestcentral\" in the Azure cloud provider, \"eu-west-1\" in the AWS cloud provider.",
 				Optional:    true,
-			},
-			"tags": schema.SetNestedAttribute{
-				Description: "show tags associated with this resource",
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-						},
-						"tag_name": schema.StringAttribute{
-							Computed: true,
-						},
-						"color": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
 			},
 		},
 	}
