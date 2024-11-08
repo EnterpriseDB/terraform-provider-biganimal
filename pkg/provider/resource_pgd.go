@@ -347,8 +347,9 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							Required:    true,
 							Attributes: map[string]schema.Attribute{
 								"cloud_provider_id": schema.StringAttribute{
-									Description: "Data group cloud provider id.",
-									Required:    true,
+									Description:   "Data group cloud provider id.",
+									Required:      true,
+									PlanModifiers: []planmodifier.String{plan_modifier.CustomCloudProvider()},
 								},
 							},
 						},
