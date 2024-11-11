@@ -69,6 +69,12 @@ resource "biganimal_cluster" "single_node_cluster" {
     size              = "4 Gi"
   }
 
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi"
+  #  }
+
   maintenance_window = {
     is_enabled = true
     start_day  = 6

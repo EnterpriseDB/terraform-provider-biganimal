@@ -82,6 +82,7 @@ type ClusterResourceModel struct {
 	VolumeSnapshot                  types.Bool                         `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
 	ServiceName                     types.String                       `tfsdk:"service_name"`
+	WalStorage                      *StorageResourceModel              `tfsdk:"wal_storage"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -575,6 +576,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
+			"wal_storage": resourceWal,
 		},
 	}
 }
@@ -863,6 +865,13 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
+	tfClusterResource.WalStorage = &StorageResourceModel{
+		VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
+		Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
+		Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
+		Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
+	}
 
 	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
 		if !tfClusterResource.PgIdentity.IsNull() && tfClusterResource.PgIdentity.ValueString() != "" {
@@ -1100,6 +1109,16 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
 		VolumeSnapshot:        clusterResource.VolumeSnapshot.ValueBoolPointer(),
+	}
+
+	if clusterResource.WalStorage != nil {
+		cluster.WalStorage = &models.Storage{
+			VolumePropertiesId: clusterResource.WalStorage.VolumeProperties.ValueStringPointer(),
+			VolumeTypeId:       clusterResource.WalStorage.VolumeType.ValueStringPointer(),
+			Iops:               clusterResource.WalStorage.Iops.ValueStringPointer(),
+			Size:               clusterResource.WalStorage.Size.ValueStringPointer(),
+			Throughput:         clusterResource.WalStorage.Throughput.ValueStringPointer(),
+		}
 	}
 
 	cluster.Extensions = &[]models.ClusterExtension{}

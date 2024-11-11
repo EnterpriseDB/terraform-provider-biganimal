@@ -3,6 +3,9 @@ package provider
 import (
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
@@ -30,4 +33,36 @@ func buildAPIReqAssignTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
 		})
 	}
 	return tags
+}
+
+var resourceWal = schema.SingleNestedAttribute{
+	Description: "Write-Ahead Logs (WAL) Storage.",
+	Optional:    true,
+	Attributes: map[string]schema.Attribute{
+		"iops": schema.StringAttribute{
+			Description:   "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+		},
+		"size": schema.StringAttribute{
+			Description:   "Size of the volume. It can be set to different values depending on your volume type and properties.",
+			Required:      true,
+			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+		},
+		"throughput": schema.StringAttribute{
+			Description:   "Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.",
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+		},
+		"volume_properties": schema.StringAttribute{
+			Description: "Volume properties in accordance with the selected volume type.",
+			Required:    true,
+		},
+		"volume_type": schema.StringAttribute{
+			Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", org s \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
+			Required:    true,
+		},
+	},
 }

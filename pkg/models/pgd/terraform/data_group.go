@@ -33,4 +33,5 @@ type DataGroup struct {
 	PeAllowedPrincipalIds types.Set                 `tfsdk:"pe_allowed_principal_ids"`
 	RoConnectionUri       types.String              `tfsdk:"ro_connection_uri"`
 	ReadOnlyConnections   *bool                     `tfsdk:"read_only_connections"`
+	WalStorage            *Storage                  `tfsdk:"wal_storage"`
 }

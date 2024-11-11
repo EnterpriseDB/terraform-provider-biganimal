@@ -102,6 +102,11 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     volume_properties = "P1"
     size              = "4 Gi"
   }
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi"
+  #  }
   private_networking = false
   region             = "centralindia"
 
