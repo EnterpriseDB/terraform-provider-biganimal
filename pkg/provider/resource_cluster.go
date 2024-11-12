@@ -82,6 +82,7 @@ type ClusterResourceModel struct {
 	VolumeSnapshot                  types.Bool                         `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
 	ServiceName                     types.String                       `tfsdk:"service_name"`
+	BackupSchedule                  *commonTerraform.BackupSchedule    `tfsdk:"backup_schedule"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -575,6 +576,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
+			"backup_schedule": resourceBackupSchedule,
 		},
 	}
 }
@@ -979,6 +981,13 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		tfClusterResource.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
 	}
 
+	if responseCluster.BackupSchedule != nil {
+		tfClusterResource.BackupSchedule = &commonTerraform.BackupSchedule{
+			StartDay:  types.StringValue(WeekdaysName[*responseCluster.BackupSchedule.StartDay]),
+			StartTime: types.StringPointerValue(responseCluster.BackupSchedule.StartTime),
+		}
+	}
+
 	return nil
 }
 
@@ -1185,6 +1194,13 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	if clusterResource.TransparentDataEncryption != nil {
 		if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
 			cluster.EncryptionKeyIdReq = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
+		}
+	}
+
+	if clusterResource.BackupSchedule != nil {
+		cluster.BackupSchedule = &commonApi.BackupSchedule{
+			StartDay:  utils.ToPointer(WeekdaysNumber[clusterResource.BackupSchedule.StartDay.ValueString()]),
+			StartTime: clusterResource.BackupSchedule.StartTime.ValueStringPointer(),
 		}
 	}
 

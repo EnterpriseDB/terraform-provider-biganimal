@@ -65,6 +65,7 @@ type FAReplicaResourceModel struct {
 	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
 	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
+	BackupSchedule                  *commonTerraform.BackupSchedule   `tfsdk:"backup_schedule"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -422,6 +423,7 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 					plan_modifier.CustomAssignTags(),
 				},
 			},
+			"backup_schedule": resourceBackupSchedule,
 		},
 	}
 }
@@ -701,6 +703,13 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		})
 	}
 
+	if responseCluster.BackupSchedule != nil {
+		fAReplicaResourceModel.BackupSchedule = &commonTerraform.BackupSchedule{
+			StartDay:  types.StringValue(WeekdaysName[*responseCluster.BackupSchedule.StartDay]),
+			StartTime: types.StringPointerValue(responseCluster.BackupSchedule.StartTime),
+		}
+	}
+
 	return nil
 }
 
@@ -811,6 +820,13 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		})
 	}
 	cluster.Tags = tags
+
+	if fAReplicaResourceModel.BackupSchedule != nil {
+		cluster.BackupSchedule = &commonApi.BackupSchedule{
+			StartDay:  utils.ToPointer(WeekdaysNumber[fAReplicaResourceModel.BackupSchedule.StartDay.ValueString()]),
+			StartTime: fAReplicaResourceModel.BackupSchedule.StartTime.ValueStringPointer(),
+		}
+	}
 
 	return cluster, nil
 }

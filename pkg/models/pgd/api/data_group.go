@@ -1,6 +1,9 @@
 package api
 
-import "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+import (
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
+)
 
 type DataGroup struct {
 	GroupId               *string                   `json:"groupId,omitempty"`
@@ -30,4 +33,5 @@ type DataGroup struct {
 	PeAllowedPrincipalIds *[]string                 `json:"peAllowedPrincipalIds,omitempty"`
 	RoConnectionUri       *string                   `json:"roConnectionUri,omitempty"`
 	ReadOnlyConnections   *bool                     `json:"readOnlyConnections,omitempty"`
+	BackupSchedule        *commonApi.BackupSchedule `json:"backupSchedule,omitempty"`
 }

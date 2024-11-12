@@ -417,6 +417,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							Optional:    true,
 							Computed:    true,
 						},
+						"backup_schedule": resourceBackupSchedule,
 					},
 				},
 			},
@@ -705,6 +706,14 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			PeAllowedPrincipalIds: principalIds,
 			ReadOnlyConnections:   v.ReadOnlyConnections,
 		}
+
+		if v.BackupSchedule != nil {
+			apiDGModel.BackupSchedule = &commonApi.BackupSchedule{
+				StartDay:  utils.ToPointer(WeekdaysNumber[v.BackupSchedule.StartDay.ValueString()]),
+				StartTime: v.BackupSchedule.StartTime.ValueStringPointer(),
+			}
+		}
+
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
 
@@ -991,6 +1000,13 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			reqDg.PgVersion = v.PgVersion
 			reqDg.ServiceAccountIds = svAccIds
 			reqDg.PeAllowedPrincipalIds = principalIds
+		}
+
+		if v.BackupSchedule != nil {
+			reqDg.BackupSchedule = &commonApi.BackupSchedule{
+				StartDay:  utils.ToPointer(WeekdaysNumber[v.BackupSchedule.StartDay.ValueString()]),
+				StartTime: v.BackupSchedule.StartTime.ValueStringPointer(),
+			}
 		}
 
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, reqDg)
@@ -1394,6 +1410,14 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					allwdIpRngsSet = types.SetValueMust(allwdIpRngsElemType, allowedIpRanges)
 				}
 
+				var backupSchedule *commonTerraform.BackupSchedule
+				if apiRespDgModel.BackupSchedule != nil {
+					backupSchedule = &commonTerraform.BackupSchedule{
+						StartDay:  types.StringValue(WeekdaysName[*apiRespDgModel.BackupSchedule.StartDay]),
+						StartTime: types.StringPointerValue(apiRespDgModel.BackupSchedule.StartTime),
+					}
+				}
+
 				tfDGModel := terraform.DataGroup{
 					GroupId:               types.StringPointerValue(apiRespDgModel.GroupId),
 					AllowedIpRanges:       allwdIpRngsSet,
@@ -1421,6 +1445,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 					RoConnectionUri:       types.StringPointerValue(apiRespDgModel.RoConnectionUri),
 					ReadOnlyConnections:   apiRespDgModel.ReadOnlyConnections,
+					BackupSchedule:        backupSchedule,
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)
