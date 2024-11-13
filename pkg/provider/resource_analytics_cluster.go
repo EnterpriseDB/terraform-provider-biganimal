@@ -60,7 +60,7 @@ type analyticsClusterResourceModel struct {
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
 	Tags                       []commonTerraform.Tag              `tfsdk:"tags"`
-	BackupSchedule             *commonTerraform.BackupSchedule    `tfsdk:"backup_schedule"`
+	BackupScheduleTime         types.String                       `tfsdk:"backup_schedule_time"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -302,7 +302,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 					plan_modifier.CustomAssignTags(),
 				},
 			},
-			"backup_schedule": resourceBackupSchedule,
+			"backup_schedule_time": ResourceBackupScheduleTime,
 		},
 	}
 }
@@ -408,6 +408,7 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 		CSPAuth:               clusterResource.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    clusterResource.BackupScheduleTime.ValueStringPointer(),
 	}
 
 	cluster.ClusterId = nil
@@ -480,13 +481,6 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 
 	cluster.Tags = buildAPIReqAssignTags(clusterResource.Tags)
 
-	if clusterResource.BackupSchedule != nil {
-		cluster.BackupSchedule = &commonApi.BackupSchedule{
-			StartDay:  utils.ToPointer(WeekdaysNumber[clusterResource.BackupSchedule.StartDay.ValueString()]),
-			StartTime: clusterResource.BackupSchedule.StartTime.ValueStringPointer(),
-		}
-	}
-
 	return cluster, nil
 }
 
@@ -514,6 +508,7 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
 	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	tfClusterResource.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
 	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
@@ -554,13 +549,6 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 	}
 
 	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
-
-	if responseCluster.BackupSchedule != nil {
-		tfClusterResource.BackupSchedule = &commonTerraform.BackupSchedule{
-			StartDay:  types.StringValue(WeekdaysName[*responseCluster.BackupSchedule.StartDay]),
-			StartTime: types.StringPointerValue(responseCluster.BackupSchedule.StartTime),
-		}
-	}
 
 	return nil
 }

@@ -82,7 +82,7 @@ type ClusterResourceModel struct {
 	VolumeSnapshot                  types.Bool                         `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
 	ServiceName                     types.String                       `tfsdk:"service_name"`
-	BackupSchedule                  *commonTerraform.BackupSchedule    `tfsdk:"backup_schedule"`
+	BackupScheduleTime              types.String                       `tfsdk:"backup_schedule_time"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -576,7 +576,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
-			"backup_schedule": resourceBackupSchedule,
+			"backup_schedule_time": ResourceBackupScheduleTime,
 		},
 	}
 }
@@ -858,6 +858,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
 	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	tfClusterResource.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
 	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
@@ -981,13 +982,6 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		tfClusterResource.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
 	}
 
-	if responseCluster.BackupSchedule != nil {
-		tfClusterResource.BackupSchedule = &commonTerraform.BackupSchedule{
-			StartDay:  types.StringValue(WeekdaysName[*responseCluster.BackupSchedule.StartDay]),
-			StartTime: types.StringPointerValue(responseCluster.BackupSchedule.StartTime),
-		}
-	}
-
 	return nil
 }
 
@@ -1107,6 +1101,7 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    clusterResource.BackupScheduleTime.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
 		VolumeSnapshot:        clusterResource.VolumeSnapshot.ValueBoolPointer(),
 	}
@@ -1194,13 +1189,6 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	if clusterResource.TransparentDataEncryption != nil {
 		if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
 			cluster.EncryptionKeyIdReq = clusterResource.TransparentDataEncryption.KeyId.ValueStringPointer()
-		}
-	}
-
-	if clusterResource.BackupSchedule != nil {
-		cluster.BackupSchedule = &commonApi.BackupSchedule{
-			StartDay:  utils.ToPointer(WeekdaysNumber[clusterResource.BackupSchedule.StartDay.ValueString()]),
-			StartTime: clusterResource.BackupSchedule.StartTime.ValueStringPointer(),
 		}
 	}
 

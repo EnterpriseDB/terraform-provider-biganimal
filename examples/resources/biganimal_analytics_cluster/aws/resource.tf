@@ -54,7 +54,8 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
   ]
 
   backup_retention_period = "30d"
-  csp_auth                = false
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
+  csp_auth = false
 
   instance_type = "aws:m6id.12xlarge"
   password      = resource.random_password.password.result

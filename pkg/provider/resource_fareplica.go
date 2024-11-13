@@ -65,7 +65,7 @@ type FAReplicaResourceModel struct {
 	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
 	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
-	BackupSchedule                  *commonTerraform.BackupSchedule   `tfsdk:"backup_schedule"`
+	BackupScheduleTime              types.String                      `tfsdk:"backup_schedule_time"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -423,7 +423,7 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 					plan_modifier.CustomAssignTags(),
 				},
 			},
-			"backup_schedule": resourceBackupSchedule,
+			"backup_schedule_time": ResourceBackupScheduleTime,
 		},
 	}
 }
@@ -627,6 +627,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
 	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
 	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	fAReplicaResourceModel.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
 	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
@@ -703,13 +704,6 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		})
 	}
 
-	if responseCluster.BackupSchedule != nil {
-		fAReplicaResourceModel.BackupSchedule = &commonTerraform.BackupSchedule{
-			StartDay:  types.StringValue(WeekdaysName[*responseCluster.BackupSchedule.StartDay]),
-			StartTime: types.StringPointerValue(responseCluster.BackupSchedule.StartTime),
-		}
-	}
-
 	return nil
 }
 
@@ -777,6 +771,7 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		CSPAuth:               fAReplicaResourceModel.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    fAReplicaResourceModel.BackupScheduleTime.ValueStringPointer(),
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}
@@ -820,13 +815,6 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		})
 	}
 	cluster.Tags = tags
-
-	if fAReplicaResourceModel.BackupSchedule != nil {
-		cluster.BackupSchedule = &commonApi.BackupSchedule{
-			StartDay:  utils.ToPointer(WeekdaysNumber[fAReplicaResourceModel.BackupSchedule.StartDay.ValueString()]),
-			StartTime: fAReplicaResourceModel.BackupSchedule.StartTime.ValueStringPointer(),
-		}
-	}
 
 	return cluster, nil
 }
