@@ -388,6 +388,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				MarkdownDescription: "Cluster connection service name.",
 				Computed:            true,
 			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
 		},
 	}
 }

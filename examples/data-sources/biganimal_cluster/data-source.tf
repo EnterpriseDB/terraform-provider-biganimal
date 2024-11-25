@@ -21,6 +21,10 @@ output "backup_retention_period" {
   value = data.biganimal_cluster.this.backup_retention_period
 }
 
+output "backup_schedule_time" {
+  value = data.biganimal_cluster.this.backup_schedule_time
+}
+
 output "cluster_name" {
   value = data.biganimal_cluster.this.cluster_name
 }
