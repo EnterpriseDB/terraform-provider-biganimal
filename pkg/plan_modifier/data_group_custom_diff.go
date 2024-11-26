@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -151,6 +152,27 @@ func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req pla
 				// if private networking has change then connection string will change
 				if sDg.PrivateNetworking != pDg.PrivateNetworking {
 					pDg.Connection = types.StringUnknown()
+				}
+
+				// validation to remove principal ids and service account ids if cloud provider is not bah
+				if !strings.Contains(*pDg.Provider.CloudProviderId, "bah") {
+					if !pDg.PeAllowedPrincipalIds.IsNull() && len(pDg.PeAllowedPrincipalIds.Elements()) > 0 {
+						resp.Diagnostics.AddError("your cloud account 'pe_allowed_principal_ids' field not allowed error",
+							fmt.Sprintf("field 'pe_allowed_principal_ids' for region %v should only be set if you are using 'bah' cloud provider, please remove 'pe_allowed_principal_ids'\n", pDg.Region.RegionId))
+						return
+					}
+
+					if !pDg.ServiceAccountIds.IsNull() && len(pDg.ServiceAccountIds.Elements()) > 0 {
+						resp.Diagnostics.AddError("your cloud account 'service_account_ids' field not allowed error",
+							fmt.Sprintf("field 'service_account_ids' for region %v should only be set if you are using cloud provider 'bah:gcp', please remove 'service_account_ids'\n", pDg.Region.RegionId))
+						return
+					}
+				} else if strings.Contains(*pDg.Provider.CloudProviderId, "bah") && !strings.Contains(*pDg.Provider.CloudProviderId, "bah:gcp") {
+					if !pDg.ServiceAccountIds.IsNull() && len(pDg.ServiceAccountIds.Elements()) > 0 {
+						resp.Diagnostics.AddError("your cloud account 'service_account_ids' field not allowed error",
+							fmt.Sprintf("you are not using cloud provider 'bah:gcp' for region %v, field 'service_account_ids' should only be set if you are using cloud provider 'bah:gcp', please remove 'service_account_ids'", pDg.Region.RegionId))
+						return
+					}
 				}
 
 				newDgPlan = append(newDgPlan, pDg)

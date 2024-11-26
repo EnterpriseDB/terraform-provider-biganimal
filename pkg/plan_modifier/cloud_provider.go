@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func CustomCloudProvider() planmodifier.String {
+func CustomClusterCloudProvider() planmodifier.String {
 	return customCloudProviderModifier{}
 }
 
