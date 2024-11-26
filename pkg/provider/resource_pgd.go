@@ -415,7 +415,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"read_only_connections": schema.BoolAttribute{
 							Description: "Is read-only connections enabled.",
 							Optional:    true,
-							Computed:    true,
 						},
 						"wal_storage": resourceWal,
 					},
