@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -101,28 +100,6 @@ func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req pla
 				pDg.ResizingPvc = sDg.ResizingPvc
 				pDg.Storage.Iops = sDg.Storage.Iops
 				pDg.Storage.Throughput = sDg.Storage.Throughput
-
-				// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
-				if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
-					pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
-						types.ObjectValueMust(
-							pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
-							map[string]attr.Value{
-								"cidr_block":  types.StringValue("0.0.0.0/0"),
-								"description": types.StringValue("To allow all access"),
-							}),
-					})
-					// fix to set the correct allowed ip ranges for PGD data group if allowed ip ranges length is 0
-				} else if pDg.AllowedIpRanges.IsNull() || len(pDg.AllowedIpRanges.Elements()) == 0 {
-					pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{
-						types.ObjectValueMust(
-							pDg.AllowedIpRanges.ElementType(ctx).(types.ObjectType).AttributeTypes(),
-							map[string]attr.Value{
-								"cidr_block":  types.StringValue("0.0.0.0/0"),
-								"description": types.StringValue(""),
-							}),
-					})
-				}
 
 				// if private networking has change then connection string will change
 				if sDg.PrivateNetworking != pDg.PrivateNetworking {
