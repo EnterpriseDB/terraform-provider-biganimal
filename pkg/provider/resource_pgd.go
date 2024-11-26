@@ -1376,14 +1376,21 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				if apiRespDgModel.AllowedIpRanges != nil && len(*apiRespDgModel.AllowedIpRanges) > 0 {
 					for _, v := range *apiRespDgModel.AllowedIpRanges {
 						v := v
+
+						description := v.Description
+						if v.CidrBlock == "0.0.0.0/0" {
+							description = ""
+						}
+
 						ob, diag := types.ObjectValue(allwdIpRngsElemTFType.AttrTypes, map[string]attr.Value{
 							"cidr_block":  types.StringValue(v.CidrBlock),
-							"description": types.StringValue(v.Description),
+							"description": types.StringValue(description),
 						})
 						if diag.HasError() {
 							diags.Append(diag...)
 							return
 						}
+
 						allowedIpRanges = append(allowedIpRanges, ob)
 					}
 				}
