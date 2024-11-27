@@ -34,7 +34,7 @@ func buildAPIReqAssignTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
 }
 
 var ResourceBackupScheduleTime = schema.StringAttribute{
-	MarkdownDescription: "Backup schedule time in 24 hour format.",
+	MarkdownDescription: "Backup schedule time in 24 hour cron expression format.",
 	Optional:            true,
 	Computed:            true,
 }
