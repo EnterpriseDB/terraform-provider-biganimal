@@ -42,8 +42,14 @@ resource "biganimal_cluster" "single_node_cluster" {
   storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-    size              = "4 Gi"
+    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   }
+
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+  #  }
 
   pg_type        = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version     = "15"
@@ -100,12 +106,12 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-    size              = "4 Gi"
+    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   }
   #  wal_storage = {
   #    volume_type       = "azurepremiumstorage"
   #    volume_properties = "P1"
-  #    size              = "4 Gi"
+  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   #  }
   private_networking = false
   region             = "centralindia"
