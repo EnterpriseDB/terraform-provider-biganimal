@@ -1378,6 +1378,11 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 						v := v
 
 						description := v.Description
+
+						// if cidr block is 0.0.0.0/0 then set description to empty string
+						// setting private networking and leaving allowed ip ranges as empty will return
+						// cidr block as 0.0.0.0/0 and description as "To allow all access"
+						// so we need to set description to empty string to keep it consistent with the tf resource
 						if v.CidrBlock == "0.0.0.0/0" {
 							description = ""
 						}
