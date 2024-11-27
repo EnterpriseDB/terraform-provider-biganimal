@@ -36,7 +36,7 @@ func buildAPIReqAssignTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
 }
 
 var resourceWal = schema.SingleNestedAttribute{
-	Description: "Write-Ahead Logs (WAL) Storage.",
+	Description: "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
 	Optional:    true,
 	Attributes: map[string]schema.Attribute{
 		"iops": schema.StringAttribute{
