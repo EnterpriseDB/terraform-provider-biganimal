@@ -671,9 +671,18 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.AllowedIpRanges = []AllowedIpRangesResourceModel{}
 	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
+			description := ipRange.Description
+
+			// if cidr block is 0.0.0.0/0 then set description to empty string
+			// setting private networking and leaving allowed ip ranges as empty will return
+			// cidr block as 0.0.0.0/0 and description as "To allow all access"
+			// so we need to set description to empty string to keep it consistent with the tf resource
+			if ipRange.CidrBlock == "0.0.0.0/0" {
+				description = ""
+			}
 			fAReplicaResourceModel.AllowedIpRanges = append(fAReplicaResourceModel.AllowedIpRanges, AllowedIpRangesResourceModel{
 				CidrBlock:   ipRange.CidrBlock,
-				Description: types.StringValue(ipRange.Description),
+				Description: types.StringValue(description),
 			})
 		}
 	}
