@@ -869,12 +869,15 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-	tfClusterResource.WalStorage = &StorageResourceModel{
-		VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
-		VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
-		Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
-		Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
-		Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
+
+	if responseCluster.WalStorage != nil {
+		tfClusterResource.WalStorage = &StorageResourceModel{
+			VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
+			VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
+			Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
+			Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
+			Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
+		}
 	}
 
 	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
@@ -1052,6 +1055,7 @@ func (c *clusterResource) makeClusterForCreate(ctx context.Context, clusterResou
 	return clusterModel, nil
 }
 
+// note: if private networking is true, it will require A peAllowedPrincipalId
 func (c *clusterResource) buildRequestBah(ctx context.Context, clusterResourceModel ClusterResourceModel) (svAccIds, principalIds *[]string, err error) {
 	if strings.Contains(clusterResourceModel.CloudProvider.ValueString(), "bah") {
 		// If there is an existing Principal Account Id for that Region, use that one.

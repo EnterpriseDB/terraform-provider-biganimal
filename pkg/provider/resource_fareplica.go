@@ -641,12 +641,15 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	fAReplicaResourceModel.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-	fAReplicaResourceModel.WalStorage = &StorageResourceModel{
-		VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
-		VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
-		Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
-		Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
-		Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
+
+	if responseCluster.WalStorage != nil {
+		fAReplicaResourceModel.WalStorage = &StorageResourceModel{
+			VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
+			VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
+			Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
+			Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
+			Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
+		}
 	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
