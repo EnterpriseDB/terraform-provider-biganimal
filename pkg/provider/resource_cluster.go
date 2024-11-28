@@ -326,8 +326,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
-				Required:    true,
+				Description:   "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
+				Required:      true,
+				PlanModifiers: []planmodifier.String{plan_modifier.CustomClusterCloudProvider()},
 			},
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
