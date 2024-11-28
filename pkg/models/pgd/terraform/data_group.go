@@ -34,4 +34,5 @@ type DataGroup struct {
 	RoConnectionUri       types.String              `tfsdk:"ro_connection_uri"`
 	ReadOnlyConnections   *bool                     `tfsdk:"read_only_connections"`
 	BackupScheduleTime    types.String              `tfsdk:"backup_schedule_time"`
+	WalStorage            *Storage                  `tfsdk:"wal_storage"`
 }

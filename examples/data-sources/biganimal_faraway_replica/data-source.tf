@@ -93,6 +93,10 @@ output "storage" {
   value = data.biganimal_faraway_replica.this.storage
 }
 
+output "wal_storage" {
+  value = data.biganimal_faraway_replica.this.wal_storage
+}
+
 output "volume_snapshot_backup" {
   value = data.biganimal_faraway_replica.this.volume_snapshot_backup
 }

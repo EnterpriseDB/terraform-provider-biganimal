@@ -70,6 +70,12 @@ resource "biganimal_cluster" "single_node_cluster" {
     size              = "10 Gi"
   }
 
+  #  wal_storage = {
+  #    volume_type       = "pd-ssd"
+  #    volume_properties = "pd-ssd"
+  #    size              = "10 Gi"
+  #  }
+
   maintenance_window = {
     is_enabled = true
     start_day  = 6

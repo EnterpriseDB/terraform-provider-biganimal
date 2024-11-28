@@ -83,6 +83,7 @@ type ClusterResourceModel struct {
 	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
 	ServiceName                     types.String                       `tfsdk:"service_name"`
 	BackupScheduleTime              types.String                       `tfsdk:"backup_schedule_time"`
+	WalStorage                      *StorageResourceModel              `tfsdk:"wal_storage"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -273,7 +274,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Required:    true,
 					},
 					"volume_type": schema.StringAttribute{
-						Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", org s \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
+						Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
 						Required:    true,
 					},
 				},
@@ -326,8 +327,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
-				Required:    true,
+				Description:   "Cloud provider. For example, \"aws\", \"azure\", \"gcp\" or \"bah:aws\", \"bah:gcp\".",
+				Required:      true,
+				PlanModifiers: []planmodifier.String{plan_modifier.CustomClusterCloudProvider()},
 			},
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\", \"pgextended\", or \"postgres\".",
@@ -577,6 +579,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
+			"wal_storage":          resourceWal,
 		},
 	}
 }
@@ -866,6 +869,13 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
+	tfClusterResource.WalStorage = &StorageResourceModel{
+		VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
+		VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
+		Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
+		Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
+		Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
+	}
 
 	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
 		if !tfClusterResource.PgIdentity.IsNull() && tfClusterResource.PgIdentity.ValueString() != "" {
@@ -1104,6 +1114,16 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		BackupScheduleTime:    clusterResource.BackupScheduleTime.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
 		VolumeSnapshot:        clusterResource.VolumeSnapshot.ValueBoolPointer(),
+	}
+
+	if clusterResource.WalStorage != nil {
+		cluster.WalStorage = &models.Storage{
+			VolumePropertiesId: clusterResource.WalStorage.VolumeProperties.ValueStringPointer(),
+			VolumeTypeId:       clusterResource.WalStorage.VolumeType.ValueStringPointer(),
+			Iops:               clusterResource.WalStorage.Iops.ValueStringPointer(),
+			Size:               clusterResource.WalStorage.Size.ValueStringPointer(),
+			Throughput:         clusterResource.WalStorage.Throughput.ValueStringPointer(),
+		}
 	}
 
 	cluster.Extensions = &[]models.ClusterExtension{}

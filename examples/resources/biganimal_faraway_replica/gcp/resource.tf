@@ -67,6 +67,11 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     volume_properties = "pd-ssd"
     size              = "4 Gi"
   }
+  #  wal_storage = {
+  #    volume_type       = "pd-ssd"
+  #    volume_properties = "pd-ssd"
+  #    size              = "4 Gi"
+  #  }
   private_networking = false
   region             = "us-east1"
 

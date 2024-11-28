@@ -187,6 +187,7 @@ type Cluster struct {
 	EncryptionKeyResp          *EncryptionKey               `json:"encryptionKey,omitempty"`
 	PgIdentity                 *string                      `json:"pgIdentity,omitempty"`
 	BackupScheduleTime         *string                      `json:"scheduleBackup,omitempty"`
+	WalStorage                 *Storage                     `json:"walStorage,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'

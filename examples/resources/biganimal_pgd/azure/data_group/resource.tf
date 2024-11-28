@@ -78,6 +78,16 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
+      storage = {
+        volume_type       = "azurepremiumstorage"
+        volume_properties = "P2"
+        size              = "32 Gi"
+      }
+      #      wal_storage = {
+      #        volume_type       = "azurepremiumstorage"
+      #        volume_properties = "P2"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }

@@ -33,4 +33,5 @@ type DataGroup struct {
 	RoConnectionUri       *string                   `json:"roConnectionUri,omitempty"`
 	ReadOnlyConnections   *bool                     `json:"readOnlyConnections,omitempty"`
 	BackupScheduleTime    *string                   `json:"scheduleBackup,omitempty"`
+	WalStorage            *models.Storage           `json:"walStorage,omitempty"`
 }
