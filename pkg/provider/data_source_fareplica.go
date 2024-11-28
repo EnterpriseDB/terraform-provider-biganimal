@@ -271,7 +271,8 @@ func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest
 					},
 				},
 			},
-			"wal_storage": resourceWal,
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"wal_storage":          resourceWal,
 		},
 	}
 }

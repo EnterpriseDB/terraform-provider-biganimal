@@ -60,6 +60,7 @@ type analyticsClusterResourceModel struct {
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
 	Tags                       []commonTerraform.Tag              `tfsdk:"tags"`
+	BackupScheduleTime         types.String                       `tfsdk:"backup_schedule_time"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -302,6 +303,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 					plan_modifier.CustomAssignTags(),
 				},
 			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
 		},
 	}
 }
@@ -407,6 +409,7 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 		CSPAuth:               clusterResource.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    clusterResource.BackupScheduleTime.ValueStringPointer(),
 	}
 
 	cluster.ClusterId = nil
@@ -506,6 +509,7 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
 	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	tfClusterResource.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
 	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)

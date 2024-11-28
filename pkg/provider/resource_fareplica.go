@@ -65,6 +65,7 @@ type FAReplicaResourceModel struct {
 	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
 	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
+	BackupScheduleTime              types.String                      `tfsdk:"backup_schedule_time"`
 	WalStorage                      *StorageResourceModel             `tfsdk:"wal_storage"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
@@ -423,7 +424,8 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 					plan_modifier.CustomAssignTags(),
 				},
 			},
-			"wal_storage": resourceWal,
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"wal_storage":          resourceWal,
 		},
 	}
 }
@@ -627,6 +629,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
 	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
 	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	fAReplicaResourceModel.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
 	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
@@ -777,6 +780,7 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		CSPAuth:               fAReplicaResourceModel.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    fAReplicaResourceModel.BackupScheduleTime.ValueStringPointer(),
 	}
 
 	if fAReplicaResourceModel.WalStorage != nil {

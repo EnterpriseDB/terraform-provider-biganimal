@@ -210,6 +210,7 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 					},
 				},
 			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
 		},
 	}
 }

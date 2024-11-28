@@ -43,8 +43,9 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   ]
 
   backup_retention_period = "8d"
-  csp_auth                = false
-  instance_type           = "azure:Standard_D2s_v3"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
+  csp_auth      = false
+  instance_type = "azure:Standard_D2s_v3"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.

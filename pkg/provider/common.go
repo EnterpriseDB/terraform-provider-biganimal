@@ -35,6 +35,12 @@ func buildAPIReqAssignTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
 	return tags
 }
 
+var ResourceBackupScheduleTime = schema.StringAttribute{
+	MarkdownDescription: "Backup schedule time in 24 hour cron expression format.",
+	Optional:            true,
+	Computed:            true,
+}
+
 var resourceWal = schema.SingleNestedAttribute{
 	Description: "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
 	Optional:    true,

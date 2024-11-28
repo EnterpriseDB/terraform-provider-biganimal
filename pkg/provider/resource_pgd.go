@@ -416,7 +416,8 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							Description: "Is read-only connections enabled.",
 							Optional:    true,
 						},
-						"wal_storage": resourceWal,
+						"backup_schedule_time": ResourceBackupScheduleTime,
+						"wal_storage":          resourceWal,
 					},
 				},
 			},
@@ -694,6 +695,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		apiDGModel := pgdApi.DataGroup{
 			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
+			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
 			CspAuth:               v.CspAuth,
@@ -711,6 +713,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ReadOnlyConnections:   v.ReadOnlyConnections,
 			WalStorage:            walStorage,
 		}
+
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
 
@@ -980,6 +983,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			ClusterType:           utils.ToPointer("data_group"),
 			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
+			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
 			CspAuth:               v.CspAuth,
 			InstanceType:          v.InstanceType,
 			PgConfig:              v.PgConfig,
@@ -1422,6 +1426,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					GroupId:               types.StringPointerValue(apiRespDgModel.GroupId),
 					AllowedIpRanges:       allwdIpRngsSet,
 					BackupRetentionPeriod: apiRespDgModel.BackupRetentionPeriod,
+					BackupScheduleTime:    types.StringPointerValue(apiRespDgModel.BackupScheduleTime),
 					ClusterArchitecture:   clusterArch,
 					ClusterName:           types.StringPointerValue(apiRespDgModel.ClusterName),
 					ClusterType:           types.StringPointerValue(apiRespDgModel.ClusterType),

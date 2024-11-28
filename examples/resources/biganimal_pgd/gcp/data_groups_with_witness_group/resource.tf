@@ -54,6 +54,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -120,6 +121,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3

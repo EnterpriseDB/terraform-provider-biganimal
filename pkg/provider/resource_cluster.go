@@ -82,6 +82,7 @@ type ClusterResourceModel struct {
 	VolumeSnapshot                  types.Bool                         `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
 	ServiceName                     types.String                       `tfsdk:"service_name"`
+	BackupScheduleTime              types.String                       `tfsdk:"backup_schedule_time"`
 	WalStorage                      *StorageResourceModel              `tfsdk:"wal_storage"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
@@ -577,7 +578,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
-			"wal_storage": resourceWal,
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"wal_storage":          resourceWal,
 		},
 	}
 }
@@ -859,6 +861,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
 	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	tfClusterResource.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
 	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
@@ -1108,6 +1111,7 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		ReadOnlyConnections:   clusterResource.ReadOnlyConnections.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    clusterResource.BackupScheduleTime.ValueStringPointer(),
 		SuperuserAccess:       clusterResource.SuperuserAccess.ValueBoolPointer(),
 		VolumeSnapshot:        clusterResource.VolumeSnapshot.ValueBoolPointer(),
 	}
