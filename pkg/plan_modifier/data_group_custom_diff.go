@@ -126,6 +126,11 @@ func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req pla
 				pDg.Storage.Iops = sDg.Storage.Iops
 				pDg.Storage.Throughput = sDg.Storage.Throughput
 
+				if sDg.WalStorage != nil {
+					pDg.WalStorage.Iops = sDg.WalStorage.Iops
+					pDg.WalStorage.Throughput = sDg.WalStorage.Throughput
+				}
+
 				// fix to set the correct allowed ip ranges to allow all if a PGD data group has private networking set as true
 				if pDg.PrivateNetworking != nil && *pDg.PrivateNetworking {
 					pDg.AllowedIpRanges = types.SetValueMust(pDg.AllowedIpRanges.ElementType(ctx), []attr.Value{

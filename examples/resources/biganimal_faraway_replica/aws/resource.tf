@@ -66,6 +66,11 @@ resource "biganimal_faraway_replica" "faraway_replica" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
   private_networking = false
   region             = "ap-south-1"
 
