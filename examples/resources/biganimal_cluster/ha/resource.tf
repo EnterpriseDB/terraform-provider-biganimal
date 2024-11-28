@@ -68,6 +68,12 @@ resource "biganimal_cluster" "ha_cluster" {
     size              = "4 Gi"
   }
 
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
+
   maintenance_window = {
     is_enabled = true
     start_day  = 6

@@ -169,8 +169,9 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\" or \"bah:aws\".",
-				Required:    true,
+				Description:   "Cloud provider. For example, \"aws\" or \"bah:aws\".",
+				Required:      true,
+				PlanModifiers: []planmodifier.String{plan_modifier.CustomClusterCloudProvider()},
 			},
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\" or \"pgextended\".",

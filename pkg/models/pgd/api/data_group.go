@@ -30,4 +30,5 @@ type DataGroup struct {
 	PeAllowedPrincipalIds *[]string                 `json:"peAllowedPrincipalIds,omitempty"`
 	RoConnectionUri       *string                   `json:"roConnectionUri,omitempty"`
 	ReadOnlyConnections   *bool                     `json:"readOnlyConnections,omitempty"`
+	WalStorage            *models.Storage           `json:"walStorage,omitempty"`
 }

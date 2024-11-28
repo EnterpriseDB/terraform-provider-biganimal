@@ -89,6 +89,10 @@ output "storage" {
   value = data.biganimal_cluster.this.storage
 }
 
+output "wal_storage" {
+  value = data.biganimal_cluster.this.wal_storage
+}
+
 output "superuser_access" {
   value = coalesce(data.biganimal_cluster.this.superuser_access, false)
 }

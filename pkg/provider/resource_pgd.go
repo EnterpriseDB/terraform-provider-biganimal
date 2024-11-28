@@ -415,8 +415,8 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"read_only_connections": schema.BoolAttribute{
 							Description: "Is read-only connections enabled.",
 							Optional:    true,
-							Computed:    true,
 						},
+						"wal_storage": resourceWal,
 					},
 				},
 			},
@@ -666,6 +666,11 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 		storage := buildRequestStorage(*v.Storage)
 
+		var walStorage *models.Storage
+		if v.WalStorage != nil {
+			walStorage = buildRequestStorage(*v.WalStorage)
+		}
+
 		if v.PgConfig == nil {
 			v.PgConfig = &[]models.KeyValue{}
 		}
@@ -704,6 +709,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
 			ReadOnlyConnections:   v.ReadOnlyConnections,
+			WalStorage:            walStorage,
 		}
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
 	}
@@ -953,6 +959,11 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	for _, v := range plan.DataGroups {
 		storage := buildRequestStorage(*v.Storage)
 
+		var walStorage *models.Storage
+		if v.WalStorage != nil {
+			walStorage = buildRequestStorage(*v.WalStorage)
+		}
+
 		groupId := v.GroupId.ValueStringPointer()
 		if v.GroupId.IsUnknown() {
 			groupId = nil
@@ -977,6 +988,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			MaintenanceWindow:     v.MaintenanceWindow,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
+			WalStorage:            walStorage,
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
@@ -1337,6 +1349,18 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					Throughput:         types.StringPointerValue(apiRespDgModel.Storage.Throughput),
 				}
 
+				// wal storage
+				var walStorage *terraform.Storage
+				if apiRespDgModel.WalStorage != nil {
+					walStorage = &terraform.Storage{
+						Size:               types.StringPointerValue(apiRespDgModel.WalStorage.Size),
+						VolumePropertiesId: types.StringPointerValue(apiRespDgModel.WalStorage.VolumePropertiesId),
+						VolumeTypeId:       types.StringPointerValue(apiRespDgModel.WalStorage.VolumeTypeId),
+						Iops:               types.StringPointerValue(apiRespDgModel.WalStorage.Iops),
+						Throughput:         types.StringPointerValue(apiRespDgModel.WalStorage.Throughput),
+					}
+				}
+
 				// service account ids
 				serviceAccIds := []attr.Value{}
 				if apiRespDgModel.ServiceAccountIds != nil && len(*apiRespDgModel.ServiceAccountIds) != 0 {
@@ -1433,6 +1457,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 					RoConnectionUri:       types.StringPointerValue(apiRespDgModel.RoConnectionUri),
 					ReadOnlyConnections:   apiRespDgModel.ReadOnlyConnections,
+					WalStorage:            walStorage,
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)

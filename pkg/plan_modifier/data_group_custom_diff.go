@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/pgd/terraform"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -31,6 +32,44 @@ func (m CustomDataGroupDiffModifier) MarkdownDescription(_ context.Context) stri
 
 // PlanModifyList implements the plan modification logic.
 func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
+	var stateDgsObs []terraform.DataGroup
+	diag := req.StateValue.ElementsAs(ctx, &stateDgsObs, false)
+	if diag.ErrorsCount() > 0 {
+		resp.Diagnostics.Append(diag...)
+		return
+	}
+
+	var planDgsObs []terraform.DataGroup
+	diag = resp.PlanValue.ElementsAs(ctx, &planDgsObs, false)
+	if diag.ErrorsCount() > 0 {
+		resp.Diagnostics.Append(diag...)
+		return
+	}
+
+	// validations
+	for _, pDg := range planDgsObs {
+		// validation to remove principal ids and service account ids if cloud provider is not bah
+		if !strings.Contains(*pDg.Provider.CloudProviderId, "bah") {
+			if !pDg.PeAllowedPrincipalIds.IsNull() && len(pDg.PeAllowedPrincipalIds.Elements()) > 0 {
+				resp.Diagnostics.AddError("your cloud account 'pe_allowed_principal_ids' field not allowed error",
+					fmt.Sprintf("field 'pe_allowed_principal_ids' for region %v should only be set if you are using BigAnimal's cloud account e.g. 'bah:aws', please remove 'pe_allowed_principal_ids'\n", pDg.Region.RegionId))
+				return
+			}
+
+			if !pDg.ServiceAccountIds.IsNull() && len(pDg.ServiceAccountIds.Elements()) > 0 {
+				resp.Diagnostics.AddError("your cloud account 'service_account_ids' field not allowed error",
+					fmt.Sprintf("field 'service_account_ids' for region %v should only be set if you are using BigAnimal's cloud account 'bah:gcp', please remove 'service_account_ids'\n", pDg.Region.RegionId))
+				return
+			}
+		} else if strings.Contains(*pDg.Provider.CloudProviderId, "bah") && !strings.Contains(*pDg.Provider.CloudProviderId, "bah:gcp") {
+			if !pDg.ServiceAccountIds.IsNull() && len(pDg.ServiceAccountIds.Elements()) > 0 {
+				resp.Diagnostics.AddError("your cloud account 'service_account_ids' field not allowed error",
+					fmt.Sprintf("you are not using BigAnimal's cloud account 'bah:gcp' for region %v, field 'service_account_ids' should only be set if you are using BigAnimal's cloud account 'bah:gcp', please remove 'service_account_ids'", pDg.Region.RegionId))
+				return
+			}
+		}
+	}
+
 	if req.StateValue.IsNull() {
 		// private networking case when doing create
 		var planDgsObs []terraform.DataGroup
@@ -62,20 +101,6 @@ func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req pla
 
 	newDgPlan := []terraform.DataGroup{}
 
-	var stateDgsObs []terraform.DataGroup
-	diag := req.StateValue.ElementsAs(ctx, &stateDgsObs, false)
-	if diag.ErrorsCount() > 0 {
-		resp.Diagnostics.Append(diag...)
-		return
-	}
-
-	var planDgsObs []terraform.DataGroup
-	diag = resp.PlanValue.ElementsAs(ctx, &planDgsObs, false)
-	if diag.ErrorsCount() > 0 {
-		resp.Diagnostics.Append(diag...)
-		return
-	}
-
 	// Need to sort the plan according to the state this is so the compare and setting unknowns are correct
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/plan-modification#caveats
 	// sort the order of the plan the same as the state, state is from the read and plan is from the config
@@ -100,6 +125,11 @@ func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req pla
 				pDg.ResizingPvc = sDg.ResizingPvc
 				pDg.Storage.Iops = sDg.Storage.Iops
 				pDg.Storage.Throughput = sDg.Storage.Throughput
+
+				if sDg.WalStorage != nil {
+					pDg.WalStorage.Iops = sDg.WalStorage.Iops
+					pDg.WalStorage.Throughput = sDg.WalStorage.Throughput
+				}
 
 				// if private networking has change then connection string will change
 				if sDg.PrivateNetworking != pDg.PrivateNetworking {
