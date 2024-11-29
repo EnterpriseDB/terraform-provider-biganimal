@@ -13,7 +13,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -55,6 +55,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   ]
 
   backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "single"
     nodes = 1
@@ -79,6 +80,12 @@ resource "biganimal_cluster" "single_node_cluster" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
+
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
 
   maintenance_window = {
     is_enabled = true
@@ -148,7 +155,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -190,6 +197,7 @@ resource "biganimal_cluster" "ha_cluster" {
   ]
 
   backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "ha"
     nodes = 3
@@ -213,6 +221,12 @@ resource "biganimal_cluster" "ha_cluster" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
+
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
 
   maintenance_window = {
     is_enabled = true
@@ -300,6 +314,7 @@ output "faraway_replica_ids" {
 
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
+- `backup_schedule_time` (String) Backup schedule time in 24 hour cron expression format.
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. Pausing a high availability cluster shuts down all cluster nodes
@@ -316,6 +331,7 @@ output "faraway_replica_ids" {
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
 - `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
+- `wal_storage` (Attributes) Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads) (see [below for nested schema](#nestedatt--wal_storage))
 
 ### Read-Only
 
@@ -355,7 +371,7 @@ Required:
 
 - `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
 - `volume_properties` (String) Volume properties in accordance with the selected volume type.
-- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", org s "io2-block-express". For Google Cloud: only "pd-ssd".
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
 
 Optional:
 
@@ -456,6 +472,21 @@ Read-Only:
 
 - `key_name` (String) Key name.
 - `status` (String) Status.
+
+
+<a id="nestedatt--wal_storage"></a>
+### Nested Schema for `wal_storage`
+
+Required:
+
+- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.
 
 ## Import
 

@@ -131,7 +131,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Required:    true,
 					},
 					"volume_type": schema.StringAttribute{
-						Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", org s \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
+						Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
 						Required:    true,
 					},
 				},

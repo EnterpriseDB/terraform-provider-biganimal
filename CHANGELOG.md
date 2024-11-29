@@ -1,3 +1,14 @@
+## v1.2.0 (November 29. 2024)
+Features:
+* Support for Write-Ahead Logs (WAL) Storage in `biganimal_cluster`, `biganimal_faraway_replica`, and `biganimal_pgd` resources
+* Support for backup schedule time in `biganimal_cluster`, `biganimal_analytics_cluster`, `biganimal_faraway_replica`, and `biganimal_pgd` resources
+
+Enhancements:
+* Validation checks to not allow pe_allowed_principal_ids and service_account_ids if using your cloud account
+
+Bug Fixes:
+* Fixed planned allowed_ip_ranges.description when using private_networking = true
+
 ## v1.1.1 (October 29. 2024)
 Bug Fixes:
 * Fixed Data Source `biganimal_cluster` cloud_provider not working with your cloud account

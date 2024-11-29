@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -62,6 +62,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -85,6 +86,16 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
+      storage = {
+        volume_type       = "azurepremiumstorage"
+        volume_properties = "P2"
+        size              = "32 Gi"
+      }
+      #      wal_storage = {
+      #        volume_type       = "azurepremiumstorage"
+      #        volume_properties = "P2"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -124,7 +135,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -176,6 +187,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -199,6 +211,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "azurepremiumstorage"
+      #        volume_properties = "P2"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -233,6 +250,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -256,6 +274,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "azurepremiumstorage"
+      #        volume_properties = "P2"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -308,7 +331,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -360,6 +383,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -383,6 +407,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "gp3"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "gp3"
+      #        volume_properties = "gp3"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -422,7 +451,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -474,6 +503,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -497,6 +527,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "gp3"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "gp3"
+      #        volume_properties = "gp3"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -531,6 +566,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -554,6 +590,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "gp3"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "gp3"
+      #        volume_properties = "gp3"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -606,7 +647,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -658,6 +699,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -681,6 +723,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "pd-ssd"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "pd-ssd"
+      #        volume_properties = "pd-ssd"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -724,7 +771,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.1.1"
+      version = "1.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -776,6 +823,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -799,6 +847,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "pd-ssd"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "pd-ssd"
+      #        volume_properties = "pd-ssd"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -837,6 +890,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -860,6 +914,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "pd-ssd"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "pd-ssd"
+      #        volume_properties = "pd-ssd"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -954,10 +1013,12 @@ Required:
 Optional:
 
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
+- `backup_schedule_time` (String) Backup schedule time in 24 hour cron expression format.
 - `cluster_type` (String) Type of the Specified Cluster
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `read_only_connections` (Boolean) Is read-only connections enabled.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `wal_storage` (Attributes) Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads) (see [below for nested schema](#nestedatt--data_groups--wal_storage))
 
 Read-Only:
 
@@ -1066,6 +1127,21 @@ Required:
 
 - `cidr_block` (String) CIDR block
 - `description` (String) Description of CIDR block
+
+
+<a id="nestedatt--data_groups--wal_storage"></a>
+### Nested Schema for `data_groups.wal_storage`
+
+Required:
+
+- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.
 
 
 

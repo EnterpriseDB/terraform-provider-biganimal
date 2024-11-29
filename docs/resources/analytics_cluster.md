@@ -30,6 +30,7 @@ The analytics cluster resource is used to manage BigAnimal analytics clusters.
 
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
+- `backup_schedule_time` (String) Backup schedule time in 24 hour cron expression format.
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. Pausing a high availability cluster shuts down all cluster nodes
