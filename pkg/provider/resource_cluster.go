@@ -203,8 +203,10 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"name": schema.StringAttribute{
-						Description: "Name.",
-						Computed:    true,
+						Description:        "Name.",
+						Optional:           true,
+						Sensitive:          true,
+						DeprecationMessage: "This field is deprecated and will be removed in a future release.",
 					},
 					"nodes": schema.Float64Attribute{
 						Description:   "Node count.",
@@ -841,7 +843,6 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.ClusterArchitecture = &ClusterArchitectureResourceModel{
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
 		Nodes: responseCluster.ClusterArchitecture.Nodes,
-		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
 	}
 	tfClusterResource.Region = types.StringValue(responseCluster.Region.Id)
 	tfClusterResource.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)

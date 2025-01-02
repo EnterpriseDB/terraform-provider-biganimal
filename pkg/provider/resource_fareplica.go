@@ -634,7 +634,6 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
 		Nodes: responseCluster.ClusterArchitecture.Nodes,
-		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
 	}
 	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
 	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
