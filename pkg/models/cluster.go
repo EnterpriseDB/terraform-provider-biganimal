@@ -188,6 +188,7 @@ type Cluster struct {
 	PgIdentity                 *string                      `json:"pgIdentity,omitempty"`
 	BackupScheduleTime         *string                      `json:"scheduleBackup,omitempty"`
 	WalStorage                 *Storage                     `json:"walStorage,omitempty"`
+	Connection                 *ClusterConnection           `json:"connection,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'
