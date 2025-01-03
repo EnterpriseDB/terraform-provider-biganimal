@@ -66,8 +66,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Required:    true,
 					},
 					"name": schema.StringAttribute{
-						Description: "Name.",
-						Computed:    true,
+						Description:        "Name.",
+						Optional:           true,
+						Sensitive:          true,
+						DeprecationMessage: "This field is deprecated and will be removed in a future release.",
 					},
 					"nodes": schema.Float64Attribute{
 						Description: "Node count.",
