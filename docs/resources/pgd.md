@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -135,7 +135,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -331,7 +331,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -451,7 +451,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -647,7 +647,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -771,7 +771,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
