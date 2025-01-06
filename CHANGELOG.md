@@ -1,3 +1,7 @@
+## v1.2.1 (January 06. 2025)
+Bug Fixes:
+* Fixed cluster_architecture.name field for `biganimal_cluster` resource and Data Source. It is now a deprecated and hidden field
+
 ## v1.2.0 (November 29. 2024)
 Features:
 * Support for Write-Ahead Logs (WAL) Storage in `biganimal_cluster`, `biganimal_faraway_replica`, and `biganimal_pgd` resources

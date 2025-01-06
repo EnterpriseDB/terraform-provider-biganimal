@@ -13,7 +13,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -155,7 +155,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.0"
+      version = "1.2.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -359,9 +359,9 @@ Required:
 - `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
 
-Read-Only:
+Optional:
 
-- `name` (String) Name.
+- `name` (String, Sensitive, Deprecated) Name.
 
 
 <a id="nestedatt--storage"></a>
