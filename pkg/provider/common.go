@@ -39,16 +39,15 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 		for _, existingTag := range existingTags {
 			// if config tag matches existing tag, then config tags color has to match existing tag color or
 			// config tag color should be set to nil, other throw validation error
-			if existingTag.TagName == configTag.TagName.ValueString() &&
-				(existingTag.Color != nil && *existingTag.Color != configTag.Color.ValueString() ||
-					configTag.Color.ValueStringPointer() != nil) {
+			if existingTag.TagName == configTag.TagName.ValueString() && configTag.Color.ValueString() != "" &&
+				existingTag.Color != nil && *existingTag.Color != configTag.Color.ValueString() {
 
 				existingColor := "nil"
 				if existingTag.Color != nil {
 					existingColor = *existingTag.Color
 				}
 
-				resp.Diagnostics.AddError("An existing tag's color cannot be changed",
+				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using cluster resources",
 					fmt.Sprintf("Please remove the color field for tag: `%v` or set it to the existing tag's color: `%v`.\nTo change an existing tag's color please use resource `biganimal_tag`",
 						configTag.TagName.ValueString(), existingColor))
 			}
