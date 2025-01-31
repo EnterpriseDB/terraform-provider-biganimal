@@ -167,7 +167,7 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	projectReqModel := models.Project{
 		ProjectName: *config.ProjectName,
-		Tags:        buildAPIReqAssignTags(config.Tags),
+		Tags:        buildApiReqTags(config.Tags),
 	}
 
 	projectId, err := p.client.Create(ctx, projectReqModel)
@@ -194,7 +194,7 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		})
 	}
 
-	buildTFRsrcAssignTagsAs(&config.Tags, project.Tags)
+	buildTfRsrcTagsAs(&config.Tags, project.Tags)
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -230,7 +230,7 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 		})
 	}
 
-	buildTFRsrcAssignTagsAs(&state.Tags, project.Tags)
+	buildTfRsrcTagsAs(&state.Tags, project.Tags)
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -250,7 +250,7 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	projectReqModel := models.Project{
 		ProjectName: *plan.ProjectName,
-		Tags:        buildAPIReqAssignTags(plan.Tags),
+		Tags:        buildApiReqTags(plan.Tags),
 	}
 
 	_, err := p.client.Update(ctx, *plan.ProjectID, projectReqModel)
@@ -259,7 +259,7 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	buildTFRsrcAssignTagsAs(&plan.Tags, projectReqModel.Tags)
+	buildTfRsrcTagsAs(&plan.Tags, projectReqModel.Tags)
 
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)

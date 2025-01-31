@@ -204,7 +204,7 @@ func (r *regionResource) ensureStatueUpdated(ctx context.Context, region Region)
 	}
 
 	diags := frameworkdiag.Diagnostics{}
-	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID, buildAPIReqAssignTags(region.Tags)); err != nil {
+	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID, buildApiReqTags(region.Tags)); err != nil {
 		if appendDiagFromBAErr(err, &diags) {
 			return diags
 		}
@@ -246,7 +246,7 @@ func (r *regionResource) writeState(ctx context.Context, region Region, state *t
 	region.Status = &read.Status
 	region.Continent = &read.Continent
 
-	buildTFRsrcAssignTagsAs(&region.Tags, read.Tags)
+	buildTfRsrcTagsAs(&region.Tags, read.Tags)
 
 	return state.Set(ctx, &region)
 }

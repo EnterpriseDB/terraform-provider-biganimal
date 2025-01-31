@@ -480,7 +480,7 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 		}
 	}
 
-	cluster.Tags = buildAPIReqAssignTags(clusterResource.Tags)
+	cluster.Tags = buildApiReqTags(clusterResource.Tags)
 
 	return cluster, nil
 }
@@ -558,7 +558,7 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
 	}
 
-	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
+	buildTfRsrcTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
 
 	return nil
 }

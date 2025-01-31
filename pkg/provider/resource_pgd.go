@@ -658,7 +658,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 		Password:    config.Password,
 	}
 
-	clusterReqBody.Tags = buildAPIReqAssignTags(config.Tags)
+	clusterReqBody.Tags = buildApiReqTags(config.Tags)
 
 	clusterReqBody.Groups = &[]any{}
 
@@ -867,7 +867,7 @@ func (p pgdResource) Read(ctx context.Context, req resource.ReadRequest, resp *r
 	state.ClusterId = clusterResp.ClusterId
 	state.ClusterName = clusterResp.ClusterName
 
-	buildTFRsrcAssignTagsAs(&state.Tags, clusterResp.Tags)
+	buildTfRsrcTagsAs(&state.Tags, clusterResp.Tags)
 
 	buildTFGroupsAs(ctx, &resp.Diagnostics, resp.State, *clusterResp, &state)
 	if resp.Diagnostics.HasError() {
@@ -955,7 +955,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 		Password:    plan.Password,
 	}
 
-	clusterReqBody.Tags = buildAPIReqAssignTags(plan.Tags)
+	clusterReqBody.Tags = buildApiReqTags(plan.Tags)
 
 	clusterReqBody.Groups = &[]any{}
 
@@ -1207,7 +1207,7 @@ func (p *pgdResource) retryFuncAs(ctx context.Context, diags *diag.Diagnostics, 
 			return retry.RetryableError(errors.New("instance not yet ready"))
 		}
 
-		buildTFRsrcAssignTagsAs(&outPgdTfResource.Tags, pgdResp.Tags)
+		buildTfRsrcTagsAs(&outPgdTfResource.Tags, pgdResp.Tags)
 
 		return nil
 	}

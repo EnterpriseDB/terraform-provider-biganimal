@@ -11,7 +11,7 @@ import (
 )
 
 // build tag assign terraform resource as, using api response as input
-func buildTFRsrcAssignTagsAs(tfRsrcTagsOut *[]commonTerraform.Tag, apiRespTags []commonApi.Tag) {
+func buildTfRsrcTagsAs(tfRsrcTagsOut *[]commonTerraform.Tag, apiRespTags []commonApi.Tag) {
 	*tfRsrcTagsOut = []commonTerraform.Tag{}
 	for _, v := range apiRespTags {
 		*tfRsrcTagsOut = append(*tfRsrcTagsOut, commonTerraform.Tag{
@@ -23,7 +23,7 @@ func buildTFRsrcAssignTagsAs(tfRsrcTagsOut *[]commonTerraform.Tag, apiRespTags [
 }
 
 // build tag assign request using terraform resource as input
-func buildAPIReqAssignTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
+func buildApiReqTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
 	tags := []commonApi.Tag{}
 	for _, tag := range tfRsrcTags {
 		tags = append(tags, commonApi.Tag{

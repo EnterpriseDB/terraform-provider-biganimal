@@ -586,6 +586,25 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 }
 
+// func (c *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+// 	config := resp.Plan
+
+// 	// Validate existing tag. Existing tag colors cannot be changed in a cluster create request and must be removed.
+// 	// To change tag color, use tag request
+// 	existingTags, err := c.client.TagClient().List(ctx)
+// 	if err != nil {
+// 		resp.Diagnostics.AddError("Error fetching existing tags", err.Error())
+// 	}
+// 	for _, configTag := range config.Elements() {
+// 		tagName := configTag.(basetypes.ObjectValue).Attributes()["tag_name"].(basetypes.StringValue).ValueString()
+// 		for _, existingTag := range existingTags {
+// 			if existingTag.TagName == tagName {
+// 				resp.Diagnostics.AddError("Existing tag color cannot be changed", fmt.Sprintf("Please remove existing tag color for tag %s", tagName))
+// 			}
+// 		}
+// 	}
+// }
+
 func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
 	var config ClusterResourceModel
@@ -991,7 +1010,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		}
 	}
 
-	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
+	buildTfRsrcTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
 
 	if responseCluster.EncryptionKeyResp != nil {
 		tfClusterResource.TransparentDataEncryption = &TransparentDataEncryptionModel{}
@@ -1213,7 +1232,7 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	cluster.ServiceAccountIds = svAccIds
 	cluster.PeAllowedPrincipalIds = principalIds
 
-	cluster.Tags = buildAPIReqAssignTags(clusterResource.Tags)
+	cluster.Tags = buildApiReqTags(clusterResource.Tags)
 
 	if clusterResource.TransparentDataEncryption != nil {
 		if !clusterResource.TransparentDataEncryption.KeyId.IsNull() {
