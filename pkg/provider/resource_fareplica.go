@@ -430,6 +430,11 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 	}
 }
 
+// modify plan on at runtime
+func (r *FAReplicaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
+}
+
 func (r *FAReplicaResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return

@@ -612,6 +612,11 @@ func PgdSchema(ctx context.Context) schema.Schema {
 	}
 }
 
+// modify plan on at runtime
+func (p *pgdResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, p.client.TagClient(), req, resp)
+}
+
 func (p pgdResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_pgd"
 }

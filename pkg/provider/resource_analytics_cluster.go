@@ -308,6 +308,11 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 	}
 }
 
+// modify plan on at runtime
+func (r *analyticsClusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
+}
+
 func (r *analyticsClusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
 	var config analyticsClusterResourceModel

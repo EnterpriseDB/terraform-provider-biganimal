@@ -11,7 +11,6 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
@@ -32,7 +31,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -588,50 +586,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 	}
 }
 
+// modify plan on at runtime
 func (c *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	var planObject map[string]tftypes.Value
-
-	err := req.Plan.Raw.As(&planObject)
-	if err != nil {
-		resp.Diagnostics.AddError("Mapping plan object in cluster modify plan error", err.Error())
-		return
-	}
-
-	set := new(types.Set)
-	req.Plan.GetAttribute(ctx, path.Root("tags"), set)
-
-	configTags := []terraform.Tag{}
-	diag := set.ElementsAs(ctx, &configTags, false)
-	if diag.ErrorsCount() > 0 {
-		resp.Diagnostics.Append(diag...)
-		return
-	}
-
-	// Validate existing tag. Existing tag colors cannot be changed in a cluster create request and must be removed.
-	// To change tag color, use tag request
-	existingTags, err := c.client.TagClient().List(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Error fetching existing tags", err.Error())
-	}
-	for _, configTag := range configTags {
-		for _, existingTag := range existingTags {
-			// if config tag matches existing tag, then config tags color has to match existing tag color or
-			// config tag color should be set to nil, other throw validation error
-			if existingTag.TagName == configTag.TagName.ValueString() &&
-				(existingTag.Color != nil && *existingTag.Color != configTag.Color.ValueString() ||
-					configTag.Color.ValueStringPointer() != nil) {
-
-				existingColor := "nil"
-				if existingTag.Color != nil {
-					existingColor = *existingTag.Color
-				}
-
-				resp.Diagnostics.AddError("An existing tag's color cannot be changed",
-					fmt.Sprintf("Please remove the color field for tag: `%v` or set it to the existing tag's color: `%v`.\nTo change an existing tag's color please use resource `biganimal_tag`",
-						configTag.TagName.ValueString(), existingColor))
-			}
-		}
-	}
+	ValidateTags(ctx, c.client.TagClient(), req, resp)
 }
 
 func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

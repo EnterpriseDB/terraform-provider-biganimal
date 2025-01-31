@@ -132,6 +132,11 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	}
 }
 
+// modify plan on at runtime
+func (p *projectResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, p.client.TagClient(), req, resp)
+}
+
 // Configure adds the provider configured client to the data source.
 func (p *projectResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
 	if req.ProviderData == nil {

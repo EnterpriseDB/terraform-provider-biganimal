@@ -121,6 +121,11 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 	}
 }
 
+// modify plan on at runtime
+func (r *regionResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
+}
+
 func (r *regionResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
