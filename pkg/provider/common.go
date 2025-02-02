@@ -29,7 +29,7 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 		return
 	}
 
-	// Validate existing tag. Existing tag colors cannot be changed in a cluster create request and must be removed.
+	// Validate existing tag. Existing tag colors cannot be changed in a cluster request and must be removed.
 	// To change tag color, use tag request
 	existingTags, err := tagClient.TagClient().List(ctx)
 	if err != nil {
@@ -38,18 +38,23 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 	for _, configTag := range configTags {
 		for _, existingTag := range existingTags {
 			// if config tag matches existing tag, then config tags color has to match existing tag color or
-			// config tag color should be set to nil, other throw validation error
-			if existingTag.TagName == configTag.TagName.ValueString() && configTag.Color.ValueString() != "" &&
+			// config tag color should be removed, otherwise throw a validation error
+			// color is a computed value so color unknown means color is removed from config
+			if existingTag.TagName == configTag.TagName.ValueString() && !configTag.Color.IsUnknown() &&
 				existingTag.Color != nil && *existingTag.Color != configTag.Color.ValueString() {
-
-				existingColor := "nil"
-				if existingTag.Color != nil {
-					existingColor = *existingTag.Color
-				}
 
 				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using cluster resources",
 					fmt.Sprintf("Please remove the color field for tag: `%v` or set it to the existing tag's color: `%v`.\nTo change an existing tag's color please use resource `biganimal_tag`",
-						configTag.TagName.ValueString(), existingColor))
+						configTag.TagName.ValueString(), *existingTag.Color))
+			}
+
+			// should never reach this as existing color should always be set even '' for no color
+			// but if existing tag color is nil, then config tag color should be removed
+			if existingTag.TagName == configTag.TagName.ValueString() && !configTag.Color.IsUnknown() &&
+				existingTag.Color == nil {
+				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using cluster resources",
+					fmt.Sprintf("Please remove the color field for tag: `%v` as the existing tag's color is nil.\nTo change an existing tag's color please use resource `biganimal_tag`",
+						configTag.TagName.ValueString()))
 			}
 		}
 	}
