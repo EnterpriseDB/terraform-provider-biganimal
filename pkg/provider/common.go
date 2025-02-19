@@ -8,9 +8,10 @@ import (
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -85,40 +86,82 @@ func buildApiReqTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
 	return tags
 }
 
-var ResourceBackupScheduleTime = schema.StringAttribute{
+var ResourceBackupScheduleTime = resourceSchema.StringAttribute{
 	MarkdownDescription: "Backup schedule time in 24 hour cron expression format.",
 	Optional:            true,
 	Computed:            true,
 }
 
-var resourceWal = schema.SingleNestedAttribute{
+var resourceWal = resourceSchema.SingleNestedAttribute{
 	Description: "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
 	Optional:    true,
-	Attributes: map[string]schema.Attribute{
-		"iops": schema.StringAttribute{
+	Attributes: map[string]resourceSchema.Attribute{
+		"iops": resourceSchema.StringAttribute{
 			Description:   "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
 			Optional:      true,
 			Computed:      true,
 			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 		},
-		"size": schema.StringAttribute{
+		"size": resourceSchema.StringAttribute{
 			Description:   "Size of the volume. It can be set to different values depending on your volume type and properties.",
 			Required:      true,
 			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 		},
-		"throughput": schema.StringAttribute{
+		"throughput": resourceSchema.StringAttribute{
 			Description:   "Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.",
 			Optional:      true,
 			Computed:      true,
 			PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 		},
-		"volume_properties": schema.StringAttribute{
+		"volume_properties": resourceSchema.StringAttribute{
 			Description: "Volume properties in accordance with the selected volume type.",
 			Required:    true,
 		},
-		"volume_type": schema.StringAttribute{
+		"volume_type": resourceSchema.StringAttribute{
 			Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
 			Required:    true,
+		},
+	},
+}
+
+var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
+	Attributes: map[string]dataSourceSchema.Attribute{
+		"tag_id": dataSourceSchema.StringAttribute{
+			Optional:           true,
+			Sensitive:          true,
+			DeprecationMessage: "This field is deprecated and will be removed in a future release.",
+		},
+		"tag_name": dataSourceSchema.StringAttribute{
+			Computed: true,
+		},
+		"color": dataSourceSchema.StringAttribute{
+			Computed: true,
+		},
+	},
+}
+
+var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
+	Attributes: map[string]resourceSchema.Attribute{
+		"tag_id": resourceSchema.StringAttribute{
+			// Optional:           true,
+			// Sensitive:          true,
+			// DeprecationMessage: "This field is deprecated and will be removed in a future release.",
+			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
+		},
+		"tag_name": resourceSchema.StringAttribute{
+			Required: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
+		},
+		"color": resourceSchema.StringAttribute{
+			Optional: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 	},
 }
