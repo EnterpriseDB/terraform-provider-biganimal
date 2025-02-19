@@ -394,32 +394,10 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"tag_name": schema.StringAttribute{
-							Required: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"color": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-					},
-				},
+				Description:  "Assign existing tags or create tags to assign to this resource",
+				Optional:     true,
+				Computed:     true,
+				NestedObject: ResourceTagNestedObject,
 				PlanModifiers: []planmodifier.Set{
 					plan_modifier.CustomAssignTags(),
 				},
