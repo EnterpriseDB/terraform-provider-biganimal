@@ -61,6 +61,8 @@ type analyticsClusterResourceModel struct {
 	Pause                      types.Bool                         `tfsdk:"pause"`
 	Tags                       []commonTerraform.Tag              `tfsdk:"tags"`
 	BackupScheduleTime         types.String                       `tfsdk:"backup_schedule_time"`
+	PrivateLinkServiceAlias    types.String                       `tfsdk:"private_link_service_alias"`
+	PrivateLinkServiceName     types.String                       `tfsdk:"private_link_service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -283,6 +285,20 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				},
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
 }
@@ -475,11 +491,6 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 		return err
 	}
 
-	connection, err := client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
-	if err != nil {
-		return err
-	}
-
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
 	tfClusterResource.ClusterId = responseCluster.ClusterId
 	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
@@ -488,7 +499,9 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 	tfClusterResource.Region = types.StringValue(responseCluster.Region.Id)
 	tfClusterResource.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
 	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	tfClusterResource.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
+	tfClusterResource.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
+	tfClusterResource.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
 	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl

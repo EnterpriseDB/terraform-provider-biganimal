@@ -45,6 +45,20 @@ var (
 	_ resource.ResourceWithImportState = &pgdResource{}
 )
 
+type PGD struct {
+	ID            *string                  `tfsdk:"id"`
+	ProjectId     string                   `tfsdk:"project_id"`
+	ClusterId     *string                  `tfsdk:"cluster_id"`
+	ClusterName   *string                  `tfsdk:"cluster_name"`
+	MostRecent    *bool                    `tfsdk:"most_recent"`
+	Password      *string                  `tfsdk:"password"`
+	Timeouts      timeouts.Value           `tfsdk:"timeouts"`
+	Pause         types.Bool               `tfsdk:"pause"`
+	Tags          []commonTerraform.Tag    `tfsdk:"tags"`
+	DataGroups    []terraform.DataGroup    `tfsdk:"data_groups"`
+	WitnessGroups []terraform.WitnessGroup `tfsdk:"witness_groups"`
+}
+
 type pgdResource struct {
 	client *api.PGDClient
 }
@@ -396,6 +410,20 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						},
 						"backup_schedule_time": ResourceBackupScheduleTime,
 						"wal_storage":          resourceWal,
+						"private_link_service_alias": schema.StringAttribute{
+							MarkdownDescription: "Private link service alias.",
+							Computed:            true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"private_link_service_name": schema.StringAttribute{
+							MarkdownDescription: "private link service name.",
+							Computed:            true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
 					},
 				},
 			},
@@ -610,20 +638,6 @@ func (p *pgdResource) Configure(_ context.Context, req resource.ConfigureRequest
 	}
 
 	p.client = req.ProviderData.(*api.API).PGDClient()
-}
-
-type PGD struct {
-	ID            *string                  `tfsdk:"id"`
-	ProjectId     string                   `tfsdk:"project_id"`
-	ClusterId     *string                  `tfsdk:"cluster_id"`
-	ClusterName   *string                  `tfsdk:"cluster_name"`
-	MostRecent    *bool                    `tfsdk:"most_recent"`
-	Password      *string                  `tfsdk:"password"`
-	Timeouts      timeouts.Value           `tfsdk:"timeouts"`
-	Pause         types.Bool               `tfsdk:"pause"`
-	Tags          []commonTerraform.Tag    `tfsdk:"tags"`
-	DataGroups    []terraform.DataGroup    `tfsdk:"data_groups"`
-	WitnessGroups []terraform.WitnessGroup `tfsdk:"witness_groups"`
 }
 
 // Create creates the resource and sets the initial Terraform state.
@@ -1425,7 +1439,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ClusterArchitecture:   clusterArch,
 					ClusterName:           types.StringPointerValue(apiRespDgModel.ClusterName),
 					ClusterType:           types.StringPointerValue(apiRespDgModel.ClusterType),
-					Connection:            types.StringPointerValue((*string)(apiRespDgModel.Connection)),
+					Connection:            types.StringPointerValue(&apiRespDgModel.Connection.PgUri),
 					CreatedAt:             types.StringPointerValue((*string)(apiRespDgModel.CreatedAt)),
 					CspAuth:               apiRespDgModel.CspAuth,
 					InstanceType:          apiRespDgModel.InstanceType,
@@ -1443,7 +1457,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					MaintenanceWindow:     apiRespDgModel.MaintenanceWindow,
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
-					RoConnectionUri:       types.StringPointerValue(apiRespDgModel.RoConnectionUri),
+					RoConnectionUri:       types.StringPointerValue(&apiRespDgModel.Connection.ReadOnlyPgUri),
 					ReadOnlyConnections:   apiRespDgModel.ReadOnlyConnections,
 					WalStorage:            walStorage,
 				}
