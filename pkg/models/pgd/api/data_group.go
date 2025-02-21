@@ -12,7 +12,7 @@ type DataGroup struct {
 	ClusterName           *string                   `json:"clusterName,omitempty"`
 	ClusterType           *string                   `json:"clusterType,omitempty"`
 	Conditions            *[]Condition              `json:"conditions,omitempty"`
-	Connection            *ClusterConnection        `json:"connection,omitempty"`
+	Connection            *models.ClusterConnection `json:"connection,omitempty"`
 	CreatedAt             *PointInTime              `json:"createdAt,omitempty"`
 	CspAuth               *bool                     `json:"cspAuth,omitempty"`
 	InstanceType          *InstanceType             `json:"instanceType,omitempty"`

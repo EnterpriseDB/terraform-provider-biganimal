@@ -475,11 +475,6 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 		return err
 	}
 
-	connection, err := client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
-	if err != nil {
-		return err
-	}
-
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
 	tfClusterResource.ClusterId = responseCluster.ClusterId
 	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
@@ -488,7 +483,7 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 	tfClusterResource.Region = types.StringValue(responseCluster.Region.Id)
 	tfClusterResource.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
 	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	tfClusterResource.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
 	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl

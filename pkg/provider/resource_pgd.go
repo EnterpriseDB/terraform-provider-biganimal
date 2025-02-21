@@ -1425,7 +1425,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ClusterArchitecture:   clusterArch,
 					ClusterName:           types.StringPointerValue(apiRespDgModel.ClusterName),
 					ClusterType:           types.StringPointerValue(apiRespDgModel.ClusterType),
-					Connection:            types.StringPointerValue((*string)(apiRespDgModel.Connection)),
+					Connection:            types.StringPointerValue(&apiRespDgModel.Connection.PgUri),
 					CreatedAt:             types.StringPointerValue((*string)(apiRespDgModel.CreatedAt)),
 					CspAuth:               apiRespDgModel.CspAuth,
 					InstanceType:          apiRespDgModel.InstanceType,
