@@ -515,9 +515,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:     true,
 				Computed:     true,
 				NestedObject: ResourceTagNestedObject,
-				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
-				},
 			},
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",

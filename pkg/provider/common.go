@@ -30,6 +30,16 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 		return
 	}
 
+	// check for tag duplicates in config
+	checkDupes := make(map[string]struct{})
+	for _, configTag := range configTags {
+		checkDupes[configTag.TagName.ValueString()] = struct{}{}
+	}
+
+	if len(checkDupes) != len(configTags) {
+		resp.Diagnostics.AddError("Duplicate tag_name not allowed", "Please remove duplicate tag_name in tags")
+	}
+
 	// Validate existing tag. Existing tag colors cannot be changed in a cluster request and must be removed.
 	// To change tag color, use tag request
 	existingTags, err := tagClient.TagClient().List(ctx)
@@ -143,13 +153,13 @@ var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
 var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 	Attributes: map[string]resourceSchema.Attribute{
 		"tag_id": resourceSchema.StringAttribute{
-			// Optional:           true,
-			// Sensitive:          true,
-			// DeprecationMessage: "This field is deprecated and will be removed in a future release.",
-			Computed: true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
+			Optional:           true,
+			Sensitive:          true,
+			DeprecationMessage: "This field is deprecated and will be removed in a future release.",
+			//Computed: true,
+			//PlanModifiers: []planmodifier.String{
+			//	stringplanmodifier.UseStateForUnknown(),
+			//},
 		},
 		"tag_name": resourceSchema.StringAttribute{
 			Required: true,
