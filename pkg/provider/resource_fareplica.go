@@ -394,32 +394,10 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"tag_name": schema.StringAttribute{
-							Required: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"color": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-					},
-				},
+				Description:  "Assign existing tags or create tags to assign to this resource",
+				Optional:     true,
+				Computed:     true,
+				NestedObject: ResourceTagNestedObject,
 				PlanModifiers: []planmodifier.Set{
 					plan_modifier.CustomAssignTags(),
 				},
@@ -428,6 +406,11 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 			"wal_storage":          resourceWal,
 		},
 	}
+}
+
+// modify plan on at runtime
+func (r *FAReplicaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
 func (r *FAReplicaResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -605,11 +588,6 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		return err
 	}
 
-	connection, err := client.ConnectionString(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
-	if err != nil {
-		return err
-	}
-
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
 	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
 	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
@@ -624,7 +602,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
 	fAReplicaResourceModel.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
 	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
 	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
