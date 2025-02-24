@@ -8,6 +8,7 @@ import (
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -55,16 +56,15 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 				existingTag.Color != nil && *existingTag.Color != configTag.Color.ValueString() {
 
 				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using cluster resources",
-					fmt.Sprintf("Please remove the color field for tag: `%v` or set it to the existing tag's color: `%v`.\nTo change an existing tag's color please use resource `biganimal_tag`",
+					fmt.Sprintf("Please remove the color field for tag: \"%v\" or set it to the existing tag's color: \"%v\".\nTo change an existing tag's color please use resource `biganimal_tag`",
 						configTag.TagName.ValueString(), *existingTag.Color))
 			}
 
-			// should never reach this as existing color should always be set even '' for no color
-			// but if existing tag color is nil, then config tag color should be removed
-			if existingTag.TagName == configTag.TagName.ValueString() && !configTag.Color.IsUnknown() &&
+			// if existing tag color is nil and config tag color is not empty or set to "" then throw a validation error
+			if existingTag.TagName == configTag.TagName.ValueString() && configTag.Color.ValueString() != "" &&
 				existingTag.Color == nil {
 				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using cluster resources",
-					fmt.Sprintf("Please remove the color field for tag: `%v` as the existing tag's color is nil.\nTo change an existing tag's color please use resource `biganimal_tag`",
+					fmt.Sprintf("Please remove the color field for tag: \"%v\" or set it to the existing tag's color: \"\".\nTo change an existing tag's color please use resource `biganimal_tag`",
 						configTag.TagName.ValueString()))
 			}
 		}
@@ -75,9 +75,14 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 func buildTfRsrcTagsAs(tfRsrcTagsOut *[]commonTerraform.Tag, apiRespTags []commonApi.Tag) {
 	*tfRsrcTagsOut = []commonTerraform.Tag{}
 	for _, v := range apiRespTags {
+		color := v.Color
+		// if color is nil, set it to empty string. This is to handle the case where color is nil in api response
+		if v.Color == nil {
+			color = utils.ToPointer("")
+		}
 		*tfRsrcTagsOut = append(*tfRsrcTagsOut, commonTerraform.Tag{
 			TagName: types.StringValue(v.TagName),
-			Color:   basetypes.NewStringPointerValue(v.Color),
+			Color:   basetypes.NewStringPointerValue(color),
 		})
 	}
 }
