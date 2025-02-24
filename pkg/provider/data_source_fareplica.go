@@ -255,21 +255,10 @@ func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest
 				Computed:            true,
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "show tags associated with this resource",
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-						},
-						"tag_name": schema.StringAttribute{
-							Required: true,
-						},
-						"color": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
+				Description:  "show tags associated with this resource",
+				Computed:     true,
+				Optional:     true,
+				NestedObject: DataSourceTagNestedObject,
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 			"wal_storage":          resourceWal,
