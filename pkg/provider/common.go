@@ -153,7 +153,7 @@ var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
 var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 	Attributes: map[string]resourceSchema.Attribute{
 		"tag_id": resourceSchema.StringAttribute{
-			Optional:           true,
+			Computed:           true,
 			Sensitive:          true,
 			DeprecationMessage: "This field is deprecated and will be removed in a future release.",
 			//Computed: true,
@@ -169,6 +169,7 @@ var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 		},
 		"color": resourceSchema.StringAttribute{
 			Optional: true,
+			Computed: true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
