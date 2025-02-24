@@ -76,7 +76,6 @@ func buildTfRsrcTagsAs(tfRsrcTagsOut *[]commonTerraform.Tag, apiRespTags []commo
 	*tfRsrcTagsOut = []commonTerraform.Tag{}
 	for _, v := range apiRespTags {
 		*tfRsrcTagsOut = append(*tfRsrcTagsOut, commonTerraform.Tag{
-			TagId:   types.StringValue(v.TagId),
 			TagName: types.StringValue(v.TagName),
 			Color:   basetypes.NewStringPointerValue(v.Color),
 		})
@@ -89,7 +88,6 @@ func buildApiReqTags(tfRsrcTags []commonTerraform.Tag) []commonApi.Tag {
 	for _, tag := range tfRsrcTags {
 		tags = append(tags, commonApi.Tag{
 			Color:   tag.Color.ValueStringPointer(),
-			TagId:   tag.TagId.ValueString(),
 			TagName: tag.TagName.ValueString(),
 		})
 	}
@@ -136,11 +134,11 @@ var resourceWal = resourceSchema.SingleNestedAttribute{
 
 var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
 	Attributes: map[string]dataSourceSchema.Attribute{
-		"tag_id": dataSourceSchema.StringAttribute{
-			Optional:           true,
-			Sensitive:          true,
-			DeprecationMessage: "This field is deprecated and will be removed in a future release.",
-		},
+		// "tag_id": dataSourceSchema.StringAttribute{
+		// 	Optional:           true,
+		// 	Sensitive:          true,
+		// 	DeprecationMessage: "This field is deprecated and will be removed in a future release.",
+		// },
 		"tag_name": dataSourceSchema.StringAttribute{
 			Computed: true,
 		},
@@ -152,15 +150,15 @@ var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
 
 var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 	Attributes: map[string]resourceSchema.Attribute{
-		"tag_id": resourceSchema.StringAttribute{
-			Computed:           true,
-			Sensitive:          true,
-			DeprecationMessage: "This field is deprecated and will be removed in a future release.",
-			//Computed: true,
-			//PlanModifiers: []planmodifier.String{
-			//	stringplanmodifier.UseStateForUnknown(),
-			//},
-		},
+		// "tag_id": resourceSchema.StringAttribute{
+		// 	Computed:           true,
+		// 	Sensitive:          true,
+		// 	DeprecationMessage: "This field is deprecated and will be removed in a future release.",
+		// 	//Computed: true,
+		// 	//PlanModifiers: []planmodifier.String{
+		// 	//	stringplanmodifier.UseStateForUnknown(),
+		// 	//},
+		// },
 		"tag_name": resourceSchema.StringAttribute{
 			Required: true,
 			PlanModifiers: []planmodifier.String{

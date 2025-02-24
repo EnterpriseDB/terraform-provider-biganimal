@@ -149,7 +149,6 @@ func (p projectsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		tags := []commonTerraform.Tag{}
 		for _, tag := range project.Tags {
 			tags = append(tags, commonTerraform.Tag{
-				TagId:   types.StringValue(tag.TagId),
 				TagName: types.StringValue(tag.TagName),
 				Color:   types.StringPointerValue(tag.Color),
 			})

@@ -696,7 +696,6 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.Tags = []commonTerraform.Tag{}
 	for _, v := range responseCluster.Tags {
 		fAReplicaResourceModel.Tags = append(fAReplicaResourceModel.Tags, commonTerraform.Tag{
-			TagId:   types.StringValue(v.TagId),
 			TagName: types.StringValue(v.TagName),
 			Color:   basetypes.NewStringPointerValue(v.Color),
 		})
@@ -818,7 +817,6 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 	for _, tag := range fAReplicaResourceModel.Tags {
 		tags = append(tags, commonApi.Tag{
 			Color:   tag.Color.ValueStringPointer(),
-			TagId:   tag.TagId.ValueString(),
 			TagName: tag.TagName.ValueString(),
 		})
 	}

@@ -1179,7 +1179,6 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 	for _, tag := range clusterResource.Tags {
 		tags = append(tags, commonApi.Tag{
 			Color:   tag.Color.ValueStringPointer(),
-			TagId:   tag.TagId.ValueString(),
 			TagName: tag.TagName.ValueString(),
 		})
 	}
