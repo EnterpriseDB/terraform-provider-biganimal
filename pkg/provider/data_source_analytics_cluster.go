@@ -200,6 +200,14 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 				NestedObject: DataSourceTagNestedObject,
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+			},
 		},
 	}
 }
