@@ -68,21 +68,9 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Computed:    true,
 						},
 						"tags": schema.SetNestedAttribute{
-							Description: "show tags associated with this resource",
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"tag_id": schema.StringAttribute{
-										Computed: true,
-									},
-									"tag_name": schema.StringAttribute{
-										Computed: true,
-									},
-									"color": schema.StringAttribute{
-										Computed: true,
-									},
-								},
-							},
+							Description:  "show tags associated with this resource",
+							Computed:     true,
+							NestedObject: DataSourceTagNestedObject,
 						},
 					},
 				},

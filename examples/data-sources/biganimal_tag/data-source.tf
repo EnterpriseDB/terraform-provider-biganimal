@@ -7,10 +7,6 @@ terraform {
   }
 }
 
-data "biganimal_tag" "this" {
-  tag_id = "tag-id"
-}
-
 output "tag_name" {
   value = data.biganimal_tag.this.tag_name
 }

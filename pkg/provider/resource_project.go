@@ -98,38 +98,21 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"tag_name": schema.StringAttribute{
-							Required: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"color": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-					},
-				},
+				Description:  "Assign existing tags or create tags to assign to this resource",
+				Optional:     true,
+				Computed:     true,
+				NestedObject: ResourceTagNestedObject,
 				PlanModifiers: []planmodifier.Set{
 					plan_modifier.CustomAssignTags(),
 				},
 			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (p *projectResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, p.client.TagClient(), req, resp)
 }
 
 // Configure adds the provider configured client to the data source.
@@ -167,7 +150,7 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	projectReqModel := models.Project{
 		ProjectName: *config.ProjectName,
-		Tags:        buildAPIReqAssignTags(config.Tags),
+		Tags:        buildApiReqTags(config.Tags),
 	}
 
 	projectId, err := p.client.Create(ctx, projectReqModel)
@@ -194,7 +177,7 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		})
 	}
 
-	buildTFRsrcAssignTagsAs(&config.Tags, project.Tags)
+	buildTfRsrcTagsAs(&config.Tags, project.Tags)
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -230,7 +213,7 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 		})
 	}
 
-	buildTFRsrcAssignTagsAs(&state.Tags, project.Tags)
+	buildTfRsrcTagsAs(&state.Tags, project.Tags)
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -250,7 +233,7 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	projectReqModel := models.Project{
 		ProjectName: *plan.ProjectName,
-		Tags:        buildAPIReqAssignTags(plan.Tags),
+		Tags:        buildApiReqTags(plan.Tags),
 	}
 
 	_, err := p.client.Update(ctx, *plan.ProjectID, projectReqModel)
@@ -259,7 +242,7 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	buildTFRsrcAssignTagsAs(&plan.Tags, projectReqModel.Tags)
+	buildTfRsrcTagsAs(&plan.Tags, projectReqModel.Tags)
 
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
