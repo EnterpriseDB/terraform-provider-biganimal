@@ -511,10 +511,11 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description:  "Assign existing tags or create tags to assign to this resource",
-				Optional:     true,
-				Computed:     true,
-				NestedObject: ResourceTagNestedObject,
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",
