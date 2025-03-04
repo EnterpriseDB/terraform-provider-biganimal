@@ -579,9 +579,9 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 }
 
 // modify plan on at runtime
-// func (c *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-// 	ValidateTags(ctx, c.client.TagClient(), req, resp)
-// }
+func (c *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, c.client.TagClient(), req, resp)
+}
 
 func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
