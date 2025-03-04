@@ -67,6 +67,8 @@ type FAReplicaResourceModel struct {
 	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
 	BackupScheduleTime              types.String                      `tfsdk:"backup_schedule_time"`
 	WalStorage                      *StorageResourceModel             `tfsdk:"wal_storage"`
+	PrivateLinkServiceAlias         types.String                      `tfsdk:"private_link_service_alias"`
+	PrivateLinkServiceName          types.String                      `tfsdk:"private_link_service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -402,6 +404,20 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 			"wal_storage":          resourceWal,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
 }
@@ -601,6 +617,8 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	}
 	fAReplicaResourceModel.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
 	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
+	fAReplicaResourceModel.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
+	fAReplicaResourceModel.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
 	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
 	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl

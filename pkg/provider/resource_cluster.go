@@ -84,6 +84,8 @@ type ClusterResourceModel struct {
 	ServiceName                     types.String                       `tfsdk:"service_name"`
 	BackupScheduleTime              types.String                       `tfsdk:"backup_schedule_time"`
 	WalStorage                      *StorageResourceModel              `tfsdk:"wal_storage"`
+	PrivateLinkServiceAlias         types.String                       `tfsdk:"private_link_service_alias"`
+	PrivateLinkServiceName          types.String                       `tfsdk:"private_link_service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -557,14 +559,28 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 			"wal_storage":          resourceWal,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
 }
 
 // modify plan on at runtime
-func (c *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	ValidateTags(ctx, c.client.TagClient(), req, resp)
-}
+// func (c *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+// 	ValidateTags(ctx, c.client.TagClient(), req, resp)
+// }
 
 func (c *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
@@ -833,6 +849,8 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
 	tfClusterResource.RoConnectionUri = types.StringPointerValue(&responseCluster.Connection.ReadOnlyPgUri)
 	tfClusterResource.ServiceName = types.StringPointerValue(&responseCluster.Connection.ServiceName)
+	tfClusterResource.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
+	tfClusterResource.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
 	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
