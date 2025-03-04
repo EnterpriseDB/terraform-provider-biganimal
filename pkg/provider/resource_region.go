@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -87,13 +87,11 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description:  "Assign existing tags or create tags to assign to this resource",
-				Optional:     true,
-				Computed:     true,
-				NestedObject: ResourceTagNestedObject,
-				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
-				},
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}

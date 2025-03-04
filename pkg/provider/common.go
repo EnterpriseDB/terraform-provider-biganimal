@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -22,7 +23,7 @@ import (
 // validate config tags. Add error if invalid
 func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	set := new(types.Set)
-	req.Plan.GetAttribute(ctx, path.Root("tags"), set)
+	req.Config.GetAttribute(ctx, path.Root("tags"), set)
 
 	configTags := []terraform.Tag{}
 	diag := set.ElementsAs(ctx, &configTags, false)
@@ -52,20 +53,11 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 			// if config tag matches existing tag, then config tags color has to match existing tag color or
 			// config tag color should be removed, otherwise throw a validation error
 			// color is a computed value so color unknown means color is removed from config
-			if existingTag.TagName == configTag.TagName.ValueString() && !configTag.Color.IsUnknown() &&
+			if existingTag.TagName == configTag.TagName.ValueString() && !configTag.Color.IsNull() &&
 				existingTag.Color != nil && *existingTag.Color != configTag.Color.ValueString() {
-
 				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using cluster resources",
 					fmt.Sprintf("Please remove the color field for tag: \"%v\" or set it to the existing tag's color: \"%v\".\nTo change an existing tag's color please use resource `biganimal_tag`",
 						configTag.TagName.ValueString(), *existingTag.Color))
-			}
-
-			// if existing tag color is nil and config tag color is not empty or set to "" then throw a validation error
-			if existingTag.TagName == configTag.TagName.ValueString() && configTag.Color.ValueString() != "" &&
-				existingTag.Color == nil {
-				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using cluster resources",
-					fmt.Sprintf("Please remove the color field for tag: \"%v\" or set it to the existing tag's color: \"\".\nTo change an existing tag's color please use resource `biganimal_tag`",
-						configTag.TagName.ValueString()))
 			}
 		}
 	}
@@ -154,6 +146,7 @@ var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
 }
 
 var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
+	PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 	Attributes: map[string]resourceSchema.Attribute{
 		// "tag_id": resourceSchema.StringAttribute{
 		// 	Computed:           true,

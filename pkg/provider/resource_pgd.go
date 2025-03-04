@@ -99,13 +99,11 @@ func PgdSchema(ctx context.Context) schema.Schema {
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description:  "Assign existing tags or create tags to assign to this resource",
-				Optional:     true,
-				Computed:     true,
-				NestedObject: ResourceTagNestedObject,
-				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
-				},
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 			"data_groups": schema.ListNestedAttribute{
 				Description: "Cluster data groups.",

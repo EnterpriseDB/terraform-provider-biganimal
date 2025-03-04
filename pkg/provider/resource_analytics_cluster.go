@@ -274,13 +274,11 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description:  "Assign existing tags or create tags to assign to this resource",
-				Optional:     true,
-				Computed:     true,
-				NestedObject: ResourceTagNestedObject,
-				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
-				},
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 		},
