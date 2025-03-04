@@ -154,6 +154,7 @@ type Cluster struct {
 	ClusterId                  *string                      `json:"clusterId,omitempty"`
 	ClusterName                *string                      `json:"clusterName,omitempty"`
 	Conditions                 []Condition                  `json:"conditions,omitempty"`
+	Connection                 *ClusterConnection           `json:"connection,omitempty"`
 	CreatedAt                  *PointInTime                 `json:"createdAt,omitempty"`
 	CSPAuth                    *bool                        `json:"cspAuth,omitempty"`
 	DeletedAt                  *PointInTime                 `json:"deletedAt,omitempty"`

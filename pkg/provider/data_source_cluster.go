@@ -338,22 +338,10 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Optional: true,
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Show existing tags associated with this resource",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-						},
-						"tag_name": schema.StringAttribute{
-							Computed: true,
-						},
-						"color": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
+				Description:  "Show existing tags associated with this resource",
+				Optional:     true,
+				Computed:     true,
+				NestedObject: DataSourceTagNestedObject,
 			},
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",
@@ -392,6 +380,14 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 			"wal_storage":          resourceWal,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+			},
 		},
 	}
 }

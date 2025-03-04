@@ -67,6 +67,8 @@ type FAReplicaResourceModel struct {
 	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
 	BackupScheduleTime              types.String                      `tfsdk:"backup_schedule_time"`
 	WalStorage                      *StorageResourceModel             `tfsdk:"wal_storage"`
+	PrivateLinkServiceAlias         types.String                      `tfsdk:"private_link_service_alias"`
+	PrivateLinkServiceName          types.String                      `tfsdk:"private_link_service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -394,40 +396,35 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"tag_name": schema.StringAttribute{
-							Required: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"color": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
-				},
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 			"wal_storage":          resourceWal,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (r *FAReplicaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
 func (r *FAReplicaResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -605,11 +602,6 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		return err
 	}
 
-	connection, err := client.ConnectionString(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
-	if err != nil {
-		return err
-	}
-
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
 	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
 	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
@@ -624,7 +616,9 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
 	fAReplicaResourceModel.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
+	fAReplicaResourceModel.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
+	fAReplicaResourceModel.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
 	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
 	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
@@ -718,7 +712,6 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.Tags = []commonTerraform.Tag{}
 	for _, v := range responseCluster.Tags {
 		fAReplicaResourceModel.Tags = append(fAReplicaResourceModel.Tags, commonTerraform.Tag{
-			TagId:   types.StringValue(v.TagId),
 			TagName: types.StringValue(v.TagName),
 			Color:   basetypes.NewStringPointerValue(v.Color),
 		})
@@ -840,7 +833,6 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 	for _, tag := range fAReplicaResourceModel.Tags {
 		tags = append(tags, commonApi.Tag{
 			Color:   tag.Color.ValueStringPointer(),
-			TagId:   tag.TagId.ValueString(),
 			TagName: tag.TagName.ValueString(),
 		})
 	}
