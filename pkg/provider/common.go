@@ -131,11 +131,6 @@ var resourceWal = resourceSchema.SingleNestedAttribute{
 
 var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
 	Attributes: map[string]dataSourceSchema.Attribute{
-		// "tag_id": dataSourceSchema.StringAttribute{
-		// 	Optional:           true,
-		// 	Sensitive:          true,
-		// 	DeprecationMessage: "This field is deprecated and will be removed in a future release.",
-		// },
 		"tag_name": dataSourceSchema.StringAttribute{
 			Computed: true,
 		},
@@ -148,15 +143,6 @@ var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
 var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 	PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 	Attributes: map[string]resourceSchema.Attribute{
-		// "tag_id": resourceSchema.StringAttribute{
-		// 	Computed:           true,
-		// 	Sensitive:          true,
-		// 	DeprecationMessage: "This field is deprecated and will be removed in a future release.",
-		// 	//Computed: true,
-		// 	//PlanModifiers: []planmodifier.String{
-		// 	//	stringplanmodifier.UseStateForUnknown(),
-		// 	//},
-		// },
 		"tag_name": resourceSchema.StringAttribute{
 			Required: true,
 			PlanModifiers: []planmodifier.String{

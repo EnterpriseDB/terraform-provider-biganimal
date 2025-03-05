@@ -62,6 +62,12 @@ func (p pgdDataSource) Schema(ctx context.Context, req datasource.SchemaRequest,
 				Description: "Show the most recent cluster when there are multiple clusters with the same name",
 				Optional:    true,
 			},
+			"tags": schema.SetNestedAttribute{
+				Description:  "show tags associated with this resource",
+				Computed:     true,
+				Optional:     true,
+				NestedObject: DataSourceTagNestedObject,
+			},
 			"data_groups": schema.SetNestedAttribute{
 				Description: "Cluster data groups.",
 				Computed:    true,
