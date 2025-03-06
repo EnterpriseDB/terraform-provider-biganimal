@@ -17,6 +17,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
+type cloudProvider struct {
+	CloudProviderId   string `tfsdk:"cloud_provider_id"`
+	CloudProviderName string `tfsdk:"cloud_provider_name"`
+}
+
+type Project struct {
+	ID             *string               `tfsdk:"id"`
+	ProjectID      *string               `tfsdk:"project_id"`
+	ProjectName    *string               `tfsdk:"project_name"`
+	UserCount      *int                  `tfsdk:"user_count"`
+	ClusterCount   *int                  `tfsdk:"cluster_count"`
+	CloudProviders []cloudProvider       `tfsdk:"cloud_providers"`
+	Tags           []commonTerraform.Tag `tfsdk:"tags"`
+}
+
 type projectResource struct {
 	client *api.ProjectClient
 }
@@ -119,21 +134,6 @@ func (p *projectResource) Configure(_ context.Context, req resource.ConfigureReq
 	}
 
 	p.client = req.ProviderData.(*api.API).ProjectClient()
-}
-
-type cloudProvider struct {
-	CloudProviderId   string `tfsdk:"cloud_provider_id"`
-	CloudProviderName string `tfsdk:"cloud_provider_name"`
-}
-
-type Project struct {
-	ID             *string               `tfsdk:"id"`
-	ProjectID      *string               `tfsdk:"project_id"`
-	ProjectName    *string               `tfsdk:"project_name"`
-	UserCount      *int                  `tfsdk:"user_count"`
-	ClusterCount   *int                  `tfsdk:"cluster_count"`
-	CloudProviders []cloudProvider       `tfsdk:"cloud_providers"`
-	Tags           []commonTerraform.Tag `tfsdk:"tags"`
 }
 
 // Create creates the resource and sets the initial Terraform state.
