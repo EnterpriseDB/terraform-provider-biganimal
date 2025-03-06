@@ -137,14 +137,7 @@ func (p projectsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			ClusterCount: &project.ClusterCount,
 		}
 
-		cloudProviders := []cloudProvider{}
-		for _, cp := range project.CloudProviders {
-			cloudProviders = append(cloudProviders, cloudProvider{
-				CloudProviderId:   cp.CloudProviderId,
-				CloudProviderName: cp.CloudProviderName,
-			})
-		}
-		appendProj.CloudProviders = cloudProviders
+		appendProj.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
 
 		tags := []commonTerraform.Tag{}
 		for _, tag := range project.Tags {

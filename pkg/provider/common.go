@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -163,4 +165,18 @@ var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 			},
 		},
 	},
+}
+
+func BuildTfRsrcCloudProviders(CloudProviders []models.CloudProvider) types.Set {
+	cloudProviderAttrType := map[string]attr.Type{"cloud_provider_id": types.StringType, "cloud_provider_name": types.StringType}
+	cloudProvidersValue := []attr.Value{}
+	for _, provider := range CloudProviders {
+		cloudProviderElem := basetypes.NewObjectValueMust(cloudProviderAttrType, map[string]attr.Value{
+			"cloud_provider_id":   basetypes.NewStringValue(provider.CloudProviderId),
+			"cloud_provider_name": basetypes.NewStringValue(provider.CloudProviderName),
+		})
+		cloudProvidersValue = append(cloudProvidersValue, cloudProviderElem)
+	}
+
+	return basetypes.NewSetValueMust(basetypes.ObjectType{AttrTypes: cloudProviderAttrType}, cloudProvidersValue)
 }

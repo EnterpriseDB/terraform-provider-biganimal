@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -17,18 +18,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
-type cloudProvider struct {
-	CloudProviderId   string `tfsdk:"cloud_provider_id"`
-	CloudProviderName string `tfsdk:"cloud_provider_name"`
-}
-
 type Project struct {
 	ID             *string               `tfsdk:"id"`
 	ProjectID      *string               `tfsdk:"project_id"`
 	ProjectName    *string               `tfsdk:"project_name"`
 	UserCount      *int                  `tfsdk:"user_count"`
 	ClusterCount   *int                  `tfsdk:"cluster_count"`
-	CloudProviders []cloudProvider       `tfsdk:"cloud_providers"`
+	CloudProviders types.Set             `tfsdk:"cloud_providers"`
 	Tags           []commonTerraform.Tag `tfsdk:"tags"`
 }
 
@@ -167,12 +163,7 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 	config.ProjectName = &project.ProjectName
 	config.UserCount = &project.UserCount
 	config.ClusterCount = &project.ClusterCount
-	for _, provider := range project.CloudProviders {
-		config.CloudProviders = append(config.CloudProviders, cloudProvider{
-			CloudProviderId:   provider.CloudProviderId,
-			CloudProviderName: provider.CloudProviderName,
-		})
-	}
+	config.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
 
 	buildTfRsrcTagsAs(&config.Tags, project.Tags)
 
@@ -202,13 +193,7 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.ProjectName = &project.ProjectName
 	state.UserCount = &project.UserCount
 	state.ClusterCount = &project.ClusterCount
-	state.CloudProviders = nil
-	for _, provider := range project.CloudProviders {
-		state.CloudProviders = append(state.CloudProviders, cloudProvider{
-			CloudProviderId:   provider.CloudProviderId,
-			CloudProviderName: provider.CloudProviderName,
-		})
-	}
+	state.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
 
 	buildTfRsrcTagsAs(&state.Tags, project.Tags)
 
