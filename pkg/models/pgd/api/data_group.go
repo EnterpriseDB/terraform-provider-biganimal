@@ -12,7 +12,7 @@ type DataGroup struct {
 	ClusterName           *string                   `json:"clusterName,omitempty"`
 	ClusterType           *string                   `json:"clusterType,omitempty"`
 	Conditions            *[]Condition              `json:"conditions,omitempty"`
-	Connection            *ClusterConnection        `json:"connection,omitempty"`
+	Connection            *models.ClusterConnection `json:"connection,omitempty"`
 	CreatedAt             *PointInTime              `json:"createdAt,omitempty"`
 	CspAuth               *bool                     `json:"cspAuth,omitempty"`
 	InstanceType          *InstanceType             `json:"instanceType,omitempty"`
@@ -30,7 +30,6 @@ type DataGroup struct {
 	MaintenanceWindow     *models.MaintenanceWindow `json:"maintenanceWindow,omitempty"`
 	ServiceAccountIds     *[]string                 `json:"serviceAccountIds,omitempty"`
 	PeAllowedPrincipalIds *[]string                 `json:"peAllowedPrincipalIds,omitempty"`
-	RoConnectionUri       *string                   `json:"roConnectionUri,omitempty"`
 	ReadOnlyConnections   *bool                     `json:"readOnlyConnections,omitempty"`
 	BackupScheduleTime    *string                   `json:"scheduleBackup,omitempty"`
 	WalStorage            *models.Storage           `json:"walStorage,omitempty"`

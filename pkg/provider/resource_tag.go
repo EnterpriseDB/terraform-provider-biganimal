@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
@@ -21,7 +22,6 @@ var (
 
 type TagResourceModel struct {
 	ID      types.String `tfsdk:"id"`
-	TagId   types.String `tfsdk:"tag_id"`
 	TagName types.String `tfsdk:"tag_name"`
 	Color   types.String `tfsdk:"color"`
 
@@ -53,12 +53,6 @@ func (tf *tagResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"tag_id": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -101,7 +95,6 @@ func (tr *tagResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	config.ID = types.StringPointerValue(tagId)
-	config.TagId = types.StringPointerValue(tagId)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
@@ -126,13 +119,12 @@ func (tr *tagResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func readTag(ctx context.Context, client *api.TagClient, resource *TagResourceModel) error {
-	tagResp, err := client.Get(ctx, resource.TagId.ValueString())
+	tagResp, err := client.Get(ctx, resource.TagName.ValueString())
 	if err != nil {
 		return err
 	}
 
-	resource.ID = types.StringValue(tagResp.TagId)
-	resource.TagId = types.StringValue(tagResp.TagId)
+	resource.ID = types.StringValue(tagResp.TagName)
 	resource.TagName = types.StringValue(tagResp.TagName)
 	resource.Color = types.StringPointerValue(tagResp.Color)
 	return nil
@@ -146,7 +138,7 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err := tr.client.Update(ctx, plan.TagId.ValueString(), commonApi.TagRequest{
+	_, err := tr.client.Update(ctx, plan.TagName.ValueString(), commonApi.TagRequest{
 		Color:   plan.Color.ValueStringPointer(),
 		TagName: plan.TagName.ValueString(),
 	})
@@ -156,6 +148,9 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		}
 		return
 	}
+
+	// wait to be safe so that the changes reflect as there is no phase to check the state
+	time.Sleep(5 * time.Second)
 
 	err = readTag(ctx, tr.client, &plan)
 	if err != nil {
@@ -176,7 +171,7 @@ func (tr *tagResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	err := tr.client.Delete(ctx, state.TagId.ValueString())
+	err := tr.client.Delete(ctx, state.TagName.ValueString())
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error deleting tag", err.Error())
@@ -186,7 +181,7 @@ func (tr *tagResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 }
 
 func (tr *tagResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tag_id"), req.ID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tag_name"), req.ID)...)
 }
 
 func NewTagResource() resource.Resource {

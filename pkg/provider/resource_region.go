@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -87,38 +87,19 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"tag_name": schema.StringAttribute{
-							Required: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"color": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
-				},
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (r *regionResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
 func (r *regionResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
@@ -204,7 +185,7 @@ func (r *regionResource) ensureStatueUpdated(ctx context.Context, region Region)
 	}
 
 	diags := frameworkdiag.Diagnostics{}
-	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID, buildAPIReqAssignTags(region.Tags)); err != nil {
+	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID, buildApiReqTags(region.Tags)); err != nil {
 		if appendDiagFromBAErr(err, &diags) {
 			return diags
 		}
@@ -246,7 +227,7 @@ func (r *regionResource) writeState(ctx context.Context, region Region, state *t
 	region.Status = &read.Status
 	region.Continent = &read.Continent
 
-	buildTFRsrcAssignTagsAs(&region.Tags, read.Tags)
+	buildTfRsrcTagsAs(&region.Tags, read.Tags)
 
 	return state.Set(ctx, &region)
 }
