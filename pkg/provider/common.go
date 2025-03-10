@@ -42,6 +42,7 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 
 	if len(checkDupes) != len(configTags) {
 		resp.Diagnostics.AddError("Duplicate tag_name not allowed", "Please remove duplicate tag_name in tags")
+		return
 	}
 
 	// Validate existing tag. Existing tag colors cannot be changed in a cluster request and must be removed.
@@ -49,6 +50,7 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 	existingTags, err := tagClient.TagClient().List(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("Error fetching existing tags", err.Error())
+		return
 	}
 	for _, configTag := range configTags {
 		for _, existingTag := range existingTags {
@@ -66,6 +68,7 @@ func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.Mo
 				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using this resource.",
 					fmt.Sprintf("Please remove the color field for tag: \"%v\" or set it to the existing tag's color: \"%v\".\nTo change an existing tag's color please use resource `biganimal_tag`.",
 						configTag.TagName.ValueString(), *existingTag.Color))
+				return
 			}
 		}
 	}
