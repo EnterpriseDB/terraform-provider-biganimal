@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
@@ -147,6 +148,9 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		}
 		return
 	}
+
+	// wait to be safe so that the changes reflect as there is no phase to check the state
+	time.Sleep(5 * time.Second)
 
 	err = readTag(ctx, tr.client, &plan)
 	if err != nil {

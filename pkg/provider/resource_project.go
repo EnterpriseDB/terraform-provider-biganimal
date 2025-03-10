@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -146,32 +147,44 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		Tags:        buildApiReqTags(config.Tags),
 	}
 
-	projectId, err := p.client.Create(ctx, projectReqModel)
+	_, err := p.client.Create(ctx, projectReqModel)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating project", "Could not create project, unexpected error: "+err.Error())
 		return
 	}
 
-	project, err := p.client.Read(ctx, projectId)
+	// it should create project straight away but wait to be safe
+	time.Sleep(5 * time.Second)
+
+	err = readProjectAs(ctx, p.client, &config)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
 	}
-
-	config.ID = &project.ProjectId
-	config.ProjectID = &project.ProjectId
-	config.ProjectName = &project.ProjectName
-	config.UserCount = &project.UserCount
-	config.ClusterCount = &project.ClusterCount
-	config.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
-
-	buildTfRsrcTagsAs(&config.Tags, project.Tags)
 
 	diags = resp.State.Set(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func readProjectAs(ctx context.Context, client *api.ProjectClient, projectOut *Project) error {
+	project, err := client.Read(ctx, *projectOut.ID)
+	if err != nil {
+		return err
+	}
+
+	projectOut.ID = &project.ProjectId
+	projectOut.ProjectID = &project.ProjectId
+	projectOut.ProjectName = &project.ProjectName
+	projectOut.UserCount = &project.UserCount
+	projectOut.ClusterCount = &project.ClusterCount
+	projectOut.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
+
+	buildTfRsrcTagsAs(&projectOut.Tags, project.Tags)
+
+	return nil
 }
 
 // Read refreshes the Terraform state with the latest data.
@@ -183,19 +196,11 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	project, err := p.client.Read(ctx, *state.ID)
+	err := readProjectAs(ctx, p.client, &state)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
 	}
-
-	state.ProjectID = &project.ProjectId
-	state.ProjectName = &project.ProjectName
-	state.UserCount = &project.UserCount
-	state.ClusterCount = &project.ClusterCount
-	state.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
-
-	buildTfRsrcTagsAs(&state.Tags, project.Tags)
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -224,7 +229,14 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	buildTfRsrcTagsAs(&plan.Tags, projectReqModel.Tags)
+	// wait to be safe so that the changes reflect as there is no phase to check the state
+	time.Sleep(5 * time.Second)
+
+	err = readProjectAs(ctx, p.client, &plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
+		return
+	}
 
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
