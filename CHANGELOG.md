@@ -1,3 +1,13 @@
+## v2.0.0 (March 18. 2025)
+Features:
+* Azure Private Link Service Alias and Azure Private Link Service Name field is now supported in `biganimal_cluster`, `biganimal_analytics` and `biganimal_fareaway` resources and data sources.
+
+Enhancements:
+* Deprecated field cluster_architecture.name for `biganimal_cluster` resource and data source is now removed.
+
+Bug Fixes:
+* Tags color validation and assigning tags bug fixes for `biganimal_cluster`, `biganimal_analytics`, `biganimal_fareaway`, `biganimal_pgd`, `biganimal_project`, `biganimal_region`, `biganimal_tag` resources and data sources. tag_id field is now removed.
+
 ## v1.2.1 (January 06. 2025)
 Bug Fixes:
 * Fixed cluster_architecture.name field for `biganimal_cluster` resource and Data Source. It is now a deprecated and hidden field

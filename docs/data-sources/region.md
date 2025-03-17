@@ -70,5 +70,4 @@ Read-Only:
 Read-Only:
 
 - `color` (String)
-- `tag_id` (String)
 - `tag_name` (String)

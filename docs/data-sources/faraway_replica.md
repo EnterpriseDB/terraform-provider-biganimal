@@ -135,6 +135,7 @@ output "volume_snapshot_backup" {
 - `private_networking` (Boolean) Is private networking enabled.
 - `project_id` (String) BigAnimal Project ID.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
 - `wal_storage` (Attributes) Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads) (see [below for nested schema](#nestedatt--wal_storage))
@@ -155,11 +156,12 @@ output "volume_snapshot_backup" {
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `source_cluster_id` (String) Source cluster ID.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--storage))
-- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 - `transparent_data_encryption_action` (String) Transparent data encryption action.
 - `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
 
@@ -179,6 +181,15 @@ Required:
 
 - `name` (String) GUC name.
 - `value` (String) GUC value.
+
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Read-Only:
+
+- `color` (String)
+- `tag_name` (String)
 
 
 <a id="nestedblock--timeouts"></a>
@@ -242,16 +253,3 @@ Optional:
 - `iops` (String) IOPS for the selected volume.
 - `size` (String) Size of the volume.
 - `throughput` (String) Throughput.
-
-
-<a id="nestedatt--tags"></a>
-### Nested Schema for `tags`
-
-Required:
-
-- `tag_name` (String)
-
-Read-Only:
-
-- `color` (String)
-- `tag_id` (String)

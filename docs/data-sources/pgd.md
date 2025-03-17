@@ -74,7 +74,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
   }
 }
@@ -91,6 +91,7 @@ terraform {
 ### Optional
 
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
+- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 
 ### Read-Only
 
@@ -98,6 +99,15 @@ terraform {
 - `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `id` (String) The ID of this resource.
 - `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Read-Only:
+
+- `color` (String)
+- `tag_name` (String)
+
 
 <a id="nestedatt--data_groups"></a>
 ### Nested Schema for `data_groups`
@@ -128,6 +138,8 @@ Read-Only:
 - `pg_type` (Attributes) Postgres type. (see [below for nested schema](#nestedatt--data_groups--pg_type))
 - `pg_version` (Attributes) Postgres version. (see [below for nested schema](#nestedatt--data_groups--pg_version))
 - `phase` (String) Current phase of the cluster group.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `private_networking` (Boolean) Is private networking enabled.
 - `read_only_connections` (Boolean) Is read-only connections enabled.
 - `region` (Attributes) Region. (see [below for nested schema](#nestedatt--data_groups--region))

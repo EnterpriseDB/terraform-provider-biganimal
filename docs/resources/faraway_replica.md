@@ -14,7 +14,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -188,6 +188,8 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `transparent_data_encryption_action` (String) Transparent data encryption action.
 
@@ -234,10 +236,6 @@ Required:
 Optional:
 
 - `color` (String)
-
-Read-Only:
-
-- `tag_id` (String)
 
 
 <a id="nestedblock--timeouts"></a>

@@ -20,7 +20,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -88,10 +88,6 @@ Required:
 Optional:
 
 - `color` (String)
-
-Read-Only:
-
-- `tag_id` (String)
 
 
 <a id="nestedatt--cloud_providers"></a>

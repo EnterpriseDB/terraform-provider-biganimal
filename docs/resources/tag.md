@@ -17,7 +17,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -50,7 +50,6 @@ resource "biganimal_tag" "tag" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `tag_id` (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -66,6 +65,6 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
-# terraform import biganimal_tag.<resource_name> <tag_id>
-terraform import biganimal_tag.tag abcdefgh-abcd-abcd-abcd-abcdefghijkl
+# terraform import biganimal_tag.<resource_name> <tag_name>
+terraform import biganimal_tag.tag test-tag-name
 ```
