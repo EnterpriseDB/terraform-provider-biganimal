@@ -163,9 +163,13 @@ var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 		"color": resourceSchema.StringAttribute{
 			Optional: true,
 			Computed: true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
+			// on update for sets and lists elements with a computed and optional true attribute in general, do no use UseStateForUnknown planmodifier.
+			// do no use UseStateForUnknown for color.
+			// on update and in the config, if you delete an element from a set and then add an existing element without it's color(unknown),
+			// it will use the color of the corresponding element id color from the state to populate the unknown which would then be incorrect.
+			// on update, a color not set should always be unknown and not be set using the corresponding element id color from the state
+			// e.g. state element colors are red, green. If i delete element red and add an existing element without it's color(it will be unknown, but it's real existing color is purple) to the end,
+			// UseStateForUnknown will populate it's color to green
 		},
 	},
 }
