@@ -93,22 +93,10 @@ func (p projectsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							},
 						},
 						"tags": schema.SetNestedAttribute{
-							Description: "Show existing tags associated with this resource",
-							Optional:    true,
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"tag_id": schema.StringAttribute{
-										Computed: true,
-									},
-									"tag_name": schema.StringAttribute{
-										Computed: true,
-									},
-									"color": schema.StringAttribute{
-										Computed: true,
-									},
-								},
-							},
+							Description:  "Show existing tags associated with this resource",
+							Optional:     true,
+							Computed:     true,
+							NestedObject: DataSourceTagNestedObject,
 						},
 					},
 				},
@@ -149,19 +137,11 @@ func (p projectsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			ClusterCount: &project.ClusterCount,
 		}
 
-		cloudProviders := []cloudProvider{}
-		for _, cp := range project.CloudProviders {
-			cloudProviders = append(cloudProviders, cloudProvider{
-				CloudProviderId:   cp.CloudProviderId,
-				CloudProviderName: cp.CloudProviderName,
-			})
-		}
-		appendProj.CloudProviders = cloudProviders
+		appendProj.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
 
 		tags := []commonTerraform.Tag{}
 		for _, tag := range project.Tags {
 			tags = append(tags, commonTerraform.Tag{
-				TagId:   types.StringValue(tag.TagId),
 				TagName: types.StringValue(tag.TagName),
 				Color:   types.StringPointerValue(tag.Color),
 			})

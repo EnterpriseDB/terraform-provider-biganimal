@@ -61,6 +61,8 @@ type analyticsClusterResourceModel struct {
 	Pause                      types.Bool                         `tfsdk:"pause"`
 	Tags                       []commonTerraform.Tag              `tfsdk:"tags"`
 	BackupScheduleTime         types.String                       `tfsdk:"backup_schedule_time"`
+	PrivateLinkServiceAlias    types.String                       `tfsdk:"private_link_service_alias"`
+	PrivateLinkServiceName     types.String                       `tfsdk:"private_link_service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -274,38 +276,34 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"tags": schema.SetNestedAttribute{
-				Description: "Assign existing tags or create tags to assign to this resource",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"tag_id": schema.StringAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"tag_name": schema.StringAttribute{
-							Required: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"color": schema.StringAttribute{
-							Optional: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Set{
-					plan_modifier.CustomAssignTags(),
-				},
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (r *analyticsClusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
 func (r *analyticsClusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -480,18 +478,13 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 		}
 	}
 
-	cluster.Tags = buildAPIReqAssignTags(clusterResource.Tags)
+	cluster.Tags = buildApiReqTags(clusterResource.Tags)
 
 	return cluster, nil
 }
 
 func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClusterResource *analyticsClusterResourceModel) error {
 	responseCluster, err := client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
-	if err != nil {
-		return err
-	}
-
-	connection, err := client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
@@ -504,7 +497,9 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 	tfClusterResource.Region = types.StringValue(responseCluster.Region.Id)
 	tfClusterResource.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
 	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	tfClusterResource.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
+	tfClusterResource.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
+	tfClusterResource.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
 	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
@@ -558,7 +553,7 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
 	}
 
-	buildTFRsrcAssignTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
+	buildTfRsrcTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
 
 	return nil
 }
