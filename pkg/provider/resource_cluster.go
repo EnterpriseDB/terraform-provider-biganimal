@@ -556,16 +556,12 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"private_link_service_alias": schema.StringAttribute{
 				MarkdownDescription: "Private link service alias.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
 			},
 			"private_link_service_name": schema.StringAttribute{
 				MarkdownDescription: "private link service name.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
 			},
 		},
 	}

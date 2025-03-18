@@ -234,9 +234,8 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 			"private_networking": schema.BoolAttribute{
 				Description: "Is private networking enabled.",
 				Optional:    true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
+
 			},
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
@@ -244,9 +243,8 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Validators: []validator.String{
 					ProjectIdValidator(),
 				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
+
 			},
 			"region": schema.StringAttribute{
 				Description: "Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.",
