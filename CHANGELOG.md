@@ -1,6 +1,6 @@
 ## v2.0.0 (March 18. 2025)
 Features:
-* Azure Private Link Service Alias and Azure Private Link Service Name field is now supported in `biganimal_cluster`, `biganimal_analytics` and `biganimal_fareaway` resources and data sources.
+* private_link_service_alias and private_link_service_name field is now supported and displayed in `biganimal_cluster`, `biganimal_analytics` and `biganimal_fareaway` resources and data sources.
 
 Enhancements:
 * Deprecated field cluster_architecture.name for `biganimal_cluster` resource and data source is now removed.
