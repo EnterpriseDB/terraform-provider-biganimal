@@ -117,13 +117,15 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   private_networking = false
   region             = "centralindia"
 
-  #tags {
-  #  tag_name  = "<ex_tag_name_1>"
-  #  color = "blue"
-  #}
-  #tags {
-  #  tag_name  = "<ex_tag_name_2>"
-  #}
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 
   # transparent_data_encryption = {
   #   key_id = <example_value>

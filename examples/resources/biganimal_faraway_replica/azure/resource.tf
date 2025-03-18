@@ -75,13 +75,15 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   private_networking = false
   region             = "australiaeast"
 
-  #tags {
-  #  tag_name  = "<ex_tag_name_1>"
-  #  color = "blue"
-  #}
-  #tags {
-  #  tag_name  = "<ex_tag_name_2>"
-  #}
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
