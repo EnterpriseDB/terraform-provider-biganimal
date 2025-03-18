@@ -287,13 +287,11 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				MarkdownDescription: "Private link service alias.",
 				Computed:            true,
 				// don't use state for unknown as this field is eventually consistent
-
 			},
 			"private_link_service_name": schema.StringAttribute{
 				MarkdownDescription: "private link service name.",
 				Computed:            true,
 				// don't use state for unknown as this field is eventually consistent
-
 			},
 		},
 	}
