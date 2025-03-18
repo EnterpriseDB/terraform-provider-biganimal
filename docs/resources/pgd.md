@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -135,7 +135,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -331,7 +331,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -451,7 +451,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -647,7 +647,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -771,7 +771,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -1029,6 +1029,8 @@ Read-Only:
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the data group.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `resizing_pvc` (Set of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI.
 
@@ -1155,10 +1157,6 @@ Required:
 Optional:
 
 - `color` (String)
-
-Read-Only:
-
-- `tag_id` (String)
 
 
 <a id="nestedblock--timeouts"></a>

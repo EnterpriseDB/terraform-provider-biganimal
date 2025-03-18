@@ -115,6 +115,7 @@ output "service_account_ids" {
 - `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. Pausing a high availability cluster shuts down all cluster nodes
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
@@ -132,10 +133,11 @@ output "service_account_ids" {
 - `pg_type` (String) Postgres type. For example, "epas" or "pgextended".
 - `pg_version` (String) Postgres version. For example 16
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `private_networking` (Boolean) Is private networking enabled.
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `resizing_pvc` (List of String) Resizing PVC.
-- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 
 <a id="nestedatt--allowed_ip_ranges"></a>
 ### Nested Schema for `allowed_ip_ranges`
@@ -162,6 +164,15 @@ Optional:
 - `start_time` (String) Start time. "hh:mm", for example: "23:59".
 
 
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Read-Only:
+
+- `color` (String)
+- `tag_name` (String)
+
+
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
@@ -170,13 +181,3 @@ Optional:
 - `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
-
-
-<a id="nestedatt--tags"></a>
-### Nested Schema for `tags`
-
-Read-Only:
-
-- `color` (String)
-- `tag_id` (String)
-- `tag_name` (String)

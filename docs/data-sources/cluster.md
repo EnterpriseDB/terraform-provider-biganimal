@@ -189,6 +189,8 @@ output "tags" {
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
@@ -258,7 +260,6 @@ Required:
 Read-Only:
 
 - `color` (String)
-- `tag_id` (String)
 - `tag_name` (String)
 
 
@@ -304,10 +305,6 @@ Required:
 
 - `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
-
-Optional:
-
-- `name` (String, Sensitive, Deprecated) Name.
 
 
 <a id="nestedatt--storage"></a>

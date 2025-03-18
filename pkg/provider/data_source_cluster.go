@@ -65,12 +65,6 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Description: "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 						Required:    true,
 					},
-					"name": schema.StringAttribute{
-						Description:        "Name.",
-						Optional:           true,
-						Sensitive:          true,
-						DeprecationMessage: "This field is deprecated and will be removed in a future release.",
-					},
 					"nodes": schema.Float64Attribute{
 						Description: "Node count.",
 						Required:    true,

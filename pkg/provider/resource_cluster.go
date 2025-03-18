@@ -91,9 +91,8 @@ type ClusterResourceModel struct {
 }
 
 type ClusterArchitectureResourceModel struct {
-	Id    string       `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Nodes int          `tfsdk:"nodes"`
+	Id    string `tfsdk:"id"`
+	Nodes int    `tfsdk:"nodes"`
 }
 
 type StorageResourceModel struct {
@@ -203,12 +202,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Description:   "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 						Required:      true,
 						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-					},
-					"name": schema.StringAttribute{
-						Description:        "Name.",
-						Optional:           true,
-						Sensitive:          true,
-						DeprecationMessage: "This field is deprecated and will be removed in a future release.",
 					},
 					"nodes": schema.Float64Attribute{
 						Description:   "Node count.",
@@ -563,16 +556,12 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"private_link_service_alias": schema.StringAttribute{
 				MarkdownDescription: "Private link service alias.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
 			},
 			"private_link_service_name": schema.StringAttribute{
 				MarkdownDescription: "private link service name.",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
 			},
 		},
 	}

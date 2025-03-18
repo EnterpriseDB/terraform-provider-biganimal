@@ -50,6 +50,8 @@ The analytics cluster resource is used to manage BigAnimal analytics clusters.
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `resizing_pvc` (List of String) Resizing PVC.
 
 <a id="nestedatt--allowed_ip_ranges"></a>
@@ -87,10 +89,6 @@ Required:
 Optional:
 
 - `color` (String)
-
-Read-Only:
-
-- `tag_id` (String)
 
 
 <a id="nestedblock--timeouts"></a>

@@ -13,7 +13,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -155,7 +155,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.2.1"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -346,6 +346,8 @@ output "faraway_replica_ids" {
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `pg_identity` (String) PG Identity required to grant key permissions to activate the cluster.
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
 - `service_name` (String) Cluster connection service name.
@@ -358,10 +360,6 @@ Required:
 
 - `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
-
-Optional:
-
-- `name` (String, Sensitive, Deprecated) Name.
 
 
 <a id="nestedatt--storage"></a>
@@ -445,10 +443,6 @@ Required:
 Optional:
 
 - `color` (String)
-
-Read-Only:
-
-- `tag_id` (String)
 
 
 <a id="nestedblock--timeouts"></a>
