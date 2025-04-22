@@ -11,7 +11,7 @@ jobs:
   # Check code for non-inclusive language
   woke:
     name: Run woke
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4.0.0
@@ -28,7 +28,7 @@ jobs:
   # Enforce en-us spell check
   spellcheck:
     name: Run spellcheck
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4.0.0
