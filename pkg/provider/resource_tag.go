@@ -124,7 +124,7 @@ func readTag(ctx context.Context, client *api.TagClient, resource *TagResourceMo
 		return err
 	}
 
-	resource.ID = types.StringValue(tagResp.TagName)
+	resource.ID = types.StringValue(tagResp.TagId)
 	resource.TagName = types.StringValue(tagResp.TagName)
 	resource.Color = types.StringPointerValue(tagResp.Color)
 	return nil
@@ -138,7 +138,7 @@ func (tr *tagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err := tr.client.Update(ctx, plan.TagName.ValueString(), commonApi.TagRequest{
+	_, err := tr.client.Update(ctx, plan.ID.ValueString(), commonApi.TagRequest{
 		Color:   plan.Color.ValueStringPointer(),
 		TagName: plan.TagName.ValueString(),
 	})

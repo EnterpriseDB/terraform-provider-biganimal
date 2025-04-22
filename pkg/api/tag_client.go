@@ -61,30 +61,14 @@ func (tc TagClient) Get(ctx context.Context, tagName string) (api.TagResponse, e
 	return api.TagResponse{}, fmt.Errorf("tag not found")
 }
 
-func (tc TagClient) Update(ctx context.Context, tagName string, tagReq api.TagRequest) (*string, error) {
-	list, err := tc.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var foundTagId string
-	for _, tag := range list {
-		if tag.TagName == tagName {
-			foundTagId = tag.TagId
-		}
-	}
-
-	if foundTagId == "" {
-		return nil, fmt.Errorf("tag not found")
-	}
-
+func (tc TagClient) Update(ctx context.Context, tagId string, tagReq api.TagRequest) (*string, error) {
 	response := struct {
 		Data struct {
 			TagId string `json:"tagId"`
 		} `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("tags/%s", foundTagId)
+	url := fmt.Sprintf("tags/%s", tagId)
 
 	b, err := json.Marshal(tagReq)
 	if err != nil {
