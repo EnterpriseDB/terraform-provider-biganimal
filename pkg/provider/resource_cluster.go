@@ -549,7 +549,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"service_name": schema.StringAttribute{
 				MarkdownDescription: "Cluster connection service name.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 			"wal_storage":          resourceWal,

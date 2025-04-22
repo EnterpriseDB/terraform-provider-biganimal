@@ -2,17 +2,14 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
@@ -22,56 +19,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-// validate config tags. Add error if invalid
+// custom tag validaiton here
 func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	set := new(types.Set)
-	req.Config.GetAttribute(ctx, path.Root("tags"), set)
-
-	configTags := []terraform.Tag{}
-	diag := set.ElementsAs(ctx, &configTags, false)
-	if diag.ErrorsCount() > 0 {
-		resp.Diagnostics.Append(diag...)
-		return
-	}
-
-	// check for tag duplicates in config
-	checkDupes := make(map[string]struct{})
-	for _, configTag := range configTags {
-		checkDupes[configTag.TagName.ValueString()] = struct{}{}
-	}
-
-	if len(checkDupes) != len(configTags) {
-		resp.Diagnostics.AddError("Duplicate tag_name not allowed", "Please remove duplicate tag_name in tags")
-		return
-	}
-
-	// Validate existing tag. Existing tag colors cannot be changed in a cluster request and must be removed.
-	// To change tag color, use tag request
-	existingTags, err := tagClient.TagClient().List(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError("Error fetching existing tags", err.Error())
-		return
-	}
-	for _, configTag := range configTags {
-		for _, existingTag := range existingTags {
-			// this sets color to empty string if color is nil so we don't need to handle nil case separately
-			if existingTag.Color == nil {
-				existingTag.Color = utils.ToPointer("")
-			}
-
-			// if config tag matches existing tag, then config tags color has to match existing tag color or
-			// config tag color should be removed, otherwise throw a validation error
-			// color is a computed value so color unknown means color is removed from config
-			if existingTag.TagName == configTag.TagName.ValueString() && !configTag.Color.IsNull() &&
-				existingTag.Color != nil && *existingTag.Color != configTag.Color.ValueString() {
-
-				resp.Diagnostics.AddError("An existing tag's color cannot be changed to another color when using this resource.",
-					fmt.Sprintf("Please remove the color field for tag: \"%v\" or set it to the existing tag's color: \"%v\".\nTo change an existing tag's color please use resource `biganimal_tag`.",
-						configTag.TagName.ValueString(), *existingTag.Color))
-				return
-			}
-		}
-	}
 }
 
 // build tag assign terraform resource as, using api response as input
@@ -161,15 +110,10 @@ var ResourceTagNestedObject = resourceSchema.NestedAttributeObject{
 			},
 		},
 		"color": resourceSchema.StringAttribute{
-			Optional: true,
 			Computed: true,
-			// on update for sets and lists elements with a computed and optional true attribute in general, do no use UseStateForUnknown planmodifier.
-			// do no use UseStateForUnknown for color.
-			// on update and in the config, if you delete an element from a set and then add an existing element without it's color(unknown),
-			// it will use the color of the corresponding element id color from the state to populate the unknown which would then be incorrect.
-			// on update, a color not set should always be unknown and not be set using the corresponding element id color from the state
-			// e.g. state element colors are red, green. If i delete element red and add an existing element without it's color(it will be unknown, but it's real existing color is purple) to the end,
-			// UseStateForUnknown will populate it's color to green
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 	},
 }
