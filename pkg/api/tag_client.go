@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
@@ -59,6 +60,23 @@ func (tc TagClient) Get(ctx context.Context, tagName string) (api.TagResponse, e
 	}
 
 	return api.TagResponse{}, fmt.Errorf("tag not found")
+}
+
+func (tc TagClient) GetResources(ctx context.Context, tagName string) ([]api.TagResource, error) {
+	response := struct {
+		Data []api.TagResource `json:"data"`
+	}{}
+
+	endpointUrl := fmt.Sprintf("resources/?tagNames=%s", url.QueryEscape(tagName))
+
+	body, err := tc.doRequest(ctx, http.MethodGet, endpointUrl, nil)
+	if err != nil {
+		return response.Data, err
+	}
+
+	err = json.Unmarshal(body, &response)
+
+	return response.Data, err
 }
 
 func (tc TagClient) Update(ctx context.Context, tagId string, tagReq api.TagRequest) (*string, error) {
