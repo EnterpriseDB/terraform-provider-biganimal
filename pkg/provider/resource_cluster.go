@@ -279,7 +279,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster connection URI.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"cluster_name": schema.StringAttribute{
 				MarkdownDescription: "Name of the cluster.",
@@ -295,7 +295,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"ro_connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
@@ -549,7 +549,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"service_name": schema.StringAttribute{
 				MarkdownDescription: "Cluster connection service name.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"backup_schedule_time": ResourceBackupScheduleTime,
 			"wal_storage":          resourceWal,

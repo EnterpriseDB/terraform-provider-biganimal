@@ -355,7 +355,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"ro_connection_uri": schema.StringAttribute{
 							MarkdownDescription: "Cluster read-only connection URI.",
 							Computed:            true,
-							PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+							PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",

@@ -143,7 +143,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 			"connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster connection URI.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"cluster_name": schema.StringAttribute{
 				MarkdownDescription: "Name of the cluster.",
