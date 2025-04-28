@@ -35,7 +35,6 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
   #tags = [
   #  {
   #     tag_name  = "<ex_tag_name_1>"
-  #     color = "blue"
   #  },
   #  {
   #     tag_name  = "<ex_tag_name_2>"

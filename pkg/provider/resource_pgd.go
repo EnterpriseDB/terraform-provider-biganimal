@@ -355,7 +355,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"ro_connection_uri": schema.StringAttribute{
 							MarkdownDescription: "Cluster read-only connection URI.",
 							Computed:            true,
-							PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+							PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
@@ -411,16 +411,14 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"private_link_service_alias": schema.StringAttribute{
 							MarkdownDescription: "Private link service alias.",
 							Computed:            true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
+							// don't use state for unknown as this field is eventually consistent
+
 						},
 						"private_link_service_name": schema.StringAttribute{
 							MarkdownDescription: "private link service name.",
 							Computed:            true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
+							// don't use state for unknown as this field is eventually consistent
+
 						},
 					},
 				},
