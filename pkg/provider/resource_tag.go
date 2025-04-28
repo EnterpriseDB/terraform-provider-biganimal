@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -21,11 +22,19 @@ var (
 )
 
 type TagResourceModel struct {
-	ID      types.String `tfsdk:"id"`
-	TagName types.String `tfsdk:"tag_name"`
-	Color   types.String `tfsdk:"color"`
+	ID           types.String  `tfsdk:"id"`
+	TagName      types.String  `tfsdk:"tag_name"`
+	Color        types.String  `tfsdk:"color"`
+	TagResources []TagResource `tfsdk:"tag_resources"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
+}
+
+type TagResource struct {
+	ResourceType types.String `tfsdk:"resource_type"`
+	ResourceId   types.String `tfsdk:"resource_id"`
+	ResourceName types.String `tfsdk:"resource_name"`
+	ProjectId    types.String `tfsdk:"project_id"`
 }
 
 type tagResource struct {
@@ -53,23 +62,42 @@ func (tf *tagResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"tag_name": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Required:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"color": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+			},
+			"tag_resources": schema.SetNestedAttribute{
+				Description: "Tag resources.",
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"resource_type": schema.StringAttribute{
+							Description: "Resource type.",
+							Computed:    true,
+						},
+						"resource_id": schema.StringAttribute{
+							Description: "Resource ID.",
+							Computed:    true,
+						},
+						"resource_name": schema.StringAttribute{
+							Description: "Resource name.",
+							Computed:    true,
+						},
+						"project_id": schema.StringAttribute{
+							Description: "Project ID.",
+							Computed:    true,
+						},
+					},
 				},
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}
@@ -124,9 +152,24 @@ func readTag(ctx context.Context, client *api.TagClient, resource *TagResourceMo
 		return err
 	}
 
+	tagResources, err := client.GetResources(ctx, resource.TagName.ValueString())
+	if err != nil {
+		return err
+	}
+
 	resource.ID = types.StringValue(tagResp.TagId)
 	resource.TagName = types.StringValue(tagResp.TagName)
 	resource.Color = types.StringPointerValue(tagResp.Color)
+
+	resource.TagResources = make([]TagResource, 0, len(tagResources))
+	for _, tagResource := range tagResources {
+		resource.TagResources = append(resource.TagResources, TagResource{
+			ResourceType: types.StringValue(tagResource.ResourceType),
+			ResourceId:   types.StringValue(tagResource.ResourceId),
+			ResourceName: types.StringValue(tagResource.ResourceName),
+			ProjectId:    types.StringValue(tagResource.ProjectId),
+		})
+	}
 	return nil
 }
 
