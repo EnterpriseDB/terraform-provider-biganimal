@@ -1,3 +1,14 @@
+## v3.0.0 (May 8. 2025)
+Features:
+* Display tag connected resources in `biganimal_tag` resource.
+
+Enhancements:
+* Removed tag color from `biganimal_cluster`, `biganimal_analytics`, `biganimal_faraway` and `biganimal_pgd` resources. Tag color can only be updated/changed in `biganimal_tag` resource.
+
+Bug Fixes:
+* Tag name change in `biganimal_tag` resource bug fix.
+* Bug fixes when private networking is true.
+
 ## v2.0.0 (March 18. 2025)
 Features:
 * private_link_service_alias and private_link_service_name field is now supported and displayed in `biganimal_cluster`, `biganimal_analytics` and `biganimal_faraway` resources and data sources.

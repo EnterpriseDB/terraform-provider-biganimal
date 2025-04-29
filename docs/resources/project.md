@@ -20,7 +20,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "2.0.0"
+      version = "3.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -38,7 +38,6 @@ resource "biganimal_project" "this" {
   #tags = [
   #  {
   #     tag_name  = "<ex_tag_name_1>"
-  #     color = "blue"
   #  },
   #  {
   #     tag_name  = "<ex_tag_name_2>"
@@ -85,7 +84,7 @@ Required:
 
 - `tag_name` (String)
 
-Optional:
+Read-Only:
 
 - `color` (String)
 
