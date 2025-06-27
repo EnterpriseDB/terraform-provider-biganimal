@@ -1,6 +1,6 @@
 module github.com/EnterpriseDB/terraform-provider-biganimal
 
-go 1.21
+go 1.22.0
 
 require (
 	github.com/aws/aws-sdk-go v1.45.0
@@ -33,7 +33,7 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
