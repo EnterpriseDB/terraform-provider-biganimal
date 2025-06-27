@@ -67,7 +67,7 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
 
   pg_type            = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version         = "16"
-  private_networking = false
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
   cloud_provider     = "bah:aws"
   region             = "ap-south-1"
   # pe_allowed_principal_ids = [

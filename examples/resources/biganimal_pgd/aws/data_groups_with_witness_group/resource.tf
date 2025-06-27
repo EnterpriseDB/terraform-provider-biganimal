@@ -88,7 +88,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       pg_version = {
         pg_version_id = "15"
       }
-      private_networking = false
+      private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
       cloud_provider = {
         cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }

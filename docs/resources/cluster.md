@@ -95,7 +95,7 @@ resource "biganimal_cluster" "single_node_cluster" {
 
   pg_type                = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version             = "15"
-  private_networking     = false
+  private_networking     = false     // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
   cloud_provider         = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
   read_only_connections  = false
   region                 = "us-east-1"
@@ -235,7 +235,7 @@ resource "biganimal_cluster" "ha_cluster" {
 
   pg_type                = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version             = "15"
-  private_networking     = false
+  private_networking     = false     // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
   cloud_provider         = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
   read_only_connections  = false
   region                 = "us-east-1"
