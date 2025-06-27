@@ -263,7 +263,6 @@ resource "biganimal_cluster" "ha_cluster" {
   #tags = [
   #  {
   #     tag_name  = "<ex_tag_name_1>"
-  #     color = "blue"
   #  },
   #  {
   #     tag_name  = "<ex_tag_name_2>"
