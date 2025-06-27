@@ -55,6 +55,7 @@ var ResourceBackupScheduleTime = resourceSchema.StringAttribute{
 	MarkdownDescription: "Backup schedule time in 24 hour cron expression format.",
 	Optional:            true,
 	Computed:            true,
+	PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 }
 
 var resourceWal = resourceSchema.SingleNestedAttribute{
