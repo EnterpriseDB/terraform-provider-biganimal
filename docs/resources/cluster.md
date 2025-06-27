@@ -13,7 +13,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -55,13 +55,14 @@ resource "biganimal_cluster" "single_node_cluster" {
   ]
 
   backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "single"
     nodes = 1
   }
   csp_auth = false
 
-  instance_type = "aws:m5.large"
+  instance_type = "aws:m6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {
@@ -79,6 +80,12 @@ resource "biganimal_cluster" "single_node_cluster" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
+
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
 
   maintenance_window = {
     is_enabled = true
@@ -113,6 +120,16 @@ resource "biganimal_cluster" "single_node_cluster" {
     #  ]
   }
 
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: 123456789012
   # ]
@@ -138,7 +155,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -180,12 +197,13 @@ resource "biganimal_cluster" "ha_cluster" {
   ]
 
   backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "ha"
     nodes = 3
   }
 
-  instance_type = "aws:c5.large"
+  instance_type = "aws:c6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {
@@ -203,6 +221,12 @@ resource "biganimal_cluster" "ha_cluster" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
+
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
 
   maintenance_window = {
     is_enabled = true
@@ -237,6 +261,16 @@ resource "biganimal_cluster" "ha_cluster" {
     #  ]
   }
 
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
@@ -268,7 +302,7 @@ output "faraway_replica_ids" {
 - `cloud_provider` (String) Cloud provider. For example, "aws", "azure", "gcp" or "bah:aws", "bah:gcp".
 - `cluster_architecture` (Attributes) Cluster architecture. (see [below for nested schema](#nestedatt--cluster_architecture))
 - `cluster_name` (String) Name of the cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c6i.large" or "gcp:e2-highcpu-4".
 - `password` (String) Password for the user edb_admin. It must be 12 characters or more.
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
@@ -280,6 +314,7 @@ output "faraway_replica_ids" {
 
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
+- `backup_schedule_time` (String) Backup schedule time in 24 hour cron expression format.
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider. Available for AWS only, See [Authentication](https://www.enterprisedb.com/docs/biganimal/latest/getting_started/creating_a_cluster/#authentication) for details.
 - `maintenance_window` (Attributes) Custom maintenance window. (see [below for nested schema](#nestedatt--maintenance_window))
 - `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. Pausing a high availability cluster shuts down all cluster nodes
@@ -292,9 +327,11 @@ output "faraway_replica_ids" {
 - `read_only_connections` (Boolean) Is read only connection enabled.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `superuser_access` (Boolean) Enable to grant superuser access to the edb_admin role.
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
 - `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
+- `wal_storage` (Attributes) Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads) (see [below for nested schema](#nestedatt--wal_storage))
 
 ### Read-Only
 
@@ -309,8 +346,11 @@ output "faraway_replica_ids" {
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `pg_identity` (String) PG Identity required to grant key permissions to activate the cluster.
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
+- `service_name` (String) Cluster connection service name.
 - `transparent_data_encryption_action` (String) Transparent data encryption action.
 
 <a id="nestedatt--cluster_architecture"></a>
@@ -321,10 +361,6 @@ Required:
 - `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `nodes` (Number) Node count.
 
-Read-Only:
-
-- `name` (String) Name.
-
 
 <a id="nestedatt--storage"></a>
 ### Nested Schema for `storage`
@@ -333,7 +369,7 @@ Required:
 
 - `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
 - `volume_properties` (String) Volume properties in accordance with the selected volume type.
-- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", org s "io2-block-express". For Google Cloud: only "pd-ssd".
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
 
 Optional:
 
@@ -397,6 +433,18 @@ Required:
 - `value` (String) GUC value.
 
 
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
+
+
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
@@ -418,6 +466,21 @@ Read-Only:
 
 - `key_name` (String) Key name.
 - `status` (String) Status.
+
+
+<a id="nestedatt--wal_storage"></a>
+### Nested Schema for `wal_storage`
+
+Required:
+
+- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.
 
 ## Import
 

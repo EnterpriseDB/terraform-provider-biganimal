@@ -33,10 +33,6 @@ output "data_groups" {
 output "witness_groups" {
   value = data.biganimal_pgd.this.witness_groups
 }
-
-output "ro_connection_uri" {
-  value = data.biganimal_cluster.this.ro_connection_uri
-}
 ```
 
 ## PGD Data Source Example
@@ -78,7 +74,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
   }
 }
@@ -95,6 +91,7 @@ terraform {
 ### Optional
 
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
+- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--tags))
 
 ### Read-Only
 
@@ -102,10 +99,23 @@ terraform {
 - `data_groups` (Attributes Set) Cluster data groups. (see [below for nested schema](#nestedatt--data_groups))
 - `id` (String) The ID of this resource.
 - `witness_groups` (Attributes Set) (see [below for nested schema](#nestedatt--witness_groups))
-- `ro_connection_uri` (String) PGD Cluster read-only connection URI. Only available for high availability clusters.
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Read-Only:
+
+- `color` (String)
+- `tag_name` (String)
+
 
 <a id="nestedatt--data_groups"></a>
 ### Nested Schema for `data_groups`
+
+Optional:
+
+- `backup_schedule_time` (String) Backup schedule time in 24 hour cron expression format.
+- `wal_storage` (Attributes) Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads) (see [below for nested schema](#nestedatt--data_groups--wal_storage))
 
 Read-Only:
 
@@ -128,12 +138,30 @@ Read-Only:
 - `pg_type` (Attributes) Postgres type. (see [below for nested schema](#nestedatt--data_groups--pg_type))
 - `pg_version` (Attributes) Postgres version. (see [below for nested schema](#nestedatt--data_groups--pg_version))
 - `phase` (String) Current phase of the cluster group.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `private_networking` (Boolean) Is private networking enabled.
+- `read_only_connections` (Boolean) Is read-only connections enabled.
 - `region` (Attributes) Region. (see [below for nested schema](#nestedatt--data_groups--region))
 - `resizing_pvc` (Set of String) Resizing PVC.
+- `ro_connection_uri` (Set of String) Read-only connection URI.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--data_groups--storage))
-- `read_only_connections` (Boolean) Is Read-only Connections/workloads enabled.
+
+<a id="nestedatt--data_groups--wal_storage"></a>
+### Nested Schema for `data_groups.wal_storage`
+
+Required:
+
+- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.
+
 
 <a id="nestedatt--data_groups--allowed_ip_ranges"></a>
 ### Nested Schema for `data_groups.allowed_ip_ranges`

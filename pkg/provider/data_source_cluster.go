@@ -18,32 +18,8 @@ var (
 	_ datasource.DataSourceWithConfigure = &clusterDataSource{}
 )
 
-type PgConfigDatasourceModel struct {
-	Value types.String `tfsdk:"value"`
-	Name  types.String `tfsdk:"name"`
-}
-
-type StorageDatasourceModel struct {
-	Throughput       types.String `tfsdk:"throughput"`
-	VolumeProperties types.String `tfsdk:"volume_properties"`
-	VolumeType       types.String `tfsdk:"volume_type"`
-	Iops             types.String `tfsdk:"iops"`
-	Size             types.String `tfsdk:"size"`
-}
-
-type ClusterArchitectureDatasourceModel struct {
-	Nodes types.Int64  `tfsdk:"nodes"`
-	Id    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-}
-
 type clusterDatasourceModel struct {
 	ClusterResourceModel
-}
-
-type AllowedIpRangesDatasourceModel struct {
-	CidrBlock   types.String `tfsdk:"cidr_block"`
-	Description types.String `tfsdk:"description"`
 }
 
 type clusterDataSource struct {
@@ -88,10 +64,6 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					"id": schema.StringAttribute{
 						Description: "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 						Required:    true,
-					},
-					"name": schema.StringAttribute{
-						Description: "Name.",
-						Computed:    true,
 					},
 					"nodes": schema.Float64Attribute{
 						Description: "Node count.",
@@ -155,7 +127,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						Required:    true,
 					},
 					"volume_type": schema.StringAttribute{
-						Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", org s \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
+						Description: "Volume type. For Azure: \"azurepremiumstorage\" or \"ultradisk\". For AWS: \"gp3\", \"io2\", or \"io2-block-express\". For Google Cloud: only \"pd-ssd\".",
 						Required:    true,
 					},
 				},
@@ -240,7 +212,7 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:            true,
 			},
 			"instance_type": schema.StringAttribute{
-				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Computed:            true,
 			},
 			"read_only_connections": schema.BoolAttribute{
@@ -359,6 +331,12 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 					"Pausing a high availability cluster shuts down all cluster nodes",
 				Optional: true,
 			},
+			"tags": schema.SetNestedAttribute{
+				Description:  "Show existing tags associated with this resource",
+				Optional:     true,
+				Computed:     true,
+				NestedObject: DataSourceTagNestedObject,
+			},
 			"transparent_data_encryption": schema.SingleNestedAttribute{
 				MarkdownDescription: "Transparent Data Encryption (TDE) key",
 				Optional:            true,
@@ -388,6 +366,20 @@ func (c *clusterDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			},
 			"transparent_data_encryption_action": schema.StringAttribute{
 				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
+			},
+			"service_name": schema.StringAttribute{
+				MarkdownDescription: "Cluster connection service name.",
+				Computed:            true,
+			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"wal_storage":          resourceWal,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
 				Computed:            true,
 			},
 		},

@@ -14,7 +14,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -54,8 +54,14 @@ resource "biganimal_cluster" "single_node_cluster" {
   storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-    size              = "4 Gi"
+    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   }
+
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+  #  }
 
   pg_type        = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version     = "15"
@@ -91,8 +97,9 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   ]
 
   backup_retention_period = "8d"
-  csp_auth                = false
-  instance_type           = "aws:c6i.large"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
+  csp_auth      = false
+  instance_type = "azure:Standard_D2s_v3"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -112,11 +119,25 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-    size              = "4 Gi"
+    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   }
-
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+  #  }
   private_networking = false
   region             = "centralindia"
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 
   # transparent_data_encryption = {
   #   key_id = <example_value>
@@ -132,7 +153,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 ### Required
 
 - `cluster_name` (String) Name of the faraway replica cluster.
-- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c5.large" or "gcp:e2-highcpu-4".
+- `instance_type` (String) Instance type. For example, "azure:Standard_D2s_v3", "aws:c6i.large" or "gcp:e2-highcpu-4".
 - `region` (String) Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.
 - `source_cluster_id` (String) Source cluster ID.
 - `storage` (Attributes) Storage. (see [below for nested schema](#nestedatt--storage))
@@ -141,15 +162,18 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--allowed_ip_ranges))
 - `backup_retention_period` (String) Backup retention period. For example, "7d", "2w", or "3m".
+- `backup_schedule_time` (String) Backup schedule time in 24 hour cron expression format.
 - `csp_auth` (Boolean) Is authentication handled by the cloud service provider.
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
 - `pg_config` (Attributes Set) Database configuration parameters. (see [below for nested schema](#nestedatt--pg_config))
 - `private_networking` (Boolean) Is private networking enabled.
 - `project_id` (String) BigAnimal Project ID.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `transparent_data_encryption` (Attributes) Transparent Data Encryption (TDE) key (see [below for nested schema](#nestedatt--transparent_data_encryption))
 - `volume_snapshot_backup` (Boolean) Enable to take a snapshot of the volume.
+- `wal_storage` (Attributes) Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads) (see [below for nested schema](#nestedatt--wal_storage))
 
 ### Read-Only
 
@@ -166,6 +190,8 @@ resource "biganimal_faraway_replica" "faraway_replica" {
 - `pg_type` (String) Postgres type. For example, "epas", "pgextended", or "postgres".
 - `pg_version` (String) Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.
 - `phase` (String) Current phase of the cluster.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `resizing_pvc` (List of String) Resizing PVC.
 - `transparent_data_encryption_action` (String) Transparent data encryption action.
 
@@ -202,6 +228,18 @@ Required:
 - `value` (String) GUC value.
 
 
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
+
+
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
@@ -225,11 +263,38 @@ Read-Only:
 - `status` (String) Status.
 
 
+<a id="nestedatt--wal_storage"></a>
+### Nested Schema for `wal_storage`
+
+Required:
+
+- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.
+
+
 <a id="nestedatt--cluster_architecture"></a>
 ### Nested Schema for `cluster_architecture`
 
+Required:
+
+- `id` (String) Cluster architecture ID.
+- `nodes` (Number) Node count.
+
 Read-Only:
 
-- `id` (String) Cluster architecture ID. For example, "single" or "ha".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.
 - `name` (String) Name.
-- `nodes` (Number) Node count.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# terraform import biganimal_faraway_replica.<resource_name> <project_id>/<cluster_id>
+terraform import biganimal_faraway_replica.faraway_replica prj_deadbeef01234567/p-abcd123456
+```

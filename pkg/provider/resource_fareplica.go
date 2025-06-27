@@ -9,6 +9,8 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/constants"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -62,6 +64,11 @@ type FAReplicaResourceModel struct {
 	PgIdentity                      types.String                      `tfsdk:"pg_identity"`
 	TransparentDataEncryptionAction types.String                      `tfsdk:"transparent_data_encryption_action"`
 	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
+	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
+	BackupScheduleTime              types.String                      `tfsdk:"backup_schedule_time"`
+	WalStorage                      *StorageResourceModel             `tfsdk:"wal_storage"`
+	PrivateLinkServiceAlias         types.String                      `tfsdk:"private_link_service_alias"`
+	PrivateLinkServiceName          types.String                      `tfsdk:"private_link_service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -164,7 +171,7 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				},
 			},
 			"instance_type": schema.StringAttribute{
-				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -227,9 +234,8 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 			"private_networking": schema.BoolAttribute{
 				Description: "Is private networking enabled.",
 				Optional:    true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
+
 			},
 			"project_id": schema.StringAttribute{
 				Description: "BigAnimal Project ID.",
@@ -237,9 +243,8 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Validators: []validator.String{
 					ProjectIdValidator(),
 				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				// don't use state for unknown as this field is eventually consistent
+
 			},
 			"region": schema.StringAttribute{
 				Description: "Region to deploy the cluster. See [Supported regions](https://www.enterprisedb.com/docs/biganimal/latest/overview/03a_region_support/) for supported regions.",
@@ -318,8 +323,8 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Description:   "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
-						Computed:      true,
+						Description:   "Cluster architecture ID.",
+						Required:      true,
 						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"name": schema.StringAttribute{
@@ -329,10 +334,11 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 					},
 					"nodes": schema.Float64Attribute{
 						Description:   "Node count.",
-						Computed:      true,
+						Required:      true,
 						PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()},
 					},
 				},
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 			},
 			"pg_version": schema.StringAttribute{
 				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
@@ -387,8 +393,34 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 				Optional:            true,
 				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"wal_storage":          resourceWal,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+				// don't use state for unknown as this field is eventually consistent
+
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+				// don't use state for unknown as this field is eventually consistent
+
+			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (r *FAReplicaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
 func (r *FAReplicaResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -566,11 +598,6 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		return err
 	}
 
-	connection, err := client.ConnectionString(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
-	if err != nil {
-		return err
-	}
-
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
 	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
 	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
@@ -585,22 +612,34 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
 	fAReplicaResourceModel.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&connection.PgUri)
+	fAReplicaResourceModel.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
+	fAReplicaResourceModel.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
+	fAReplicaResourceModel.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
 	fAReplicaResourceModel.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
 	fAReplicaResourceModel.LogsUrl = responseCluster.LogsUrl
 	fAReplicaResourceModel.MetricsUrl = responseCluster.MetricsUrl
 	fAReplicaResourceModel.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	fAReplicaResourceModel.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
 	fAReplicaResourceModel.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 	fAReplicaResourceModel.ClusterArchitecture = &ClusterArchitectureResourceModel{
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
 		Nodes: responseCluster.ClusterArchitecture.Nodes,
-		Name:  types.StringValue(responseCluster.ClusterArchitecture.ClusterArchitectureName),
 	}
 	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
 	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	fAReplicaResourceModel.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
+
+	if responseCluster.WalStorage != nil {
+		fAReplicaResourceModel.WalStorage = &StorageResourceModel{
+			VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
+			VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
+			Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
+			Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
+			Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
+		}
+	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
@@ -624,9 +663,18 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	fAReplicaResourceModel.AllowedIpRanges = []AllowedIpRangesResourceModel{}
 	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
+			description := ipRange.Description
+
+			// if cidr block is 0.0.0.0/0 then set description to empty string
+			// setting private networking and leaving allowed ip ranges as empty will return
+			// cidr block as 0.0.0.0/0 and description as "To allow all access"
+			// so we need to set description to empty string to keep it consistent with the tf resource
+			if ipRange.CidrBlock == "0.0.0.0/0" {
+				description = ""
+			}
 			fAReplicaResourceModel.AllowedIpRanges = append(fAReplicaResourceModel.AllowedIpRanges, AllowedIpRangesResourceModel{
 				CidrBlock:   ipRange.CidrBlock,
-				Description: types.StringValue(ipRange.Description),
+				Description: types.StringValue(description),
 			})
 		}
 	}
@@ -655,6 +703,14 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		fAReplicaResourceModel.TransparentDataEncryption.KeyId = types.StringValue(responseCluster.EncryptionKeyResp.KeyId)
 		fAReplicaResourceModel.TransparentDataEncryption.KeyName = types.StringValue(responseCluster.EncryptionKeyResp.KeyName)
 		fAReplicaResourceModel.TransparentDataEncryption.Status = types.StringValue(responseCluster.EncryptionKeyResp.Status)
+	}
+
+	fAReplicaResourceModel.Tags = []commonTerraform.Tag{}
+	for _, v := range responseCluster.Tags {
+		fAReplicaResourceModel.Tags = append(fAReplicaResourceModel.Tags, commonTerraform.Tag{
+			TagName: types.StringValue(v.TagName),
+			Color:   basetypes.NewStringPointerValue(v.Color),
+		})
 	}
 
 	return nil
@@ -724,6 +780,17 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		CSPAuth:               fAReplicaResourceModel.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    fAReplicaResourceModel.BackupScheduleTime.ValueStringPointer(),
+	}
+
+	if fAReplicaResourceModel.WalStorage != nil {
+		cluster.WalStorage = &models.Storage{
+			VolumePropertiesId: fAReplicaResourceModel.WalStorage.VolumeProperties.ValueStringPointer(),
+			VolumeTypeId:       fAReplicaResourceModel.WalStorage.VolumeType.ValueStringPointer(),
+			Iops:               fAReplicaResourceModel.WalStorage.Iops.ValueStringPointer(),
+			Size:               fAReplicaResourceModel.WalStorage.Size.ValueStringPointer(),
+			Throughput:         fAReplicaResourceModel.WalStorage.Throughput.ValueStringPointer(),
+		}
 	}
 
 	allowedIpRanges := []models.AllowedIpRange{}
@@ -757,6 +824,15 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 			cluster.EncryptionKeyIdReq = fAReplicaResourceModel.TransparentDataEncryption.KeyId.ValueStringPointer()
 		}
 	}
+
+	tags := []commonApi.Tag{}
+	for _, tag := range fAReplicaResourceModel.Tags {
+		tags = append(tags, commonApi.Tag{
+			Color:   tag.Color.ValueStringPointer(),
+			TagName: tag.TagName.ValueString(),
+		})
+	}
+	cluster.Tags = tags
 
 	return cluster, nil
 }

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -43,8 +43,9 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   ]
 
   backup_retention_period = "8d"
-  csp_auth                = false
-  instance_type           = "gcp:e2-highcpu-4"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
+  csp_auth      = false
+  instance_type = "gcp:e2-highcpu-4"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -64,10 +65,25 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   storage = {
     volume_type       = "pd-ssd"
     volume_properties = "pd-ssd"
-    size              = "10 Gi"
+    size              = "4 Gi"
   }
+  #  wal_storage = {
+  #    volume_type       = "pd-ssd"
+  #    volume_properties = "pd-ssd"
+  #    size              = "4 Gi"
+  #  }
   private_networking = false
   region             = "us-east1"
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "development-data-123456"
   # ]

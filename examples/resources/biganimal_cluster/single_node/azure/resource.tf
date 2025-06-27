@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -44,6 +44,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   ]
 
   backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "single"
     nodes = 1
@@ -66,8 +67,14 @@ resource "biganimal_cluster" "single_node_cluster" {
   storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-    size              = "4 Gi"
+    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   }
+
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+  #  }
 
   maintenance_window = {
     is_enabled = true
@@ -102,6 +109,15 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"

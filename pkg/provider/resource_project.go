@@ -2,10 +2,14 @@ package provider
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -14,6 +18,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
+
+type Project struct {
+	ID             *string               `tfsdk:"id"`
+	ProjectID      *string               `tfsdk:"project_id"`
+	ProjectName    *string               `tfsdk:"project_name"`
+	UserCount      *int                  `tfsdk:"user_count"`
+	ClusterCount   *int                  `tfsdk:"cluster_count"`
+	CloudProviders types.Set             `tfsdk:"cloud_providers"`
+	Tags           []commonTerraform.Tag `tfsdk:"tags"`
+}
 
 type projectResource struct {
 	client *api.ProjectClient
@@ -94,8 +108,20 @@ func (p projectResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					},
 				},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (p *projectResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, p.client.TagClient(), req, resp)
 }
 
 // Configure adds the provider configured client to the data source.
@@ -107,20 +133,6 @@ func (p *projectResource) Configure(_ context.Context, req resource.ConfigureReq
 	p.client = req.ProviderData.(*api.API).ProjectClient()
 }
 
-type cloudProvider struct {
-	CloudProviderId   string `tfsdk:"cloud_provider_id"`
-	CloudProviderName string `tfsdk:"cloud_provider_name"`
-}
-
-type Project struct {
-	ID             *string         `tfsdk:"id"`
-	ProjectID      *string         `tfsdk:"project_id"`
-	ProjectName    *string         `tfsdk:"project_name"`
-	UserCount      *int            `tfsdk:"user_count"`
-	ClusterCount   *int            `tfsdk:"cluster_count"`
-	CloudProviders []cloudProvider `tfsdk:"cloud_providers"`
-}
-
 // Create creates the resource and sets the initial Terraform state.
 func (p projectResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var config Project
@@ -130,28 +142,24 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	projectId, err := p.client.Create(ctx, *config.ProjectName)
+	projectReqModel := models.Project{
+		ProjectName: *config.ProjectName,
+		Tags:        buildApiReqTags(config.Tags),
+	}
+
+	_, err := p.client.Create(ctx, projectReqModel)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating project", "Could not create project, unexpected error: "+err.Error())
 		return
 	}
 
-	project, err := p.client.Read(ctx, projectId)
+	// it should create project straight away but wait to be safe
+	time.Sleep(5 * time.Second)
+
+	err = readProjectAs(ctx, p.client, &config)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
-	}
-
-	config.ID = &project.ProjectId
-	config.ProjectID = &project.ProjectId
-	config.ProjectName = &project.ProjectName
-	config.UserCount = &project.UserCount
-	config.ClusterCount = &project.ClusterCount
-	for _, provider := range project.CloudProviders {
-		config.CloudProviders = append(config.CloudProviders, cloudProvider{
-			CloudProviderId:   provider.CloudProviderId,
-			CloudProviderName: provider.CloudProviderName,
-		})
 	}
 
 	diags = resp.State.Set(ctx, &config)
@@ -159,6 +167,24 @@ func (p projectResource) Create(ctx context.Context, req resource.CreateRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func readProjectAs(ctx context.Context, client *api.ProjectClient, projectOut *Project) error {
+	project, err := client.Read(ctx, *projectOut.ID)
+	if err != nil {
+		return err
+	}
+
+	projectOut.ID = &project.ProjectId
+	projectOut.ProjectID = &project.ProjectId
+	projectOut.ProjectName = &project.ProjectName
+	projectOut.UserCount = &project.UserCount
+	projectOut.ClusterCount = &project.ClusterCount
+	projectOut.CloudProviders = BuildTfRsrcCloudProviders(project.CloudProviders)
+
+	buildTfRsrcTagsAs(&projectOut.Tags, project.Tags)
+
+	return nil
 }
 
 // Read refreshes the Terraform state with the latest data.
@@ -170,22 +196,10 @@ func (p projectResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	project, err := p.client.Read(ctx, *state.ID)
+	err := readProjectAs(ctx, p.client, &state)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
-	}
-
-	state.ProjectID = &project.ProjectId
-	state.ProjectName = &project.ProjectName
-	state.UserCount = &project.UserCount
-	state.ClusterCount = &project.ClusterCount
-	state.CloudProviders = nil
-	for _, provider := range project.CloudProviders {
-		state.CloudProviders = append(state.CloudProviders, cloudProvider{
-			CloudProviderId:   provider.CloudProviderId,
-			CloudProviderName: provider.CloudProviderName,
-		})
 	}
 
 	diags = resp.State.Set(ctx, &state)
@@ -204,9 +218,23 @@ func (p projectResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	_, err := p.client.Update(ctx, *plan.ProjectID, *plan.ProjectName)
+	projectReqModel := models.Project{
+		ProjectName: *plan.ProjectName,
+		Tags:        buildApiReqTags(plan.Tags),
+	}
+
+	_, err := p.client.Update(ctx, *plan.ProjectID, projectReqModel)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating project", "Could not update project, unexpected error: "+err.Error())
+		return
+	}
+
+	// wait to be safe so that the changes reflect as there is no phase to check the state
+	time.Sleep(5 * time.Second)
+
+	err = readProjectAs(ctx, p.client, &plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading project", "Could not read project, unexpected error: "+err.Error())
 		return
 	}
 

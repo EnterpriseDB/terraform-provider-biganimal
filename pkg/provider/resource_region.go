@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
+	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -83,8 +86,20 @@ func (r regionResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (r *regionResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
 func (r *regionResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
@@ -96,13 +111,14 @@ func (r *regionResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 type Region struct {
-	ProjectID     *string `tfsdk:"project_id"`
-	CloudProvider *string `tfsdk:"cloud_provider"`
-	RegionID      *string `tfsdk:"region_id"`
-	ID            *string `tfsdk:"id"`
-	Name          *string `tfsdk:"name"`
-	Continent     *string `tfsdk:"continent"`
-	Status        *string `tfsdk:"status"`
+	ProjectID     *string               `tfsdk:"project_id"`
+	CloudProvider *string               `tfsdk:"cloud_provider"`
+	RegionID      *string               `tfsdk:"region_id"`
+	ID            *string               `tfsdk:"id"`
+	Name          *string               `tfsdk:"name"`
+	Continent     *string               `tfsdk:"continent"`
+	Status        *string               `tfsdk:"status"`
+	Tags          []commonTerraform.Tag `tfsdk:"tags"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -169,7 +185,7 @@ func (r *regionResource) ensureStatueUpdated(ctx context.Context, region Region)
 	}
 
 	diags := frameworkdiag.Diagnostics{}
-	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID); err != nil {
+	if err := r.client.Update(ctx, *region.Status, *region.ProjectID, *region.CloudProvider, *region.RegionID, buildApiReqTags(region.Tags)); err != nil {
 		if appendDiagFromBAErr(err, &diags) {
 			return diags
 		}
@@ -210,6 +226,9 @@ func (r *regionResource) writeState(ctx context.Context, region Region, state *t
 	region.Name = &read.Name
 	region.Status = &read.Status
 	region.Continent = &read.Continent
+
+	buildTfRsrcTagsAs(&region.Tags, read.Tags)
+
 	return state.Set(ctx, &region)
 }
 

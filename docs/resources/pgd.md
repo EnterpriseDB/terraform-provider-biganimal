@@ -10,7 +10,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -40,6 +40,15 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   pause        = false
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -53,6 +62,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -76,6 +86,16 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
+      storage = {
+        volume_type       = "azurepremiumstorage"
+        volume_properties = "P2"
+        size              = "32 Gi"
+      }
+      #      wal_storage = {
+      #        volume_type       = "azurepremiumstorage"
+      #        volume_properties = "P2"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -94,6 +114,8 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 1
         start_time = "13:00"
       }
+      read_only_connections = false
+
       # pe_allowed_principal_ids = [
       #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
       # ]
@@ -113,7 +135,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -143,6 +165,15 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   pause        = false
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -156,6 +187,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -179,6 +211,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "azurepremiumstorage"
+      #        volume_properties = "P2"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -213,6 +250,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -236,6 +274,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "azurepremiumstorage"
+      #        volume_properties = "P2"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -288,7 +331,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -318,6 +361,15 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   pause        = false
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -331,13 +383,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "aws:m5.large"
+        instance_type_id = "aws:m6i.large"
       }
       pg_config = [
         {
@@ -354,6 +407,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "gp3"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "gp3"
+      #        volume_properties = "gp3"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -372,6 +430,8 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 6
         start_time = "13:00"
       }
+      read_only_connections = false
+
       # pe_allowed_principal_ids = [
       #   <example_value> # ex: 123456789012
       # ]
@@ -391,7 +451,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -421,6 +481,15 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   pause        = false
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -434,13 +503,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "aws:m5.large"
+        instance_type_id = "aws:m6i.large"
       }
       pg_config = [
         {
@@ -457,6 +527,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "gp3"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "gp3"
+      #        volume_properties = "gp3"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -491,13 +566,14 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
       }
       csp_auth = false
       instance_type = {
-        instance_type_id = "aws:m5.large"
+        instance_type_id = "aws:m6i.large"
       }
       pg_config = [
         {
@@ -514,6 +590,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "gp3"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "gp3"
+      #        volume_properties = "gp3"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -566,7 +647,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -596,6 +677,15 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   pause        = false
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -609,6 +699,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -632,6 +723,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "pd-ssd"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "pd-ssd"
+      #        volume_properties = "pd-ssd"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -650,6 +746,8 @@ resource "biganimal_pgd" "pgd_cluster" {
         start_day  = 6
         start_time = "13:00"
       }
+      read_only_connections = false
+
       # pe_allowed_principal_ids = [
       #   <example_value> # ex: "development-data-123456"
       # ]
@@ -673,7 +771,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -703,6 +801,15 @@ resource "biganimal_pgd" "pgd_cluster" {
   project_id   = var.project_id
   password     = resource.random_password.password.result
   pause        = false
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
   data_groups = [
     {
       allowed_ip_ranges = [
@@ -716,6 +823,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -739,6 +847,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "pd-ssd"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "pd-ssd"
+      #        volume_properties = "pd-ssd"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -777,6 +890,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         },
       ]
       backup_retention_period = "6d"
+      #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
       cluster_architecture = {
         cluster_architecture_id = "pgd"
         nodes                   = 3
@@ -800,6 +914,11 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "pd-ssd"
         size              = "32 Gi"
       }
+      #      wal_storage = {
+      #        volume_type       = "pd-ssd"
+      #        volume_properties = "pd-ssd"
+      #        size              = "32 Gi"
+      #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
       }
@@ -864,6 +983,7 @@ output "password" {
 - `most_recent` (Boolean) Show the most recent cluster when there are multiple clusters with the same name
 - `pause` (Boolean) Pause cluster. If true it will put the cluster on pause and set the phase as paused, if false it will resume the cluster and set the phase as healthy. Pausing a cluster allows you to save on compute costs without losing data or cluster configuration settings. While paused, clusters aren't upgraded or patched, but changes are applied when the cluster resumes. Pausing a Postgres Distributed(PGD) cluster shuts down all cluster nodes
 - `project_id` (String) BigAnimal Project ID.
+- `tags` (Attributes Set) Assign existing tags or create tags to assign to this resource (see [below for nested schema](#nestedatt--tags))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `witness_groups` (Attributes List) (see [below for nested schema](#nestedatt--witness_groups))
 
@@ -893,9 +1013,12 @@ Required:
 Optional:
 
 - `allowed_ip_ranges` (Attributes Set) Allowed IP ranges. (see [below for nested schema](#nestedatt--data_groups--allowed_ip_ranges))
+- `backup_schedule_time` (String) Backup schedule time in 24 hour cron expression format.
 - `cluster_type` (String) Type of the Specified Cluster
 - `pe_allowed_principal_ids` (Set of String) Cloud provider subscription/account ID, need to be specified when cluster is deployed on BigAnimal's cloud account.
+- `read_only_connections` (Boolean) Is read-only connections enabled.
 - `service_account_ids` (Set of String) A Google Cloud Service Account is used for logs. If you leave this blank, then you will be unable to access log details for this cluster. Required when cluster is deployed on BigAnimal's cloud account.
+- `wal_storage` (Attributes) Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads) (see [below for nested schema](#nestedatt--data_groups--wal_storage))
 
 Read-Only:
 
@@ -906,8 +1029,10 @@ Read-Only:
 - `logs_url` (String) The URL to find the logs of this cluster.
 - `metrics_url` (String) The URL to find the metrics of this cluster.
 - `phase` (String) Current phase of the data group.
+- `private_link_service_alias` (String) Private link service alias.
+- `private_link_service_name` (String) private link service name.
 - `resizing_pvc` (Set of String) Resizing PVC.
-- `ro_connection_uri` (String) Cluster read-only connection URI. Only available for high availability clusters.
+- `ro_connection_uri` (String) Cluster read-only connection URI.
 
 <a id="nestedatt--data_groups--cloud_provider"></a>
 ### Nested Schema for `data_groups.cloud_provider`
@@ -1005,6 +1130,33 @@ Required:
 - `cidr_block` (String) CIDR block
 - `description` (String) Description of CIDR block
 
+
+<a id="nestedatt--data_groups--wal_storage"></a>
+### Nested Schema for `data_groups.wal_storage`
+
+Required:
+
+- `size` (String) Size of the volume. It can be set to different values depending on your volume type and properties.
+- `volume_properties` (String) Volume properties in accordance with the selected volume type.
+- `volume_type` (String) Volume type. For Azure: "azurepremiumstorage" or "ultradisk". For AWS: "gp3", "io2", or "io2-block-express". For Google Cloud: only "pd-ssd".
+
+Optional:
+
+- `iops` (String) IOPS for the selected volume. It can be set to different values depending on your volume type and properties.
+- `throughput` (String) Throughput is automatically calculated by BigAnimal based on the IOPS input if it's not provided.
+
+
+
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
+
+Required:
+
+- `tag_name` (String)
+
+Optional:
+
+- `color` (String)
 
 
 <a id="nestedblock--timeouts"></a>

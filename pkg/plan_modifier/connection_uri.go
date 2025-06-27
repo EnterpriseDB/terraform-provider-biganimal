@@ -8,25 +8,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func CustomConnection() planmodifier.String {
-	return customConnectionModifier{}
+// Checks if private networking is true and if so, sets the plan value to unknown as it will change
+func CustomPrivateNetworking() planmodifier.String {
+	return customPrivateNetworkingModifier{}
 }
 
-// customConnectionModifier implements the plan modifier.
-type customConnectionModifier struct{}
+// customPrivateNetworkingModifier implements the plan modifier.
+type customPrivateNetworkingModifier struct{}
 
 // Description returns a human-readable description of the plan modifier.
-func (m customConnectionModifier) Description(_ context.Context) string {
+func (m customPrivateNetworkingModifier) Description(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // MarkdownDescription returns a markdown description of the plan modifier.
-func (m customConnectionModifier) MarkdownDescription(_ context.Context) string {
+func (m customPrivateNetworkingModifier) MarkdownDescription(_ context.Context) string {
 	return "Once set, the value of this attribute in state will not change."
 }
 
 // PlanModifyString implements the plan modification logic.
-func (m customConnectionModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+func (m customPrivateNetworkingModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
 	var planObject map[string]tftypes.Value
 
 	err := req.Plan.Raw.As(&planObject)

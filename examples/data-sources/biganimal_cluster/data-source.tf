@@ -21,6 +21,10 @@ output "backup_retention_period" {
   value = data.biganimal_cluster.this.backup_retention_period
 }
 
+output "backup_schedule_time" {
+  value = data.biganimal_cluster.this.backup_schedule_time
+}
+
 output "cluster_name" {
   value = data.biganimal_cluster.this.cluster_name
 }
@@ -89,6 +93,10 @@ output "storage" {
   value = data.biganimal_cluster.this.storage
 }
 
+output "wal_storage" {
+  value = data.biganimal_cluster.this.wal_storage
+}
+
 output "superuser_access" {
   value = coalesce(data.biganimal_cluster.this.superuser_access, false)
 }
@@ -115,4 +123,12 @@ output "service_account_ids" {
 
 output "volume_snapshot_backup" {
   value = coalesce(data.biganimal_cluster.this.post_gis, false)
+}
+
+output "service_name" {
+  value = data.biganimal_cluster.this.service_name
+}
+
+output "tags" {
+  value = data.biganimal_cluster.this.tags
 }

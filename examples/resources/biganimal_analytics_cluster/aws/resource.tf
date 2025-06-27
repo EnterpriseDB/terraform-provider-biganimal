@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -32,6 +32,15 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
   project_id   = var.project_id
   pause        = false
 
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
   allowed_ip_ranges = [
     {
       cidr_block  = "127.0.0.1/32"
@@ -44,7 +53,8 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
   ]
 
   backup_retention_period = "30d"
-  csp_auth                = false
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
+  csp_auth = false
 
   instance_type = "aws:m6id.12xlarge"
   password      = resource.random_password.password.result

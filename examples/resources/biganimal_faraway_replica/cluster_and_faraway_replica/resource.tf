@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -42,8 +42,14 @@ resource "biganimal_cluster" "single_node_cluster" {
   storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-    size              = "4 Gi"
+    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   }
+
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+  #  }
 
   pg_type        = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version     = "15"
@@ -79,8 +85,9 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   ]
 
   backup_retention_period = "8d"
-  csp_auth                = false
-  instance_type           = "aws:c6i.large"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
+  csp_auth      = false
+  instance_type = "azure:Standard_D2s_v3"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -100,11 +107,24 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   storage = {
     volume_type       = "azurepremiumstorage"
     volume_properties = "P1"
-    size              = "4 Gi"
+    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   }
-
+  #  wal_storage = {
+  #    volume_type       = "azurepremiumstorage"
+  #    volume_properties = "P1"
+  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+  #  }
   private_networking = false
   region             = "centralindia"
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 
   # transparent_data_encryption = {
   #   key_id = <example_value>

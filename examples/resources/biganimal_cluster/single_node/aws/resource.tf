@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -44,13 +44,14 @@ resource "biganimal_cluster" "single_node_cluster" {
   ]
 
   backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "single"
     nodes = 1
   }
   csp_auth = false
 
-  instance_type = "aws:m5.large"
+  instance_type = "aws:m6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {
@@ -68,6 +69,12 @@ resource "biganimal_cluster" "single_node_cluster" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
+
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
 
   maintenance_window = {
     is_enabled = true
@@ -101,6 +108,15 @@ resource "biganimal_cluster" "single_node_cluster" {
     #    },
     #  ]
   }
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 
   # pe_allowed_principal_ids = [
   #   <example_value> # ex: 123456789012

@@ -133,7 +133,7 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 				Computed:            true,
 			},
 			"instance_type": schema.StringAttribute{
-				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Computed:            true,
 			},
 			"resizing_pvc": schema.ListAttribute{
@@ -193,6 +193,21 @@ func (r *analyticsClusterDataSource) Schema(ctx context.Context, req datasource.
 					"Pausing a high availability cluster shuts down all cluster nodes",
 				Optional: true,
 			},
+			"tags": schema.SetNestedAttribute{
+				Description:  "show tags associated with this resource",
+				Computed:     true,
+				Optional:     true,
+				NestedObject: DataSourceTagNestedObject,
+			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -205,7 +220,7 @@ func (r *analyticsClusterDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	if err := read(ctx, r.client, &data.analyticsClusterResourceModel); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &data.analyticsClusterResourceModel); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}

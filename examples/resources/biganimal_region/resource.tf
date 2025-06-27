@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
   }
 }
@@ -16,6 +16,15 @@ resource "biganimal_region" "this" {
   cloud_provider = "aws"
   region_id      = "eu-west-1"
   project_id     = var.project_id
+
+  #  tags = [
+  #    {
+  #      tag_name = "<ex_tag_name_1>"
+  #    },
+  #    {
+  #      tag_name = "<ex_tag_name_2>"
+  #    },
+  #  ]
 }
 
 output "region_status" {

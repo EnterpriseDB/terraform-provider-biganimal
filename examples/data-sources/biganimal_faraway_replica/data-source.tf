@@ -29,6 +29,10 @@ output "backup_retention_period" {
   value = data.biganimal_faraway_replica.this.backup_retention_period
 }
 
+output "backup_schedule_time" {
+  value = data.biganimal_faraway_replica.this.backup_schedule_time
+}
+
 output "cluster_name" {
   value = data.biganimal_faraway_replica.this.cluster_name
 }
@@ -87,6 +91,10 @@ output "resizing_pvc" {
 
 output "storage" {
   value = data.biganimal_faraway_replica.this.storage
+}
+
+output "wal_storage" {
+  value = data.biganimal_faraway_replica.this.wal_storage
 }
 
 output "volume_snapshot_backup" {

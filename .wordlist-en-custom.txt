@@ -1,7 +1,9 @@
 BigAnimal
 BigAnimal's
 CIDR
+cron
 CSP
+csp
 EDB
 GUC
 IAM
@@ -45,3 +47,4 @@ TDE
 terraform
 ultradisk
 uri
+wal

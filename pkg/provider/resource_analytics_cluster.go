@@ -59,6 +59,10 @@ type analyticsClusterResourceModel struct {
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds      types.Set                          `tfsdk:"pe_allowed_principal_ids"`
 	Pause                      types.Bool                         `tfsdk:"pause"`
+	Tags                       []commonTerraform.Tag              `tfsdk:"tags"`
+	BackupScheduleTime         types.String                       `tfsdk:"backup_schedule_time"`
+	PrivateLinkServiceAlias    types.String                       `tfsdk:"private_link_service_alias"`
+	PrivateLinkServiceName     types.String                       `tfsdk:"private_link_service_name"`
 
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
@@ -139,7 +143,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 			"connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster connection URI.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomConnection()},
+				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"cluster_name": schema.StringAttribute{
 				MarkdownDescription: "Name of the cluster.",
@@ -168,8 +172,9 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cloud_provider": schema.StringAttribute{
-				Description: "Cloud provider. For example, \"aws\" or \"bah:aws\".",
-				Required:    true,
+				Description:   "Cloud provider. For example, \"aws\" or \"bah:aws\".",
+				Required:      true,
+				PlanModifiers: []planmodifier.String{plan_modifier.CustomClusterCloudProvider()},
 			},
 			"pg_type": schema.StringAttribute{
 				MarkdownDescription: "Postgres type. For example, \"epas\" or \"pgextended\".",
@@ -203,7 +208,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				Required:            true,
 			},
 			"instance_type": schema.StringAttribute{
-				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				MarkdownDescription: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Required:            true,
 			},
 			"resizing_pvc": schema.ListAttribute{
@@ -270,8 +275,31 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				Optional:      true,
 				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
+			"tags": schema.SetNestedAttribute{
+				Description:   "Assign existing tags or create tags to assign to this resource",
+				Optional:      true,
+				Computed:      true,
+				NestedObject:  ResourceTagNestedObject,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+				// don't use state for unknown as this field is eventually consistent
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
+				Computed:            true,
+				// don't use state for unknown as this field is eventually consistent
+			},
 		},
 	}
+}
+
+// modify plan on at runtime
+func (r *analyticsClusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
 func (r *analyticsClusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -335,7 +363,7 @@ func (r *analyticsClusterResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	// after cluster is in the correct state (healthy/paused) then get the cluster and save into state
-	if err := read(ctx, r.client, &config); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &config); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -375,6 +403,7 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 		CSPAuth:               clusterResource.CspAuth.ValueBoolPointer(),
 		PrivateNetworking:     clusterResource.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: clusterResource.BackupRetentionPeriod.ValueStringPointer(),
+		BackupScheduleTime:    clusterResource.BackupScheduleTime.ValueStringPointer(),
 	}
 
 	cluster.ClusterId = nil
@@ -445,71 +474,82 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 		}
 	}
 
+	cluster.Tags = buildApiReqTags(clusterResource.Tags)
+
 	return cluster, nil
 }
 
-func read(ctx context.Context, client *api.ClusterClient, tfClusterResource *analyticsClusterResourceModel) error {
-	apiCluster, err := client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
-	if err != nil {
-		return err
-	}
-
-	connection, err := client.ConnectionString(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
+func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClusterResource *analyticsClusterResourceModel) error {
+	responseCluster, err := client.Read(ctx, tfClusterResource.ProjectId, *tfClusterResource.ClusterId)
 	if err != nil {
 		return err
 	}
 
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
-	tfClusterResource.ClusterId = apiCluster.ClusterId
-	tfClusterResource.ClusterName = types.StringPointerValue(apiCluster.ClusterName)
-	tfClusterResource.Phase = apiCluster.Phase
-	tfClusterResource.CloudProvider = types.StringValue(apiCluster.Provider.CloudProviderId)
-	tfClusterResource.Region = types.StringValue(apiCluster.Region.Id)
-	tfClusterResource.InstanceType = types.StringValue(apiCluster.InstanceType.InstanceTypeId)
-	tfClusterResource.ResizingPvc = StringSliceToList(apiCluster.ResizingPvc)
-	tfClusterResource.ConnectionUri = types.StringPointerValue(&connection.PgUri)
-	tfClusterResource.CspAuth = types.BoolPointerValue(apiCluster.CSPAuth)
-	tfClusterResource.LogsUrl = apiCluster.LogsUrl
-	tfClusterResource.MetricsUrl = apiCluster.MetricsUrl
-	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(apiCluster.BackupRetentionPeriod)
-	tfClusterResource.PgVersion = types.StringValue(apiCluster.PgVersion.PgVersionId)
-	tfClusterResource.PgType = types.StringValue(apiCluster.PgType.PgTypeId)
-	tfClusterResource.PrivateNetworking = types.BoolPointerValue(apiCluster.PrivateNetworking)
+	tfClusterResource.ClusterId = responseCluster.ClusterId
+	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
+	tfClusterResource.Phase = responseCluster.Phase
+	tfClusterResource.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
+	tfClusterResource.Region = types.StringValue(responseCluster.Region.Id)
+	tfClusterResource.InstanceType = types.StringValue(responseCluster.InstanceType.InstanceTypeId)
+	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
+	tfClusterResource.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
+	tfClusterResource.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
+	tfClusterResource.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
+	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	tfClusterResource.LogsUrl = responseCluster.LogsUrl
+	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
+	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
+	tfClusterResource.BackupScheduleTime = types.StringPointerValue(responseCluster.BackupScheduleTime)
+	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
+	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
+	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
 
-	if apiCluster.FirstRecoverabilityPointAt != nil {
-		firstPointAt := apiCluster.FirstRecoverabilityPointAt.String()
+	if responseCluster.FirstRecoverabilityPointAt != nil {
+		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
 		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
 	}
 
 	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := apiCluster.AllowedIpRanges; allowedIpRanges != nil {
+	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
 		for _, ipRange := range *allowedIpRanges {
+			description := ipRange.Description
+
+			// if cidr block is 0.0.0.0/0 then set description to empty string
+			// setting private networking and leaving allowed ip ranges as empty will return
+			// cidr block as 0.0.0.0/0 and description as "To allow all access"
+			// so we need to set description to empty string to keep it consistent with the tf resource
+			if ipRange.CidrBlock == "0.0.0.0/0" {
+				description = ""
+			}
 			tfClusterResource.AllowedIpRanges = append(tfClusterResource.AllowedIpRanges, AllowedIpRangesResourceModel{
 				CidrBlock:   ipRange.CidrBlock,
-				Description: types.StringValue(ipRange.Description),
+				Description: types.StringValue(description),
 			})
 		}
 	}
 
-	if pt := apiCluster.CreatedAt; pt != nil {
+	if pt := responseCluster.CreatedAt; pt != nil {
 		tfClusterResource.CreatedAt = types.StringValue(pt.String())
 	}
 
-	if apiCluster.MaintenanceWindow != nil {
+	if responseCluster.MaintenanceWindow != nil {
 		tfClusterResource.MaintenanceWindow = &commonTerraform.MaintenanceWindow{
-			IsEnabled: apiCluster.MaintenanceWindow.IsEnabled,
-			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*apiCluster.MaintenanceWindow.StartDay))),
-			StartTime: types.StringPointerValue(apiCluster.MaintenanceWindow.StartTime),
+			IsEnabled: responseCluster.MaintenanceWindow.IsEnabled,
+			StartDay:  types.Int64PointerValue(utils.ToPointer(int64(*responseCluster.MaintenanceWindow.StartDay))),
+			StartTime: types.StringPointerValue(responseCluster.MaintenanceWindow.StartTime),
 		}
 	}
 
-	if apiCluster.PeAllowedPrincipalIds != nil {
-		tfClusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&apiCluster.PeAllowedPrincipalIds))
+	if responseCluster.PeAllowedPrincipalIds != nil {
+		tfClusterResource.PeAllowedPrincipalIds = StringSliceToSet(utils.ToValue(&responseCluster.PeAllowedPrincipalIds))
 	}
 
-	if apiCluster.ServiceAccountIds != nil {
-		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&apiCluster.ServiceAccountIds))
+	if responseCluster.ServiceAccountIds != nil {
+		tfClusterResource.ServiceAccountIds = StringSliceToSet(utils.ToValue(&responseCluster.ServiceAccountIds))
 	}
+
+	buildTfRsrcTagsAs(&tfClusterResource.Tags, responseCluster.Tags)
 
 	return nil
 }
@@ -522,7 +562,7 @@ func (r *analyticsClusterResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	if err := read(ctx, r.client, &state); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &state); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}
@@ -628,7 +668,7 @@ func (r *analyticsClusterResource) Update(ctx context.Context, req resource.Upda
 		}
 	}
 
-	if err := read(ctx, r.client, &plan); err != nil {
+	if err := readAnalyticsCluster(ctx, r.client, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading cluster", err.Error())
 		}

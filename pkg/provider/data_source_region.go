@@ -67,6 +67,11 @@ func (r *regionsDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							Description: "Continent that region belongs to.",
 							Computed:    true,
 						},
+						"tags": schema.SetNestedAttribute{
+							Description:  "show tags associated with this resource",
+							Computed:     true,
+							NestedObject: DataSourceTagNestedObject,
+						},
 					},
 				},
 			},

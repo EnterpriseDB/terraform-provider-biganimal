@@ -29,37 +29,23 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
   }
 }
 
 provider "biganimal" {
   # Configuration options
-  ba_bearer_token = <redacted> // See Getting an API Token section for details
   ba_access_key = <redacted> // See Getting an Access Key section for details
 }
 ```
 
-You can also set the `BA_BEARER_TOKEN`, `BA_ACCESS_KEY` environment variables. When those environment variables are present, you
-don't need to add any configuration options to the provider block described above. Only either `BA_BEARER_TOKEN` or `BA_ACCESS_KEY` needs to be set, if both are set then `BA_ACCESS_KEY` will take priority and be used.
+You can also set the `BA_ACCESS_KEY` environment variable. When it is set as env var, you
+don't need to add any configuration options to the provider block described above.
 
 ```bash
-export BA_BEARER_TOKEN=<redacted>
 export BA_ACCESS_KEY=<redacted>
 ```
-
-> [!WARNING]
-> OAuth2 authorization and thus `BA_BEARER_TOKEN` will be deprecated in future Terraform Provider releases. It is recommended to use `BA_ACCESS_KEY` as soon as you can.
-
-### Getting an API Token
-
-In order to access the BigAnimal API, it's necessary to fetch an api bearer token and either export it into your
-environment or add this token to the provider block.
-
-Please
-visit [Using the get-token script](https://www.enterprisedb.com/docs/biganimal/latest/reference/api/#using-the-get-token-script)
-for more details.
 
 ### Getting an Access Key
 

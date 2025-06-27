@@ -58,6 +58,15 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		return nil, err
 	}
 
+	tagKey := d.Get("tags")
+	tags := []commonApi.Tag{}
+	if tagKey != nil {
+		tags, err = utils.StructFromProps[[]commonApi.Tag](tagKey.(*schema.Set).List())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cluster := &Cluster{
 		ReplicaSourceClusterId: SourceId,
 		ClusterType:            ClusterType,
@@ -96,6 +105,7 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		},
 		ReadOnlyConnections: clusterRoConn,
 		Storage:             &storage,
+		Tags:                tags,
 	}
 
 	return cluster, nil
@@ -144,6 +154,7 @@ type Cluster struct {
 	ClusterId                  *string                      `json:"clusterId,omitempty"`
 	ClusterName                *string                      `json:"clusterName,omitempty"`
 	Conditions                 []Condition                  `json:"conditions,omitempty"`
+	Connection                 *ClusterConnection           `json:"connection,omitempty"`
 	CreatedAt                  *PointInTime                 `json:"createdAt,omitempty"`
 	CSPAuth                    *bool                        `json:"cspAuth,omitempty"`
 	DeletedAt                  *PointInTime                 `json:"deletedAt,omitempty"`
@@ -171,10 +182,13 @@ type Cluster struct {
 	SuperuserAccess            *bool                        `json:"superuserAccess,omitempty"`
 	Extensions                 *[]ClusterExtension          `json:"extensions,omitempty"`
 	PgBouncer                  *PgBouncer                   `json:"pgBouncer,omitempty"`
+	Tags                       []commonApi.Tag              `json:"tags,omitempty"`
 	VolumeSnapshot             *bool                        `json:"volumeSnapshotBackup,omitempty"`
 	EncryptionKeyIdReq         *string                      `json:"keyId,omitempty"`
 	EncryptionKeyResp          *EncryptionKey               `json:"encryptionKey,omitempty"`
 	PgIdentity                 *string                      `json:"pgIdentity,omitempty"`
+	BackupScheduleTime         *string                      `json:"scheduleBackup,omitempty"`
+	WalStorage                 *Storage                     `json:"walStorage,omitempty"`
 }
 
 // IsHealthy checks to see if the cluster has the right condition 'biganimal.com/deployed'

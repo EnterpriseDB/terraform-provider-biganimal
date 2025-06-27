@@ -62,3 +62,12 @@ Read-Only:
 - `name` (String) Region name of the region.
 - `region_id` (String) Region ID of the region.
 - `status` (String) Region status of the region.
+- `tags` (Attributes Set) show tags associated with this resource (see [below for nested schema](#nestedatt--regions--tags))
+
+<a id="nestedatt--regions--tags"></a>
+### Nested Schema for `regions.tags`
+
+Read-Only:
+
+- `color` (String)
+- `tag_name` (String)

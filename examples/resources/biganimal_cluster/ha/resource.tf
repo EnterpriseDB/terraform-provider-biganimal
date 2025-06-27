@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "1.0.0"
+      version = "2.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -44,12 +44,13 @@ resource "biganimal_cluster" "ha_cluster" {
   ]
 
   backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "ha"
     nodes = 3
   }
 
-  instance_type = "aws:c5.large"
+  instance_type = "aws:c6i.large"
   password      = resource.random_password.password.result
   pg_config = [
     {
@@ -67,6 +68,12 @@ resource "biganimal_cluster" "ha_cluster" {
     volume_properties = "gp3"
     size              = "4 Gi"
   }
+
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #  }
 
   maintenance_window = {
     is_enabled = true
@@ -100,6 +107,16 @@ resource "biganimal_cluster" "ha_cluster" {
     #    },
     #  ]
   }
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #     color = "blue"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
 
   # transparent_data_encryption = {
   #   key_id = <example_value>

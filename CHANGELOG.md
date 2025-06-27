@@ -1,3 +1,49 @@
+## v2.0.0 (March 18. 2025)
+Features:
+* private_link_service_alias and private_link_service_name field is now supported and displayed in `biganimal_cluster`, `biganimal_analytics` and `biganimal_faraway` resources and data sources.
+
+Enhancements:
+* Deprecated field cluster_architecture.name for `biganimal_cluster` resource and data source is now removed.
+
+Bug Fixes:
+* Tags color validation and assigning tags bug fixes for `biganimal_cluster`, `biganimal_analytics`, `biganimal_faraway`, `biganimal_pgd`, `biganimal_project`, `biganimal_region`, `biganimal_tag` resources and data sources. tag_id field is now removed.
+
+## v1.2.1 (January 06. 2025)
+Bug Fixes:
+* Fixed cluster_architecture.name field for `biganimal_cluster` resource and Data Source. It is now a deprecated and hidden field
+
+## v1.2.0 (November 29. 2024)
+Features:
+* Support for Write-Ahead Logs (WAL) Storage in `biganimal_cluster`, `biganimal_faraway_replica`, and `biganimal_pgd` resources
+* Support for backup schedule time in `biganimal_cluster`, `biganimal_analytics_cluster`, `biganimal_faraway_replica`, and `biganimal_pgd` resources
+
+Enhancements:
+* Validation checks to not allow pe_allowed_principal_ids and service_account_ids if using your cloud account
+
+Bug Fixes:
+* Fixed planned allowed_ip_ranges.description when using private_networking = true
+
+## v1.1.1 (October 29. 2024)
+Bug Fixes:
+* Fixed Data Source `biganimal_cluster` cloud_provider not working with your cloud account
+* Fixed Data Source `biganimal_projects` conversion error
+* Fixed Data Source `biganimal_region` conversion error
+
+## v1.1.0 (October 21. 2024)
+Features:
+* New Resource and Data Source to manage tags: `biganimal_tag`
+* New Resource and Data Source to manage csp tags: `biganimal_csp_tag`
+* Support to assign tags in `biganimal_cluster`, `biganimal_analytics_cluster`, `biganimal_faraway_replica`, `biganimal_pgd`, `biganimal_projects` and `biganimal_region` resources
+* Support for read-only connections in `biganimal_pgd` resources
+* Support service_name in `biganimal_cluster` resources
+
+Enhancements:
+* Updated authentication information in docs
+* Updated AWS examples to use series 6 instance types by default
+
+Bug Fixes:
+* Fixed cluster_architecture.name not computing when changing cluster_architecture.id in `biganimal_cluster` resources
+
 ## v1.0.0 (August 07. 2024)
 Features:
 * Transparent Data Encryption (TDE) is now supported in `biganimal_cluster` and `biganimal_faraway_replica` resources

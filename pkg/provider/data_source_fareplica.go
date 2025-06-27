@@ -90,7 +90,7 @@ func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest
 				Computed:    true,
 			},
 			"instance_type": schema.StringAttribute{
-				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c5.large\" or \"gcp:e2-highcpu-4\".",
+				Description: "Instance type. For example, \"azure:Standard_D2s_v3\", \"aws:c6i.large\" or \"gcp:e2-highcpu-4\".",
 				Computed:    true,
 			},
 			"logs_url": schema.StringAttribute{
@@ -252,6 +252,22 @@ func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest
 			},
 			"transparent_data_encryption_action": schema.StringAttribute{
 				MarkdownDescription: "Transparent data encryption action.",
+				Computed:            true,
+			},
+			"tags": schema.SetNestedAttribute{
+				Description:  "show tags associated with this resource",
+				Computed:     true,
+				Optional:     true,
+				NestedObject: DataSourceTagNestedObject,
+			},
+			"backup_schedule_time": ResourceBackupScheduleTime,
+			"wal_storage":          resourceWal,
+			"private_link_service_alias": schema.StringAttribute{
+				MarkdownDescription: "Private link service alias.",
+				Computed:            true,
+			},
+			"private_link_service_name": schema.StringAttribute{
+				MarkdownDescription: "private link service name.",
 				Computed:            true,
 			},
 		},
