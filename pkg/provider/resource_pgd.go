@@ -178,8 +178,9 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Data group connection URI.",
-							Computed:    true,
+							Description:   "Data group connection URI.",
+							Computed:      true,
+							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the data group.",
@@ -355,7 +356,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"ro_connection_uri": schema.StringAttribute{
 							MarkdownDescription: "Cluster read-only connection URI.",
 							Computed:            true,
-							PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
+							PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",

@@ -134,6 +134,7 @@ func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req pla
 				// if private networking has change then connection string will change
 				if sDg.PrivateNetworking != pDg.PrivateNetworking {
 					pDg.Connection = types.StringUnknown()
+					pDg.RoConnectionUri = types.StringUnknown()
 				}
 
 				newDgPlan = append(newDgPlan, pDg)
