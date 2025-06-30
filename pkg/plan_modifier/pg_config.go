@@ -94,7 +94,7 @@ func (m CustomPGConfigModifier) PlanModifySet(ctx context.Context, req planmodif
 func pgConfigNameExists(s []attr.Value, e string) bool {
 	for _, a := range s {
 		// a_attribute := a.(basetypes.ObjectValue).Attributes()["name"].String()
-		attributeName := strings.Replace(a.(basetypes.ObjectValue).Attributes()["name"].String(), "\"", "", -1)
+		attributeName := strings.ReplaceAll(a.(basetypes.ObjectValue).Attributes()["name"].String(), "\"", "")
 
 		if attributeName == e {
 			return true

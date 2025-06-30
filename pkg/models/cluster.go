@@ -13,11 +13,11 @@ func NewCluster(d *schema.ResourceData) (*Cluster, error) {
 		SourceId             *string
 		clusterPassword      *string
 		ClusterType          *string
-		clusterPgType        *PgType    = new(PgType)
-		clusterPgVersion     *PgVersion = new(PgVersion)
-		clusterCloudProvider *Provider  = new(Provider)
+		clusterPgType        = new(PgType)
+		clusterPgVersion     = new(PgVersion)
+		clusterCloudProvider = new(Provider)
 		clusterRoConn        *bool
-		clusterArchitecture  *Architecture = new(Architecture)
+		clusterArchitecture  = new(Architecture)
 	)
 
 	allowedIpRanges, err := utils.StructFromProps[[]AllowedIpRange](d.Get("allowed_ip_ranges").(*schema.Set).List())
