@@ -7,6 +7,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -59,8 +60,10 @@ var ResourceBackupScheduleTime = resourceSchema.StringAttribute{
 }
 
 var resourceWal = resourceSchema.SingleNestedAttribute{
-	Description: "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
-	Optional:    true,
+	Description:   "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
+	Optional:      true,
+	Computed:      true,
+	PlanModifiers: []planmodifier.Object{plan_modifier.WalStorageForUnknown()},
 	Attributes: map[string]resourceSchema.Attribute{
 		"iops": resourceSchema.StringAttribute{
 			Description:   "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
@@ -131,4 +134,40 @@ func BuildTfRsrcCloudProviders(CloudProviders []models.CloudProvider) types.Set 
 	}
 
 	return basetypes.NewSetValueMust(basetypes.ObjectType{AttrTypes: cloudProviderAttrType}, cloudProvidersValue)
+}
+
+func BuildTfRsrcWalStorage(storage models.Storage) types.Object {
+	walStorageAttrType := map[string]attr.Type{
+		"iops":              types.StringType,
+		"size":              types.StringType,
+		"throughput":        types.StringType,
+		"volume_properties": types.StringType,
+		"volume_type":       types.StringType,
+	}
+
+	walStorageValue := map[string]attr.Value{
+		"iops":              basetypes.NewStringPointerValue(storage.Iops),
+		"size":              basetypes.NewStringPointerValue(storage.Size),
+		"throughput":        basetypes.NewStringPointerValue(storage.Throughput),
+		"volume_properties": basetypes.NewStringPointerValue(storage.VolumePropertiesId),
+		"volume_type":       basetypes.NewStringPointerValue(storage.VolumeTypeId),
+	}
+
+	return basetypes.NewObjectValueMust(walStorageAttrType, walStorageValue)
+}
+
+func BuildRequestWalStorage(tfRsrcWalStorage types.Object) *models.Storage {
+	if tfRsrcWalStorage.IsNull() || tfRsrcWalStorage.IsUnknown() {
+		return nil
+	}
+
+	walStorage := &models.Storage{
+		Iops:               tfRsrcWalStorage.Attributes()["iops"].(types.String).ValueStringPointer(),
+		Size:               tfRsrcWalStorage.Attributes()["size"].(types.String).ValueStringPointer(),
+		Throughput:         tfRsrcWalStorage.Attributes()["throughput"].(types.String).ValueStringPointer(),
+		VolumePropertiesId: tfRsrcWalStorage.Attributes()["volume_properties"].(types.String).ValueStringPointer(),
+		VolumeTypeId:       tfRsrcWalStorage.Attributes()["volume_type"].(types.String).ValueStringPointer(),
+	}
+
+	return walStorage
 }

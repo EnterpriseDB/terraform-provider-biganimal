@@ -83,7 +83,7 @@ type ClusterResourceModel struct {
 	Tags                            []commonTerraform.Tag              `tfsdk:"tags"`
 	ServiceName                     types.String                       `tfsdk:"service_name"`
 	BackupScheduleTime              types.String                       `tfsdk:"backup_schedule_time"`
-	WalStorage                      *StorageResourceModel              `tfsdk:"wal_storage"`
+	WalStorage                      types.Object                       `tfsdk:"wal_storage"`
 	PrivateLinkServiceAlias         types.String                       `tfsdk:"private_link_service_alias"`
 	PrivateLinkServiceName          types.String                       `tfsdk:"private_link_service_name"`
 
@@ -855,13 +855,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
 
 	if responseCluster.WalStorage != nil {
-		tfClusterResource.WalStorage = &StorageResourceModel{
-			VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
-			VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
-			Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
-			Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
-			Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
-		}
+		tfClusterResource.WalStorage = BuildTfRsrcWalStorage(*responseCluster.WalStorage)
 	}
 
 	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
@@ -1113,14 +1107,8 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		VolumeSnapshot:        clusterResource.VolumeSnapshot.ValueBoolPointer(),
 	}
 
-	if clusterResource.WalStorage != nil {
-		cluster.WalStorage = &models.Storage{
-			VolumePropertiesId: clusterResource.WalStorage.VolumeProperties.ValueStringPointer(),
-			VolumeTypeId:       clusterResource.WalStorage.VolumeType.ValueStringPointer(),
-			Iops:               clusterResource.WalStorage.Iops.ValueStringPointer(),
-			Size:               clusterResource.WalStorage.Size.ValueStringPointer(),
-			Throughput:         clusterResource.WalStorage.Throughput.ValueStringPointer(),
-		}
+	if !clusterResource.WalStorage.IsNull() {
+		cluster.WalStorage = BuildRequestWalStorage(clusterResource.WalStorage)
 	}
 
 	cluster.Extensions = &[]models.ClusterExtension{}

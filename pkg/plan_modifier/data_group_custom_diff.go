@@ -126,11 +126,6 @@ func (m CustomDataGroupDiffModifier) PlanModifyList(ctx context.Context, req pla
 				pDg.Storage.Iops = sDg.Storage.Iops
 				pDg.Storage.Throughput = sDg.Storage.Throughput
 
-				if sDg.WalStorage != nil {
-					pDg.WalStorage.Iops = sDg.WalStorage.Iops
-					pDg.WalStorage.Throughput = sDg.WalStorage.Throughput
-				}
-
 				// if private networking has change then connection string will change
 				if sDg.PrivateNetworking != pDg.PrivateNetworking {
 					pDg.Connection = types.StringUnknown()
