@@ -81,6 +81,8 @@ resource "biganimal_pgd" "pgd_cluster" {
       #        volume_type       = "gp3"
       #        volume_properties = "gp3"
       #        size              = "32 Gi"
+      #        #iops             = "100" # optional
+      #        #throughput       = "125" # optional
       #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
