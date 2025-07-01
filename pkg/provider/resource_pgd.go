@@ -711,7 +711,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			providerId := *config.DataGroups[0].Provider.CloudProviderId
 
 			if !wg.Provider.IsNull() && !wg.Provider.IsUnknown() {
-				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
+				providerId = strings.ReplaceAll(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "")
 			}
 
 			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, pgdApi.WitnessGroupParamsBody{
@@ -1001,7 +1001,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			providerId := *plan.DataGroups[0].Provider.CloudProviderId
 
 			if !wg.Provider.IsNull() && !wg.Provider.IsUnknown() {
-				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
+				providerId = strings.ReplaceAll(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "")
 			}
 
 			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, pgdApi.WitnessGroupParamsBody{
@@ -1338,7 +1338,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				}
 
 				// wal storage
-				var walStorage types.Object = BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
+				walStorage := BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
 				if apiRespDgModel.WalStorage != nil {
 					walStorage = BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
 				}
