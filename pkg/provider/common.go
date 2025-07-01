@@ -136,7 +136,7 @@ func BuildTfRsrcCloudProviders(CloudProviders []models.CloudProvider) types.Set 
 	return basetypes.NewSetValueMust(basetypes.ObjectType{AttrTypes: cloudProviderAttrType}, cloudProvidersValue)
 }
 
-func BuildTfRsrcWalStorage(storage models.Storage) types.Object {
+func BuildTfRsrcWalStorage(storage *models.Storage) types.Object {
 	walStorageAttrType := map[string]attr.Type{
 		"iops":              types.StringType,
 		"size":              types.StringType,
@@ -145,12 +145,24 @@ func BuildTfRsrcWalStorage(storage models.Storage) types.Object {
 		"volume_type":       types.StringType,
 	}
 
-	walStorageValue := map[string]attr.Value{
-		"iops":              basetypes.NewStringPointerValue(storage.Iops),
-		"size":              basetypes.NewStringPointerValue(storage.Size),
-		"throughput":        basetypes.NewStringPointerValue(storage.Throughput),
-		"volume_properties": basetypes.NewStringPointerValue(storage.VolumePropertiesId),
-		"volume_type":       basetypes.NewStringPointerValue(storage.VolumeTypeId),
+	var walStorageValue map[string]attr.Value
+
+	if storage != nil {
+		walStorageValue = map[string]attr.Value{
+			"iops":              basetypes.NewStringPointerValue(storage.Iops),
+			"size":              basetypes.NewStringPointerValue(storage.Size),
+			"throughput":        basetypes.NewStringPointerValue(storage.Throughput),
+			"volume_properties": basetypes.NewStringPointerValue(storage.VolumePropertiesId),
+			"volume_type":       basetypes.NewStringPointerValue(storage.VolumeTypeId),
+		}
+	} else {
+		walStorageValue = map[string]attr.Value{
+			"iops":              basetypes.NewStringNull(),
+			"size":              basetypes.NewStringNull(),
+			"throughput":        basetypes.NewStringNull(),
+			"volume_properties": basetypes.NewStringNull(),
+			"volume_type":       basetypes.NewStringNull(),
+		}
 	}
 
 	return basetypes.NewObjectValueMust(walStorageAttrType, walStorageValue)

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 func WalStorageForUnknown() planmodifier.Object {
@@ -26,10 +25,26 @@ func (r WalStorageForUnknownModifier) MarkdownDescription(_ context.Context) str
 
 // PlanModifyObject implements the plan modification logic.
 func (r WalStorageForUnknownModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	state := req.StateValue
-
 	// use state for unknown
 	if resp.PlanValue.IsUnknown() {
-		resp.PlanValue = basetypes.NewObjectValueMust(state.AttributeTypes(ctx), state.Attributes())
+		resp.PlanValue = req.StateValue
+		return
 	}
+
+	// // Do nothing if there is no state value.
+	// if req.StateValue.IsNull() {
+	// 	return
+	// }
+
+	// // Do nothing if there is a known planned value.
+	// if !req.PlanValue.IsUnknown() {
+	// 	return
+	// }
+
+	// // Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
+	// if req.ConfigValue.IsUnknown() {
+	// 	return
+	// }
+
+	// resp.PlanValue = req.StateValue
 }

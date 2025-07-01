@@ -1338,9 +1338,9 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				}
 
 				// wal storage
-				var walStorage types.Object
+				var walStorage types.Object = BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
 				if apiRespDgModel.WalStorage != nil {
-					walStorage = BuildTfRsrcWalStorage(*apiRespDgModel.WalStorage)
+					walStorage = BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
 				}
 
 				// service account ids
