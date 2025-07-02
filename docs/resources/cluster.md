@@ -85,7 +85,7 @@ resource "biganimal_cluster" "single_node_cluster" {
   #    volume_type       = "gp3"
   #    volume_properties = "gp3"
   #    size              = "4 Gi"
-  #    #iops             = "100" # optional
+  #    #iops             = "3000" # optional
   #    #throughput       = "125" # optional
   #  }
 
@@ -227,7 +227,7 @@ resource "biganimal_cluster" "ha_cluster" {
   #    volume_type       = "gp3"
   #    volume_properties = "gp3"
   #    size              = "4 Gi"
-  #    #iops             = "100" # optional
+  #    #iops             = "3000" # optional
   #    #throughput       = "125" # optional
   #  }
 

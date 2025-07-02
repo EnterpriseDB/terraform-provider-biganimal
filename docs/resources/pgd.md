@@ -403,7 +403,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       #        volume_type       = "gp3"
       #        volume_properties = "gp3"
       #        size              = "32 Gi"
-      #        #iops             = "100" # optional
+      #        #iops             = "3000" # optional
       #        #throughput       = "125" # optional
       #      }
       pg_type = {
@@ -524,7 +524,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       #        volume_type       = "gp3"
       #        volume_properties = "gp3"
       #        size              = "32 Gi"
-      #        #iops             = "100" # optional
+      #        #iops             = "3000" # optional
       #        #throughput       = "125" # optional
       #      }
       pg_type = {
@@ -589,7 +589,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       #        volume_type       = "gp3"
       #        volume_properties = "gp3"
       #        size              = "32 Gi"
-      #        #iops             = "100" # optional
+      #        #iops             = "3000" # optional
       #        #throughput       = "125" # optional
       #      }
       pg_type = {
