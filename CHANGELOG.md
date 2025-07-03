@@ -1,4 +1,4 @@
-## v3.0.0 (May 8. 2025)
+## v3.0.0 (July 3. 2025)
 Features:
 * Display tag connected resources in `biganimal_tag` resource.
 
@@ -7,6 +7,7 @@ Enhancements:
 
 Bug Fixes:
 * Tag name change in `biganimal_tag` resource bug fix.
+* Bug fixes for wal_storage.
 * Bug fixes when private networking is true.
 
 ## v2.0.0 (March 18. 2025)
