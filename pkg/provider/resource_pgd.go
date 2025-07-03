@@ -178,8 +178,9 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"connection_uri": schema.StringAttribute{
-							Description: "Data group connection URI.",
-							Computed:    true,
+							Description:   "Data group connection URI.",
+							Computed:      true,
+							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the data group.",
@@ -355,7 +356,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"ro_connection_uri": schema.StringAttribute{
 							MarkdownDescription: "Cluster read-only connection URI.",
 							Computed:            true,
-							PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
+							PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
@@ -660,11 +661,6 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 
 		storage := buildRequestStorage(*v.Storage)
 
-		var walStorage *models.Storage
-		if v.WalStorage != nil {
-			walStorage = buildRequestStorage(*v.WalStorage)
-		}
-
 		if v.PgConfig == nil {
 			v.PgConfig = &[]models.KeyValue{}
 		}
@@ -704,7 +700,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
 			ReadOnlyConnections:   v.ReadOnlyConnections,
-			WalStorage:            walStorage,
+			WalStorage:            BuildRequestWalStorage(v.WalStorage),
 		}
 
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
@@ -715,7 +711,7 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			providerId := *config.DataGroups[0].Provider.CloudProviderId
 
 			if !wg.Provider.IsNull() && !wg.Provider.IsUnknown() {
-				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
+				providerId = strings.ReplaceAll(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "")
 			}
 
 			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, config.ProjectId, pgdApi.WitnessGroupParamsBody{
@@ -955,11 +951,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 	for _, v := range plan.DataGroups {
 		storage := buildRequestStorage(*v.Storage)
 
-		var walStorage *models.Storage
-		if v.WalStorage != nil {
-			walStorage = buildRequestStorage(*v.WalStorage)
-		}
-
 		groupId := v.GroupId.ValueStringPointer()
 		if v.GroupId.IsUnknown() {
 			groupId = nil
@@ -985,7 +976,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			MaintenanceWindow:     v.MaintenanceWindow,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
-			WalStorage:            walStorage,
+			WalStorage:            BuildRequestWalStorage(v.WalStorage),
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
@@ -1010,7 +1001,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			providerId := *plan.DataGroups[0].Provider.CloudProviderId
 
 			if !wg.Provider.IsNull() && !wg.Provider.IsUnknown() {
-				providerId = strings.Replace(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "", -1)
+				providerId = strings.ReplaceAll(wg.Provider.Attributes()["cloud_provider_id"].String(), "\"", "")
 			}
 
 			calWitnessResp, err := p.client.CalculateWitnessGroupParams(ctx, plan.ProjectId, pgdApi.WitnessGroupParamsBody{
@@ -1347,15 +1338,9 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 				}
 
 				// wal storage
-				var walStorage *terraform.Storage
+				walStorage := BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
 				if apiRespDgModel.WalStorage != nil {
-					walStorage = &terraform.Storage{
-						Size:               types.StringPointerValue(apiRespDgModel.WalStorage.Size),
-						VolumePropertiesId: types.StringPointerValue(apiRespDgModel.WalStorage.VolumePropertiesId),
-						VolumeTypeId:       types.StringPointerValue(apiRespDgModel.WalStorage.VolumeTypeId),
-						Iops:               types.StringPointerValue(apiRespDgModel.WalStorage.Iops),
-						Throughput:         types.StringPointerValue(apiRespDgModel.WalStorage.Throughput),
-					}
+					walStorage = BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
 				}
 
 				// service account ids

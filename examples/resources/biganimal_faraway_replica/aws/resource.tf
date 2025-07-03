@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "2.0.0"
+      version = "3.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -71,8 +71,10 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   #    volume_type       = "gp3"
   #    volume_properties = "gp3"
   #    size              = "4 Gi"
+  #    #iops             = "3000" # optional
+  #    #throughput       = "125" # optional
   #  }
-  private_networking = false
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
   region             = "ap-south-1"
 
   #tags = [

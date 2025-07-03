@@ -32,7 +32,15 @@ func (api API) doRequest(ctx context.Context, httpMethod, path string, body io.R
 		return nil, err
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			tflog.Error(ctx, "Error closing response body", map[string]interface{}{
+				"error": err.Error(),
+			})
+		}
+	}()
+
 	out, _ := io.ReadAll(res.Body)
 
 	err = getStatusError(res.StatusCode, out)

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "2.0.0"
+      version = "3.0.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -81,6 +81,8 @@ resource "biganimal_pgd" "pgd_cluster" {
       #        volume_type       = "gp3"
       #        volume_properties = "gp3"
       #        size              = "32 Gi"
+      #        #iops             = "3000" # optional
+      #        #throughput       = "125" # optional
       #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
@@ -88,7 +90,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       pg_version = {
         pg_version_id = "15"
       }
-      private_networking = false
+      private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
       cloud_provider = {
         cloud_provider_id = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
       }
@@ -144,6 +146,8 @@ resource "biganimal_pgd" "pgd_cluster" {
       #        volume_type       = "gp3"
       #        volume_properties = "gp3"
       #        size              = "32 Gi"
+      #        #iops             = "3000" # optional
+      #        #throughput       = "125" # optional
       #      }
       pg_type = {
         pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"

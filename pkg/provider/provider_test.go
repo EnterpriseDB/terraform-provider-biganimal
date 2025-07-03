@@ -25,7 +25,6 @@ func init() {
 	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 		"biganimal": providerserver.NewProtocol6WithError(NewFrameworkProvider("test")()),
 	}
-
 }
 
 // The following check can be added as a Resource specific PreCheck during Acceptance Tests
@@ -41,7 +40,8 @@ func testAccResourcePreCheck(t *testing.T, resource_type string, checklist []str
 	t.Logf("Checking env variables for the %s resource", resource_type)
 	for _, envVar := range checklist {
 		if os.Getenv(envVar) == "" {
-			t.Fatalf(fmt.Sprintf("%s must be set to run the %s acceptance tests", envVar, resource_type))
+			errMsg := fmt.Sprintf("%s must be set to run the %s acceptance tests", envVar, resource_type)
+			t.Fatal(errMsg)
 		}
 	}
 }
