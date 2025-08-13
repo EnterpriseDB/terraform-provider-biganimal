@@ -3,8 +3,8 @@
 page_title: "biganimal_azure_connection Resource - terraform-provider-biganimal"
 subcategory: ""
 description: |-
-  The azureconnection resource is used to make connection between your project and Azure.
-  To obtain the necessary input parameters, please refer to [Connect CSP](https://www.enterprisedb.com/docs/biganimal/latest/gettingstarted/02connectingtoyourcloud/connecting_azure/).
+  The azure_connection resource is used to make connection between your project and Azure.
+  To obtain the necessary input parameters, please refer to Connect CSP https://www.enterprisedb.com/docs/biganimal/latest/getting_started/02_connecting_to_your_cloud/connecting_azure/.
 ---
 
 # biganimal_azure_connection (Resource)
@@ -19,7 +19,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "3.0.0"
+      version = "3.0.1"
     }
   }
 }
