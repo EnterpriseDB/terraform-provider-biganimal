@@ -722,7 +722,7 @@ func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResour
 		return nil, nil, err
 	}
 
-	if sourceCluster.Provider.CloudProviderId == "bah:aws" || sourceCluster.Provider.CloudProviderId == "bah:azure" {
+	if strings.Contains(sourceCluster.Provider.CloudProviderId, "bah") {
 		// If there is an existing Principal Account Id for that Region, use that one.
 		pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
 		if err != nil {
@@ -742,24 +742,24 @@ func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResour
 
 			principalIds = utils.ToPointer(plist)
 		}
-	}
 
-	if sourceCluster.Provider.CloudProviderId == "bah:gcp" {
-		// If there is an existing Service Account Id for that Region, use that one.
-		sids, _ := r.client.GetServiceAccountIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
-		svAccIds = utils.ToPointer(sids.Data)
+		if sourceCluster.Provider.CloudProviderId == "bah:gcp" {
+			// If there is an existing Service Account Id for that Region, use that one.
+			sids, _ := r.client.GetServiceAccountIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
+			svAccIds = utils.ToPointer(sids.Data)
 
-		// If there is no existing value, user should provide one
-		if svAccIds != nil && len(*svAccIds) == 0 {
-			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
-			// while encoding JSON objects.
-			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
-			slist := []string{}
-			for _, saId := range fAReplicaResourceModel.ServiceAccountIds.Elements() {
-				slist = append(slist, saId.(basetypes.StringValue).ValueString())
+			// If there is no existing value, user should provide one
+			if svAccIds != nil && len(*svAccIds) == 0 {
+				// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+				// while encoding JSON objects.
+				// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+				slist := []string{}
+				for _, saId := range fAReplicaResourceModel.ServiceAccountIds.Elements() {
+					slist = append(slist, saId.(basetypes.StringValue).ValueString())
+				}
+
+				svAccIds = utils.ToPointer(slist)
 			}
-
-			svAccIds = utils.ToPointer(slist)
 		}
 	}
 	return
