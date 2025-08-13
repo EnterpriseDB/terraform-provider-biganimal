@@ -1,6 +1,6 @@
-## v3.0.1 (August 8. 2025)
+## v3.0.1 (August 13. 2025)
 Bug Fixes:
-* pe_allowed_principal_ids bug fix to skip principal ids check for your cloud account in `biganimal_faraway_replica` resource
+* pe_allowed_principal_ids bug fix for `biganimal_faraway_replica` resource
 
 ## v3.0.0 (July 3. 2025)
 Features:
