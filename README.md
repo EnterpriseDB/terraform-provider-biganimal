@@ -49,9 +49,7 @@ export BA_ACCESS_KEY=<redacted>
 
 ### Getting an Access Key
 
-You can use an access key to access the BigAnimal API. The advantage of an access key compared to an API token is that it can be set to have a long expiry date which will aide automation.
-
-To get an access key or manage access keys Log in to https://portal.biganimal.com/, hover over your username and from the drop down click "Access Keys".
+Plese refer to https://www.enterprisedb.com/docs/biganimal/latest/reference/access_key/
 
 ## Development
 

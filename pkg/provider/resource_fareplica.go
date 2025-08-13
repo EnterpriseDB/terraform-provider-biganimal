@@ -722,24 +722,26 @@ func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResour
 		return nil, nil, err
 	}
 
-	// If there is an existing Principal Account Id for that Region, use that one.
-	pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
-	if err != nil {
-		return nil, nil, err
-	}
-	principalIds = utils.ToPointer(pids.Data)
-
-	// If there is no existing value, user should provide one
-	if principalIds != nil && len(*principalIds) == 0 {
-		// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
-		// while encoding JSON objects
-		// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
-		plist := []string{}
-		for _, peId := range fAReplicaResourceModel.PeAllowedPrincipalIds.Elements() {
-			plist = append(plist, peId.(basetypes.StringValue).ValueString())
+	if sourceCluster.Provider.CloudProviderId == "bah:aws" || sourceCluster.Provider.CloudProviderId == "bah:azure" {
+		// If there is an existing Principal Account Id for that Region, use that one.
+		pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
+		if err != nil {
+			return nil, nil, err
 		}
+		principalIds = utils.ToPointer(pids.Data)
 
-		principalIds = utils.ToPointer(plist)
+		// If there is no existing value, user should provide one
+		if principalIds != nil && len(*principalIds) == 0 {
+			// Here, we prefer to create a non-nil zero length slice, because we need empty JSON array
+			// while encoding JSON objects
+			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
+			plist := []string{}
+			for _, peId := range fAReplicaResourceModel.PeAllowedPrincipalIds.Elements() {
+				plist = append(plist, peId.(basetypes.StringValue).ValueString())
+			}
+
+			principalIds = utils.ToPointer(plist)
+		}
 	}
 
 	if sourceCluster.Provider.CloudProviderId == "bah:gcp" {
