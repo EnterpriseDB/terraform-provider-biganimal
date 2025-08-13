@@ -3,8 +3,8 @@
 page_title: "biganimal_aws_connection Resource - terraform-provider-biganimal"
 subcategory: ""
 description: |-
-  The awsconnection resource is used to make connection between your project and AWS.
-  o obtain the necessary input parameters, please refer to [Connect CSP](https://www.enterprisedb.com/docs/biganimal/latest/gettingstarted/02connectingtoyourcloud/connecting_aws/).
+  The aws_connection resource is used to make connection between your project and AWS.
+  o obtain the necessary input parameters, please refer to Connect CSP https://www.enterprisedb.com/docs/biganimal/latest/getting_started/02_connecting_to_your_cloud/connecting_aws/.
 ---
 
 # biganimal_aws_connection (Resource)
@@ -19,7 +19,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "3.0.0"
+      version = "3.0.1"
     }
   }
 }
