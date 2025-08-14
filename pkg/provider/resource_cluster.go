@@ -340,9 +340,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"faraway_replica_ids": schema.SetAttribute{
-				Computed:      true,
-				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
-				ElementType:   types.StringType,
+				Computed:    true,
+				ElementType: types.StringType,
 			},
 			"pg_version": schema.StringAttribute{
 				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
