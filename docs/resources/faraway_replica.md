@@ -14,7 +14,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "2.0.0"
+      version = "3.0.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -126,13 +126,12 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   #    volume_properties = "P1"
   #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   #  }
-  private_networking = false
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
   region             = "centralindia"
 
   #tags = [
   #  {
   #     tag_name  = "<ex_tag_name_1>"
-  #     color = "blue"
   #  },
   #  {
   #     tag_name  = "<ex_tag_name_2>"
@@ -235,7 +234,7 @@ Required:
 
 - `tag_name` (String)
 
-Optional:
+Read-Only:
 
 - `color` (String)
 

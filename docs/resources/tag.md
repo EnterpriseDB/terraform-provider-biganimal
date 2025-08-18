@@ -17,7 +17,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "2.0.0"
+      version = "3.0.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -50,6 +50,7 @@ resource "biganimal_tag" "tag" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `tag_resources` (Attributes Set) Tag resources. (see [below for nested schema](#nestedatt--tag_resources))
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -59,6 +60,17 @@ Optional:
 - `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
+
+<a id="nestedatt--tag_resources"></a>
+### Nested Schema for `tag_resources`
+
+Read-Only:
+
+- `project_id` (String) Project ID.
+- `resource_id` (String) Resource ID.
+- `resource_name` (String) Resource name.
+- `resource_type` (String) Resource type.
 
 ## Import
 

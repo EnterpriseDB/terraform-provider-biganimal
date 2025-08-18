@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "2.0.0"
+      version = "3.0.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -77,11 +77,6 @@ resource "biganimal_pgd" "pgd_cluster" {
         volume_properties = "P2"
         size              = "32 Gi"
       }
-      storage = {
-        volume_type       = "azurepremiumstorage"
-        volume_properties = "P2"
-        size              = "32 Gi"
-      }
       #      wal_storage = {
       #        volume_type       = "azurepremiumstorage"
       #        volume_properties = "P2"
@@ -93,7 +88,7 @@ resource "biganimal_pgd" "pgd_cluster" {
       pg_version = {
         pg_version_id = "15"
       }
-      private_networking = false
+      private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
       cloud_provider = {
         cloud_provider_id = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
       }

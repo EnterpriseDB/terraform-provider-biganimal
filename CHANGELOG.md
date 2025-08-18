@@ -1,3 +1,19 @@
+## v3.0.1 (August 13. 2025)
+Bug Fixes:
+* pe_allowed_principal_ids bug fix for `biganimal_faraway_replica` resource
+
+## v3.0.0 (July 3. 2025)
+Features:
+* Display tag connected resources in `biganimal_tag` resource.
+
+Enhancements:
+* Removed tag color from `biganimal_cluster`, `biganimal_analytics`, `biganimal_faraway` and `biganimal_pgd` resources. Tag color can only be updated/changed in `biganimal_tag` resource.
+
+Bug Fixes:
+* Tag name change in `biganimal_tag` resource bug fix.
+* Bug fixes for wal_storage.
+* Bug fixes when private networking is true.
+
 ## v2.0.0 (March 18. 2025)
 Features:
 * private_link_service_alias and private_link_service_name field is now supported and displayed in `biganimal_cluster`, `biganimal_analytics` and `biganimal_faraway` resources and data sources.

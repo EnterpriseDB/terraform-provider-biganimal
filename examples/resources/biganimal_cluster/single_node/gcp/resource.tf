@@ -2,7 +2,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "2.0.0"
+      version = "3.0.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -84,7 +84,7 @@ resource "biganimal_cluster" "single_node_cluster" {
 
   pg_type                = "epas" #valid values ["epas", "pgextended", "postgres]"
   pg_version             = "15"
-  private_networking     = false
+  private_networking     = false     // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
   cloud_provider         = "bah:gcp" // "bah:gpc" uses BigAnimal's cloud account Google Cloud provider, use "gcp" for your cloud account
   read_only_connections  = false
   region                 = "us-east1"

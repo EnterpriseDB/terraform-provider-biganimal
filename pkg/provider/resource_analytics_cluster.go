@@ -448,7 +448,7 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 			// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
 			plist := []string{}
 			for _, peId := range clusterRscPrincipalIds.Elements() {
-				plist = append(plist, strings.Replace(peId.String(), "\"", "", -1))
+				plist = append(plist, strings.ReplaceAll(peId.String(), "\"", ""))
 			}
 
 			cluster.PeAllowedPrincipalIds = utils.ToPointer(plist)
@@ -466,7 +466,7 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 				// For more info, please visit https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices
 				slist := []string{}
 				for _, saId := range clusterRscSvcAcntIds.Elements() {
-					slist = append(slist, strings.Replace(saId.String(), "\"", "", -1))
+					slist = append(slist, strings.ReplaceAll(saId.String(), "\"", ""))
 				}
 
 				cluster.ServiceAccountIds = utils.ToPointer(slist)

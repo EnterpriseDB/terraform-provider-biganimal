@@ -86,7 +86,7 @@ Required:
 
 - `tag_name` (String)
 
-Optional:
+Read-Only:
 
 - `color` (String)
 
