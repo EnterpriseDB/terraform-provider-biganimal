@@ -29,12 +29,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-type FAReplicaResource struct {
+var (
+	_ resource.Resource              = &FAReplicaPromoteResource{}
+	_ resource.ResourceWithMoveState = &FAReplicaPromoteResource{}
+)
+
+type FAReplicaPromoteResource struct {
 	client *api.ClusterClient
 }
 
-type FAReplicaResourceModel struct {
+type FAReplicaPromoteResourceModel struct {
 	ID                              types.String                      `tfsdk:"id"`
+	Password                        types.String                      `tfsdk:"password"`
 	CspAuth                         types.Bool                        `tfsdk:"csp_auth"`
 	Region                          types.String                      `tfsdk:"region"`
 	InstanceType                    types.String                      `tfsdk:"instance_type"`
@@ -73,31 +79,31 @@ type FAReplicaResourceModel struct {
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
-func (c FAReplicaResourceModel) projectId() string {
+func (c FAReplicaPromoteResourceModel) projectId() string {
 	return c.ProjectId
 }
 
-func (c FAReplicaResourceModel) clusterId() string {
+func (c FAReplicaPromoteResourceModel) clusterId() string {
 	return *c.ClusterId
 }
 
-func (c *FAReplicaResourceModel) setPhase(phase string) {
+func (c *FAReplicaPromoteResourceModel) setPhase(phase string) {
 	c.Phase = types.StringValue(phase)
 }
 
-func (c *FAReplicaResourceModel) setPgIdentity(pgIdentity string) {
+func (c *FAReplicaPromoteResourceModel) setPgIdentity(pgIdentity string) {
 	c.PgIdentity = types.StringValue(pgIdentity)
 }
 
-func (c *FAReplicaResourceModel) setCloudProvider(cloudProvider string) {
+func (c *FAReplicaPromoteResourceModel) setCloudProvider(cloudProvider string) {
 	c.CloudProvider = types.StringValue(cloudProvider)
 }
 
-func NewFAReplicaResource() resource.Resource {
-	return &FAReplicaResource{}
+func NewFAReplicaPromoteResource() resource.Resource {
+	return &FAReplicaPromoteResource{}
 }
 
-func fAReplicaSchema(ctx context.Context) *schema.Schema {
+func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 	return &schema.Schema{
 		MarkdownDescription: "The faraway replica resource is used to manage cluster faraway-replicas on different active regions in the cloud. See [Managing replicas](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_replicas/) for more details.",
 		Blocks: map[string]schema.Block{
@@ -320,10 +326,10 @@ func fAReplicaSchema(ctx context.Context) *schema.Schema {
 			},
 			"cluster_architecture": schema.SingleNestedAttribute{
 				Description: "Cluster architecture.",
-				Computed:    true,
+				Required:    true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Description:   "Cluster architecture ID.",
+						Description:   "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 						Required:      true,
 						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
@@ -333,7 +339,6 @@ func fAReplicaSchema(ctx context.Context) *schema.Schema {
 						PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()},
 					},
 				},
-				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 			},
 			"pg_version": schema.StringAttribute{
 				MarkdownDescription: "Postgres version. See [Supported Postgres types and versions](https://www.enterprisedb.com/docs/biganimal/latest/overview/05_database_version_policy/#supported-postgres-types-and-versions) for supported Postgres types and versions.",
@@ -401,28 +406,30 @@ func fAReplicaSchema(ctx context.Context) *schema.Schema {
 				MarkdownDescription: "Private link service alias.",
 				Computed:            true,
 				// don't use state for unknown as this field is eventually consistent
-
 			},
 			"private_link_service_name": schema.StringAttribute{
 				MarkdownDescription: "private link service name.",
 				Computed:            true,
 				// don't use state for unknown as this field is eventually consistent
-
+			},
+			"password": schema.StringAttribute{
+				MarkdownDescription: "Password for the user edb_admin. It must be 12 characters or more.",
+				Required:            true,
 			},
 		},
 	}
 }
 
-func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = *fAReplicaSchema(ctx)
+func (r *FAReplicaPromoteResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = *fAReplicaPromoteSchema(ctx)
 }
 
 // modify plan on at runtime
-func (r *FAReplicaResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (r *FAReplicaPromoteResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	ValidateTags(ctx, r.client.TagClient(), req, resp)
 }
 
-func (r *FAReplicaResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *FAReplicaPromoteResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -430,19 +437,19 @@ func (r *FAReplicaResource) Configure(ctx context.Context, req resource.Configur
 	r.client = req.ProviderData.(*api.API).ClusterClient()
 }
 
-func (r *FAReplicaResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_faraway_replica"
+func (r *FAReplicaPromoteResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_faraway_replica_promote"
 }
 
-func (r *FAReplicaResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var config FAReplicaResourceModel
+func (r *FAReplicaPromoteResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var config FAReplicaPromoteResourceModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	clusterModel, err := r.generateGenericFAReplicaModel(ctx, config)
+	clusterModel, err := r.generateGenericFAReplicaPromoteModel(ctx, config)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error generating faraway-replica create request", err.Error())
@@ -481,15 +488,15 @@ func (r *FAReplicaResource) Create(ctx context.Context, req resource.CreateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
-func (r *FAReplicaResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state FAReplicaResourceModel
+func (r *FAReplicaPromoteResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state FAReplicaPromoteResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if err := readFAReplica(ctx, r.client, &state); err != nil {
+	if err := readFAReplicaPromote(ctx, r.client, &state); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading faraway-replica", err.Error())
 		}
@@ -499,8 +506,8 @@ func (r *FAReplicaResource) Read(ctx context.Context, req resource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan FAReplicaResourceModel
+func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan FAReplicaPromoteResourceModel
 
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
 	resp.Diagnostics.Append(diagnostics...)
@@ -511,14 +518,14 @@ func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	var state FAReplicaResourceModel
+	var state FAReplicaPromoteResourceModel
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	fAReplicaModel, err := r.makeFaReplicaForUpdate(ctx, plan)
+	fAReplicaModel, err := r.makeFaReplicaPromoteForUpdate(ctx, plan)
 	if err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error updating faraway replica", err.Error())
@@ -550,7 +557,7 @@ func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateReque
 		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(plan.CloudProvider.ValueString()))
 	}
 
-	if err := readFAReplica(ctx, r.client, &plan); err != nil {
+	if err := readFAReplicaPromote(ctx, r.client, &plan); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
 			resp.Diagnostics.AddError("Error reading faraway replica", err.Error())
 		}
@@ -560,8 +567,8 @@ func (r *FAReplicaResource) Update(ctx context.Context, req resource.UpdateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (r *FAReplicaResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state FAReplicaResourceModel
+func (r *FAReplicaPromoteResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state FAReplicaPromoteResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -577,7 +584,7 @@ func (r *FAReplicaResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 }
 
-func (r FAReplicaResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r FAReplicaPromoteResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, "/")
 	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
@@ -591,7 +598,57 @@ func (r FAReplicaResource) ImportState(ctx context.Context, req resource.ImportS
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
-func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaResourceModel *FAReplicaResourceModel) error {
+func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.StateMover {
+	fAReplicaSchema := fAReplicaSchema(ctx)
+	return []resource.StateMover{
+		{
+			SourceSchema: fAReplicaSchema,
+			StateMover: func(ctx context.Context, req resource.MoveStateRequest, resp *resource.MoveStateResponse) {
+				// Always verify the expected source before working with the data.
+				if req.SourceTypeName != "biganimal_faraway_replica" {
+					return
+				}
+
+				if req.SourceSchemaVersion != 0 {
+					return
+				}
+
+				// This only checks the provider address namespace and type
+				// since practitioners may use differing hostnames for the same
+				// provider, such as a network mirror. If necessary though, the
+				// hostname can be used for disambiguation.
+				if !strings.HasSuffix(req.SourceProviderAddress, "registry.terraform.io/enterprisedb/biganimal") {
+					return
+				}
+
+				var sourceStateData FAReplicaResourceModel
+
+				resp.Diagnostics.Append(req.SourceState.Get(ctx, &sourceStateData)...)
+
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				targetStateData := &FAReplicaPromoteResourceModel{}
+				CopyObjectJson(sourceStateData, targetStateData)
+				// have to manually copy over computed values
+				targetStateData.Timeouts = sourceStateData.Timeouts
+				targetStateData.ResizingPvc = sourceStateData.ResizingPvc
+				targetStateData.PeAllowedPrincipalIds = sourceStateData.PeAllowedPrincipalIds
+				targetStateData.ServiceAccountIds = sourceStateData.ServiceAccountIds
+
+				// targetStateData := FAReplicaPromoteResourceModel{
+				// 	ID:       sourceStateData.ID,
+				// 	Timeouts: sourceStateData.Timeouts,
+				// }
+
+				resp.Diagnostics.Append(resp.TargetState.Set(ctx, targetStateData)...)
+			},
+		},
+	}
+}
+
+func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fAReplicaResourceModel *FAReplicaPromoteResourceModel) error {
 	responseCluster, err := client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId)
 	if err != nil {
 		return err
@@ -715,7 +772,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	return nil
 }
 
-func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaResourceModel) (svAccIds, principalIds *[]string, err error) {
+func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (svAccIds, principalIds *[]string, err error) {
 	sourceCluster, err := r.client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ReplicaSourceClusterId)
 	if err != nil {
 		return nil, nil, err
@@ -764,12 +821,17 @@ func (r *FAReplicaResource) buildRequestBah(ctx context.Context, fAReplicaResour
 	return
 }
 
-func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, fAReplicaResourceModel FAReplicaResourceModel) (models.Cluster, error) {
+func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ReplicaSourceClusterId: fAReplicaResourceModel.ReplicaSourceClusterId,
-		ClusterName:            fAReplicaResourceModel.ClusterName.ValueStringPointer(),
-		ClusterType:            utils.ToPointer("faraway_replica"),
-		Region:                 &models.Region{Id: fAReplicaResourceModel.Region.ValueString()},
+		ClusterArchitecture: &models.Architecture{
+			ClusterArchitectureId: fAReplicaResourceModel.ClusterArchitecture.Id,
+			Nodes:                 fAReplicaResourceModel.ClusterArchitecture.Nodes,
+		},
+		Password:    fAReplicaResourceModel.Password.ValueStringPointer(),
+		ClusterName: fAReplicaResourceModel.ClusterName.ValueStringPointer(),
+		ClusterType: utils.ToPointer("cluster"),
+		Region:      &models.Region{Id: fAReplicaResourceModel.Region.ValueString()},
 		Storage: &models.Storage{
 			VolumePropertiesId: fAReplicaResourceModel.Storage.VolumeProperties.ValueStringPointer(),
 			VolumeTypeId:       fAReplicaResourceModel.Storage.VolumeType.ValueStringPointer(),
@@ -838,8 +900,8 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 	return cluster, nil
 }
 
-func (r *FAReplicaResource) makeFaReplicaForUpdate(ctx context.Context, fAReplicaResourceModel FAReplicaResourceModel) (*models.Cluster, error) {
-	fAReplicaModel, err := r.generateGenericFAReplicaModel(ctx, fAReplicaResourceModel)
+func (r *FAReplicaPromoteResource) makeFaReplicaPromoteForUpdate(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (*models.Cluster, error) {
+	fAReplicaModel, err := r.generateGenericFAReplicaPromoteModel(ctx, fAReplicaResourceModel)
 	if err != nil {
 		return nil, err
 	}
