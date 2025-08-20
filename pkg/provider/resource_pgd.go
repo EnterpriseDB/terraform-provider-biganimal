@@ -201,9 +201,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							Description: "Resizing PVC.",
 							Computed:    true,
 							ElementType: types.StringType,
-							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.UseStateForUnknown(),
-							},
 						},
 						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
