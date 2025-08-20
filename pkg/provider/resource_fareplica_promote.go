@@ -600,7 +600,15 @@ func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.Sta
 				}
 
 				targetStateData := &FAReplicaPromoteResourceModel{}
-				CopyObjectJson(sourceStateData, targetStateData)
+				err := CopyObjectJson(sourceStateData, targetStateData)
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error copying state data",
+						fmt.Sprintf("An error occurred while copying state data: %s", err.Error()),
+					)
+					return
+				}
+
 				// have to manually copy over computed values
 				targetStateData.Timeouts = sourceStateData.Timeouts
 				targetStateData.ResizingPvc = sourceStateData.ResizingPvc
