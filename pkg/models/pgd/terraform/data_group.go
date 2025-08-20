@@ -15,7 +15,7 @@ type DataGroup struct {
 	ClusterType             types.String              `tfsdk:"cluster_type"`
 	Connection              types.String              `tfsdk:"connection_uri"`
 	CreatedAt               types.String              `tfsdk:"created_at"`
-	CspAuth                 *bool                     `tfsdk:"csp_auth"`
+	CspAuth                 bool                      `tfsdk:"csp_auth"`
 	InstanceType            *api.InstanceType         `tfsdk:"instance_type"`
 	LogsUrl                 types.String              `tfsdk:"logs_url"`
 	MetricsUrl              types.String              `tfsdk:"metrics_url"`
@@ -23,7 +23,7 @@ type DataGroup struct {
 	PgType                  *api.PgType               `tfsdk:"pg_type"`
 	PgVersion               *api.PgVersion            `tfsdk:"pg_version"`
 	Phase                   types.String              `tfsdk:"phase"`
-	PrivateNetworking       *bool                     `tfsdk:"private_networking"`
+	PrivateNetworking       bool                      `tfsdk:"private_networking"`
 	Provider                *api.CloudProvider        `tfsdk:"cloud_provider"`
 	Region                  *api.Region               `tfsdk:"region"`
 	ResizingPvc             types.Set                 `tfsdk:"resizing_pvc"`
@@ -32,7 +32,7 @@ type DataGroup struct {
 	ServiceAccountIds       types.Set                 `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds   types.Set                 `tfsdk:"pe_allowed_principal_ids"`
 	RoConnectionUri         types.String              `tfsdk:"ro_connection_uri"`
-	ReadOnlyConnections     *bool                     `tfsdk:"read_only_connections"`
+	ReadOnlyConnections     bool                      `tfsdk:"read_only_connections"`
 	BackupScheduleTime      types.String              `tfsdk:"backup_schedule_time"`
 	WalStorage              types.Object              `tfsdk:"wal_storage"`
 	PrivateLinkServiceAlias types.String              `tfsdk:"private_link_service_alias"`
