@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
@@ -40,6 +39,7 @@ type FAReplicaPromoteResource struct {
 
 type FAReplicaPromoteResourceModel struct {
 	ID                              types.String                      `tfsdk:"id"`
+	ReplicaSourceClusterId          types.String                      `tfsdk:"source_cluster_id"`
 	Password                        types.String                      `tfsdk:"password"`
 	CspAuth                         types.Bool                        `tfsdk:"csp_auth"`
 	Region                          types.String                      `tfsdk:"region"`
@@ -47,7 +47,6 @@ type FAReplicaPromoteResourceModel struct {
 	ResizingPvc                     types.List                        `tfsdk:"resizing_pvc"`
 	MetricsUrl                      *string                           `tfsdk:"metrics_url"`
 	ClusterId                       *string                           `tfsdk:"cluster_id"`
-	ReplicaSourceClusterId          *string                           `tfsdk:"source_cluster_id"`
 	Phase                           types.String                      `tfsdk:"phase"`
 	ConnectionUri                   types.String                      `tfsdk:"connection_uri"`
 	ClusterName                     types.String                      `tfsdk:"cluster_name"`
@@ -62,7 +61,7 @@ type FAReplicaPromoteResourceModel struct {
 	ServiceAccountIds               types.Set                         `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds           types.Set                         `tfsdk:"pe_allowed_principal_ids"`
 	ClusterArchitecture             *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
-	ClusterType                     *string                           `tfsdk:"cluster_type"`
+	ClusterType                     types.String                      `tfsdk:"cluster_type"`
 	PgType                          types.String                      `tfsdk:"pg_type"`
 	PgVersion                       types.String                      `tfsdk:"pg_version"`
 	CloudProvider                   types.String                      `tfsdk:"cloud_provider"`
@@ -117,6 +116,10 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"source_cluster_id": schema.StringAttribute{
+				Description: "Source cluster ID.",
+				Computed:    true,
+			},
 			"allowed_ip_ranges": schema.SetNestedAttribute{
 				Description: "Allowed IP ranges.",
 				Optional:    true,
@@ -154,14 +157,6 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"source_cluster_id": schema.StringAttribute{
-				Description: "Source cluster ID.",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-
 			"cluster_name": schema.StringAttribute{
 				Description: "Name of the faraway replica cluster.",
 				Required:    true,
@@ -207,9 +202,6 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 			"connection_uri": schema.StringAttribute{
 				Description: "Cluster connection URI.",
 				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"pg_config": schema.SetNestedAttribute{
 				Description: "Database configuration parameters.",
@@ -263,9 +255,6 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 				Description: "Resizing PVC.",
 				Computed:    true,
 				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"storage": schema.SingleNestedAttribute{
 				Description: "Storage.",
@@ -322,7 +311,6 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 			"cluster_type": schema.StringAttribute{
 				MarkdownDescription: "Type of the cluster. For example, \"cluster\" for biganimal_cluster resources, or \"faraway_replica\" for biganimal_faraway_replica resources.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"cluster_architecture": schema.SingleNestedAttribute{
 				Description: "Cluster architecture.",
@@ -427,6 +415,19 @@ func (r *FAReplicaPromoteResource) Schema(ctx context.Context, req resource.Sche
 // modify plan on at runtime
 func (r *FAReplicaPromoteResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	ValidateTags(ctx, r.client.TagClient(), req, resp)
+
+	var state FAReplicaPromoteResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if state.ReplicaSourceClusterId.ValueString() != "" {
+		resp.Diagnostics.AddWarning("Promoting faraway replica", "Promoting faraway replica from source cluster: "+state.ReplicaSourceClusterId.ValueString())
+	} else {
+		resp.Diagnostics.AddWarning("Faraway replica is already promoted", "Updating cluster with cluster ID: "+*state.ClusterId)
+	}
 }
 
 func (r *FAReplicaPromoteResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -442,50 +443,7 @@ func (r *FAReplicaPromoteResource) Metadata(ctx context.Context, req resource.Me
 }
 
 func (r *FAReplicaPromoteResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var config FAReplicaPromoteResourceModel
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	clusterModel, err := r.generateGenericFAReplicaPromoteModel(ctx, config)
-	if err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error generating faraway-replica create request", err.Error())
-		}
-		return
-	}
-
-	clusterId, err := r.client.Create(ctx, config.ProjectId, clusterModel)
-	if err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error creating cluster API request", err.Error())
-		}
-		return
-	}
-
-	config.ClusterId = &clusterId
-
-	timeout, diagnostics := config.Timeouts.Create(ctx, time.Minute*60)
-	resp.Diagnostics.Append(diagnostics...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if err := ensureClusterIsEndStateAs(ctx, r.client, &config, timeout); err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error waiting for the cluster is ready ", err.Error())
-		}
-
-		return
-	}
-
-	if config.Phase.ValueString() == constants.PHASE_WAITING_FOR_ACCESS_TO_ENCRYPTION_KEY {
-		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(config.CloudProvider.ValueString()))
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
+	resp.Diagnostics.AddError("Error can not be create cluster", "this resource is only for promoting faraway cluster and getting a response")
 }
 
 func (r *FAReplicaPromoteResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -533,12 +491,24 @@ func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	_, err = r.client.Update(ctx, fAReplicaModel, plan.ProjectId, *plan.ClusterId)
-	if err != nil {
-		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
-			resp.Diagnostics.AddError("Error updating faraway replica API request", err.Error())
+	// promote faraway replica
+	if state.ReplicaSourceClusterId.ValueString() != "" {
+		_, err = r.client.Promote(ctx, fAReplicaModel, plan.ProjectId, *plan.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error updating faraway replica API request", err.Error())
+			}
+			return
 		}
-		return
+	} else {
+		// update cluster
+		_, err = r.client.Update(ctx, fAReplicaModel, plan.ProjectId, *plan.ClusterId)
+		if err != nil {
+			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+				resp.Diagnostics.AddError("Error updating faraway replica API request", err.Error())
+			}
+			return
+		}
 	}
 
 	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
@@ -655,6 +625,7 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 	}
 
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
+	fAReplicaResourceModel.ReplicaSourceClusterId = types.StringValue(*responseCluster.ReplicaSourceClusterId)
 	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
 	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
 	fAReplicaResourceModel.Phase = types.StringPointerValue(responseCluster.Phase)
@@ -681,7 +652,7 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
 		Nodes: responseCluster.ClusterArchitecture.Nodes,
 	}
-	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
+	fAReplicaResourceModel.ClusterType = types.StringPointerValue(responseCluster.ClusterType)
 	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
@@ -773,14 +744,9 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 }
 
 func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (svAccIds, principalIds *[]string, err error) {
-	sourceCluster, err := r.client.Read(ctx, fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ReplicaSourceClusterId)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if strings.Contains(sourceCluster.Provider.CloudProviderId, "bah") {
+	if strings.Contains(fAReplicaResourceModel.CloudProvider.ValueString(), "bah") {
 		// If there is an existing Principal Account Id for that Region, use that one.
-		pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
+		pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, fAReplicaResourceModel.CloudProvider.ValueString(), fAReplicaResourceModel.Region.ValueString())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -799,9 +765,9 @@ func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplic
 			principalIds = utils.ToPointer(plist)
 		}
 
-		if sourceCluster.Provider.CloudProviderId == "bah:gcp" {
+		if fAReplicaResourceModel.CloudProvider.ValueString() == "bah:gcp" {
 			// If there is an existing Service Account Id for that Region, use that one.
-			sids, _ := r.client.GetServiceAccountIds(ctx, fAReplicaResourceModel.ProjectId, sourceCluster.Provider.CloudProviderId, fAReplicaResourceModel.Region.ValueString())
+			sids, _ := r.client.GetServiceAccountIds(ctx, fAReplicaResourceModel.ProjectId, fAReplicaResourceModel.CloudProvider.ValueString(), fAReplicaResourceModel.Region.ValueString())
 			svAccIds = utils.ToPointer(sids.Data)
 
 			// If there is no existing value, user should provide one
@@ -823,7 +789,6 @@ func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplic
 
 func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
-		ReplicaSourceClusterId: fAReplicaResourceModel.ReplicaSourceClusterId,
 		ClusterArchitecture: &models.Architecture{
 			ClusterArchitectureId: fAReplicaResourceModel.ClusterArchitecture.Id,
 			Nodes:                 fAReplicaResourceModel.ClusterArchitecture.Nodes,

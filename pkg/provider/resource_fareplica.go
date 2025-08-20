@@ -598,6 +598,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 	}
 
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
+	fAReplicaResourceModel.ReplicaSourceClusterId = responseCluster.ReplicaSourceClusterId
 	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
 	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
 	fAReplicaResourceModel.Phase = types.StringPointerValue(responseCluster.Phase)
