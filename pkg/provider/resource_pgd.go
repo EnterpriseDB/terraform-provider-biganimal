@@ -401,8 +401,10 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 						},
 						"read_only_connections": schema.BoolAttribute{
-							Description: "Is read-only connections enabled.",
-							Optional:    true,
+							Description:   "Is read-only connections enabled.",
+							Optional:      true,
+							Computed:      true,
+							PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 						},
 						"backup_schedule_time": ResourceBackupScheduleTime,
 						"wal_storage":          resourceWal,

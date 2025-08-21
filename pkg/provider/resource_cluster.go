@@ -371,6 +371,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"read_only_connections": schema.BoolAttribute{
 				MarkdownDescription: "Is read only connection enabled.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"resizing_pvc": schema.ListAttribute{
 				MarkdownDescription: "Resizing PVC.",
