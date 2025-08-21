@@ -55,7 +55,7 @@ type FAReplicaResourceModel struct {
 	ServiceAccountIds               types.Set                         `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds           types.Set                         `tfsdk:"pe_allowed_principal_ids"`
 	ClusterArchitecture             *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
-	ClusterType                     *string                           `tfsdk:"cluster_type"`
+	ClusterType                     types.String                      `tfsdk:"cluster_type"`
 	PgType                          types.String                      `tfsdk:"pg_type"`
 	PgVersion                       types.String                      `tfsdk:"pg_version"`
 	CloudProvider                   types.String                      `tfsdk:"cloud_provider"`
@@ -621,7 +621,7 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
 		Nodes: responseCluster.ClusterArchitecture.Nodes,
 	}
-	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
+	fAReplicaResourceModel.ClusterType = types.StringPointerValue(responseCluster.ClusterType)
 	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
@@ -779,6 +779,7 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
 		BackupScheduleTime:    fAReplicaResourceModel.BackupScheduleTime.ValueStringPointer(),
+		VolumeSnapshot:        fAReplicaResourceModel.VolumeSnapshot.ValueBoolPointer(),
 	}
 
 	if fAReplicaResourceModel.WalStorage != nil {
