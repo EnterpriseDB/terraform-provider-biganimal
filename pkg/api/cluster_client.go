@@ -110,20 +110,43 @@ func (c ClusterClient) ConnectionString(ctx context.Context, projectId, id strin
 	return &response.Data, nil
 }
 
-func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, projectId, id string) (*models.Cluster, error) {
+func (c ClusterClient) Update(ctx context.Context, cluster *models.Cluster, projectId, clusterId string) (*models.Cluster, error) {
 	response := struct {
 		Data struct {
 			ClusterId string `json:"clusterId"`
 		} `json:"data"`
 	}{}
 
-	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, id)
+	url := fmt.Sprintf("projects/%s/clusters/%s", projectId, clusterId)
 
 	b, err := json.Marshal(cluster)
 	if err != nil {
 		return nil, err
 	}
 	body, err := c.doRequest(ctx, http.MethodPut, url, bytes.NewBuffer(b))
+	if err != nil {
+		return &models.Cluster{}, err
+	}
+
+	err = json.Unmarshal(body, &response)
+	return nil, err
+}
+
+func (c ClusterClient) Promote(ctx context.Context, cluster *models.Cluster, projectId, clusterId string) (*models.Cluster, error) {
+	response := struct {
+		Data struct {
+			ClusterId string `json:"clusterId"`
+		} `json:"data"`
+	}{}
+
+	url := fmt.Sprintf("projects/%s/clusters/%s/promote", projectId, clusterId)
+
+	b, err := json.Marshal(cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := c.doRequest(ctx, http.MethodPost, url, bytes.NewBuffer(b))
 	if err != nil {
 		return &models.Cluster{}, err
 	}

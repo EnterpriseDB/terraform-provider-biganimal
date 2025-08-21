@@ -202,10 +202,6 @@ func (c *FAReplicaData) Schema(ctx context.Context, req datasource.SchemaRequest
 						Description: "Cluster architecture ID. For example, \"single\" or \"ha\".For Extreme High Availability clusters, please use the [biganimal_pgd](https://registry.terraform.io/providers/EnterpriseDB/biganimal/latest/docs/resources/pgd) resource.",
 						Computed:    true,
 					},
-					"name": schema.StringAttribute{
-						Description: "Name.",
-						Computed:    true,
-					},
 					"nodes": schema.Float64Attribute{
 						Description: "Node count.",
 						Computed:    true,
