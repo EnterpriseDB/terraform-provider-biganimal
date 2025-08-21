@@ -201,9 +201,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							Description: "Resizing PVC.",
 							Computed:    true,
 							ElementType: types.StringType,
-							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.UseStateForUnknown(),
-							},
 						},
 						"allowed_ip_ranges": schema.SetNestedAttribute{
 							Description: "Allowed IP ranges.",
@@ -687,19 +684,19 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
-			CspAuth:               v.CspAuth,
+			CspAuth:               utils.ToPointer(v.CspAuth),
 			ClusterType:           utils.ToPointer("data_group"),
 			InstanceType:          v.InstanceType,
 			MaintenanceWindow:     v.MaintenanceWindow,
 			PgConfig:              v.PgConfig,
 			PgType:                v.PgType,
 			PgVersion:             v.PgVersion,
-			PrivateNetworking:     v.PrivateNetworking,
+			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking),
 			Region:                v.Region,
 			Storage:               storage,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
-			ReadOnlyConnections:   v.ReadOnlyConnections,
+			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections),
 			WalStorage:            BuildRequestWalStorage(v.WalStorage),
 		}
 
@@ -968,10 +965,10 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
-			CspAuth:               v.CspAuth,
+			CspAuth:               utils.ToPointer(v.CspAuth),
 			InstanceType:          v.InstanceType,
 			PgConfig:              v.PgConfig,
-			PrivateNetworking:     v.PrivateNetworking,
+			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking),
 			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
 			ServiceAccountIds:     svAccIds,
@@ -1412,6 +1409,21 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					allwdIpRngsSet = types.SetValueMust(allwdIpRngsElemType, allowedIpRanges)
 				}
 
+				cspAuth := false
+				if apiRespDgModel.CspAuth != nil {
+					cspAuth = *apiRespDgModel.CspAuth
+				}
+
+				privateNetworking := false
+				if apiRespDgModel.PrivateNetworking != nil {
+					privateNetworking = *apiRespDgModel.PrivateNetworking
+				}
+
+				readOnlyConnections := false
+				if apiRespDgModel.ReadOnlyConnections != nil {
+					readOnlyConnections = *apiRespDgModel.ReadOnlyConnections
+				}
+
 				tfDGModel := terraform.DataGroup{
 					GroupId:               types.StringPointerValue(apiRespDgModel.GroupId),
 					AllowedIpRanges:       allwdIpRngsSet,
@@ -1422,7 +1434,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ClusterType:           types.StringPointerValue(apiRespDgModel.ClusterType),
 					Connection:            types.StringPointerValue(&apiRespDgModel.Connection.PgUri),
 					CreatedAt:             types.StringPointerValue((*string)(apiRespDgModel.CreatedAt)),
-					CspAuth:               apiRespDgModel.CspAuth,
+					CspAuth:               cspAuth,
 					InstanceType:          apiRespDgModel.InstanceType,
 					LogsUrl:               types.StringPointerValue(apiRespDgModel.LogsUrl),
 					MetricsUrl:            types.StringPointerValue(apiRespDgModel.MetricsUrl),
@@ -1430,7 +1442,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					PgType:                apiRespDgModel.PgType,
 					PgVersion:             apiRespDgModel.PgVersion,
 					Phase:                 types.StringPointerValue(apiRespDgModel.Phase),
-					PrivateNetworking:     apiRespDgModel.PrivateNetworking,
+					PrivateNetworking:     privateNetworking,
 					Provider:              apiRespDgModel.Provider,
 					Region:                apiRespDgModel.Region,
 					ResizingPvc:           types.SetValueMust(types.StringType, resizingPvc),
@@ -1439,7 +1451,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 					RoConnectionUri:       types.StringPointerValue(&apiRespDgModel.Connection.ReadOnlyPgUri),
-					ReadOnlyConnections:   apiRespDgModel.ReadOnlyConnections,
+					ReadOnlyConnections:   readOnlyConnections,
 					WalStorage:            walStorage,
 				}
 

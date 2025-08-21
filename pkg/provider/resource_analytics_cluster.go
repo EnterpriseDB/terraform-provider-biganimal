@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -214,7 +213,6 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 			"resizing_pvc": schema.ListAttribute{
 				MarkdownDescription: "Resizing PVC.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 				ElementType:         types.StringType,
 			},
 			"metrics_url": schema.StringAttribute{
