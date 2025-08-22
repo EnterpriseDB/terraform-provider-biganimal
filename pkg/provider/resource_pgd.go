@@ -178,9 +178,8 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"connection_uri": schema.StringAttribute{
-							Description:   "Data group connection URI.",
-							Computed:      true,
-							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+							Description: "Data group connection URI.",
+							Computed:    true,
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the data group.",
@@ -353,7 +352,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"ro_connection_uri": schema.StringAttribute{
 							MarkdownDescription: "Cluster read-only connection URI.",
 							Computed:            true,
-							PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
@@ -976,6 +974,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
 			WalStorage:            BuildRequestWalStorage(v.WalStorage),
+			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections.ValueBool()),
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
@@ -1071,7 +1070,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
 	// this is possibly a bug in the API
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	plan.ID = plan.ClusterId
 

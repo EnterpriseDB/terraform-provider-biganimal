@@ -294,7 +294,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"ro_connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
@@ -737,7 +736,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
 	// this is possibly a bug in the API
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	if err := ensureClusterIsEndStateAs(ctx, c.client, &plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
