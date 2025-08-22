@@ -39,7 +39,7 @@ type FAReplicaPromoteResource struct {
 
 type FAReplicaPromoteResourceModel struct {
 	ID                              types.String                      `tfsdk:"id"`
-	ReplicaSourceClusterId          types.String                      `tfsdk:"source_cluster_id"`
+	CanAddFarawayReplica            types.Bool                        `tfsdk:"can_add_faraway_replica"`
 	Password                        types.String                      `tfsdk:"password"`
 	CspAuth                         types.Bool                        `tfsdk:"csp_auth"`
 	Region                          types.String                      `tfsdk:"region"`
@@ -115,10 +115,6 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"source_cluster_id": schema.StringAttribute{
-				Description: "Source cluster ID.",
-				Computed:    true,
 			},
 			"allowed_ip_ranges": schema.SetNestedAttribute{
 				Description: "Allowed IP ranges.",
@@ -404,6 +400,10 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 				MarkdownDescription: "Password for the user edb_admin. It must be 12 characters or more.",
 				Required:            true,
 			},
+			"can_add_faraway_replica": schema.BoolAttribute{
+				MarkdownDescription: "Can add faraway replica.",
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -423,8 +423,8 @@ func (r *FAReplicaPromoteResource) ModifyPlan(ctx context.Context, req resource.
 		return
 	}
 
-	if state.ReplicaSourceClusterId.ValueString() != "" {
-		resp.Diagnostics.AddWarning("Promoting faraway replica", "Promoting faraway replica from source cluster: "+state.ReplicaSourceClusterId.ValueString())
+	if !state.CanAddFarawayReplica.ValueBool() {
+		resp.Diagnostics.AddWarning("Promoting faraway replica", "Promoting faraway replica with cluster ID: "+*state.ClusterId)
 	} else {
 		resp.Diagnostics.AddWarning("Faraway replica is already promoted", "Updating cluster with cluster ID: "+*state.ClusterId)
 	}
@@ -492,7 +492,7 @@ func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.Upda
 	}
 
 	// promote faraway replica
-	if state.ReplicaSourceClusterId.ValueString() != "" {
+	if !state.CanAddFarawayReplica.ValueBool() {
 		_, err = r.client.Promote(ctx, fAReplicaModel, plan.ProjectId, *plan.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -633,8 +633,8 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 	}
 
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
-	fAReplicaResourceModel.ReplicaSourceClusterId = types.StringValue(*responseCluster.ReplicaSourceClusterId)
 	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
+	fAReplicaResourceModel.CanAddFarawayReplica = types.BoolValue(responseCluster.CanAddFarawayReplica)
 	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
 	fAReplicaResourceModel.Phase = types.StringPointerValue(responseCluster.Phase)
 	fAReplicaResourceModel.Region = types.StringValue(responseCluster.Region.Id)

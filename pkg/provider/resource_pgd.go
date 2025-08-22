@@ -178,9 +178,8 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"connection_uri": schema.StringAttribute{
-							Description:   "Data group connection URI.",
-							Computed:      true,
-							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+							Description: "Data group connection URI.",
+							Computed:    true,
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the data group.",
@@ -353,7 +352,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"ro_connection_uri": schema.StringAttribute{
 							MarkdownDescription: "Cluster read-only connection URI.",
 							Computed:            true,
-							PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
@@ -401,8 +399,10 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 						},
 						"read_only_connections": schema.BoolAttribute{
-							Description: "Is read-only connections enabled.",
-							Optional:    true,
+							Description:   "Is read-only connections enabled.",
+							Optional:      true,
+							Computed:      true,
+							PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 						},
 						"backup_schedule_time": ResourceBackupScheduleTime,
 						"wal_storage":          resourceWal,
@@ -684,19 +684,19 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
-			CspAuth:               utils.ToPointer(v.CspAuth),
+			CspAuth:               utils.ToPointer(v.CspAuth.ValueBool()),
 			ClusterType:           utils.ToPointer("data_group"),
 			InstanceType:          v.InstanceType,
 			MaintenanceWindow:     v.MaintenanceWindow,
 			PgConfig:              v.PgConfig,
 			PgType:                v.PgType,
 			PgVersion:             v.PgVersion,
-			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking),
+			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking.ValueBool()),
 			Region:                v.Region,
 			Storage:               storage,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
-			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections),
+			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections.ValueBool()),
 			WalStorage:            BuildRequestWalStorage(v.WalStorage),
 		}
 
@@ -965,15 +965,16 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
-			CspAuth:               utils.ToPointer(v.CspAuth),
+			CspAuth:               utils.ToPointer(v.CspAuth.ValueBool()),
 			InstanceType:          v.InstanceType,
 			PgConfig:              v.PgConfig,
-			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking),
+			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking.ValueBool()),
 			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
 			WalStorage:            BuildRequestWalStorage(v.WalStorage),
+			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections.ValueBool()),
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
@@ -1069,7 +1070,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
 	// this is possibly a bug in the API
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	plan.ID = plan.ClusterId
 
@@ -1434,7 +1435,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ClusterType:           types.StringPointerValue(apiRespDgModel.ClusterType),
 					Connection:            types.StringPointerValue(&apiRespDgModel.Connection.PgUri),
 					CreatedAt:             types.StringPointerValue((*string)(apiRespDgModel.CreatedAt)),
-					CspAuth:               cspAuth,
+					CspAuth:               types.BoolValue(cspAuth),
 					InstanceType:          apiRespDgModel.InstanceType,
 					LogsUrl:               types.StringPointerValue(apiRespDgModel.LogsUrl),
 					MetricsUrl:            types.StringPointerValue(apiRespDgModel.MetricsUrl),
@@ -1442,7 +1443,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					PgType:                apiRespDgModel.PgType,
 					PgVersion:             apiRespDgModel.PgVersion,
 					Phase:                 types.StringPointerValue(apiRespDgModel.Phase),
-					PrivateNetworking:     privateNetworking,
+					PrivateNetworking:     types.BoolValue(privateNetworking),
 					Provider:              apiRespDgModel.Provider,
 					Region:                apiRespDgModel.Region,
 					ResizingPvc:           types.SetValueMust(types.StringType, resizingPvc),
@@ -1451,7 +1452,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 					RoConnectionUri:       types.StringPointerValue(&apiRespDgModel.Connection.ReadOnlyPgUri),
-					ReadOnlyConnections:   readOnlyConnections,
+					ReadOnlyConnections:   types.BoolValue(readOnlyConnections),
 					WalStorage:            walStorage,
 				}
 

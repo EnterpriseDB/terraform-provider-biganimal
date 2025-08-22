@@ -152,6 +152,7 @@ type Cluster struct {
 	BackupRetentionPeriod      *string                      `json:"backupRetentionPeriod,omitempty"`
 	ClusterArchitecture        *Architecture                `json:"clusterArchitecture,omitempty" mapstructure:"cluster_architecture"`
 	ClusterId                  *string                      `json:"clusterId,omitempty"`
+	CanAddFarawayReplica       bool                         `json:"canAddFarawayReplica,omitempty"`
 	ClusterName                *string                      `json:"clusterName,omitempty"`
 	Conditions                 []Condition                  `json:"conditions,omitempty"`
 	Connection                 *ClusterConnection           `json:"connection,omitempty"`

@@ -294,7 +294,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"ro_connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
@@ -371,6 +370,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"read_only_connections": schema.BoolAttribute{
 				MarkdownDescription: "Is read only connection enabled.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"resizing_pvc": schema.ListAttribute{
 				MarkdownDescription: "Resizing PVC.",
@@ -735,7 +736,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
 	// this is possibly a bug in the API
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	if err := ensureClusterIsEndStateAs(ctx, c.client, &plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -812,6 +813,21 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		return err
 	}
 
+	cspAuth := false
+	if responseCluster.CSPAuth != nil {
+		cspAuth = *responseCluster.CSPAuth
+	}
+
+	privateNetworking := false
+	if responseCluster.PrivateNetworking != nil {
+		privateNetworking = *responseCluster.PrivateNetworking
+	}
+
+	readOnlyConnections := false
+	if responseCluster.ReadOnlyConnections != nil {
+		readOnlyConnections = *responseCluster.ReadOnlyConnections
+	}
+
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
 	tfClusterResource.ClusterId = responseCluster.ClusterId
 	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
@@ -832,13 +848,13 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
 	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	tfClusterResource.ReadOnlyConnections = types.BoolPointerValue(responseCluster.ReadOnlyConnections)
+	tfClusterResource.ReadOnlyConnections = types.BoolValue(readOnlyConnections)
 	tfClusterResource.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
 	tfClusterResource.RoConnectionUri = types.StringPointerValue(&responseCluster.Connection.ReadOnlyPgUri)
 	tfClusterResource.ServiceName = types.StringPointerValue(&responseCluster.Connection.ServiceName)
 	tfClusterResource.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
 	tfClusterResource.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
-	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	tfClusterResource.CspAuth = types.BoolValue(cspAuth)
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
 	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
@@ -846,7 +862,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
-	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
+	tfClusterResource.PrivateNetworking = types.BoolValue(privateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
