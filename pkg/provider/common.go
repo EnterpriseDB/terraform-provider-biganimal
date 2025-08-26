@@ -8,7 +8,6 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
-	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -61,10 +60,10 @@ var ResourceBackupScheduleTime = resourceSchema.StringAttribute{
 }
 
 var resourceWal = resourceSchema.SingleNestedAttribute{
-	Description:   "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
-	Optional:      true,
-	Computed:      true,
-	PlanModifiers: []planmodifier.Object{plan_modifier.WalStorageForUnknown()},
+	Description: "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
+	Optional:    true,
+	Computed:    true,
+	// PlanModifiers: []planmodifier.Object{plan_modifier.WalStorageForUnknown()},
 	Attributes: map[string]resourceSchema.Attribute{
 		"iops": resourceSchema.StringAttribute{
 			Description:   "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",

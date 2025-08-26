@@ -1035,7 +1035,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 						RegionId: wg.Region.RegionId.ValueString(),
 					},
 				}
-
 				if wg.MaintenanceWindow != nil {
 					wgReq.MaintenanceWindow = &commonApi.MaintenanceWindow{
 						IsEnabled: wg.MaintenanceWindow.IsEnabled,
@@ -1053,6 +1052,16 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 				wgReq := pgdApi.WitnessGroup{
 					ClusterType: utils.ToPointer("witness_group"),
 					GroupId:     wg.GroupId.ValueStringPointer(),
+				}
+				if wg.MaintenanceWindow != nil {
+					wgReq.MaintenanceWindow = &commonApi.MaintenanceWindow{
+						IsEnabled: wg.MaintenanceWindow.IsEnabled,
+						StartTime: wg.MaintenanceWindow.StartTime.ValueStringPointer(),
+					}
+
+					if !wg.MaintenanceWindow.StartDay.IsUnknown() && !wg.MaintenanceWindow.StartDay.IsNull() {
+						wgReq.MaintenanceWindow.StartDay = utils.ToPointer(float64(wg.MaintenanceWindow.StartDay.ValueInt64()))
+					}
 				}
 				*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 			}
