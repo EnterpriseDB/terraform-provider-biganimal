@@ -323,11 +323,6 @@ func (r *FAReplicaResource) Schema(ctx context.Context, req resource.SchemaReque
 						Required:      true,
 						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
-					"name": schema.StringAttribute{
-						Description:   "Name.",
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
-					},
 					"nodes": schema.Float64Attribute{
 						Description:   "Node count.",
 						Required:      true,
