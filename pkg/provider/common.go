@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/api"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
@@ -182,4 +183,18 @@ func BuildRequestWalStorage(tfRsrcWalStorage types.Object) *models.Storage {
 	}
 
 	return walStorage
+}
+
+// json marshals to bytes then unmarshals into struct to fill a struct. Out has to be a pointer
+func CopyObjectJson(in any, out any) error {
+	bytes, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(bytes, out); err != nil {
+		return err
+	}
+
+	return nil
 }
