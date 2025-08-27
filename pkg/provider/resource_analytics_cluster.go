@@ -132,7 +132,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 						},
 					},
 				},
-				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
 			},
 			"cluster_id": schema.StringAttribute{
 				MarkdownDescription: "Cluster ID.",

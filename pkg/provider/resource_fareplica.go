@@ -126,9 +126,7 @@ func fAReplicaSchema(ctx context.Context) *schema.Schema {
 						},
 					},
 				},
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
+				PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
 			},
 			"backup_retention_period": schema.StringAttribute{
 				Description: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",

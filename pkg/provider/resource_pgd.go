@@ -217,9 +217,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 									},
 								},
 							},
-							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.UseStateForUnknown(),
-							},
+							PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
 						},
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
@@ -399,10 +397,9 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
 						},
 						"read_only_connections": schema.BoolAttribute{
-							Description:   "Is read-only connections enabled.",
-							Optional:      true,
-							Computed:      true,
-							PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+							Description: "Is read-only connections enabled.",
+							Optional:    true,
+							Computed:    true,
 						},
 						"backup_schedule_time": ResourceBackupScheduleTime,
 						"wal_storage":          resourceWal,

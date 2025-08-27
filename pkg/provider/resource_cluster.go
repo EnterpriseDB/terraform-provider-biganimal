@@ -225,7 +225,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 						},
 					},
 				},
-				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+				PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
 			},
 			"pg_config": schema.SetNestedAttribute{
 				Description: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
