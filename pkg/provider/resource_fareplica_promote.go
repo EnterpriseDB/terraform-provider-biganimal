@@ -71,7 +71,7 @@ type FAReplicaPromoteResourceModel struct {
 	VolumeSnapshot                  types.Bool                        `tfsdk:"volume_snapshot_backup"`
 	Tags                            []commonTerraform.Tag             `tfsdk:"tags"`
 	BackupScheduleTime              types.String                      `tfsdk:"backup_schedule_time"`
-	WalStorage                      *StorageResourceModel             `tfsdk:"wal_storage"`
+	WalStorage                      types.Object                      `tfsdk:"wal_storage"`
 	PrivateLinkServiceAlias         types.String                      `tfsdk:"private_link_service_alias"`
 	PrivateLinkServiceName          types.String                      `tfsdk:"private_link_service_name"`
 
@@ -663,16 +663,7 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	fAReplicaResourceModel.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-
-	if responseCluster.WalStorage != nil {
-		fAReplicaResourceModel.WalStorage = &StorageResourceModel{
-			VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
-			VolumeProperties: types.StringPointerValue(responseCluster.WalStorage.VolumePropertiesId),
-			Size:             types.StringPointerValue(responseCluster.WalStorage.Size),
-			Iops:             types.StringPointerValue(responseCluster.WalStorage.Iops),
-			Throughput:       types.StringPointerValue(responseCluster.WalStorage.Throughput),
-		}
-	}
+	fAReplicaResourceModel.WalStorage = BuildTfRsrcWalStorage(responseCluster.WalStorage)
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
 	newPgConfig := []PgConfigResourceModel{}
@@ -817,15 +808,7 @@ func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx cont
 		BackupScheduleTime:    fAReplicaResourceModel.BackupScheduleTime.ValueStringPointer(),
 	}
 
-	if fAReplicaResourceModel.WalStorage != nil {
-		cluster.WalStorage = &models.Storage{
-			VolumePropertiesId: fAReplicaResourceModel.WalStorage.VolumeProperties.ValueStringPointer(),
-			VolumeTypeId:       fAReplicaResourceModel.WalStorage.VolumeType.ValueStringPointer(),
-			Iops:               fAReplicaResourceModel.WalStorage.Iops.ValueStringPointer(),
-			Size:               fAReplicaResourceModel.WalStorage.Size.ValueStringPointer(),
-			Throughput:         fAReplicaResourceModel.WalStorage.Throughput.ValueStringPointer(),
-		}
-	}
+	cluster.WalStorage = BuildRequestWalStorage(fAReplicaResourceModel.WalStorage)
 
 	allowedIpRanges := []models.AllowedIpRange{}
 	for _, ipRange := range fAReplicaResourceModel.AllowedIpRanges {

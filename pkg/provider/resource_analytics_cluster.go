@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var (
@@ -43,7 +44,7 @@ type analyticsClusterResourceModel struct {
 	Phase                      *string                            `tfsdk:"phase"`
 	ConnectionUri              types.String                       `tfsdk:"connection_uri"`
 	ClusterName                types.String                       `tfsdk:"cluster_name"`
-	FirstRecoverabilityPointAt *string                            `tfsdk:"first_recoverability_point_at"`
+	FirstRecoverabilityPointAt types.String                       `tfsdk:"first_recoverability_point_at"`
 	ProjectId                  string                             `tfsdk:"project_id"`
 	LogsUrl                    *string                            `tfsdk:"logs_url"`
 	BackupRetentionPeriod      types.String                       `tfsdk:"backup_retention_period"`
@@ -183,7 +184,6 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 			"first_recoverability_point_at": schema.StringAttribute{
 				MarkdownDescription: "Earliest backup recover time.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"pg_version": schema.StringAttribute{
 				MarkdownDescription: "Postgres version. For example 16",
@@ -505,7 +505,9 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 
 	if responseCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
-		tfClusterResource.FirstRecoverabilityPointAt = &firstPointAt
+		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue(firstPointAt)
+	} else {
+		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue("")
 	}
 
 	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}

@@ -336,7 +336,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"first_recoverability_point_at": schema.StringAttribute{
 				MarkdownDescription: "Earliest backup recover time.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"faraway_replica_ids": schema.SetAttribute{
 				Computed:    true,
@@ -866,10 +865,7 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-
-	if responseCluster.WalStorage != nil {
-		tfClusterResource.WalStorage = BuildTfRsrcWalStorage(responseCluster.WalStorage)
-	}
+	tfClusterResource.WalStorage = BuildTfRsrcWalStorage(responseCluster.WalStorage)
 
 	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
 		if !tfClusterResource.PgIdentity.IsNull() && tfClusterResource.PgIdentity.ValueString() != "" {
@@ -892,6 +888,8 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	if responseCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
 		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue(firstPointAt)
+	} else {
+		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue("")
 	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
