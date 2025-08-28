@@ -1,3 +1,5 @@
+// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promote resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promote and use the "moved" command as shown in this example.
+
 terraform {
   required_providers {
     biganimal = {

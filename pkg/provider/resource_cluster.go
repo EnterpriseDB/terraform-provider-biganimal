@@ -1052,7 +1052,7 @@ func (c *clusterResource) buildRequestBah(ctx context.Context, clusterResourceMo
 		// If there is an existing Principal Account Id for that Region, use that one.
 		pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("principal Ids not found: %v", err)
 		}
 		principalIds = utils.ToPointer(pids.Data)
 
