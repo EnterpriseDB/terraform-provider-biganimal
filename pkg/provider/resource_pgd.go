@@ -694,7 +694,16 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
 			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections.ValueBool()),
-			WalStorage:            BuildRequestWalStorage(v.WalStorage),
+		}
+
+		if v.WalStorage != nil {
+			apiDGModel.WalStorage = &models.Storage{
+				VolumePropertiesId: v.WalStorage.VolumeProperties.ValueStringPointer(),
+				VolumeTypeId:       v.WalStorage.VolumeType.ValueStringPointer(),
+				Iops:               v.WalStorage.Iops.ValueStringPointer(),
+				Size:               v.WalStorage.Size.ValueStringPointer(),
+				Throughput:         v.WalStorage.Throughput.ValueStringPointer(),
+			}
 		}
 
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
@@ -970,8 +979,17 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			MaintenanceWindow:     v.MaintenanceWindow,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
-			WalStorage:            BuildRequestWalStorage(v.WalStorage),
 			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections.ValueBool()),
+		}
+
+		if v.WalStorage != nil {
+			reqDg.WalStorage = &models.Storage{
+				VolumePropertiesId: v.WalStorage.VolumeProperties.ValueStringPointer(),
+				VolumeTypeId:       v.WalStorage.VolumeType.ValueStringPointer(),
+				Iops:               v.WalStorage.Iops.ValueStringPointer(),
+				Size:               v.WalStorage.Size.ValueStringPointer(),
+				Throughput:         v.WalStorage.Throughput.ValueStringPointer(),
+			}
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
@@ -1341,12 +1359,6 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					Throughput:         types.StringPointerValue(apiRespDgModel.Storage.Throughput),
 				}
 
-				// wal storage
-				walStorage := BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
-				if apiRespDgModel.WalStorage != nil {
-					walStorage = BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
-				}
-
 				// service account ids
 				serviceAccIds := []attr.Value{}
 				if apiRespDgModel.ServiceAccountIds != nil && len(*apiRespDgModel.ServiceAccountIds) != 0 {
@@ -1459,7 +1471,16 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 					RoConnectionUri:       types.StringPointerValue(&apiRespDgModel.Connection.ReadOnlyPgUri),
 					ReadOnlyConnections:   types.BoolValue(readOnlyConnections),
-					WalStorage:            walStorage,
+				}
+
+				if apiRespDgModel.WalStorage != nil {
+					tfDGModel.WalStorage = &models.StorageResourceModel{
+						VolumeProperties: types.StringPointerValue(apiRespDgModel.WalStorage.VolumePropertiesId),
+						VolumeType:       types.StringPointerValue(apiRespDgModel.WalStorage.VolumeTypeId),
+						Iops:             types.StringPointerValue(apiRespDgModel.WalStorage.Iops),
+						Size:             types.StringPointerValue(apiRespDgModel.WalStorage.Size),
+						Throughput:       types.StringPointerValue(apiRespDgModel.WalStorage.Throughput),
+					}
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)
