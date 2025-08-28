@@ -55,7 +55,7 @@ type FAReplicaResourceModel struct {
 	ServiceAccountIds               types.Set                         `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds           types.Set                         `tfsdk:"pe_allowed_principal_ids"`
 	ClusterArchitecture             *ClusterArchitectureResourceModel `tfsdk:"cluster_architecture"`
-	ClusterType                     *string                           `tfsdk:"cluster_type"`
+	ClusterType                     types.String                      `tfsdk:"cluster_type"`
 	PgType                          types.String                      `tfsdk:"pg_type"`
 	PgVersion                       types.String                      `tfsdk:"pg_version"`
 	CloudProvider                   types.String                      `tfsdk:"cloud_provider"`
@@ -126,9 +126,7 @@ func fAReplicaSchema(ctx context.Context) *schema.Schema {
 						},
 					},
 				},
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
+				PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
 			},
 			"backup_retention_period": schema.StringAttribute{
 				Description: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
@@ -474,6 +472,13 @@ func (r *FAReplicaResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddWarning("Transparent data encryption action", TdeActionInfo(config.CloudProvider.ValueString()))
 	}
 
+	if err := readFAReplica(ctx, r.client, &config); err != nil {
+		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
+			resp.Diagnostics.AddError("Error reading faraway replica", err.Error())
+		}
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, config)...)
 }
 
@@ -621,12 +626,11 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		Id:    responseCluster.ClusterArchitecture.ClusterArchitectureId,
 		Nodes: responseCluster.ClusterArchitecture.Nodes,
 	}
-	fAReplicaResourceModel.ClusterType = responseCluster.ClusterType
+	fAReplicaResourceModel.ClusterType = types.StringPointerValue(responseCluster.ClusterType)
 	fAReplicaResourceModel.CloudProvider = types.StringValue(responseCluster.Provider.CloudProviderId)
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	fAReplicaResourceModel.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-
 	if responseCluster.WalStorage != nil {
 		fAReplicaResourceModel.WalStorage = &StorageResourceModel{
 			VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
@@ -779,6 +783,7 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		PrivateNetworking:     fAReplicaResourceModel.PrivateNetworking.ValueBoolPointer(),
 		BackupRetentionPeriod: fAReplicaResourceModel.BackupRetentionPeriod.ValueStringPointer(),
 		BackupScheduleTime:    fAReplicaResourceModel.BackupScheduleTime.ValueStringPointer(),
+		VolumeSnapshot:        fAReplicaResourceModel.VolumeSnapshot.ValueBoolPointer(),
 	}
 
 	if fAReplicaResourceModel.WalStorage != nil {

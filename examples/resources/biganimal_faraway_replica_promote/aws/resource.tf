@@ -1,3 +1,5 @@
+// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promote resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promote and use the "moved" command as shown in this example.
+
 terraform {
   required_providers {
     biganimal = {
@@ -68,7 +70,7 @@ resource "biganimal_faraway_replica_promote" "promote" {
   #    #iops             = "3000" # optional
   #    #throughput       = "125" # optional
   #  }
-  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
   region             = "ap-south-1"
 
   #tags = [

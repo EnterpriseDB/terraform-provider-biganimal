@@ -54,7 +54,7 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
 
   backup_retention_period = "30d"
   #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
-  csp_auth = false
+  csp_auth = false //can't change once set
 
   instance_type = "aws:m6id.12xlarge"
   password      = resource.random_password.password.result
@@ -65,9 +65,9 @@ resource "biganimal_analytics_cluster" "analytics_cluster" {
     start_time = "00:00"
   }
 
-  pg_type            = "epas" #valid values ["epas", "pgextended", "postgres]"
-  pg_version         = "16"
-  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
+  pg_type            = "epas" #valid values ["epas", "pgextended", "postgres]"  //can't change once set
+  pg_version         = "16"  //can't change once set
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
   cloud_provider     = "bah:aws"
   region             = "ap-south-1"
   # pe_allowed_principal_ids = [

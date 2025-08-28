@@ -178,9 +178,8 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"connection_uri": schema.StringAttribute{
-							Description:   "Data group connection URI.",
-							Computed:      true,
-							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+							Description: "Data group connection URI.",
+							Computed:    true,
 						},
 						"phase": schema.StringAttribute{
 							Description: "Current phase of the data group.",
@@ -218,9 +217,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 									},
 								},
 							},
-							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.UseStateForUnknown(),
-							},
+							PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
 						},
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
@@ -353,7 +350,6 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"ro_connection_uri": schema.StringAttribute{
 							MarkdownDescription: "Cluster read-only connection URI.",
 							Computed:            true,
-							PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 						},
 						"instance_type": schema.SingleNestedAttribute{
 							Description: "Instance type.",
@@ -403,6 +399,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 						"read_only_connections": schema.BoolAttribute{
 							Description: "Is read-only connections enabled.",
 							Optional:    true,
+							Computed:    true,
 						},
 						"backup_schedule_time": ResourceBackupScheduleTime,
 						"wal_storage":          resourceWal,
@@ -684,20 +681,29 @@ func (p pgdResource) Create(ctx context.Context, req resource.CreateRequest, res
 			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
 			Provider:              v.Provider,
 			ClusterArchitecture:   clusterArch,
-			CspAuth:               utils.ToPointer(v.CspAuth),
+			CspAuth:               utils.ToPointer(v.CspAuth.ValueBool()),
 			ClusterType:           utils.ToPointer("data_group"),
 			InstanceType:          v.InstanceType,
 			MaintenanceWindow:     v.MaintenanceWindow,
 			PgConfig:              v.PgConfig,
 			PgType:                v.PgType,
 			PgVersion:             v.PgVersion,
-			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking),
+			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking.ValueBool()),
 			Region:                v.Region,
 			Storage:               storage,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
-			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections),
-			WalStorage:            BuildRequestWalStorage(v.WalStorage),
+			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections.ValueBool()),
+		}
+
+		if v.WalStorage != nil {
+			apiDGModel.WalStorage = &models.Storage{
+				VolumePropertiesId: v.WalStorage.VolumeProperties.ValueStringPointer(),
+				VolumeTypeId:       v.WalStorage.VolumeType.ValueStringPointer(),
+				Iops:               v.WalStorage.Iops.ValueStringPointer(),
+				Size:               v.WalStorage.Size.ValueStringPointer(),
+				Throughput:         v.WalStorage.Throughput.ValueStringPointer(),
+			}
 		}
 
 		*clusterReqBody.Groups = append(*clusterReqBody.Groups, apiDGModel)
@@ -965,15 +971,25 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 			AllowedIpRanges:       buildRequestAllowedIpRanges(v.AllowedIpRanges),
 			BackupRetentionPeriod: v.BackupRetentionPeriod,
 			BackupScheduleTime:    v.BackupScheduleTime.ValueStringPointer(),
-			CspAuth:               utils.ToPointer(v.CspAuth),
+			CspAuth:               utils.ToPointer(v.CspAuth.ValueBool()),
 			InstanceType:          v.InstanceType,
 			PgConfig:              v.PgConfig,
-			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking),
+			PrivateNetworking:     utils.ToPointer(v.PrivateNetworking.ValueBool()),
 			Storage:               storage,
 			MaintenanceWindow:     v.MaintenanceWindow,
 			ServiceAccountIds:     svAccIds,
 			PeAllowedPrincipalIds: principalIds,
-			WalStorage:            BuildRequestWalStorage(v.WalStorage),
+			ReadOnlyConnections:   utils.ToPointer(v.ReadOnlyConnections.ValueBool()),
+		}
+
+		if v.WalStorage != nil {
+			reqDg.WalStorage = &models.Storage{
+				VolumePropertiesId: v.WalStorage.VolumeProperties.ValueStringPointer(),
+				VolumeTypeId:       v.WalStorage.VolumeType.ValueStringPointer(),
+				Iops:               v.WalStorage.Iops.ValueStringPointer(),
+				Size:               v.WalStorage.Size.ValueStringPointer(),
+				Throughput:         v.WalStorage.Throughput.ValueStringPointer(),
+			}
 		}
 
 		// signals that it doesn't have an existing group id so this is a new group to add and needs extra fields
@@ -1034,7 +1050,6 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 						RegionId: wg.Region.RegionId.ValueString(),
 					},
 				}
-
 				if wg.MaintenanceWindow != nil {
 					wgReq.MaintenanceWindow = &commonApi.MaintenanceWindow{
 						IsEnabled: wg.MaintenanceWindow.IsEnabled,
@@ -1053,6 +1068,16 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 					ClusterType: utils.ToPointer("witness_group"),
 					GroupId:     wg.GroupId.ValueStringPointer(),
 				}
+				if wg.MaintenanceWindow != nil {
+					wgReq.MaintenanceWindow = &commonApi.MaintenanceWindow{
+						IsEnabled: wg.MaintenanceWindow.IsEnabled,
+						StartTime: wg.MaintenanceWindow.StartTime.ValueStringPointer(),
+					}
+
+					if !wg.MaintenanceWindow.StartDay.IsUnknown() && !wg.MaintenanceWindow.StartDay.IsNull() {
+						wgReq.MaintenanceWindow.StartDay = utils.ToPointer(float64(wg.MaintenanceWindow.StartDay.ValueInt64()))
+					}
+				}
 				*clusterReqBody.Groups = append(*clusterReqBody.Groups, wgReq)
 			}
 		}
@@ -1069,7 +1094,7 @@ func (p pgdResource) Update(ctx context.Context, req resource.UpdateRequest, res
 
 	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
 	// this is possibly a bug in the API
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	plan.ID = plan.ClusterId
 
@@ -1334,12 +1359,6 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					Throughput:         types.StringPointerValue(apiRespDgModel.Storage.Throughput),
 				}
 
-				// wal storage
-				walStorage := BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
-				if apiRespDgModel.WalStorage != nil {
-					walStorage = BuildTfRsrcWalStorage(apiRespDgModel.WalStorage)
-				}
-
 				// service account ids
 				serviceAccIds := []attr.Value{}
 				if apiRespDgModel.ServiceAccountIds != nil && len(*apiRespDgModel.ServiceAccountIds) != 0 {
@@ -1434,7 +1453,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ClusterType:           types.StringPointerValue(apiRespDgModel.ClusterType),
 					Connection:            types.StringPointerValue(&apiRespDgModel.Connection.PgUri),
 					CreatedAt:             types.StringPointerValue((*string)(apiRespDgModel.CreatedAt)),
-					CspAuth:               cspAuth,
+					CspAuth:               types.BoolValue(cspAuth),
 					InstanceType:          apiRespDgModel.InstanceType,
 					LogsUrl:               types.StringPointerValue(apiRespDgModel.LogsUrl),
 					MetricsUrl:            types.StringPointerValue(apiRespDgModel.MetricsUrl),
@@ -1442,7 +1461,7 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					PgType:                apiRespDgModel.PgType,
 					PgVersion:             apiRespDgModel.PgVersion,
 					Phase:                 types.StringPointerValue(apiRespDgModel.Phase),
-					PrivateNetworking:     privateNetworking,
+					PrivateNetworking:     types.BoolValue(privateNetworking),
 					Provider:              apiRespDgModel.Provider,
 					Region:                apiRespDgModel.Region,
 					ResizingPvc:           types.SetValueMust(types.StringType, resizingPvc),
@@ -1451,8 +1470,17 @@ func buildTFGroupsAs(ctx context.Context, diags *diag.Diagnostics, state tfsdk.S
 					ServiceAccountIds:     types.SetValueMust(types.StringType, serviceAccIds),
 					PeAllowedPrincipalIds: types.SetValueMust(types.StringType, principalIds),
 					RoConnectionUri:       types.StringPointerValue(&apiRespDgModel.Connection.ReadOnlyPgUri),
-					ReadOnlyConnections:   readOnlyConnections,
-					WalStorage:            walStorage,
+					ReadOnlyConnections:   types.BoolValue(readOnlyConnections),
+				}
+
+				if apiRespDgModel.WalStorage != nil {
+					tfDGModel.WalStorage = &models.StorageResourceModel{
+						VolumeProperties: types.StringPointerValue(apiRespDgModel.WalStorage.VolumePropertiesId),
+						VolumeType:       types.StringPointerValue(apiRespDgModel.WalStorage.VolumeTypeId),
+						Iops:             types.StringPointerValue(apiRespDgModel.WalStorage.Iops),
+						Size:             types.StringPointerValue(apiRespDgModel.WalStorage.Size),
+						Throughput:       types.StringPointerValue(apiRespDgModel.WalStorage.Throughput),
+					}
 				}
 
 				outPgdTFResource.DataGroups = append(outPgdTFResource.DataGroups, tfDGModel)
