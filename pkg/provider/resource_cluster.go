@@ -865,7 +865,9 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-	tfClusterResource.WalStorage = BuildTfRsrcWalStorage(responseCluster.WalStorage)
+	if responseCluster.WalStorage != nil {
+		tfClusterResource.WalStorage = BuildTfRsrcWalStorage(responseCluster.WalStorage)
+	}
 
 	if responseCluster.EncryptionKeyResp != nil && *responseCluster.Phase != constants.PHASE_HEALTHY {
 		if !tfClusterResource.PgIdentity.IsNull() && tfClusterResource.PgIdentity.ValueString() != "" {

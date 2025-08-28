@@ -8,6 +8,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models"
 	commonApi "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/api"
 	commonTerraform "github.com/EnterpriseDB/terraform-provider-biganimal/pkg/models/common/terraform"
+	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/plan_modifier"
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -60,10 +61,10 @@ var ResourceBackupScheduleTime = resourceSchema.StringAttribute{
 }
 
 var resourceWal = resourceSchema.SingleNestedAttribute{
-	Description: "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
-	Optional:    true,
-	Computed:    true,
-	// PlanModifiers: []planmodifier.Object{plan_modifier.WalStorageForUnknown()},
+	Description:   "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
+	Optional:      true,
+	Computed:      true,
+	PlanModifiers: []planmodifier.Object{plan_modifier.WalStorageForUnknown()},
 	Attributes: map[string]resourceSchema.Attribute{
 		"iops": resourceSchema.StringAttribute{
 			Description:   "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
@@ -136,7 +137,7 @@ func BuildTfRsrcCloudProviders(CloudProviders []models.CloudProvider) types.Set 
 	return basetypes.NewSetValueMust(basetypes.ObjectType{AttrTypes: cloudProviderAttrType}, cloudProvidersValue)
 }
 
-func BuildTfRsrcWalStorage(storage *models.Storage) types.Object {
+func BuildTfRsrcWalStorage(walStorage *models.Storage) types.Object {
 	walStorageAttrType := map[string]attr.Type{
 		"iops":              types.StringType,
 		"size":              types.StringType,
@@ -145,23 +146,21 @@ func BuildTfRsrcWalStorage(storage *models.Storage) types.Object {
 		"volume_type":       types.StringType,
 	}
 
-	var walStorageValue map[string]attr.Value
+	walStorageValue := map[string]attr.Value{
+		"iops":              basetypes.NewStringNull(),
+		"size":              basetypes.NewStringNull(),
+		"throughput":        basetypes.NewStringNull(),
+		"volume_properties": basetypes.NewStringNull(),
+		"volume_type":       basetypes.NewStringNull(),
+	}
 
-	if storage != nil {
+	if walStorage != nil {
 		walStorageValue = map[string]attr.Value{
-			"iops":              basetypes.NewStringPointerValue(storage.Iops),
-			"size":              basetypes.NewStringPointerValue(storage.Size),
-			"throughput":        basetypes.NewStringPointerValue(storage.Throughput),
-			"volume_properties": basetypes.NewStringPointerValue(storage.VolumePropertiesId),
-			"volume_type":       basetypes.NewStringPointerValue(storage.VolumeTypeId),
-		}
-	} else {
-		walStorageValue = map[string]attr.Value{
-			"iops":              basetypes.NewStringNull(),
-			"size":              basetypes.NewStringNull(),
-			"throughput":        basetypes.NewStringNull(),
-			"volume_properties": basetypes.NewStringNull(),
-			"volume_type":       basetypes.NewStringNull(),
+			"iops":              basetypes.NewStringPointerValue(walStorage.Iops),
+			"size":              basetypes.NewStringPointerValue(walStorage.Size),
+			"throughput":        basetypes.NewStringPointerValue(walStorage.Throughput),
+			"volume_properties": basetypes.NewStringPointerValue(walStorage.VolumePropertiesId),
+			"volume_type":       basetypes.NewStringPointerValue(walStorage.VolumeTypeId),
 		}
 	}
 
