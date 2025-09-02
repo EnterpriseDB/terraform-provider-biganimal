@@ -13,6 +13,12 @@ terraform {
   }
 }
 
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 variable "cluster_name" {
   type        = string
   description = "The name of the faraway replica cluster."

@@ -596,6 +596,7 @@ func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.Sta
 				targetStateData.ResizingPvc = sourceStateData.ResizingPvc
 				targetStateData.PeAllowedPrincipalIds = sourceStateData.PeAllowedPrincipalIds
 				targetStateData.ServiceAccountIds = sourceStateData.ServiceAccountIds
+				targetStateData.AllowedIpRanges = sourceStateData.AllowedIpRanges
 
 				// targetStateData := FAReplicaPromoteResourceModel{
 				// 	ID:       sourceStateData.ID,
