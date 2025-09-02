@@ -201,24 +201,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 							Computed:    true,
 							ElementType: types.StringType,
 						},
-						"allowed_ip_ranges": schema.SetNestedAttribute{
-							Description: "Allowed IP ranges.",
-							Optional:    true,
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"cidr_block": schema.StringAttribute{
-										Description: "CIDR block",
-										Required:    true,
-									},
-									"description": schema.StringAttribute{
-										Description: "Description of CIDR block",
-										Required:    true,
-									},
-								},
-							},
-							PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
-						},
+						"allowed_ip_ranges": resourceAllowedIpRanges,
 						"pg_config": schema.SetNestedAttribute{
 							Description: "Database configuration parameters.",
 							Required:    true,
@@ -1683,7 +1666,7 @@ func buildRequestBah(ctx context.Context, client *api.PGDClient, diags *diag.Dia
 		} else {
 			pids, err := client.GetPeAllowedPrincipalIds(ctx, projectId, *dg.Provider.CloudProviderId, dg.Region.RegionId)
 			if err != nil {
-				diags.AddError("pgd get pe allowed principal ids error", err.Error())
+				diags.AddError(fmt.Sprintf("pgd get existing pe allowed principal ids error in region: %v, not a bah cloud_provider_id or please set field 'pe_allowed_principal_ids' if you are using bah cloud_provider_id", dg.Region.RegionId), err.Error())
 				return nil, nil
 			}
 
@@ -1737,19 +1720,6 @@ func buildRequestBah(ctx context.Context, client *api.PGDClient, diags *diag.Dia
 		}
 	}
 	return
-}
-
-func buildRequestAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
-	apiAllowedIpRanges := &[]models.AllowedIpRange{}
-
-	for _, v := range tfAllowedIpRanges.Elements() {
-		*apiAllowedIpRanges = append(*apiAllowedIpRanges, models.AllowedIpRange{
-			CidrBlock:   v.(types.Object).Attributes()["cidr_block"].(types.String).ValueString(),
-			Description: v.(types.Object).Attributes()["description"].(types.String).ValueString(),
-		})
-	}
-
-	return apiAllowedIpRanges
 }
 
 func buildRequestStorage(tfStorage terraform.Storage) *models.Storage {

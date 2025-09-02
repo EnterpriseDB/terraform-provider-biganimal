@@ -38,5 +38,6 @@ func (m forceUnknownModifier) PlanModifySet(ctx context.Context, req planmodifie
 		return
 	}
 
+	// if it reaches here, it typically means it sets the plan value to unknown if config is set to null
 	resp.PlanValue = types.SetUnknown(req.PlanValue.ElementType(ctx))
 }

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -50,7 +51,7 @@ type FAReplicaResourceModel struct {
 	LogsUrl                         *string                           `tfsdk:"logs_url"`
 	BackupRetentionPeriod           types.String                      `tfsdk:"backup_retention_period"`
 	PrivateNetworking               types.Bool                        `tfsdk:"private_networking"`
-	AllowedIpRanges                 []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
+	AllowedIpRanges                 types.Set                         `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                       types.String                      `tfsdk:"created_at"`
 	ServiceAccountIds               types.Set                         `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds           types.Set                         `tfsdk:"pe_allowed_principal_ids"`
@@ -110,24 +111,7 @@ func fAReplicaSchema(ctx context.Context) *schema.Schema {
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"allowed_ip_ranges": schema.SetNestedAttribute{
-				Description: "Allowed IP ranges.",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							Description: "CIDR block",
-							Required:    true,
-						},
-						"description": schema.StringAttribute{
-							Description: "Description of CIDR block",
-							Required:    true,
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
-			},
+			"allowed_ip_ranges": resourceAllowedIpRanges,
 			"backup_retention_period": schema.StringAttribute{
 				Description: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
 				Optional:    true,
@@ -660,24 +644,12 @@ func readFAReplica(ctx context.Context, client *api.ClusterClient, fAReplicaReso
 		fAReplicaResourceModel.PgConfig = newPgConfig
 	}
 
-	fAReplicaResourceModel.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
-		for _, ipRange := range *allowedIpRanges {
-			description := ipRange.Description
-
-			// if cidr block is 0.0.0.0/0 then set description to empty string
-			// setting private networking and leaving allowed ip ranges as empty will return
-			// cidr block as 0.0.0.0/0 and description as "To allow all access"
-			// so we need to set description to empty string to keep it consistent with the tf resource
-			if ipRange.CidrBlock == "0.0.0.0/0" {
-				description = ""
-			}
-			fAReplicaResourceModel.AllowedIpRanges = append(fAReplicaResourceModel.AllowedIpRanges, AllowedIpRangesResourceModel{
-				CidrBlock:   ipRange.CidrBlock,
-				Description: types.StringValue(description),
-			})
-		}
+	allowedIpRanges, diag := buildTFRsrcAllowedIpRanges(responseCluster.AllowedIpRanges)
+	if diag.HasError() {
+		return errors.New("error building allowed_ip_ranges")
 	}
+
+	fAReplicaResourceModel.AllowedIpRanges = allowedIpRanges
 
 	if pt := responseCluster.CreatedAt; pt != nil {
 		fAReplicaResourceModel.CreatedAt = types.StringValue(pt.String())
@@ -796,14 +768,7 @@ func (r *FAReplicaResource) generateGenericFAReplicaModel(ctx context.Context, f
 		}
 	}
 
-	allowedIpRanges := []models.AllowedIpRange{}
-	for _, ipRange := range fAReplicaResourceModel.AllowedIpRanges {
-		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
-			CidrBlock:   ipRange.CidrBlock,
-			Description: ipRange.Description.ValueString(),
-		})
-	}
-	cluster.AllowedIpRanges = &allowedIpRanges
+	cluster.AllowedIpRanges = buildRequestAllowedIpRanges(fAReplicaResourceModel.AllowedIpRanges)
 
 	configs := []models.KeyValue{}
 	for _, model := range fAReplicaResourceModel.PgConfig {

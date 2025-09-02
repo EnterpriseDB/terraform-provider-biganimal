@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -53,7 +54,7 @@ type analyticsClusterResourceModel struct {
 	Password                   types.String                       `tfsdk:"password"`
 	PgVersion                  types.String                       `tfsdk:"pg_version"`
 	PrivateNetworking          types.Bool                         `tfsdk:"private_networking"`
-	AllowedIpRanges            []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
+	AllowedIpRanges            types.Set                          `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                  types.String                       `tfsdk:"created_at"`
 	MaintenanceWindow          *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
 	ServiceAccountIds          types.Set                          `tfsdk:"service_account_ids"`
@@ -117,24 +118,7 @@ func (r *analyticsClusterResource) Schema(ctx context.Context, req resource.Sche
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
-			"allowed_ip_ranges": schema.SetNestedAttribute{
-				Description: "Allowed IP ranges.",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							Description: "CIDR block",
-							Required:    true,
-						},
-						"description": schema.StringAttribute{
-							Description: "Description of CIDR block",
-							Optional:    true,
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
-			},
+			"allowed_ip_ranges": resourceAllowedIpRanges,
 			"cluster_id": schema.StringAttribute{
 				MarkdownDescription: "Cluster ID.",
 				Computed:            true,
@@ -407,14 +391,7 @@ func generateAnalyticsClusterModelCreate(ctx context.Context, client *api.Cluste
 	cluster.ClusterId = nil
 	cluster.PgConfig = nil
 
-	allowedIpRanges := []models.AllowedIpRange{}
-	for _, ipRange := range clusterResource.AllowedIpRanges {
-		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
-			CidrBlock:   ipRange.CidrBlock,
-			Description: ipRange.Description.ValueString(),
-		})
-	}
-	cluster.AllowedIpRanges = &allowedIpRanges
+	cluster.AllowedIpRanges = buildRequestAllowedIpRanges(clusterResource.AllowedIpRanges)
 
 	if clusterResource.MaintenanceWindow != nil {
 		cluster.MaintenanceWindow = &commonApi.MaintenanceWindow{
@@ -510,24 +487,11 @@ func readAnalyticsCluster(ctx context.Context, client *api.ClusterClient, tfClus
 		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue("")
 	}
 
-	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
-		for _, ipRange := range *allowedIpRanges {
-			description := ipRange.Description
-
-			// if cidr block is 0.0.0.0/0 then set description to empty string
-			// setting private networking and leaving allowed ip ranges as empty will return
-			// cidr block as 0.0.0.0/0 and description as "To allow all access"
-			// so we need to set description to empty string to keep it consistent with the tf resource
-			if ipRange.CidrBlock == "0.0.0.0/0" {
-				description = ""
-			}
-			tfClusterResource.AllowedIpRanges = append(tfClusterResource.AllowedIpRanges, AllowedIpRangesResourceModel{
-				CidrBlock:   ipRange.CidrBlock,
-				Description: types.StringValue(description),
-			})
-		}
+	allowedIpRanges, diag := buildTFRsrcAllowedIpRanges(responseCluster.AllowedIpRanges)
+	if diag.HasError() {
+		return errors.New("error building allowed_ip_ranges")
 	}
+	tfClusterResource.AllowedIpRanges = allowedIpRanges
 
 	if pt := responseCluster.CreatedAt; pt != nil {
 		tfClusterResource.CreatedAt = types.StringValue(pt.String())
