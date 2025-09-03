@@ -1,4 +1,4 @@
-// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promote resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promote and use the "moved" command as shown in this example.
+// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promoted_cluster resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promoted_cluster and use the "moved" command as shown in this example.
 
 terraform {
   required_providers {
@@ -29,7 +29,7 @@ variable "project_id" {
   description = "BigAnimal Project ID"
 }
 
-resource "biganimal_faraway_replica_promote" "promote" {
+resource "biganimal_faraway_replica_promoted_cluster" "promoted_cluster" {
   cluster_name      = var.cluster_name
   project_id        = var.project_id
 
@@ -47,7 +47,7 @@ resource "biganimal_faraway_replica_promote" "promote" {
   backup_retention_period = "8d"
   #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   csp_auth      = false
-  instance_type = "aws:c6i.large"
+  instance_type = "gcp:e2-highcpu-4"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -65,19 +65,17 @@ resource "biganimal_faraway_replica_promote" "promote" {
   ]
 
   storage = {
-    volume_type       = "gp3"
-    volume_properties = "gp3"
+    volume_type       = "pd-ssd"
+    volume_properties = "pd-ssd"
     size              = "4 Gi"
   }
   #  wal_storage = {
-  #    volume_type       = "gp3"
-  #    volume_properties = "gp3"
+  #    volume_type       = "pd-ssd"
+  #    volume_properties = "pd-ssd"
   #    size              = "4 Gi"
-  #    #iops             = "3000" # optional
-  #    #throughput       = "125" # optional
   #  }
   private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
-  region             = "ap-south-1"
+  region             = "us-east1"
 
   #tags = [
   #  {
@@ -89,7 +87,11 @@ resource "biganimal_faraway_replica_promote" "promote" {
   #]
 
   # pe_allowed_principal_ids = [
-  #   <example_value> # ex: 123456789012
+  #   <example_value> # ex: "development-data-123456"
+  # ]
+
+  # service_account_ids = [
+  #   <only_needed_for_bah:gcp_clusters> # ex: "test@development-data-123456.iam.gserviceaccount.com"
   # ]
 
   # transparent_data_encryption = {
@@ -107,5 +109,5 @@ resource "biganimal_faraway_replica_promote" "promote" {
 
 moved {
   from = biganimal_faraway_replica.faraway_replica
-  to   = biganimal_faraway_replica_promote.promote
+  to   = biganimal_faraway_replica_promoted_cluster.promoted_cluster
 }

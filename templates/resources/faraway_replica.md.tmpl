@@ -15,6 +15,21 @@ That's why both the cluster and the faraway replica in this example are running 
 
 {{ tffile "examples/resources/biganimal_faraway_replica/cluster_and_faraway_replica/resource.tf" }}
 
+## Example of promoting a Faraway Replica
+
+To promote a Faraway Replica you have to change the resource "biganimal_faraway_replica" to "biganimal_faraway_replica_promoted_cluster"
+in your terraform file, use the same fields and the moved command as shown in the example below. You can overwrite your terraform file 
+with the example file, but make sure the moved commands corresponds to your previous resource and name.
+
+e.g.
+moved {
+  from = biganimal_faraway_replica.faraway_replica                    // your previous resource and name
+  to   = biganimal_faraway_replica_promoted_cluster.promoted_cluster  // migrate to this resource and name
+}
+
+
+{{ tffile "examples/resources/biganimal_faraway_replica_promoted_cluster/aws/resource.tf" }}
+
 {{ .SchemaMarkdown | trimspace }}
 {{- if .HasImport }}
 

@@ -1,3 +1,5 @@
+// to promote a faraway replica please have a look at biganimal_faraway_replica_promoted_cluster examples
+
 terraform {
   required_providers {
     biganimal = {

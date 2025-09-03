@@ -1,4 +1,4 @@
-// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promote resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promote and use the "moved" command as shown in this example.
+// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promoted_cluster resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promoted_cluster and use the "moved" command as shown in this example.
 
 terraform {
   required_providers {
@@ -29,7 +29,7 @@ variable "project_id" {
   description = "BigAnimal Project ID"
 }
 
-resource "biganimal_faraway_replica_promote" "promote" {
+resource "biganimal_faraway_replica_promoted_cluster" "promoted_cluster" {
   cluster_name      = var.cluster_name
   project_id        = var.project_id
 
@@ -105,5 +105,5 @@ resource "biganimal_faraway_replica_promote" "promote" {
 
 moved {
   from = biganimal_faraway_replica.faraway_replica
-  to   = biganimal_faraway_replica_promote.promote
+  to   = biganimal_faraway_replica_promoted_cluster.promoted_cluster
 }

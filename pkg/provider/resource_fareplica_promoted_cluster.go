@@ -30,11 +30,11 @@ import (
 )
 
 var (
-	_ resource.Resource              = &FAReplicaPromoteResource{}
-	_ resource.ResourceWithMoveState = &FAReplicaPromoteResource{}
+	_ resource.Resource              = &FAReplicaPromotedResource{}
+	_ resource.ResourceWithMoveState = &FAReplicaPromotedResource{}
 )
 
-type FAReplicaPromoteResource struct {
+type FAReplicaPromotedResource struct {
 	client *api.ClusterClient
 }
 
@@ -99,8 +99,8 @@ func (c *FAReplicaPromoteResourceModel) setCloudProvider(cloudProvider string) {
 	c.CloudProvider = types.StringValue(cloudProvider)
 }
 
-func NewFAReplicaPromoteResource() resource.Resource {
-	return &FAReplicaPromoteResource{}
+func NewFAReplicaPromotedResource() resource.Resource {
+	return &FAReplicaPromotedResource{}
 }
 
 func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
@@ -390,12 +390,12 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 	}
 }
 
-func (r *FAReplicaPromoteResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *FAReplicaPromotedResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = *fAReplicaPromoteSchema(ctx)
 }
 
 // modify plan on at runtime
-func (r *FAReplicaPromoteResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (r *FAReplicaPromotedResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	ValidateTags(ctx, r.client.TagClient(), req, resp)
 
 	var state FAReplicaPromoteResourceModel
@@ -412,7 +412,7 @@ func (r *FAReplicaPromoteResource) ModifyPlan(ctx context.Context, req resource.
 	}
 }
 
-func (r *FAReplicaPromoteResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *FAReplicaPromotedResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -420,15 +420,15 @@ func (r *FAReplicaPromoteResource) Configure(ctx context.Context, req resource.C
 	r.client = req.ProviderData.(*api.API).ClusterClient()
 }
 
-func (r *FAReplicaPromoteResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_faraway_replica_promote"
+func (r *FAReplicaPromotedResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_faraway_replica_promoted_cluster"
 }
 
-func (r *FAReplicaPromoteResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *FAReplicaPromotedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	resp.Diagnostics.AddError("Error can not be create cluster", "this resource is only for promoting faraway cluster and getting a response")
 }
 
-func (r *FAReplicaPromoteResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *FAReplicaPromotedResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state FAReplicaPromoteResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -446,7 +446,7 @@ func (r *FAReplicaPromoteResource) Read(ctx context.Context, req resource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *FAReplicaPromotedResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan FAReplicaPromoteResourceModel
 
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
@@ -519,7 +519,7 @@ func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.Upda
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (r *FAReplicaPromoteResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *FAReplicaPromotedResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state FAReplicaPromoteResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -536,7 +536,7 @@ func (r *FAReplicaPromoteResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
-func (r FAReplicaPromoteResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r FAReplicaPromotedResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, "/")
 	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
@@ -550,7 +550,7 @@ func (r FAReplicaPromoteResource) ImportState(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
-func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.StateMover {
+func (r *FAReplicaPromotedResource) MoveState(ctx context.Context) []resource.StateMover {
 	fAReplicaSchema := fAReplicaSchema(ctx)
 	return []resource.StateMover{
 		{
@@ -598,6 +598,8 @@ func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.Sta
 				targetStateData.PeAllowedPrincipalIds = sourceStateData.PeAllowedPrincipalIds
 				targetStateData.ServiceAccountIds = sourceStateData.ServiceAccountIds
 				targetStateData.AllowedIpRanges = sourceStateData.AllowedIpRanges
+				targetStateData.Tags = sourceStateData.Tags
+				targetStateData.PgConfig = sourceStateData.PgConfig
 
 				// targetStateData := FAReplicaPromoteResourceModel{
 				// 	ID:       sourceStateData.ID,
@@ -721,7 +723,7 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 	return nil
 }
 
-func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (svAccIds, principalIds *[]string, err error) {
+func (r *FAReplicaPromotedResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (svAccIds, principalIds *[]string, err error) {
 	if strings.Contains(fAReplicaResourceModel.CloudProvider.ValueString(), "bah") {
 		// If there is an existing Principal Account Id for that Region, use that one.
 		pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, fAReplicaResourceModel.CloudProvider.ValueString(), fAReplicaResourceModel.Region.ValueString())
@@ -765,7 +767,7 @@ func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplic
 	return
 }
 
-func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (models.Cluster, error) {
+func (r *FAReplicaPromotedResource) generateGenericFAReplicaPromoteModel(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterArchitecture: &models.Architecture{
 			ClusterArchitectureId: fAReplicaResourceModel.ClusterArchitecture.Id,
@@ -836,7 +838,7 @@ func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx cont
 	return cluster, nil
 }
 
-func (r *FAReplicaPromoteResource) makeFaReplicaPromoteForUpdate(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (*models.Cluster, error) {
+func (r *FAReplicaPromotedResource) makeFaReplicaPromoteForUpdate(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (*models.Cluster, error) {
 	fAReplicaModel, err := r.generateGenericFAReplicaPromoteModel(ctx, fAReplicaResourceModel)
 	if err != nil {
 		return nil, err
