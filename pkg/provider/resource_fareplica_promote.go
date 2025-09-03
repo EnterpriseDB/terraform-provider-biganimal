@@ -592,6 +592,7 @@ func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.Sta
 				}
 
 				// have to manually copy over computed values
+				// and TF lists/sets/maps as copyobjectjson does not handle these well
 				targetStateData.Timeouts = sourceStateData.Timeouts
 				targetStateData.ResizingPvc = sourceStateData.ResizingPvc
 				targetStateData.PeAllowedPrincipalIds = sourceStateData.PeAllowedPrincipalIds
