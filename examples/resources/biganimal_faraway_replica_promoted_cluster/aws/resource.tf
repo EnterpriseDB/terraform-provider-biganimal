@@ -1,6 +1,7 @@
 // To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promoted_cluster resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promoted_cluster and use the "moved" command as shown in this example.
 
 terraform {
+  required_version = "= 1.13.1"
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"

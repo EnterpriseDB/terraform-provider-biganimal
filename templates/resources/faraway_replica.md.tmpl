@@ -17,6 +17,8 @@ That's why both the cluster and the faraway replica in this example are running 
 
 ## Example of promoting a Faraway Replica
 
+Please upgrade terraform version to 1.13.1 before using biganimal_faraway_replica_promoted_cluster resource
+
 To promote a Faraway Replica you have to change the resource "biganimal_faraway_replica" to "biganimal_faraway_replica_promoted_cluster"
 in your terraform file, use the same fields and the moved command as shown in the example below. You can overwrite your terraform file 
 with the example file, but make sure the moved commands corresponds to your previous resource and name.
