@@ -58,7 +58,7 @@ resource "biganimal_pgd" "pgd_cluster" {
         cluster_architecture_id = "pgd"
         nodes                   = 3
       }
-      csp_auth = false
+      csp_auth = false //can't change once set
       instance_type = {
         instance_type_id = "azure:Standard_D2s_v3"
       }
@@ -83,12 +83,12 @@ resource "biganimal_pgd" "pgd_cluster" {
       #        size              = "32 Gi"
       #      }
       pg_type = {
-        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]"
+        pg_type_id = "epas" #valid values ["epas", "pgextended", "postgres]" //can't change once set
       }
       pg_version = {
-        pg_version_id = "15"
+        pg_version_id = "15" //can't change once set
       }
-      private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
+      private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
       cloud_provider = {
         cloud_provider_id = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
       }

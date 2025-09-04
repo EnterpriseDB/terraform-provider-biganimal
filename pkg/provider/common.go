@@ -12,6 +12,7 @@ import (
 	"github.com/EnterpriseDB/terraform-provider-biganimal/pkg/utils"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	dataSourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
@@ -23,6 +24,60 @@ import (
 
 // custom tag validation here
 func ValidateTags(ctx context.Context, tagClient *api.TagClient, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+}
+
+func buildRequestAllowedIpRanges(tfAllowedIpRanges basetypes.SetValue) *[]models.AllowedIpRange {
+	apiAllowedIpRanges := &[]models.AllowedIpRange{}
+
+	for _, v := range tfAllowedIpRanges.Elements() {
+		*apiAllowedIpRanges = append(*apiAllowedIpRanges, models.AllowedIpRange{
+			CidrBlock:   v.(types.Object).Attributes()["cidr_block"].(types.String).ValueString(),
+			Description: v.(types.Object).Attributes()["description"].(types.String).ValueString(),
+		})
+	}
+
+	return apiAllowedIpRanges
+}
+
+func buildTFRsrcAllowedIpRanges(respAllowedIpRanges *[]models.AllowedIpRange) (basetypes.SetValue, diag.Diagnostics) {
+	attributeTypes := map[string]attr.Type{
+		"cidr_block":  basetypes.StringType{},
+		"description": basetypes.StringType{},
+	}
+
+	allowedIpRanges := []attr.Value{}
+	if respAllowedIpRanges != nil && len(*respAllowedIpRanges) > 0 {
+		for _, v := range *respAllowedIpRanges {
+			v := v
+
+			description := v.Description
+
+			// if cidr block is 0.0.0.0/0 then set description to empty string
+			// setting private networking = true and leaving allowed ip ranges as empty will return
+			// cidr block as 0.0.0.0/0 and description as "To allow all access"
+			// so we need to set description to empty string to keep it consistent with the tf resource
+			if v.CidrBlock == "0.0.0.0/0" {
+				description = ""
+			}
+
+			ob, diag := types.ObjectValue(attributeTypes, map[string]attr.Value{
+				"cidr_block":  types.StringValue(v.CidrBlock),
+				"description": types.StringValue(description),
+			})
+			if diag.HasError() {
+				return basetypes.SetValue{}, diag
+			}
+
+			allowedIpRanges = append(allowedIpRanges, ob)
+		}
+	}
+
+	allwdIpRngsElemType := types.ObjectType{AttrTypes: attributeTypes}
+	allwdIpRngsSet := types.SetNull(allwdIpRngsElemType)
+	if len(allowedIpRanges) > 0 {
+		allwdIpRngsSet = types.SetValueMust(allwdIpRngsElemType, allowedIpRanges)
+	}
+	return allwdIpRngsSet, nil
 }
 
 // build tag assign terraform resource as, using api response as input
@@ -61,10 +116,8 @@ var ResourceBackupScheduleTime = resourceSchema.StringAttribute{
 }
 
 var resourceWal = resourceSchema.SingleNestedAttribute{
-	Description:   "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
-	Optional:      true,
-	Computed:      true,
-	PlanModifiers: []planmodifier.Object{plan_modifier.WalStorageForUnknown()},
+	Description: "Use a separate storage volume for Write-Ahead Logs (Recommended for high write workloads)",
+	Optional:    true,
 	Attributes: map[string]resourceSchema.Attribute{
 		"iops": resourceSchema.StringAttribute{
 			Description:   "IOPS for the selected volume. It can be set to different values depending on your volume type and properties.",
@@ -92,6 +145,25 @@ var resourceWal = resourceSchema.SingleNestedAttribute{
 			Required:    true,
 		},
 	},
+}
+
+var resourceAllowedIpRanges = resourceSchema.SetNestedAttribute{
+	Description: "Allowed IP ranges.",
+	Optional:    true,
+	Computed:    true,
+	NestedObject: resourceSchema.NestedAttributeObject{
+		Attributes: map[string]resourceSchema.Attribute{
+			"cidr_block": resourceSchema.StringAttribute{
+				Description: "CIDR block",
+				Required:    true,
+			},
+			"description": resourceSchema.StringAttribute{
+				Description: "Description of CIDR block",
+				Required:    true,
+			},
+		},
+	},
+	PlanModifiers: []planmodifier.Set{plan_modifier.SetForceUnknownUpdate()},
 }
 
 var DataSourceTagNestedObject = dataSourceSchema.NestedAttributeObject{
@@ -137,7 +209,7 @@ func BuildTfRsrcCloudProviders(CloudProviders []models.CloudProvider) types.Set 
 	return basetypes.NewSetValueMust(basetypes.ObjectType{AttrTypes: cloudProviderAttrType}, cloudProvidersValue)
 }
 
-func BuildTfRsrcWalStorage(storage *models.Storage) types.Object {
+func BuildTfRsrcWalStorage(walStorage *models.Storage) types.Object {
 	walStorageAttrType := map[string]attr.Type{
 		"iops":              types.StringType,
 		"size":              types.StringType,
@@ -146,23 +218,21 @@ func BuildTfRsrcWalStorage(storage *models.Storage) types.Object {
 		"volume_type":       types.StringType,
 	}
 
-	var walStorageValue map[string]attr.Value
+	walStorageValue := map[string]attr.Value{
+		"iops":              basetypes.NewStringNull(),
+		"size":              basetypes.NewStringNull(),
+		"throughput":        basetypes.NewStringNull(),
+		"volume_properties": basetypes.NewStringNull(),
+		"volume_type":       basetypes.NewStringNull(),
+	}
 
-	if storage != nil {
+	if walStorage != nil {
 		walStorageValue = map[string]attr.Value{
-			"iops":              basetypes.NewStringPointerValue(storage.Iops),
-			"size":              basetypes.NewStringPointerValue(storage.Size),
-			"throughput":        basetypes.NewStringPointerValue(storage.Throughput),
-			"volume_properties": basetypes.NewStringPointerValue(storage.VolumePropertiesId),
-			"volume_type":       basetypes.NewStringPointerValue(storage.VolumeTypeId),
-		}
-	} else {
-		walStorageValue = map[string]attr.Value{
-			"iops":              basetypes.NewStringNull(),
-			"size":              basetypes.NewStringNull(),
-			"throughput":        basetypes.NewStringNull(),
-			"volume_properties": basetypes.NewStringNull(),
-			"volume_type":       basetypes.NewStringNull(),
+			"iops":              basetypes.NewStringPointerValue(walStorage.Iops),
+			"size":              basetypes.NewStringPointerValue(walStorage.Size),
+			"throughput":        basetypes.NewStringPointerValue(walStorage.Throughput),
+			"volume_properties": basetypes.NewStringPointerValue(walStorage.VolumePropertiesId),
+			"volume_type":       basetypes.NewStringPointerValue(walStorage.VolumeTypeId),
 		}
 	}
 

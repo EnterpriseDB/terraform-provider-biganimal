@@ -1,3 +1,5 @@
+// to promote a faraway replica please have a look at biganimal_faraway_replica_promoted_cluster examples
+
 terraform {
   required_providers {
     biganimal = {
@@ -74,7 +76,7 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   #    #iops             = "3000" # optional
   #    #throughput       = "125" # optional
   #  }
-  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
   region             = "ap-south-1"
 
   #tags = [

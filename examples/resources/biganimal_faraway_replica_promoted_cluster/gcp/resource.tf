@@ -1,3 +1,5 @@
+// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promoted_cluster resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promoted_cluster and use the "moved" command as shown in this example.
+
 terraform {
   required_providers {
     biganimal = {
@@ -11,6 +13,12 @@ terraform {
   }
 }
 
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 variable "cluster_name" {
   type        = string
   description = "The name of the faraway replica cluster."
@@ -21,7 +29,7 @@ variable "project_id" {
   description = "BigAnimal Project ID"
 }
 
-resource "biganimal_faraway_replica_promote" "promote" {
+resource "biganimal_faraway_replica_promoted_cluster" "promoted_cluster" {
   cluster_name      = var.cluster_name
   project_id        = var.project_id
 
@@ -66,7 +74,7 @@ resource "biganimal_faraway_replica_promote" "promote" {
   #    volume_properties = "pd-ssd"
   #    size              = "4 Gi"
   #  }
-  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
   region             = "us-east1"
 
   #tags = [
@@ -101,5 +109,5 @@ resource "biganimal_faraway_replica_promote" "promote" {
 
 moved {
   from = biganimal_faraway_replica.faraway_replica
-  to   = biganimal_faraway_replica_promote.promote
+  to   = biganimal_faraway_replica_promoted_cluster.promoted_cluster
 }
