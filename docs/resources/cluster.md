@@ -13,7 +13,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "3.0.1"
+      version = "3.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -60,7 +60,7 @@ resource "biganimal_cluster" "single_node_cluster" {
     id    = "single"
     nodes = 1
   }
-  csp_auth = false
+  csp_auth = false //can't change once set
 
   instance_type = "aws:m6i.large"
   password      = resource.random_password.password.result
@@ -95,8 +95,8 @@ resource "biganimal_cluster" "single_node_cluster" {
     start_time = "03:00"
   }
 
-  pg_type                = "epas" #valid values ["epas", "pgextended", "postgres]"
-  pg_version             = "15"
+  pg_type                = "epas"    #valid values ["epas", "pgextended", "postgres]" //can't change once set
+  pg_version             = "15"      //can't change once set
   private_networking     = false     // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
   cloud_provider         = "bah:aws" // "bah:aws" uses BigAnimal's cloud account AWS, use "aws" for your cloud account
   read_only_connections  = false
@@ -156,7 +156,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "3.0.1"
+      version = "3.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -385,9 +385,6 @@ Optional:
 Required:
 
 - `cidr_block` (String) CIDR block
-
-Optional:
-
 - `description` (String) Description of CIDR block
 
 

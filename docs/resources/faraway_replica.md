@@ -14,7 +14,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "3.0.1"
+      version = "3.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -42,14 +42,39 @@ variable "project_id" {
 resource "biganimal_cluster" "single_node_cluster" {
   cluster_name = var.cluster_name
   project_id   = var.project_id
+  pause        = false
 
+  allowed_ip_ranges = [
+    {
+      cidr_block  = "127.0.0.1/32"
+      description = "localhost"
+    },
+    {
+      cidr_block  = "192.168.0.1/32"
+      description = "description!"
+    }
+  ]
+
+  backup_retention_period = "6d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   cluster_architecture = {
     id    = "single"
     nodes = 1
   }
+  csp_auth = false //can't change once set
 
   instance_type = "azure:Standard_D2s_v3"
   password      = resource.random_password.password.result
+  pg_config = [
+    {
+      name  = "application_name"
+      value = "created through terraform"
+    },
+    {
+      name  = "array_nulls"
+      value = "off"
+    }
+  ]
 
   storage = {
     volume_type       = "azurepremiumstorage"
@@ -63,21 +88,65 @@ resource "biganimal_cluster" "single_node_cluster" {
   #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
   #  }
 
-  pg_type        = "epas" #valid values ["epas", "pgextended", "postgres]"
-  pg_version     = "15"
-  cloud_provider = "azure"
-  region         = "eastus"
+  maintenance_window = {
+    is_enabled = true
+    start_day  = 6
+    start_time = "03:00"
+  }
+
+  pg_type                = "epas"      #valid values ["epas", "pgextended", "postgres]" //can't change once set
+  pg_version             = "15"        //can't change once set
+  private_networking     = false       // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
+  cloud_provider         = "bah:azure" // "bah:azure" uses BigAnimal's cloud account Azure, use "azure" for your cloud account
+  read_only_connections  = false
+  region                 = "eastus2"
+  superuser_access       = false
+  pgvector               = false
+  post_gis               = false
+  volume_snapshot_backup = false
+
+
+  pg_bouncer = {
+    is_enabled = false
+    #  settings = [ # If is_enabled is true, remove the comment and enter the settings. Should you prefer something different from the defaults.
+    #    {
+    #      name      = "autodb_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "5000"
+    #    },
+    #    {
+    #      name      = "client_idle_timeout"
+    #      operation = "read-write" #valid values ["read-write", "read-only"]. "read-only" is only valid for ha clusters with read_only_connections set to true
+    #      value     = "6000"
+    #    },
+    #  ]
+  }
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+  # ]
 
   # transparent_data_encryption = {
   #   key_id = <example_value>
   # }
-
-  volume_snapshot_backup = false
 }
 
 output "password" {
   sensitive = true
   value     = resource.biganimal_cluster.single_node_cluster.password
+}
+
+output "faraway_replica_ids" {
+  value = biganimal_cluster.single_node_cluster.faraway_replica_ids
 }
 
 resource "biganimal_faraway_replica" "faraway_replica" {
@@ -143,6 +212,135 @@ resource "biganimal_faraway_replica" "faraway_replica" {
   # }
 
   volume_snapshot_backup = false
+}
+```
+
+## Example of promoting a Faraway Replica
+
+Please upgrade terraform version to 1.13.1 before using biganimal_faraway_replica_promoted_cluster resource
+
+To promote a Faraway Replica you have to change the resource "biganimal_faraway_replica" to "biganimal_faraway_replica_promoted_cluster"
+in your terraform file, use the same fields and the moved command as shown in the example below. You can overwrite your terraform file
+with the example file, but make sure the moved commands corresponds to your previous resource and name.
+
+moved example:
+moved {
+  from = biganimal_faraway_replica.faraway_replica                    // your previous resource and name
+  to   = biganimal_faraway_replica_promoted_cluster.promoted_cluster  // migrate to this resource and name
+}
+
+```terraform
+// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promoted_cluster resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promoted_cluster and use the "moved" command as shown in this example.
+
+terraform {
+  required_version = "= 1.13.1"
+  required_providers {
+    biganimal = {
+      source  = "EnterpriseDB/biganimal"
+      version = "3.1.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.6.0"
+    }
+  }
+}
+
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "The name of the faraway replica cluster."
+}
+
+variable "project_id" {
+  type        = string
+  description = "BigAnimal Project ID"
+}
+
+resource "biganimal_faraway_replica_promoted_cluster" "promoted_cluster" {
+  cluster_name = var.cluster_name
+  project_id   = var.project_id
+
+  allowed_ip_ranges = [
+    {
+      cidr_block  = "127.0.0.1/32"
+      description = "localhost"
+    },
+    {
+      cidr_block  = "192.168.0.1/32"
+      description = "description!"
+    },
+  ]
+
+  backup_retention_period = "8d"
+  #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
+  csp_auth      = false
+  instance_type = "aws:c6i.large"
+
+  // only following pg_config parameters are configurable for faraway replica
+  // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
+  // it is highly recommended setting these values to be equal to or greater than the source cluster's.
+  // Please visit [this page](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/managing_replicas/#modify-a-faraway-replica)for best practices.
+  pg_config = [
+    {
+      name  = "max_connections"
+      value = "100"
+    },
+    {
+      name  = "max_locks_per_transaction"
+      value = "64"
+    }
+  ]
+
+  storage = {
+    volume_type       = "gp3"
+    volume_properties = "gp3"
+    size              = "4 Gi"
+  }
+  #  wal_storage = {
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #    #iops             = "3000" # optional
+  #    #throughput       = "125" # optional
+  #  }
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
+  region             = "ap-south-1"
+
+  #tags = [
+  #  {
+  #     tag_name  = "<ex_tag_name_1>"
+  #  },
+  #  {
+  #     tag_name  = "<ex_tag_name_2>"
+  #  },
+  #]
+
+  # pe_allowed_principal_ids = [
+  #   <example_value> # ex: 123456789012
+  # ]
+
+  # transparent_data_encryption = {
+  #   key_id = <example_value>
+  # }
+
+  volume_snapshot_backup = false
+  password               = resource.random_password.password.result
+
+  cluster_architecture = {
+    id    = "single"
+    nodes = 1
+  }
+}
+
+moved {
+  from = biganimal_faraway_replica.faraway_replica
+  to   = biganimal_faraway_replica_promoted_cluster.promoted_cluster
 }
 ```
 
@@ -284,10 +482,6 @@ Required:
 
 - `id` (String) Cluster architecture ID.
 - `nodes` (Number) Node count.
-
-Read-Only:
-
-- `name` (String) Name.
 
 ## Import
 
