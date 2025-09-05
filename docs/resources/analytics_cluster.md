@@ -60,9 +60,6 @@ The analytics cluster resource is used to manage BigAnimal analytics clusters.
 Required:
 
 - `cidr_block` (String) CIDR block
-
-Optional:
-
 - `description` (String) Description of CIDR block
 
 

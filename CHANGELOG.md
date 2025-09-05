@@ -1,3 +1,16 @@
+## v3.1.0 (August 05. 2025)
+Features:
+* New resource to promote faraway replica `biganimal_faraway_replica_promoted_cluster`
+
+Bug Fixes:
+* cluster_architecture bug fix for `biganimal_faraway_replica` resource
+* read_only_connections and private_networking bug fix for all resources
+* resizing_pvc bug fix for `biganimal_faraway_replica`, `biganimal_analytics` and `biganimal_pgd` resources
+* allowed_ip_ranges when setting private_networking to true bug fix for all resources
+
+Enhancements:
+* added validation for maintenance window
+
 ## v3.0.1 (August 13. 2025)
 Bug Fixes:
 * pe_allowed_principal_ids bug fix for `biganimal_faraway_replica` resource
