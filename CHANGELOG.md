@@ -1,4 +1,4 @@
-## v3.1.0 (August 05. 2025)
+## v3.1.0 (September 08. 2025)
 Features:
 * New resource to promote faraway replica `biganimal_faraway_replica_promoted_cluster`
 
