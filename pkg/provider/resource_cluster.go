@@ -65,7 +65,7 @@ type ClusterResourceModel struct {
 	FarawayReplicaIds               types.Set                          `tfsdk:"faraway_replica_ids"`
 	PgVersion                       types.String                       `tfsdk:"pg_version"`
 	PrivateNetworking               types.Bool                         `tfsdk:"private_networking"`
-	AllowedIpRanges                 []AllowedIpRangesResourceModel     `tfsdk:"allowed_ip_ranges"`
+	AllowedIpRanges                 types.Set                          `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                       types.String                       `tfsdk:"created_at"`
 	MaintenanceWindow               *commonTerraform.MaintenanceWindow `tfsdk:"maintenance_window"`
 	ServiceAccountIds               types.Set                          `tfsdk:"service_account_ids"`
@@ -209,24 +209,7 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 					},
 				},
 			},
-			"allowed_ip_ranges": schema.SetNestedAttribute{
-				Description: "Allowed IP ranges.",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							Description: "CIDR block",
-							Required:    true,
-						},
-						"description": schema.StringAttribute{
-							Description: "Description of CIDR block",
-							Optional:    true,
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
-			},
+			"allowed_ip_ranges": resourceAllowedIpRanges,
 			"pg_config": schema.SetNestedAttribute{
 				Description: "Database configuration parameters. See [Modifying database configuration parameters](https://www.enterprisedb.com/docs/biganimal/latest/using_cluster/03_modifying_your_cluster/05_db_configuration_parameters/) for details.",
 				Optional:    true,
@@ -294,7 +277,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"ro_connection_uri": schema.StringAttribute{
 				MarkdownDescription: "Cluster read-only connection URI. Only available for high availability clusters.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{plan_modifier.CustomPrivateNetworking()},
 			},
 			"project_id": schema.StringAttribute{
 				MarkdownDescription: "BigAnimal Project ID.",
@@ -337,7 +319,6 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"first_recoverability_point_at": schema.StringAttribute{
 				MarkdownDescription: "Earliest backup recover time.",
 				Computed:            true,
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"faraway_replica_ids": schema.SetAttribute{
 				Computed:    true,
@@ -371,6 +352,8 @@ func (c *clusterResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"read_only_connections": schema.BoolAttribute{
 				MarkdownDescription: "Is read only connection enabled.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"resizing_pvc": schema.ListAttribute{
 				MarkdownDescription: "Resizing PVC.",
@@ -735,7 +718,7 @@ func (c *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	// sleep after update operation as API can incorrectly respond with healthy state when checking the phase
 	// this is possibly a bug in the API
-	time.Sleep(20 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	if err := ensureClusterIsEndStateAs(ctx, c.client, &plan, timeout); err != nil {
 		if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -812,6 +795,21 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		return err
 	}
 
+	cspAuth := false
+	if responseCluster.CSPAuth != nil {
+		cspAuth = *responseCluster.CSPAuth
+	}
+
+	privateNetworking := false
+	if responseCluster.PrivateNetworking != nil {
+		privateNetworking = *responseCluster.PrivateNetworking
+	}
+
+	readOnlyConnections := false
+	if responseCluster.ReadOnlyConnections != nil {
+		readOnlyConnections = *responseCluster.ReadOnlyConnections
+	}
+
 	tfClusterResource.ID = types.StringValue(fmt.Sprintf("%s/%s", tfClusterResource.ProjectId, *tfClusterResource.ClusterId))
 	tfClusterResource.ClusterId = responseCluster.ClusterId
 	tfClusterResource.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
@@ -832,13 +830,13 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		Throughput:       types.StringPointerValue(responseCluster.Storage.Throughput),
 	}
 	tfClusterResource.ResizingPvc = StringSliceToList(responseCluster.ResizingPvc)
-	tfClusterResource.ReadOnlyConnections = types.BoolPointerValue(responseCluster.ReadOnlyConnections)
+	tfClusterResource.ReadOnlyConnections = types.BoolValue(readOnlyConnections)
 	tfClusterResource.ConnectionUri = types.StringPointerValue(&responseCluster.Connection.PgUri)
 	tfClusterResource.RoConnectionUri = types.StringPointerValue(&responseCluster.Connection.ReadOnlyPgUri)
 	tfClusterResource.ServiceName = types.StringPointerValue(&responseCluster.Connection.ServiceName)
 	tfClusterResource.PrivateLinkServiceAlias = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceAlias)
 	tfClusterResource.PrivateLinkServiceName = types.StringPointerValue(&responseCluster.Connection.PrivateLinkServiceName)
-	tfClusterResource.CspAuth = types.BoolPointerValue(responseCluster.CSPAuth)
+	tfClusterResource.CspAuth = types.BoolValue(cspAuth)
 	tfClusterResource.LogsUrl = responseCluster.LogsUrl
 	tfClusterResource.MetricsUrl = responseCluster.MetricsUrl
 	tfClusterResource.BackupRetentionPeriod = types.StringPointerValue(responseCluster.BackupRetentionPeriod)
@@ -846,11 +844,10 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	tfClusterResource.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	tfClusterResource.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	tfClusterResource.FarawayReplicaIds = StringSliceToSet(responseCluster.FarawayReplicaIds)
-	tfClusterResource.PrivateNetworking = types.BoolPointerValue(responseCluster.PrivateNetworking)
+	tfClusterResource.PrivateNetworking = types.BoolValue(privateNetworking)
 	tfClusterResource.SuperuserAccess = types.BoolPointerValue(responseCluster.SuperuserAccess)
 	tfClusterResource.PgIdentity = types.StringPointerValue(responseCluster.PgIdentity)
 	tfClusterResource.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-
 	if responseCluster.WalStorage != nil {
 		tfClusterResource.WalStorage = BuildTfRsrcWalStorage(responseCluster.WalStorage)
 	}
@@ -876,6 +873,8 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 	if responseCluster.FirstRecoverabilityPointAt != nil {
 		firstPointAt := responseCluster.FirstRecoverabilityPointAt.String()
 		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue(firstPointAt)
+	} else {
+		tfClusterResource.FirstRecoverabilityPointAt = basetypes.NewStringValue("")
 	}
 
 	// pgConfig. If tf resource pg config elem matches with api response pg config elem then add the elem to tf resource pg config
@@ -897,24 +896,11 @@ func readCluster(ctx context.Context, client *api.ClusterClient, tfClusterResour
 		tfClusterResource.PgConfig = newPgConfig
 	}
 
-	tfClusterResource.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
-		for _, ipRange := range *allowedIpRanges {
-			description := ipRange.Description
-
-			// if cidr block is 0.0.0.0/0 then set description to empty string
-			// setting private networking and leaving allowed ip ranges as empty will return
-			// cidr block as 0.0.0.0/0 and description as "To allow all access"
-			// so we need to set description to empty string to keep it consistent with the tf resource
-			if ipRange.CidrBlock == "0.0.0.0/0" {
-				description = ""
-			}
-			tfClusterResource.AllowedIpRanges = append(tfClusterResource.AllowedIpRanges, AllowedIpRangesResourceModel{
-				CidrBlock:   ipRange.CidrBlock,
-				Description: types.StringValue(description),
-			})
-		}
+	allowedIpRanges, diag := buildTFRsrcAllowedIpRanges(responseCluster.AllowedIpRanges)
+	if diag.HasError() {
+		return errors.New("error building allowed_ip_ranges")
 	}
+	tfClusterResource.AllowedIpRanges = allowedIpRanges
 
 	if pt := responseCluster.CreatedAt; pt != nil {
 		tfClusterResource.CreatedAt = types.StringValue(pt.String())
@@ -1036,7 +1022,7 @@ func (c *clusterResource) buildRequestBah(ctx context.Context, clusterResourceMo
 		// If there is an existing Principal Account Id for that Region, use that one.
 		pids, err := c.client.GetPeAllowedPrincipalIds(ctx, clusterResourceModel.ProjectId, clusterResourceModel.CloudProvider.ValueString(), clusterResourceModel.Region.ValueString())
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("principal Ids not found: %v", err)
 		}
 		principalIds = utils.ToPointer(pids.Data)
 
@@ -1117,14 +1103,7 @@ func (c *clusterResource) generateGenericClusterModel(ctx context.Context, clust
 		*cluster.Extensions = append(*cluster.Extensions, models.ClusterExtension{Enabled: true, ExtensionId: "postgis"})
 	}
 
-	allowedIpRanges := []models.AllowedIpRange{}
-	for _, ipRange := range clusterResource.AllowedIpRanges {
-		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
-			CidrBlock:   ipRange.CidrBlock,
-			Description: ipRange.Description.ValueString(),
-		})
-	}
-	cluster.AllowedIpRanges = &allowedIpRanges
+	cluster.AllowedIpRanges = buildRequestAllowedIpRanges(clusterResource.AllowedIpRanges)
 
 	configs := []models.KeyValue{}
 	for _, model := range clusterResource.PgConfig {

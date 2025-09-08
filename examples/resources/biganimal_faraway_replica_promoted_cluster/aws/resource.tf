@@ -1,4 +1,7 @@
+// To promote biganimal_faraway_replica resource use the biganimal_faraway_replica_promoted_cluster resource. You will have to change your biganimal_faraway_replica resource to biganimal_faraway_replica_promoted_cluster and use the "moved" command as shown in this example.
+
 terraform {
+  required_version = "= 1.13.1"
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
@@ -11,6 +14,12 @@ terraform {
   }
 }
 
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 variable "cluster_name" {
   type        = string
   description = "The name of the faraway replica cluster."
@@ -21,7 +30,7 @@ variable "project_id" {
   description = "BigAnimal Project ID"
 }
 
-resource "biganimal_faraway_replica_promote" "promote" {
+resource "biganimal_faraway_replica_promoted_cluster" "promoted_cluster" {
   cluster_name      = var.cluster_name
   project_id        = var.project_id
 
@@ -39,7 +48,7 @@ resource "biganimal_faraway_replica_promote" "promote" {
   backup_retention_period = "8d"
   #  backup_schedule_time = "0 5 1 * * *" //24 hour format cron expression e.g. "0 5 1 * * *" is 01:05
   csp_auth      = false
-  instance_type = "azure:Standard_D2s_v3"
+  instance_type = "aws:c6i.large"
 
   // only following pg_config parameters are configurable for faraway replica
   // max_connections, max_locks_per_transaction, max_prepared_transactions, max_wal_senders, max_worker_processes.
@@ -57,17 +66,19 @@ resource "biganimal_faraway_replica_promote" "promote" {
   ]
 
   storage = {
-    volume_type       = "azurepremiumstorage"
-    volume_properties = "P1"
-    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+    volume_type       = "gp3"
+    volume_properties = "gp3"
+    size              = "4 Gi"
   }
   #  wal_storage = {
-  #    volume_type       = "azurepremiumstorage"
-  #    volume_properties = "P1"
-  #    size              = "4 Gi" # for azurepremiumstorage please check Premium storage disk sizes here: https://learn.microsoft.com/en-us/azure/virtual-machines/premium-storage-performance
+  #    volume_type       = "gp3"
+  #    volume_properties = "gp3"
+  #    size              = "4 Gi"
+  #    #iops             = "3000" # optional
+  #    #throughput       = "125" # optional
   #  }
-  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = []" if private_networking = true
-  region             = "australiaeast"
+  private_networking = false // field allowed_ip_ranges will need to be set as "allowed_ip_ranges = null" if private_networking = true
+  region             = "ap-south-1"
 
   #tags = [
   #  {
@@ -79,7 +90,7 @@ resource "biganimal_faraway_replica_promote" "promote" {
   #]
 
   # pe_allowed_principal_ids = [
-  #   <example_value> # ex: "9334e5e6-7f47-aE61-5A4F-ee067daeEf4A"
+  #   <example_value> # ex: 123456789012
   # ]
 
   # transparent_data_encryption = {
@@ -97,5 +108,5 @@ resource "biganimal_faraway_replica_promote" "promote" {
 
 moved {
   from = biganimal_faraway_replica.faraway_replica
-  to   = biganimal_faraway_replica_promote.promote
+  to   = biganimal_faraway_replica_promoted_cluster.promoted_cluster
 }

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -29,17 +30,17 @@ import (
 )
 
 var (
-	_ resource.Resource              = &FAReplicaPromoteResource{}
-	_ resource.ResourceWithMoveState = &FAReplicaPromoteResource{}
+	_ resource.Resource              = &FAReplicaPromotedResource{}
+	_ resource.ResourceWithMoveState = &FAReplicaPromotedResource{}
 )
 
-type FAReplicaPromoteResource struct {
+type FAReplicaPromotedResource struct {
 	client *api.ClusterClient
 }
 
 type FAReplicaPromoteResourceModel struct {
 	ID                              types.String                      `tfsdk:"id"`
-	ReplicaSourceClusterId          types.String                      `tfsdk:"source_cluster_id"`
+	CanAddFarawayReplica            types.Bool                        `tfsdk:"can_add_faraway_replica"`
 	Password                        types.String                      `tfsdk:"password"`
 	CspAuth                         types.Bool                        `tfsdk:"csp_auth"`
 	Region                          types.String                      `tfsdk:"region"`
@@ -56,7 +57,7 @@ type FAReplicaPromoteResourceModel struct {
 	LogsUrl                         *string                           `tfsdk:"logs_url"`
 	BackupRetentionPeriod           types.String                      `tfsdk:"backup_retention_period"`
 	PrivateNetworking               types.Bool                        `tfsdk:"private_networking"`
-	AllowedIpRanges                 []AllowedIpRangesResourceModel    `tfsdk:"allowed_ip_ranges"`
+	AllowedIpRanges                 types.Set                         `tfsdk:"allowed_ip_ranges"`
 	CreatedAt                       types.String                      `tfsdk:"created_at"`
 	ServiceAccountIds               types.Set                         `tfsdk:"service_account_ids"`
 	PeAllowedPrincipalIds           types.Set                         `tfsdk:"pe_allowed_principal_ids"`
@@ -98,8 +99,8 @@ func (c *FAReplicaPromoteResourceModel) setCloudProvider(cloudProvider string) {
 	c.CloudProvider = types.StringValue(cloudProvider)
 }
 
-func NewFAReplicaPromoteResource() resource.Resource {
-	return &FAReplicaPromoteResource{}
+func NewFAReplicaPromotedResource() resource.Resource {
+	return &FAReplicaPromotedResource{}
 }
 
 func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
@@ -116,30 +117,7 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"source_cluster_id": schema.StringAttribute{
-				Description: "Source cluster ID.",
-				Computed:    true,
-			},
-			"allowed_ip_ranges": schema.SetNestedAttribute{
-				Description: "Allowed IP ranges.",
-				Optional:    true,
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr_block": schema.StringAttribute{
-							Description: "CIDR block",
-							Required:    true,
-						},
-						"description": schema.StringAttribute{
-							Description: "Description of CIDR block",
-							Required:    true,
-						},
-					},
-				},
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
-			},
+			"allowed_ip_ranges": resourceAllowedIpRanges,
 			"backup_retention_period": schema.StringAttribute{
 				Description: "Backup retention period. For example, \"7d\", \"2w\", or \"3m\".",
 				Optional:    true,
@@ -404,16 +382,20 @@ func fAReplicaPromoteSchema(ctx context.Context) *schema.Schema {
 				MarkdownDescription: "Password for the user edb_admin. It must be 12 characters or more.",
 				Required:            true,
 			},
+			"can_add_faraway_replica": schema.BoolAttribute{
+				MarkdownDescription: "Can add faraway replica.",
+				Computed:            true,
+			},
 		},
 	}
 }
 
-func (r *FAReplicaPromoteResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *FAReplicaPromotedResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = *fAReplicaPromoteSchema(ctx)
 }
 
 // modify plan on at runtime
-func (r *FAReplicaPromoteResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (r *FAReplicaPromotedResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	ValidateTags(ctx, r.client.TagClient(), req, resp)
 
 	var state FAReplicaPromoteResourceModel
@@ -423,14 +405,14 @@ func (r *FAReplicaPromoteResource) ModifyPlan(ctx context.Context, req resource.
 		return
 	}
 
-	if state.ReplicaSourceClusterId.ValueString() != "" {
-		resp.Diagnostics.AddWarning("Promoting faraway replica", "Promoting faraway replica from source cluster: "+state.ReplicaSourceClusterId.ValueString())
+	if !state.CanAddFarawayReplica.ValueBool() {
+		resp.Diagnostics.AddWarning("Promoting faraway replica", "Promoting faraway replica with cluster ID: "+*state.ClusterId)
 	} else {
 		resp.Diagnostics.AddWarning("Faraway replica is already promoted", "Updating cluster with cluster ID: "+*state.ClusterId)
 	}
 }
 
-func (r *FAReplicaPromoteResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *FAReplicaPromotedResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -438,15 +420,15 @@ func (r *FAReplicaPromoteResource) Configure(ctx context.Context, req resource.C
 	r.client = req.ProviderData.(*api.API).ClusterClient()
 }
 
-func (r *FAReplicaPromoteResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_faraway_replica_promote"
+func (r *FAReplicaPromotedResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_faraway_replica_promoted_cluster"
 }
 
-func (r *FAReplicaPromoteResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *FAReplicaPromotedResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	resp.Diagnostics.AddError("Error can not be create cluster", "this resource is only for promoting faraway cluster and getting a response")
 }
 
-func (r *FAReplicaPromoteResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *FAReplicaPromotedResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state FAReplicaPromoteResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -464,7 +446,7 @@ func (r *FAReplicaPromoteResource) Read(ctx context.Context, req resource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *FAReplicaPromotedResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan FAReplicaPromoteResourceModel
 
 	timeout, diagnostics := plan.Timeouts.Update(ctx, time.Minute*60)
@@ -492,7 +474,7 @@ func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.Upda
 	}
 
 	// promote faraway replica
-	if state.ReplicaSourceClusterId.ValueString() != "" {
+	if !state.CanAddFarawayReplica.ValueBool() {
 		_, err = r.client.Promote(ctx, fAReplicaModel, plan.ProjectId, *plan.ClusterId)
 		if err != nil {
 			if !appendDiagFromBAErr(err, &resp.Diagnostics) {
@@ -537,7 +519,7 @@ func (r *FAReplicaPromoteResource) Update(ctx context.Context, req resource.Upda
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (r *FAReplicaPromoteResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *FAReplicaPromotedResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state FAReplicaPromoteResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -554,7 +536,7 @@ func (r *FAReplicaPromoteResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
-func (r FAReplicaPromoteResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r FAReplicaPromotedResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, "/")
 	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
@@ -568,7 +550,7 @@ func (r FAReplicaPromoteResource) ImportState(ctx context.Context, req resource.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("cluster_id"), idParts[1])...)
 }
 
-func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.StateMover {
+func (r *FAReplicaPromotedResource) MoveState(ctx context.Context) []resource.StateMover {
 	fAReplicaSchema := fAReplicaSchema(ctx)
 	return []resource.StateMover{
 		{
@@ -610,10 +592,14 @@ func (r *FAReplicaPromoteResource) MoveState(ctx context.Context) []resource.Sta
 				}
 
 				// have to manually copy over computed values
+				// and TF lists/sets/maps as copyobjectjson does not handle these well
 				targetStateData.Timeouts = sourceStateData.Timeouts
 				targetStateData.ResizingPvc = sourceStateData.ResizingPvc
 				targetStateData.PeAllowedPrincipalIds = sourceStateData.PeAllowedPrincipalIds
 				targetStateData.ServiceAccountIds = sourceStateData.ServiceAccountIds
+				targetStateData.AllowedIpRanges = sourceStateData.AllowedIpRanges
+				targetStateData.Tags = sourceStateData.Tags
+				targetStateData.PgConfig = sourceStateData.PgConfig
 
 				// targetStateData := FAReplicaPromoteResourceModel{
 				// 	ID:       sourceStateData.ID,
@@ -633,8 +619,8 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 	}
 
 	fAReplicaResourceModel.ID = types.StringValue(fmt.Sprintf("%s/%s", fAReplicaResourceModel.ProjectId, *fAReplicaResourceModel.ClusterId))
-	fAReplicaResourceModel.ReplicaSourceClusterId = types.StringValue(*responseCluster.ReplicaSourceClusterId)
 	fAReplicaResourceModel.ClusterId = responseCluster.ClusterId
+	fAReplicaResourceModel.CanAddFarawayReplica = types.BoolValue(responseCluster.CanAddFarawayReplica)
 	fAReplicaResourceModel.ClusterName = types.StringPointerValue(responseCluster.ClusterName)
 	fAReplicaResourceModel.Phase = types.StringPointerValue(responseCluster.Phase)
 	fAReplicaResourceModel.Region = types.StringValue(responseCluster.Region.Id)
@@ -665,7 +651,6 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 	fAReplicaResourceModel.PgVersion = types.StringValue(responseCluster.PgVersion.PgVersionId)
 	fAReplicaResourceModel.PgType = types.StringValue(responseCluster.PgType.PgTypeId)
 	fAReplicaResourceModel.VolumeSnapshot = types.BoolPointerValue(responseCluster.VolumeSnapshot)
-
 	if responseCluster.WalStorage != nil {
 		fAReplicaResourceModel.WalStorage = &StorageResourceModel{
 			VolumeType:       types.StringPointerValue(responseCluster.WalStorage.VolumeTypeId),
@@ -695,24 +680,11 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 		fAReplicaResourceModel.PgConfig = newPgConfig
 	}
 
-	fAReplicaResourceModel.AllowedIpRanges = []AllowedIpRangesResourceModel{}
-	if allowedIpRanges := responseCluster.AllowedIpRanges; allowedIpRanges != nil {
-		for _, ipRange := range *allowedIpRanges {
-			description := ipRange.Description
-
-			// if cidr block is 0.0.0.0/0 then set description to empty string
-			// setting private networking and leaving allowed ip ranges as empty will return
-			// cidr block as 0.0.0.0/0 and description as "To allow all access"
-			// so we need to set description to empty string to keep it consistent with the tf resource
-			if ipRange.CidrBlock == "0.0.0.0/0" {
-				description = ""
-			}
-			fAReplicaResourceModel.AllowedIpRanges = append(fAReplicaResourceModel.AllowedIpRanges, AllowedIpRangesResourceModel{
-				CidrBlock:   ipRange.CidrBlock,
-				Description: types.StringValue(description),
-			})
-		}
+	allowedIpRanges, diag := buildTFRsrcAllowedIpRanges(responseCluster.AllowedIpRanges)
+	if diag.HasError() {
+		return errors.New("error building allowed_ip_ranges")
 	}
+	fAReplicaResourceModel.AllowedIpRanges = allowedIpRanges
 
 	if pt := responseCluster.CreatedAt; pt != nil {
 		fAReplicaResourceModel.CreatedAt = types.StringValue(pt.String())
@@ -751,7 +723,7 @@ func readFAReplicaPromote(ctx context.Context, client *api.ClusterClient, fARepl
 	return nil
 }
 
-func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (svAccIds, principalIds *[]string, err error) {
+func (r *FAReplicaPromotedResource) buildRequestBah(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (svAccIds, principalIds *[]string, err error) {
 	if strings.Contains(fAReplicaResourceModel.CloudProvider.ValueString(), "bah") {
 		// If there is an existing Principal Account Id for that Region, use that one.
 		pids, err := r.client.GetPeAllowedPrincipalIds(ctx, fAReplicaResourceModel.ProjectId, fAReplicaResourceModel.CloudProvider.ValueString(), fAReplicaResourceModel.Region.ValueString())
@@ -795,7 +767,7 @@ func (r *FAReplicaPromoteResource) buildRequestBah(ctx context.Context, fAReplic
 	return
 }
 
-func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (models.Cluster, error) {
+func (r *FAReplicaPromotedResource) generateGenericFAReplicaPromoteModel(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (models.Cluster, error) {
 	cluster := models.Cluster{
 		ClusterArchitecture: &models.Architecture{
 			ClusterArchitectureId: fAReplicaResourceModel.ClusterArchitecture.Id,
@@ -829,14 +801,7 @@ func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx cont
 		}
 	}
 
-	allowedIpRanges := []models.AllowedIpRange{}
-	for _, ipRange := range fAReplicaResourceModel.AllowedIpRanges {
-		allowedIpRanges = append(allowedIpRanges, models.AllowedIpRange{
-			CidrBlock:   ipRange.CidrBlock,
-			Description: ipRange.Description.ValueString(),
-		})
-	}
-	cluster.AllowedIpRanges = &allowedIpRanges
+	cluster.AllowedIpRanges = buildRequestAllowedIpRanges(fAReplicaResourceModel.AllowedIpRanges)
 
 	configs := []models.KeyValue{}
 	for _, model := range fAReplicaResourceModel.PgConfig {
@@ -873,7 +838,7 @@ func (r *FAReplicaPromoteResource) generateGenericFAReplicaPromoteModel(ctx cont
 	return cluster, nil
 }
 
-func (r *FAReplicaPromoteResource) makeFaReplicaPromoteForUpdate(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (*models.Cluster, error) {
+func (r *FAReplicaPromotedResource) makeFaReplicaPromoteForUpdate(ctx context.Context, fAReplicaResourceModel FAReplicaPromoteResourceModel) (*models.Cluster, error) {
 	fAReplicaModel, err := r.generateGenericFAReplicaPromoteModel(ctx, fAReplicaResourceModel)
 	if err != nil {
 		return nil, err
