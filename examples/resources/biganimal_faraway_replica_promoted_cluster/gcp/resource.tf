@@ -4,7 +4,7 @@ terraform {
   required_providers {
     biganimal = {
       source  = "EnterpriseDB/biganimal"
-      version = "3.0.1"
+      version = "3.1.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -30,8 +30,8 @@ variable "project_id" {
 }
 
 resource "biganimal_faraway_replica_promoted_cluster" "promoted_cluster" {
-  cluster_name      = var.cluster_name
-  project_id        = var.project_id
+  cluster_name = var.cluster_name
+  project_id   = var.project_id
 
   allowed_ip_ranges = [
     {
@@ -102,8 +102,8 @@ resource "biganimal_faraway_replica_promoted_cluster" "promoted_cluster" {
   password               = resource.random_password.password.result
 
   cluster_architecture = {
-      id    = "single"
-      nodes = 1
+    id    = "single"
+    nodes = 1
   }
 }
 
