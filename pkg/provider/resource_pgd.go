@@ -355,7 +355,7 @@ func PgdSchema(ctx context.Context) schema.Schema {
 									Description: "Is maintenance window enabled.",
 									Required:    true,
 								},
-								"start_day": schema.Float64Attribute{
+								"start_day": schema.Int64Attribute{
 									Description: "Start day.",
 									Required:    true,
 								},
