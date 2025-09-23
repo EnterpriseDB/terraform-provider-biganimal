@@ -1,3 +1,7 @@
+## v3.1.1 (October 24. 2025)
+Bug Fixes:
+* create resource bug fix for `biganimal_pgd` resource
+
 ## v3.1.0 (September 08. 2025)
 Features:
 * New resource to promote faraway replica `biganimal_faraway_replica_promoted_cluster`
