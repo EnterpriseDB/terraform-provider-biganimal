@@ -1,4 +1,4 @@
-## v3.1.1 (October 24. 2025)
+## v3.1.1 (September 24. 2025)
 Bug Fixes:
 * create resource bug fix for `biganimal_pgd` resource
 
